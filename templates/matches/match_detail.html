@@ -1,10 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
 
-</body>
-</html>
+{% block title %}{{ match.home_team }} vs {{ match.away_team }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ match.home_team }} 🆚 {{ match.away_team }}</h2>
+    <p>{{ match.date_time|date:"Y/m/d - H:i" }}</p>
+    <p>ورزشگاه: {{ match.stadium.name }}</p>
+    <a href="{% url 'matches:select_floor' match.id %}" class="btn btn-primary">خرید بلیط</a>
+</div>
+{% endblock %}

@@ -1,97 +1,448 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block title %}مدیریت بلوک‌ها{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* ===== تنظیمات کلی ===== */
+    .blocks-page { padding: 20px 0; }
+
+    /* ===== هدر ===== */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+    }
+    .page-header h2 {
+        font-weight: 700;
+        color: #1A1A2E;
+        margin: 0;
+        font-size: 28px;
+    }
+    .page-header h2 i { color: #D4AF37; margin-left: 12px; }
+    .header-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .btn-admin {
+        padding: 10px 22px;
+        border-radius: 10px;
+        border: none;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-admin:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+    .btn-primary-custom { background: #1A1A2E; color: #fff; }
+    .btn-primary-custom:hover { background: #2A2A4E; color: #D4AF37; }
+    .btn-success-custom { background: #28a745; color: #fff; }
+    .btn-success-custom:hover { background: #218838; color: #fff; }
+    .btn-outline-custom { background: transparent; color: #1A1A2E; border: 2px solid #1A1A2E; }
+    .btn-outline-custom:hover { background: #1A1A2E; color: #fff; }
+
+    /* ===== فیلتر ===== */
+    .filter-section {
+        background: #fff;
+        border-radius: 16px;
+        padding: 18px 24px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        border: 1px solid #e8eaed;
+    }
+    .filter-section .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 16px;
+    }
+    .filter-section .filter-group {
+        flex: 1;
+        min-width: 180px;
+    }
+    .filter-section .filter-group label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 4px;
+    }
+    .filter-section .filter-group label i { color: #D4AF37; }
+    .filter-section select {
+        width: 100%;
+        padding: 8px 14px;
+        border-radius: 8px;
+        border: 1.5px solid #e8eaed;
+        font-size: 14px;
+        background: #fafafa;
+        transition: all 0.3s ease;
+        color: #333;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236c757d' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: left 10px center;
+        padding-left: 30px;
+        cursor: pointer;
+    }
+    .filter-section select:focus { border-color: #D4AF37; outline: none; box-shadow: 0 0 0 4px rgba(212,175,55,0.15); background: #fff; }
+    .filter-section .filter-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-reset {
+        padding: 8px 18px;
+        border-radius: 8px;
+        border: 1.5px solid #e8eaed;
+        background: #fff;
+        color: #6c757d;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .btn-reset:hover { border-color: #D4AF37; color: #1A1A2E; }
+    .filter-stats {
+        font-size: 13px;
+        color: #6c757d;
+        white-space: nowrap;
+    }
+    .filter-stats strong { color: #1A1A2E; }
+
+    /* ===== کارت‌های بلوک ===== */
+    .blocks-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 24px;
+        margin-bottom: 30px;
+    }
+    .block-card {
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid #e8eaed;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+    }
+    .block-card:hover { transform: translateY(-6px); box-shadow: 0 12px 40px rgba(212,175,55,0.15); border-color: #D4AF37; }
+
+    .block-card .card-header {
+        background: #f8f9fa;
+        padding: 16px 20px;
+        border-bottom: 2px solid #D4AF37;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .block-card .card-header .block-name {
+        font-weight: 700;
+        font-size: 17px;
+        color: #1A1A2E;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .block-card .card-header .block-name i { color: #D4AF37; font-size: 18px; }
+    .block-card .card-header .block-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 14px;
+        border-radius: 50px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .block-card .card-header .block-status .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .block-card .card-header .block-status.active { background: #d4edda; color: #155724; }
+    .block-card .card-header .block-status.active .dot { background: #28a745; }
+    .block-card .card-header .block-status.inactive { background: #f8d7da; color: #721c24; }
+    .block-card .card-header .block-status.inactive .dot { background: #dc3545; }
+
+    .block-card .card-body { padding: 18px 20px; flex: 1; }
+    .block-card .card-body .block-meta {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 16px;
+        margin-bottom: 14px;
+    }
+    .block-card .card-body .block-meta .meta-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 4px 0;
+        border-bottom: 1px solid #f5f5f5;
+        font-size: 13px;
+    }
+    .block-card .card-body .block-meta .meta-item .label {
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .block-card .card-body .block-meta .meta-item .label i { color: #D4AF37; width: 16px; }
+    .block-card .card-body .block-meta .meta-item .value { font-weight: 600; color: #1A1A2E; }
+    .block-card .card-body .block-meta .meta-item .value .badge-zone {
+        padding: 2px 12px;
+        border-radius: 50px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    .badge-zone.home { background: #28a745; color: #fff; }
+    .badge-zone.away { background: #ffc107; color: #212529; }
+    .badge-zone.class1 { background: #007bff; color: #fff; }
+    .badge-zone.women { background: #e83e8c; color: #fff; }
+    .badge-zone.vip { background: #9b59b6; color: #fff; }
+
+    .block-card .card-body .block-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin: 10px 0;
+        padding: 10px 0;
+        border-top: 1px solid #f0f0f0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .block-card .card-body .block-stats .stat-item { text-align: center; }
+    .block-card .card-body .block-stats .stat-item .number {
+        display: block;
+        font-weight: 700;
+        font-size: 18px;
+        color: #1A1A2E;
+    }
+    .block-card .card-body .block-stats .stat-item .stat-label { font-size: 11px; color: #6c757d; }
+    .block-card .card-body .block-stats .stat-item .number.seats { color: #17a2b8; }
+    .block-card .card-body .block-stats .stat-item .number.rows { color: #ffc107; }
+    .block-card .card-body .block-stats .stat-item .number.price { color: #28a745; }
+
+    .block-card .card-footer {
+        background: #fafafa;
+        padding: 12px 20px;
+        border-top: 1px solid #e8eaed;
+        display: flex;
+        justify-content: flex-end;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .block-card .card-footer .btn-sm {
+        padding: 6px 14px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+    }
+    .block-card .card-footer .btn-sm:hover { transform: translateY(-2px); }
+    .block-card .card-footer .btn-toggle {
+        background: #ffc107; color: #212529;
+    }
+    .block-card .card-footer .btn-toggle:hover { background: #e0a800; box-shadow: 0 4px 15px rgba(255,193,7,0.3); }
+    .block-card .card-footer .btn-seats {
+        background: #17a2b8; color: #fff;
+    }
+    .block-card .card-footer .btn-seats:hover { background: #138496; box-shadow: 0 4px 15px rgba(23,162,184,0.3); }
+    .block-card .card-footer .btn-edit {
+        background: #28a745; color: #fff;
+    }
+    .block-card .card-footer .btn-edit:hover { background: #218838; box-shadow: 0 4px 15px rgba(40,167,69,0.3); }
+    .block-card .card-footer .btn-delete {
+        background: #dc3545; color: #fff;
+    }
+    .block-card .card-footer .btn-delete:hover { background: #c82333; box-shadow: 0 4px 15px rgba(220,53,69,0.3); }
+
+    /* ===== حالت خالی ===== */
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        grid-column: 1 / -1;
+    }
+    .empty-state i { font-size: 72px; color: #e8eaed; margin-bottom: 16px; display: block; }
+    .empty-state h4 { color: #1A1A2E; font-weight: 600; margin-bottom: 8px; font-size: 22px; }
+    .empty-state p { color: #6c757d; font-size: 16px; margin-bottom: 20px; }
+
+    /* ===== واکنش‌گرایی ===== */
+    @media (max-width: 768px) {
+        .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+        .page-header h2 { font-size: 22px; }
+        .blocks-grid { grid-template-columns: 1fr; }
+        .filter-section .filter-row { flex-direction: column; align-items: stretch; }
+        .filter-section .filter-group { min-width: 100%; }
+        .filter-section .filter-actions { flex-direction: row; }
+        .filter-stats { white-space: normal; }
+        .block-card .card-body .block-meta { grid-template-columns: 1fr; }
+        .block-card .card-body .block-stats { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 480px) {
+        .block-card .card-body .block-stats { grid-template-columns: 1fr 1fr; }
+        .block-card .card-header .block-name { font-size: 15px; }
+        .block-card .card-footer .btn-sm { flex: 1; justify-content: center; }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-    <div class="container mt-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2>مدیریت بلوک‌ها</h2>
-            <a href="{% url 'matches:admin_block_edit' %}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> بلوک جدید
+<div class="blocks-page">
+
+    <!-- ===== هدر ===== -->
+    <div class="page-header">
+        <h2><i class="fas fa-layer-group"></i> مدیریت بلوک‌ها</h2>
+        <div class="header-actions">
+            <a href="{% url 'matches:admin_stadium_list' %}" class="btn-admin btn-outline-custom">
+                <i class="fas fa-arrow-right"></i> مدیریت ورزشگاه‌ها
+            </a>
+            <a href="{% url 'admin:index' %}" target="_blank" class="btn-admin btn-primary-custom">
+                <i class="fas fa-external-link-alt"></i> پنل ادمین
             </a>
         </div>
-        <!-- ===== فیلتر ورزشگاه ===== -->
-        <div class="filter-section mb-4">
-            <form method="get" class="d-flex flex-wrap align-items-center gap-3">
-                <div>
-                    <label class="fw-bold me-2"><i class="fas fa-map-marker-alt"></i> ورزشگاه:</label>
-                    <select name="stadium_id" class="form-select" style="width:250px; display:inline-block;"
-                            onchange="this.form.submit()">
+    </div>
+
+    <!-- ===== فیلتر ===== -->
+    <div class="filter-section">
+        <form method="get" id="filterForm">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar-alt"></i> مسابقه</label>
+                    <select name="match_id" onchange="this.form.submit()">
+                        <option value="">همه مسابقات</option>
+                        {% for match in matches %}
+                            <option value="{{ match.id }}" {% if selected_match and selected_match.id == match.id %}selected{% endif %}>
+                                {{ match.home_team }} vs {{ match.away_team }} ({{ match.date_time|date:"Y/m/d" }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-map-marker-alt"></i> ورزشگاه</label>
+                    <select name="stadium_id" onchange="this.form.submit()">
                         <option value="">همه ورزشگاه‌ها</option>
                         {% for stadium in stadiums %}
-                            <option value="{{ stadium.id }}"
-                                    {% if selected_stadium and selected_stadium.id == stadium.id %}selected{% endif %}>
+                            <option value="{{ stadium.id }}" {% if selected_stadium and selected_stadium.id == stadium.id %}selected{% endif %}>
                                 {{ stadium.name }}
                             </option>
                         {% endfor %}
                     </select>
                 </div>
-                {% if selected_stadium %}
-                    <a href="{% url 'matches:admin_block_list' %}" class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-times"></i> حذف فیلتر
-                    </a>
-                {% endif %}
-                <span class="text-muted small">
-            <i class="fas fa-info-circle"></i> {{ blocks|length }} بلوک
-        </span>
-            </form>
-        </div>
-
-        <div class="table-responsive">
-            <table class="table table-striped table-hover">
-                <thead class="table-dark">
-                <tr>
-                    <th>نام</th>
-                    <th>ترتیب</th>
-                    <th>نوع جایگاه</th>
-                    <th>قیمت (تومان)</th>
-                    <th>VIP</th>
-                    <th>کلاس ۱</th>
-                    <th>فعال</th>
-                    <th>عملیات</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for block in blocks %}
-                    <tr>
-                        <td><strong>{{ block.name }}</strong></td>
-                        <td>{{ block.order }}</td>
-                        <td>
-                        <span class="badge 
-                            {% if block.zone_type == 'home' %}bg-success
-                            {% elif block.zone_type == 'away' %}bg-warning text-dark
-                            {% elif block.zone_type == 'class1' %}bg-primary
-                            {% elif block.zone_type == 'women' %}bg-pink
-                            {% elif block.zone_type == 'vip' %}bg-purple
-                            {% else %}bg-secondary{% endif %}">
-                            {{ block.get_zone_type_display }}
-                        </span>
-                        </td>
-                        <td>{{ block.price|floatformat:0 }}</td>
-                        <td>{% if block.is_vip %}✅{% else %}❌{% endif %}</td>
-                        <td>{% if block.is_class1 %}✅{% else %}❌{% endif %}</td>
-                        <td>{% if block.is_active %}✅{% else %}❌{% endif %}</td>
-                        <td>
-                            <a href="{% url 'matches:admin_block_edit' block.id %}" class="btn btn-sm btn-warning">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <a href="{% url 'matches:admin_block_delete' block.id %}" class="btn btn-sm btn-danger">
-                                <i class="fas fa-trash"></i>
-                            </a>
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="8" class="text-center text-muted">هیچ بلوکی تعریف نشده است.</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <div class="mt-3">
-            <a href="{% url 'matches:admin_match_list' %}" class="btn btn-secondary">
-                <i class="fas fa-arrow-right"></i> بازگشت به مدیریت مسابقات
-            </a>
+                <div class="filter-actions">
+                    {% if selected_match or selected_stadium %}
+                        <a href="{% url 'matches:admin_block_list' %}" class="btn-reset">
+                            <i class="fas fa-times"></i> حذف فیلتر
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+        <div class="filter-stats mt-2">
+            <i class="fas fa-info-circle"></i>
+            <strong>{{ blocks|length }}</strong> بلوک
+            {% if selected_match %}
+                در مسابقه <strong>{{ selected_match.home_team }} vs {{ selected_match.away_team }}</strong>
+            {% elif selected_stadium %}
+                در ورزشگاه <strong>{{ selected_stadium.name }}</strong>
+            {% endif %}
         </div>
     </div>
+
+    <!-- ===== کارت‌های بلوک ===== -->
+    <div class="blocks-grid">
+        {% for block in blocks %}
+        <div class="block-card">
+            <div class="card-header">
+                <div class="block-name">
+                    <i class="fas fa-cube"></i>
+                    {{ block.name }}
+                </div>
+                <span class="block-status {% if block.is_active %}active{% else %}inactive{% endif %}">
+                    <span class="dot"></span>
+                    {{ block.is_active|yesno:"فعال,غیرفعال" }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="block-meta">
+                    <div class="meta-item">
+                        <span class="label"><i class="fas fa-tag"></i> نوع جایگاه</span>
+                        <span class="value">
+                            <span class="badge-zone {{ block.zone_type }}">
+                                {{ block.get_zone_type_display }}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="label"><i class="fas fa-sort-numeric-up"></i> ترتیب</span>
+                        <span class="value">{{ block.order }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="label"><i class="fas fa-crown"></i> VIP</span>
+                        <span class="value">{{ block.is_vip|yesno:"✅,❌" }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="label"><i class="fas fa-star"></i> کلاس ۱</span>
+                        <span class="value">{{ block.is_class1|yesno:"✅,❌" }}</span>
+                    </div>
+                </div>
+                <div class="block-stats">
+                    <div class="stat-item">
+                        <span class="number rows">{{ block.rows.count }}</span>
+                        <span class="stat-label">ردیف‌ها</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="number seats">{{ block.seats.count }}</span>
+                        <span class="stat-label">صندلی‌ها</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="number price">{{ block.price|floatformat:0 }}</span>
+                        <span class="stat-label">قیمت (تومان)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'matches:toggle_block_status' block.id %}"
+                   class="btn-sm btn-toggle"
+                   onclick="return confirm('آیا از تغییر وضعیت این بلوک اطمینان دارید؟')">
+                    <i class="fas {% if block.is_active %}fa-ban{% else %}fa-check{% endif %}"></i>
+                    {% if block.is_active %}غیرفعال{% else %}فعال{% endif %}
+                </a>
+                <a href="{% url 'matches:manage_block_seats' block.id %}" class="btn-sm btn-seats">
+                    <i class="fas fa-chair"></i> صندلی‌ها
+                </a>
+                <a href="{% url 'matches:admin_block_edit' block.id %}" class="btn-sm btn-edit">
+                    <i class="fas fa-edit"></i>
+                </a>
+                <a href="{% url 'matches:admin_block_delete' block.id %}" class="btn-sm btn-delete">
+                    <i class="fas fa-trash"></i>
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="fas fa-layer-group"></i>
+            <h4>هیچ بلوکی یافت نشد</h4>
+            <p>
+                {% if selected_match %}
+                    برای مسابقه "{{ selected_match.home_team }} vs {{ selected_match.away_team }}" بلوکی تعریف نشده است.
+                {% elif selected_stadium %}
+                    برای ورزشگاه "{{ selected_stadium.name }}" بلوکی تعریف نشده است.
+                {% else %}
+                    هیچ بلوکی در سیستم تعریف نشده است.
+                {% endif %}
+            </p>
+            <a href="{% url 'matches:admin_stadium_list' %}" class="btn-admin btn-success-custom">
+                <i class="fas fa-plus"></i> رفتن به مدیریت ورزشگاه‌ها
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
 {% endblock %}

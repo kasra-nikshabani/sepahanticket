@@ -4,86 +4,94 @@
 {% block title %}{% if is_edit %}ویرایش{% else %}ایجاد{% endif %} مسابقه{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-10 col-lg-8">
-            <div class="card shadow-lg">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">
-                        {% if is_edit %}
-                            <i class="fas fa-edit"></i> ویرایش مسابقه
-                        {% else %}
-                            <i class="fas fa-plus"></i> ایجاد مسابقه جدید
-                        {% endif %}
-                    </h4>
-                </div>
-                <div class="card-body">
-                    <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="id_home_team" class="form-label">تیم میزبان</label>
-                                {{ form.home_team }}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="id_away_team" class="form-label">تیم میهمان</label>
-                                {{ form.away_team }}
-                            </div>
-                        </div>
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-10 col-lg-8">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            {% if is_edit %}
+                                <i class="fas fa-edit"></i> ویرایش مسابقه
+                            {% else %}
+                                <i class="fas fa-plus"></i> ایجاد مسابقه جدید
+                            {% endif %}
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="id_home_team_logo" class="form-label">لوگوی تیم میزبان</label>
-                                {{ form.home_team_logo }}
-                                {% if form.instance.home_team_logo %}
-                                    <div class="mt-2">
-                                        <img src="{{ form.instance.home_team_logo.url }}" alt="لوگوی میزبان" style="max-height: 80px;">
-                                    </div>
-                                {% endif %}
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_home_team" class="form-label">تیم میزبان</label>
+                                    {{ form.home_team }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_away_team" class="form-label">تیم میهمان</label>
+                                    {{ form.away_team }}
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="id_away_team_logo" class="form-label">لوگوی تیم میهمان</label>
-                                {{ form.away_team_logo }}
-                                {% if form.instance.away_team_logo %}
-                                    <div class="mt-2">
-                                        <img src="{{ form.instance.away_team_logo.url }}" alt="لوگوی میهمان" style="max-height: 80px;">
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="id_stadium" class="form-label">ورزشگاه</label>
-                                {{ form.stadium }}
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_home_team_logo" class="form-label">لوگوی تیم میزبان</label>
+                                    {{ form.home_team_logo }}
+                                    {% if form.instance.home_team_logo %}
+                                        <div class="mt-2">
+                                            <img src="{{ form.instance.home_team_logo.url }}" alt="لوگوی میزبان"
+                                                 style="max-height: 80px;">
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_away_team_logo" class="form-label">لوگوی تیم میهمان</label>
+                                    {{ form.away_team_logo }}
+                                    {% if form.instance.away_team_logo %}
+                                        <div class="mt-2">
+                                            <img src="{{ form.instance.away_team_logo.url }}" alt="لوگوی میهمان"
+                                                 style="max-height: 80px;">
+                                        </div>
+                                    {% endif %}
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="id_date_time" class="form-label">تاریخ و ساعت</label>
-                                {{ form.date_time }}
-                            </div>
-                        </div>
 
-                        <div class="mb-3">
-                            <div class="form-check">
-                                {{ form.is_active }}
-                                <label class="form-check-label" for="id_is_active">فعال</label>
-                                <small class="text-muted d-block">در صورت غیرفعال بودن، مسابقه در سایت نمایش داده نمی‌شود.</small>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_sport_type" class="form-label">رشته ورزشی</label>
+                                    {{ form.sport_type }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_stadium" class="form-label">ورزشگاه</label>
+                                    {{ form.stadium }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_date_time" class="form-label">تاریخ و ساعت</label>
+                                    {{ form.date_time }}
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="d-grid gap-2 mt-3">
-                            <button type="submit" class="btn btn-success btn-lg">
-                                <i class="fas fa-save"></i> {% if is_edit %}ذخیره تغییرات{% else %}ایجاد مسابقه{% endif %}
-                            </button>
-                            <a href="{% url 'matches:admin_match_list' %}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-right"></i> بازگشت به لیست مسابقات
-                            </a>
-                        </div>
-                    </form>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="id_is_active">فعال</label>
+                                    <small class="text-muted d-block">در صورت غیرفعال بودن، مسابقه در سایت نمایش داده
+                                        نمی‌شود.</small>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 mt-3">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-save"></i> {% if is_edit %}ذخیره تغییرات{% else %}ایجاد
+                                    مسابقه{% endif %}
+                                </button>
+                                <a href="{% url 'matches:admin_match_list' %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-right"></i> بازگشت به لیست مسابقات
+                                </a>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 {% endblock %}

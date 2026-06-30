@@ -12,9 +12,12 @@ from django.contrib import messages
 from django.db import transaction
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.http import HttpResponse, JsonResponse
+from django.urls import reverse
 from django.utils import timezone
 from django.db.models import Count
 from django.views.decorators.csrf import csrf_exempt
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
 
 import matches
 from .models import Ticket, VIPQuota, DiscountCode
@@ -30,20 +33,40 @@ from accounts.models import User
 
 @login_required
 def user_tickets(request):
-    """نمایش بلیط‌های خریداری‌شده کاربر عادی (با فیلتر مسابقه)"""
-    if request.user.user_type == 'vip':
-        return redirect('tickets:vip_tickets')
-
+    """
+    نمایش بلیط‌های کاربر در بخش «بلیط‌های من» با قابلیت فیلتر بر اساس وضعیت
+    """
     match_id = request.GET.get('match_id')
-    tickets_qs = Ticket.objects.filter(user=request.user, status='paid').order_by('-purchase_date')
+    status_filter = request.GET.get('status')  # new: paid, admin_assigned, vip_issued
+
+    # کوئری پایه بر اساس نوع کاربر
+    if request.user.user_type == 'vip':
+        tickets_qs = Ticket.objects.filter(
+            user=request.user,
+            status__in=['paid', 'admin_assigned', 'vip_issued']
+        ).order_by('-purchase_date')
+    else:
+        tickets_qs = Ticket.objects.filter(
+            user=request.user,
+            status='paid'
+        ).order_by('-purchase_date')
+
+    # اعمال فیلتر مسابقه
     if match_id:
         tickets_qs = tickets_qs.filter(match_id=match_id)
 
+    # اعمال فیلتر وضعیت (فقط برای VIP)
+    if status_filter and request.user.user_type == 'vip':
+        if status_filter in ['paid', 'admin_assigned', 'vip_issued']:
+            tickets_qs = tickets_qs.filter(status=status_filter)
+
     matches = Match.objects.filter(is_active=True).order_by('-date_time')
+
     context = {
         'tickets': tickets_qs,
         'matches': matches,
         'selected_match_id': int(match_id) if match_id else None,
+        'selected_status': status_filter,
     }
     return render(request, 'tickets/user_tickets.html', context)
 
@@ -70,6 +93,7 @@ def vip_tickets(request):
         'selected_match_id': int(match_id) if match_id else None,
     }
     return render(request, 'tickets/vip_tickets.html', context)
+
 
 @login_required
 def vip_dashboard(request):
@@ -99,20 +123,42 @@ def vip_dashboard(request):
 
 @login_required
 def vip_issued_tickets(request):
-    """نمایش بلیط‌های صادرشده توسط کاربر ویژه (با فیلتر مسابقه)"""
+    """
+    نمایش بلیط‌های صادرشده توسط کاربر ویژه (بخش مخصوص خودش)
+    اگر پارامتر match_id در URL باشد، فقط بلیط‌های آن مسابقه نمایش داده می‌شوند.
+    """
     if request.user.user_type != 'vip':
         messages.error(request, 'شما دسترسی به این بخش ندارید.')
         return redirect('matches:home')
 
+    # دریافت فیلتر مسابقه از GET
     match_id = request.GET.get('match_id')
-    tickets_qs = Ticket.objects.filter(user=request.user, status='vip_issued').order_by('-purchase_date')
+
+    # کوئری پایه: بلیط‌های صادرشده توسط این کاربر
+    tickets_qs = Ticket.objects.filter(
+        user=request.user,
+        status='vip_issued'
+    ).order_by('-purchase_date')
+
+    # اعمال فیلتر مسابقه (در صورت وجود)
+    selected_match = None
     if match_id:
         tickets_qs = tickets_qs.filter(match_id=match_id)
+        selected_match = get_object_or_404(Match, id=match_id)
 
+    # لیست مسابقات برای نمایش در فیلتر (اختیاری)
     matches = Match.objects.filter(is_active=True).order_by('-date_time')
+
+    # ===== اگر بلیطی وجود نداشته باشد =====
+    if not tickets_qs.exists() and not match_id:
+        messages.info(request, 'هیچ بلیط صادرشده‌ای یافت نشد.')
+    elif not tickets_qs.exists() and match_id:
+        messages.info(request, f'هیچ بلیطی برای مسابقه "{selected_match}" صادر نشده است.')
+
     context = {
         'tickets': tickets_qs,
         'matches': matches,
+        'selected_match': selected_match,
         'selected_match_id': int(match_id) if match_id else None,
     }
     return render(request, 'tickets/vip_issued_tickets.html', context)
@@ -124,7 +170,11 @@ def vip_issued_tickets(request):
 
 @login_required
 def vip_issue_manual(request, match_id):
-    """صدور خودکار بلیط توسط کاربر ویژه"""
+    """
+    صدور خودکار بلیط توسط کاربر ویژه (بدون انتخاب صندلی)
+    پس از صدور، به صفحه بلیط‌های صادرشده با فیلتر همان مسابقه هدایت می‌شود.
+    """
+    # ===== بررسی دسترسی =====
     if request.user.user_type != 'vip':
         messages.error(request, 'شما دسترسی به این بخش ندارید.')
         return redirect('matches:home')
@@ -136,10 +186,11 @@ def vip_issue_manual(request, match_id):
         messages.error(request, 'ظرفیت شما برای این مسابقه تکمیل شده است.')
         return redirect('tickets:vip_dashboard')
 
-    # ایجاد خودکار MatchSeat برای صندلی‌هایی که وجود ندارند
+    # ===== ۱. ایجاد خودکار MatchSeat برای صندلی‌هایی که وجود ندارند =====
     all_seats = Seat.objects.filter(row__is_active=True)
     existing_match_seats = MatchSeat.objects.filter(match=match, seat__in=all_seats)
     existing_seat_ids = existing_match_seats.values_list('seat_id', flat=True)
+
     missing_seat_ids = all_seats.exclude(id__in=existing_seat_ids).values_list('id', flat=True)
     if missing_seat_ids:
         new_match_seats = [
@@ -148,7 +199,7 @@ def vip_issue_manual(request, match_id):
         ]
         MatchSeat.objects.bulk_create(new_match_seats)
 
-    # پیدا کردن اولین صندلی خالی
+    # ===== ۲. پیدا کردن اولین صندلی خالی =====
     available_seat = MatchSeat.objects.filter(
         match=match,
         is_available=True
@@ -158,6 +209,7 @@ def vip_issue_manual(request, match_id):
         'seat__number'
     ).first()
 
+    # ===== ۳. پردازش فرم (POST) =====
     if request.method == 'POST':
         full_name = request.POST.get('full_name')
         national_code = request.POST.get('national_code')
@@ -175,9 +227,10 @@ def vip_issue_manual(request, match_id):
             return redirect('tickets:vip_dashboard')
 
         with transaction.atomic():
+            # قفل کردن صندلی برای جلوگیری از race condition
             match_seat = MatchSeat.objects.select_for_update().get(id=available_seat.id)
             if not match_seat.is_available:
-                messages.error(request, 'صندلی انتخاب‌شده قبلاً پر شده است.')
+                messages.error(request, 'صندلی انتخاب‌شده قبلاً پر شده است. لطفاً دوباره تلاش کنید.')
                 return redirect('tickets:vip_issue_manual', match_id=match_id)
 
             ticket = Ticket.objects.create(
@@ -193,12 +246,20 @@ def vip_issue_manual(request, match_id):
 
             match_seat.is_available = False
             match_seat.save()
+
             quota.used += 1
             quota.save()
 
-        messages.success(request, f'✅ بلیط برای {full_name} صادر شد. ردیف: {match_seat.seat.row.name} - صندلی: {match_seat.seat.number}')
-        return redirect('tickets:vip_dashboard')
+        messages.success(
+            request,
+            f'✅ بلیط برای {full_name} با موفقیت صادر شد.\n'
+            f'ردیف: {match_seat.seat.row.name} - صندلی: {match_seat.seat.number}'
+        )
 
+        # ===== هدایت به صفحه بلیط‌های صادرشده (بخش مخصوص کاربر ویژه) =====
+        return redirect(f'{reverse("tickets:vip_issued_tickets")}?match_id={match.id}')
+
+    # ===== ۴. نمایش فرم (GET) =====
     context = {
         'match': match,
         'quota': quota,
@@ -209,13 +270,10 @@ def vip_issue_manual(request, match_id):
 
 @login_required
 def vip_issue_excel(request, match_id):
-    """صدور خودکار بلیط (همانند manual)"""
-    return vip_issue_manual(request, match_id)  # یا کد مشابه
-
-
-@login_required
-def vip_issue_excel(request, match_id):
-    """صدور گروهی بلیط با فایل اکسل توسط کاربر ویژه (با MatchSeat)"""
+    """
+    صدور بلیط توسط کاربر ویژه از طریق فایل اکسل (خودکار)
+    پس از صدور، به صفحه بلیط‌های صادرشده با فیلتر همان مسابقه هدایت می‌شود.
+    """
     if request.user.user_type != 'vip':
         messages.error(request, 'شما دسترسی به این بخش ندارید.')
         return redirect('matches:home')
@@ -227,30 +285,42 @@ def vip_issue_excel(request, match_id):
         messages.error(request, 'ظرفیت شما برای این مسابقه تکمیل شده است.')
         return redirect('tickets:vip_dashboard')
 
+    # ===== پردازش فایل اکسل =====
     if request.method == 'POST' and request.FILES.get('excel_file'):
         try:
             import pandas as pd
             excel_file = request.FILES['excel_file']
             df = pd.read_excel(excel_file)
+
             required_columns = ['نام و نام خانوادگی', 'کد ملی']
             if not all(col in df.columns for col in required_columns):
-                messages.error(request, 'فایل باید شامل ستون‌های "نام و نام خانوادگی" و "کد ملی" باشد.')
+                messages.error(
+                    request,
+                    'فایل باید شامل ستون‌های "نام و نام خانوادگی" و "کد ملی" باشد.'
+                )
                 return redirect('tickets:vip_issue_excel', match_id=match_id)
 
-            # دریافت MatchSeatهای موجود
+            # دریافت صندلی‌های خالی
             available_match_seats = list(
                 MatchSeat.objects.filter(match=match, is_available=True)
                 .select_related('seat')
-                .order_by('seat__row__order', 'seat__number')
+                .order_by('seat__row__block__order', 'seat__row__number', 'seat__number')
             )
 
             if len(available_match_seats) < len(df):
-                messages.error(request,
-                               f'تعداد صندلی‌های موجود ({len(available_match_seats)}) کمتر از تعداد درخواست‌ها ({len(df)}) است.')
+                messages.error(
+                    request,
+                    f'تعداد صندلی‌های موجود ({len(available_match_seats)}) '
+                    f'کمتر از تعداد درخواست‌ها ({len(df)}) است.'
+                )
                 return redirect('tickets:vip_issue_excel', match_id=match_id)
+
             if len(df) > quota.remaining:
-                messages.error(request,
-                               f'ظرفیت باقی‌مانده شما ({quota.remaining}) کمتر از تعداد درخواست‌ها ({len(df)}) است.')
+                messages.error(
+                    request,
+                    f'ظرفیت باقی‌مانده شما ({quota.remaining}) '
+                    f'کمتر از تعداد درخواست‌ها ({len(df)}) است.'
+                )
                 return redirect('tickets:vip_issue_excel', match_id=match_id)
 
             with transaction.atomic():
@@ -258,10 +328,12 @@ def vip_issue_excel(request, match_id):
                 for _, row_data in df.iterrows():
                     full_name = str(row_data['نام و نام خانوادگی']).strip()
                     national_code = str(row_data['کد ملی']).strip()
+
                     if not full_name or not national_code or len(national_code) != 10:
                         continue
 
                     match_seat = available_match_seats[created]
+
                     ticket = Ticket.objects.create(
                         user=request.user,
                         match=match,
@@ -273,6 +345,7 @@ def vip_issue_excel(request, match_id):
                         is_admin_assigned=False,
                     )
                     ticket.save()
+
                     match_seat.is_available = False
                     match_seat.save()
                     created += 1
@@ -280,12 +353,21 @@ def vip_issue_excel(request, match_id):
                 quota.used += created
                 quota.save()
 
-            messages.success(request, f'{created} بلیط با موفقیت از فایل اکسل صادر شد.')
-            return redirect('tickets:vip_dashboard')
-        except Exception as e:
-            messages.error(request, f'خطا در خواندن فایل: {str(e)}')
+            messages.success(request, f'✅ {created} بلیط با موفقیت از فایل اکسل صادر شد.')
 
-    return render(request, 'tickets/vip_issue_excel.html', {'match': match, 'quota': quota})
+            # ===== هدایت به صفحه بلیط‌های صادرشده (بخش مخصوص کاربر ویژه) =====
+            return redirect(f'{reverse("tickets:vip_issued_tickets")}?match_id={match.id}')
+
+        except Exception as e:
+            messages.error(request, f'❌ خطا در خواندن فایل: {str(e)}')
+            return redirect('tickets:vip_issue_excel', match_id=match_id)
+
+    # ===== نمایش فرم (GET) =====
+    context = {
+        'match': match,
+        'quota': quota,
+    }
+    return render(request, 'tickets/vip_issue_excel.html', context)
 
 
 # ============================================================
@@ -334,7 +416,8 @@ def select_seats(request, match_id):
         request.session.pop('reserved_at', None)
         messages.info(request, 'رزروهای قبلی شما به دلیل بازگشت به این صفحه لغو شد.')
 
-    match_seats = MatchSeat.objects.filter(match=match, seat__row=row).select_related('seat', 'seat__row').order_by('seat__number')
+    match_seats = MatchSeat.objects.filter(match=match, seat__row=row).select_related('seat', 'seat__row').order_by(
+        'seat__number')
     if not match_seats.exists():
         messages.warning(request, 'هیچ صندلی‌ای برای این ردیف در این مسابقه تعریف نشده است.')
         return redirect('matches:block_map', match_id=match_id)
@@ -347,6 +430,7 @@ def select_seats(request, match_id):
         'row': row,
         'match_seats': match_seats,
     })
+
 
 @login_required
 def reserve_seats(request, match_id):
@@ -620,6 +704,7 @@ def cancel_reservation(request, match_id):
 
     return redirect('matches:select_block', match_id=match_id)
 
+
 @login_required
 @csrf_exempt
 def release_reservation(request):
@@ -662,6 +747,7 @@ def release_reservation(request):
     request.session.pop('reserved_at', None)
 
     return JsonResponse({'status': 'ok', 'message': 'Reservation released'})
+
 
 # ============================================================
 #  ویوهای مخصوص ادمین (مدیریت و گزارشات)
@@ -816,6 +902,7 @@ def bulk_issue_tickets(request):
 
     return render(request, 'tickets/bulk_issue.html', {'form': form})
 
+
 @login_required
 @staff_member_required
 def manage_vip_users(request):
@@ -925,6 +1012,8 @@ def row_occupancy_report(request):
         'selected_match_id': match_id,
     }
     return render(request, 'tickets/row_occupancy.html', context)
+
+
 # ============================================================
 #  ویوهای مربوط به دانلود گروهی
 # ============================================================
@@ -1168,3 +1257,209 @@ def admin_discount_toggle(request, discount_id):
     messages.success(request, f'کد تخفیف "{discount.code}" {status} شد.')
     return redirect('tickets:admin_discount_list')
 
+
+@staff_member_required
+def export_sales_report_excel(request):
+    """خروجی اکسل از گزارش فروش چند مسابقه"""
+    if request.method != 'POST':
+        messages.error(request, 'درخواست نامعتبر.')
+        return redirect('tickets:sales_report')
+
+    match_ids = request.POST.getlist('match_ids')
+    if not match_ids:
+        messages.warning(request, 'هیچ مسابقه‌ای انتخاب نشده است.')
+        return redirect('tickets:sales_report')
+
+    matches = Match.objects.filter(id__in=match_ids).order_by('-date_time')
+    if not matches:
+        messages.error(request, 'مسابقه‌های انتخاب‌شده یافت نشدند.')
+        return redirect('tickets:sales_report')
+
+    wb = Workbook()
+    # حذف sheet پیش‌فرض (بعداً دوباره می‌سازیم)
+    wb.remove(wb.active)
+
+    # ===== Sheet خلاصه =====
+    summary_ws = wb.create_sheet("خلاصه کل", 0)
+    summary_ws.append(['گزارش فروش چند مسابقه'])
+    summary_ws.merge_cells('A1:F1')
+    summary_ws['A1'].font = Font(bold=True, size=14)
+    summary_ws['A1'].alignment = Alignment(horizontal='center')
+    summary_ws.append([])
+
+    # هدر جدول خلاصه
+    summary_headers = ['ردیف', 'مسابقه', 'رشته', 'تاریخ', 'تعداد فروش', 'درآمد کل (تومان)', 'درصد اشغال']
+    summary_ws.append(summary_headers)
+    for cell in summary_ws[summary_ws.max_row]:
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal='center')
+        cell.fill = PatternFill(start_color="D4AF37", end_color="D4AF37", fill_type="solid")
+
+    total_all = 0
+    revenue_all = 0
+    row_num = 1
+
+    # ===== برای هر مسابقه یک Sheet جداگانه =====
+    for match in matches:
+        # محاسبه آمار
+        sold_tickets = Ticket.objects.filter(match=match, status='paid')
+        vip_tickets = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued'])
+        sold_count = sold_tickets.count()
+        vip_count = vip_tickets.count()
+        total_tickets = sold_count + vip_count
+
+        revenue = sum(t.seat.row.block.price for t in sold_tickets if t.seat and t.seat.row and t.seat.row.block)
+        vip_revenue = sum(t.seat.row.block.price for t in vip_tickets if t.seat and t.seat.row and t.seat.row.block)
+        total_revenue = revenue + vip_revenue
+
+        total_seats = Seat.objects.filter(
+            row__block__stadium=match.stadium,
+            row__block__is_active=True,
+            row__is_active=True
+        ).count()
+        sold_seats = MatchSeat.objects.filter(match=match, is_available=False).count()
+        occupancy = round((sold_seats / total_seats * 100) if total_seats > 0 else 0, 1)
+
+        # اضافه کردن به خلاصه
+        summary_ws.append([
+            row_num,
+            f"{match.home_team} vs {match.away_team}",
+            match.get_sport_type_display(),
+            match.date_time.strftime('%Y/%m/%d'),
+            total_tickets,
+            total_revenue,
+            f"{occupancy}%"
+        ])
+        total_all += total_tickets
+        revenue_all += total_revenue
+        row_num += 1
+
+        # ===== Sheet اختصاصی هر مسابقه =====
+        sheet_name = f"{match.home_team} - {match.away_team}"[:31]  # حداکثر ۳۱ کاراکتر
+        ws = wb.create_sheet(sheet_name)
+
+        # عنوان
+        ws.append([f"گزارش فروش: {match.home_team} vs {match.away_team}"])
+        ws.merge_cells('A1:F1')
+        ws['A1'].font = Font(bold=True, size=14)
+        ws['A1'].alignment = Alignment(horizontal='center')
+        ws.append([])
+
+        # اطلاعات کلی
+        ws.append(['تاریخ مسابقه:', match.date_time.strftime('%Y/%m/%d %H:%M')])
+        ws.append(['ورزشگاه:', match.stadium.name])
+        ws.append(['ظرفیت کل:', total_seats])
+        ws.append(['تعداد فروش:', total_tickets])
+        ws.append(['درآمد کل:', total_revenue])
+        ws.append(['درصد اشغال:', f"{occupancy}%"])
+        ws.append([])
+
+        # لیست بلیط‌ها (نمونه)
+        headers = ['شماره بلیط', 'کاربر', 'نام خریدار', 'کد ملی', 'قیمت (تومان)', 'وضعیت']
+        ws.append(headers)
+        for cell in ws[ws.max_row]:
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='center')
+            cell.fill = PatternFill(start_color="D4AF37", end_color="D4AF37", fill_type="solid")
+
+        all_tickets = list(sold_tickets) + list(vip_tickets)
+        for t in all_tickets[:100]:  # نمایش حداکثر ۱۰۰ بلیط
+            ws.append([
+                t.ticket_number,
+                t.user.username,
+                t.full_name,
+                t.national_code,
+                t.seat.row.block.price if t.seat and t.seat.row and t.seat.row.block else 0,
+                t.get_status_display(),
+            ])
+
+        # تنظیم عرض ستون‌ها
+        for col in ['A', 'B', 'C', 'D', 'E', 'F']:
+            ws.column_dimensions[col].width = 18
+
+    # اضافه کردن ردیف جمع کل در خلاصه
+    summary_ws.append([])
+    summary_ws.append(['جمع کل', '', '', '', total_all, revenue_all, ''])
+    for cell in summary_ws[summary_ws.max_row]:
+        cell.font = Font(bold=True)
+        cell.fill = PatternFill(start_color="28a745", end_color="28a745", fill_type="solid")
+        cell.alignment = Alignment(horizontal='center')
+
+    for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G']:
+        summary_ws.column_dimensions[col].width = 18
+
+    # ===== پاسخ HTTP =====
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="گزارش_فروش_{timezone.now().strftime("%Y%m%d")}.xlsx"'
+    wb.save(response)
+    return response
+
+
+def get_blocks_for_match(request):
+    """دریافت بلوک‌های یک مسابقه (بر اساس ورزشگاه)"""
+    match_id = request.GET.get('match_id')
+    if not match_id:
+        return JsonResponse({'blocks': []})
+
+    try:
+        match = Match.objects.get(id=match_id)
+        blocks = Block.objects.filter(
+            stadium=match.stadium,
+            is_active=True
+        ).order_by('order')
+
+        blocks_data = [{'id': block.id, 'name': block.name} for block in blocks]
+        return JsonResponse({'blocks': blocks_data})
+    except Match.DoesNotExist:
+        return JsonResponse({'blocks': []})
+
+
+
+@login_required
+def bulk_download_user_tickets(request):
+    """
+    دانلود گروهی بلیط‌های انتخاب‌شده از صفحه «بلیط‌های من»
+    """
+    if request.method != 'POST':
+        messages.error(request, 'درخواست نامعتبر.')
+        return redirect('tickets:user_tickets')
+
+    ticket_ids = request.POST.getlist('ticket_ids')
+    if not ticket_ids:
+        messages.warning(request, 'هیچ بلیطی انتخاب نشده است.')
+        return redirect('tickets:user_tickets')
+
+    # دریافت بلیط‌های متعلق به کاربر فعلی
+    tickets = Ticket.objects.filter(
+        id__in=ticket_ids,
+        user=request.user,
+        status__in=['paid', 'admin_assigned', 'vip_issued']
+    )
+
+    if not tickets:
+        messages.error(request, 'بلیط‌های انتخاب‌شده معتبر نیستند.')
+        return redirect('tickets:user_tickets')
+
+    # ایجاد فایل ZIP
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+        for ticket in tickets:
+            if ticket.pdf_file and ticket.pdf_file.path:
+                try:
+                    # نام فایل: ticket_شماره.pdf
+                    zip_file.write(
+                        ticket.pdf_file.path,
+                        arcname=f"ticket_{ticket.ticket_number}.pdf"
+                    )
+                except FileNotFoundError:
+                    messages.warning(request, f'فایل PDF برای بلیط {ticket.ticket_number} یافت نشد.')
+                    continue
+
+    if zip_buffer.getbuffer().nbytes == 0:
+        messages.error(request, 'هیچ فایل PDF معتبری برای دانلود وجود ندارد.')
+        return redirect('tickets:user_tickets')
+
+    zip_buffer.seek(0)
+    response = HttpResponse(zip_buffer, content_type='application/zip')
+    response['Content-Disposition'] = f'attachment; filename="tickets_{timezone.now().strftime("%Y%m%d")}.zip"'
+    return response

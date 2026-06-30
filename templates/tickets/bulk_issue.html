@@ -265,24 +265,50 @@
 </div>
 
 <script>
-    (function() {
-        const userSelect = document.getElementById('{{ form.users.id_for_label }}');
-        const countDisplay = document.getElementById('userCountDisplay');
-        const seatCountInput = document.getElementById('{{ form.seat_count_per_user.id_for_label }}');
-        const totalNeededDisplay = document.getElementById('totalNeededDisplay');
+document.addEventListener('DOMContentLoaded', function() {
+    const matchSelect = document.getElementById('id_match');
+    const blockSelect = document.getElementById('id_block');
 
-        function updateCounts() {
-            const selectedUsers = userSelect.selectedOptions.length;
-            countDisplay.textContent = selectedUsers;
-            const perUser = parseInt(seatCountInput.value) || 0;
-            const totalNeeded = selectedUsers * perUser;
-            totalNeededDisplay.textContent = totalNeeded;
+    if (matchSelect && blockSelect) {
+        // تابع به‌روزرسانی بلوک‌ها
+        function updateBlocks() {
+            const matchId = matchSelect.value;
+            if (!matchId) {
+                blockSelect.innerHTML = '<option value="">---------</option>';
+                return;
+            }
+
+            // نمایش وضعیت بارگذاری
+            blockSelect.innerHTML = '<option value="">در حال بارگذاری...</option>';
+            blockSelect.disabled = true;
+
+            fetch(`/tickets/api/get-blocks-for-match/?match_id=${matchId}`)
+                .then(response => response.json())
+                .then(data => {
+                    blockSelect.innerHTML = '<option value="">---------</option>';
+                    data.blocks.forEach(block => {
+                        const option = document.createElement('option');
+                        option.value = block.id;
+                        option.textContent = block.name;
+                        blockSelect.appendChild(option);
+                    });
+                    blockSelect.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error loading blocks:', error);
+                    blockSelect.innerHTML = '<option value="">خطا در بارگذاری</option>';
+                    blockSelect.disabled = false;
+                });
         }
 
-        userSelect.addEventListener('change', updateCounts);
-        seatCountInput.addEventListener('input', updateCounts);
-        // initial update
-        updateCounts();
-    })();
+        // رویداد تغییر مسابقه
+        matchSelect.addEventListener('change', updateBlocks);
+
+        // اجرا در ابتدا (اگر مسابقه‌ای از قبل انتخاب شده باشد)
+        if (matchSelect.value) {
+            updateBlocks();
+        }
+    }
+});
 </script>
 {% endblock %}

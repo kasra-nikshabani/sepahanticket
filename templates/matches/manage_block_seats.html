@@ -1,202 +1,684 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}مدیریت صندلی‌های بلوک {{ block.name }}{% endblock %}
+{% block title %}
+    {% if selected_block %}
+        مدیریت صندلی‌های {{ selected_block.name }}
+    {% else %}
+        مدیریت صندلی‌های بلوک
+    {% endif %}
+{% endblock %}
 
 {% block extra_css %}
 <style>
-    .seat-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-        gap: 8px;
-        margin-top: 20px;
-    }
-    .seat-item {
-        padding: 8px;
-        text-align: center;
-        border-radius: 6px;
-        border: 1px solid #ddd;
-        cursor: pointer;
-        transition: all 0.2s;
-        font-size: 0.85rem;
-        background: #f8f9fa;
-        user-select: none;
-        position: relative;
-    }
-    .seat-item:hover {
-        transform: scale(1.05);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .seat-item.available {
-        background: #d4edda;
-        border-color: #28a745;
-    }
-    .seat-item.unavailable {
-        background: #f8d7da;
-        border-color: #dc3545;
-        opacity: 0.7;
-    }
-    .seat-item.has-ticket {
-        background: #ffc107;
-        border-color: #e0a800;
-        cursor: not-allowed;
-        opacity: 0.8;
-    }
-    .seat-item.selected {
-        outline: 3px solid #007bff;
-        transform: scale(1.08);
-    }
-    .seat-item .row-label {
-        font-size: 0.7rem;
-        display: block;
-        color: #6c757d;
-    }
-    .toolbar {
-        margin: 20px 0;
+    /* ===== تنظیمات کلی ===== */
+    .seats-page { padding: 20px 0; }
+
+    /* ===== هدر ===== */
+    .page-header {
         display: flex;
-        gap: 10px;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+    }
+    .page-header h2 {
+        font-weight: 700;
+        color: #1A1A2E;
+        margin: 0;
+        font-size: 24px;
+    }
+    .page-header h2 i { color: #D4AF37; margin-left: 10px; }
+    .page-header .subtitle {
+        font-size: 14px;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 4px;
+    }
+    .page-header .subtitle .badge-stadium {
+        background: #D4AF37;
+        color: #1A1A2E;
+        padding: 2px 14px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 13px;
+    }
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #6c757d;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    .back-link:hover {
+        color: #D4AF37;
+        transform: translateX(-4px);
+    }
+
+    /* ===== انتخابگر بلوک ===== */
+    .block-selector {
+        background: #fff;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+        border: 1px solid #e8eaed;
+        display: flex;
         flex-wrap: wrap;
         align-items: center;
+        gap: 16px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.04);
     }
-    .legend {
+    .block-selector label {
+        font-weight: 600;
+        color: #1A1A2E;
+        font-size: 14px;
         display: flex;
-        gap: 15px;
+        align-items: center;
+        gap: 6px;
+    }
+    .block-selector label i { color: #D4AF37; }
+    .block-selector select {
+        flex: 1;
+        min-width: 200px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        border: 1.5px solid #e8eaed;
+        font-size: 14px;
+        background: #fafafa;
+        transition: all 0.3s ease;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236c757d' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: left 10px center;
+        padding-left: 30px;
+        cursor: pointer;
+        color: #333;
+    }
+    .block-selector select:focus {
+        border-color: #D4AF37;
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(212,175,55,0.15);
+        background: #fff;
+    }
+    .block-selector .selected-info {
+        color: #6c757d;
+        font-size: 13px;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .block-selector .selected-info i { color: #28a745; }
+
+    /* ===== آمار ===== */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 16px;
+        margin-bottom: 25px;
+    }
+    .stat-box {
+        background: #fff;
+        border-radius: 12px;
+        padding: 14px 16px;
+        border: 1px solid #e8eaed;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, #D4AF37, #B8960F);
+    }
+    .stat-box:hover {
+        transform: translateY(-4px);
+        border-color: #D4AF37;
+        box-shadow: 0 8px 25px rgba(212,175,55,0.12);
+    }
+    .stat-box .number {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1A1A2E;
+    }
+    .stat-box .label {
+        font-size: 13px;
+        color: #6c757d;
+        margin-top: 4px;
+    }
+    .stat-box .number.green { color: #28a745; }
+    .stat-box .number.red { color: #dc3545; }
+    .stat-box .number.blue { color: #17a2b8; }
+    .stat-box .number.gold { color: #D4AF37; }
+
+    /* ===== نوار ابزار ===== */
+    .toolbar {
+        background: #fff;
+        border-radius: 12px;
+        padding: 14px 18px;
+        margin-bottom: 20px;
+        border: 1px solid #e8eaed;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         flex-wrap: wrap;
-        margin: 10px 0;
+        gap: 12px;
     }
-    .legend-item {
+    .toolbar .left-actions,
+    .toolbar .right-actions {
         display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .btn-sm {
+        padding: 6px 14px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
         align-items: center;
         gap: 5px;
     }
-    .legend-color {
+    .btn-sm:hover { transform: translateY(-2px); }
+    .btn-sm:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .btn-success { background: #28a745; color: #fff; }
+    .btn-success:hover { background: #218838; box-shadow: 0 4px 15px rgba(40,167,69,0.3); }
+    .btn-danger { background: #dc3545; color: #fff; }
+    .btn-danger:hover { background: #c82333; box-shadow: 0 4px 15px rgba(220,53,69,0.3); }
+    .btn-warning { background: #ffc107; color: #212529; }
+    .btn-warning:hover { background: #e0a800; box-shadow: 0 4px 15px rgba(255,193,7,0.3); }
+    .btn-secondary { background: #6c757d; color: #fff; }
+    .btn-secondary:hover { background: #5a6268; box-shadow: 0 4px 15px rgba(108,117,125,0.3); }
+    .btn-primary { background: #17a2b8; color: #fff; }
+    .btn-primary:hover { background: #138496; box-shadow: 0 4px 15px rgba(23,162,184,0.3); }
+
+    /* ===== گروه‌بندی ردیف‌ها ===== */
+    .row-group {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 16px;
+        border: 1px solid #e8eaed;
+    }
+    .row-group .row-title {
+        font-weight: 700;
+        font-size: 15px;
+        color: #1A1A2E;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e8eaed;
+    }
+    .row-group .row-title .row-count {
+        font-size: 12px;
+        font-weight: 400;
+        color: #6c757d;
+        margin-right: auto;
+    }
+
+    /* ===== شبکه کارت‌های صندلی ===== */
+    .seats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+        gap: 10px;
+    }
+
+    /* ===== کارت صندلی ===== */
+    .seat-card {
+        background: #fff;
+        border-radius: 12px;
+        border: 2px solid #e8eaed;
+        padding: 10px 6px;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        user-select: none;
+    }
+    .seat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        border-color: #D4AF37;
+    }
+    .seat-card .seat-number {
+        display: block;
+        font-weight: 700;
+        font-size: 16px;
+        color: #1A1A2E;
+    }
+    .seat-card .seat-row-label {
+        display: block;
+        font-size: 10px;
+        color: #6c757d;
+        margin-top: 2px;
+    }
+    .seat-card .seat-status {
+        display: block;
+        font-size: 9px;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 50px;
+        margin-top: 4px;
+    }
+    .seat-card .seat-status.active {
+        background: #d4edda;
+        color: #155724;
+    }
+    .seat-card .seat-status.inactive {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    .seat-card .seat-status.sold {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    /* وضعیت کارت */
+    .seat-card.active-seat {
+        border-color: #28a745;
+        background: #f0fff4;
+    }
+    .seat-card.inactive-seat {
+        border-color: #dc3545;
+        background: #fff5f5;
+        opacity: 0.7;
+    }
+    .seat-card.inactive-seat .seat-number {
+        color: #dc3545;
+    }
+    .seat-card.sold-seat {
+        border-color: #D4AF37;
+        background: #fff9e6;
+        cursor: not-allowed;
+        opacity: 0.85;
+    }
+    .seat-card.sold-seat .seat-number {
+        color: #B8960F;
+    }
+    .seat-card.sold-seat input[type="checkbox"] {
+        display: none;
+    }
+    .seat-card.sold-seat:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* انتخاب‌شده */
+    .seat-card.selected {
+        border-color: #D4AF37;
+        background: #fff9e6;
+        box-shadow: 0 0 0 3px rgba(212,175,55,0.25);
+    }
+    .seat-card.selected .seat-number {
+        color: #B8960F;
+    }
+
+    /* چک‌باکس مخفی */
+    .seat-card input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    /* نشانگر انتخاب */
+    .seat-card .selection-indicator {
+        position: absolute;
+        top: -6px;
+        right: -6px;
         width: 20px;
         height: 20px;
-        border-radius: 4px;
-        border: 1px solid #ddd;
+        border-radius: 50%;
+        background: #D4AF37;
+        color: #fff;
+        font-size: 12px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(212,175,55,0.4);
     }
-    .legend-color.available { background: #d4edda; }
-    .legend-color.unavailable { background: #f8d7da; }
-    .legend-color.has-ticket { background: #ffc107; }
+    .seat-card.selected .selection-indicator {
+        display: flex;
+    }
+
+    /* ===== حالت خالی ===== */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+    }
+    .empty-state i {
+        font-size: 56px;
+        color: #e8eaed;
+        margin-bottom: 16px;
+        display: block;
+    }
+    .empty-state h4 {
+        color: #1A1A2E;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    .empty-state p {
+        font-size: 16px;
+    }
+
+    /* ===== پیام عدم انتخاب بلوک ===== */
+    .select-block-prompt {
+        text-align: center;
+        padding: 80px 20px;
+    }
+    .select-block-prompt i {
+        font-size: 72px;
+        color: #D4AF37;
+        margin-bottom: 16px;
+        display: block;
+    }
+    .select-block-prompt h4 {
+        color: #1A1A2E;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 22px;
+    }
+    .select-block-prompt p {
+        color: #6c757d;
+        font-size: 16px;
+    }
+
+    /* ===== واکنش‌گرایی ===== */
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .page-header h2 { font-size: 20px; }
+        .stats-row { grid-template-columns: repeat(2, 1fr); }
+        .seats-grid { grid-template-columns: repeat(auto-fill, minmax(55px, 1fr)); gap: 6px; }
+        .toolbar { flex-direction: column; align-items: stretch; }
+        .toolbar .left-actions,
+        .toolbar .right-actions { justify-content: center; }
+        .seat-card { padding: 6px 4px; }
+        .seat-card .seat-number { font-size: 14px; }
+        .seat-card .seat-row-label { font-size: 9px; }
+        .seat-card .seat-status { font-size: 8px; }
+        .block-selector { flex-direction: column; align-items: stretch; }
+        .block-selector select { min-width: 100%; }
+        .block-selector .selected-info { align-self: flex-start; }
+    }
+    @media (max-width: 480px) {
+        .stats-row { grid-template-columns: 1fr 1fr; }
+        .seats-grid { grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 4px; }
+        .seat-card { padding: 4px 2px; border-radius: 8px; }
+        .seat-card .seat-number { font-size: 12px; }
+        .row-group { padding: 8px 10px; }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center">
-        <h2>مدیریت صندلی‌های بلوک {{ block.name }}</h2>
-        <a href="{% url 'matches:manage_blocks' %}?match_id={{ match.id }}" class="btn btn-secondary">بازگشت</a>
-    </div>
-    <p>مسابقه: <strong>{{ match.home_team }} vs {{ match.away_team }}</strong></p>
-    <p>کل صندلی‌ها: {{ total }} | موجود: {{ available }} | غیرفعال: {{ unavailable }}</p>
+<div class="seats-page">
 
-    <!-- راهنما -->
-    <div class="legend">
-        <span class="legend-item"><span class="legend-color available"></span> موجود</span>
-        <span class="legend-item"><span class="legend-color unavailable"></span> غیرفعال</span>
-        <span class="legend-item"><span class="legend-color has-ticket"></span> دارای بلیط (غیرقابل تغییر)</span>
-    </div>
-
-    <form method="post" id="seats-form">
-        {% csrf_token %}
-        <div class="toolbar">
-            <button type="submit" name="action" value="activate_selected" class="btn btn-success">فعال‌سازی انتخاب‌شده‌ها</button>
-            <button type="submit" name="action" value="deactivate_selected" class="btn btn-danger">غیرفعال‌سازی انتخاب‌شده‌ها</button>
-            <button type="submit" name="action" value="activate_all" class="btn btn-outline-success">فعال‌سازی همه</button>
-            <button type="submit" name="action" value="deactivate_all" class="btn btn-outline-danger">غیرفعال‌سازی همه</button>
-            <button type="button" class="btn btn-outline-secondary" onclick="toggleAllSeats()">انتخاب همه</button>
-            <span class="ms-3" id="selected-count">تعداد انتخاب‌شده: ۰</span>
-        </div>
-
-        <input type="hidden" name="selected_seats" id="selected_seats_input">
-
-        {% if seats_data %}
-        <div class="seat-grid">
-            {% for item in seats_data %}
-            <div class="seat-item
-                {% if item.has_ticket %}has-ticket{% elif item.is_available %}available{% else %}unavailable{% endif %}
-            " data-seat-id="{{ item.seat.id }}"
-               {% if item.has_ticket %}style="cursor:not-allowed;"{% endif %}
-               onclick="toggleSeat(this)">
-                {{ item.seat.number }}
-                <span class="row-label">ردیف {{ item.row_number }}</span>
+    <!-- ===== هدر ===== -->
+    <div class="page-header">
+        <div>
+            <h2>
+                <i class="fas fa-chair"></i>
+                {% if selected_block %}
+                    مدیریت صندلی‌های {{ selected_block.name }}
+                {% else %}
+                    مدیریت صندلی‌های بلوک
+                {% endif %}
+            </h2>
+            {% if selected_block %}
+            <div class="subtitle">
+                <span class="badge-stadium">{{ selected_block.stadium.name }}</span>
+                <span>نوع جایگاه: {{ selected_block.get_zone_type_display }}</span>
+                <span>قیمت: {{ selected_block.price|floatformat:0 }} تومان</span>
             </div>
-            {% endfor %}
+            {% endif %}
         </div>
-        {% else %}
-        <div class="alert alert-warning">هیچ صندلی‌ای برای این بلوک تعریف نشده است.</div>
-            <td>
-    <a href="{% url 'matches:manage_block_seats' item.block.id %}?match_id={{ selected_match.id }}" class="btn btn-info btn-sm">مدیریت صندلی‌ها</a>
+        <a href="{% url 'matches:admin_block_list' %}" class="back-link">
+            <i class="fas fa-arrow-right"></i> بازگشت به مدیریت بلوک‌ها
+        </a>
+    </div>
 
-    <form method="post" style="display:inline;">
-        {% csrf_token %}
-        <input type="hidden" name="block_id" value="{{ item.block.id }}">
-        <input type="hidden" name="match_id" value="{{ selected_match.id }}">
-        {% if item.status == 'active' or item.status == 'partial' %}
-            <button type="submit" name="action" value="deactivate" class="btn btn-danger btn-sm">غیرفعال کردن</button>
-        {% else %}
-            <button type="submit" name="action" value="activate" class="btn btn-success btn-sm">فعال کردن</button>
+    <!-- ===== انتخابگر بلوک ===== -->
+    <div class="block-selector">
+        <label for="blockSelect"><i class="fas fa-layer-group"></i> انتخاب بلوک:</label>
+        <select id="blockSelect" onchange="location.href='?block_id='+this.value">
+            <option value="">یک بلوک انتخاب کنید...</option>
+            {% for block in all_blocks %}
+                <option value="{{ block.id }}" {% if selected_block and selected_block.id == block.id %}selected{% endif %}>
+                    {{ block.name }} ({{ block.stadium.name }})
+                </option>
+            {% endfor %}
+        </select>
+        {% if selected_block %}
+            <span class="selected-info">
+                <i class="fas fa-check-circle"></i>
+                {{ selected_block.name }} انتخاب شد
+            </span>
         {% endif %}
-    </form>
-</td>
-        {% endif %}
-    </form>
+    </div>
+
+    <!-- ===== محتوای اصلی ===== -->
+    {% if selected_block %}
+
+        <!-- ===== آمار ===== -->
+        <div class="stats-row">
+            <div class="stat-box">
+                <div class="number blue">{{ total_seats }}</div>
+                <div class="label">کل صندلی‌ها</div>
+            </div>
+            <div class="stat-box">
+                <div class="number green">{{ active_seats }}</div>
+                <div class="label">فعال</div>
+            </div>
+            <div class="stat-box">
+                <div class="number red">{{ inactive_seats }}</div>
+                <div class="label">غیرفعال</div>
+            </div>
+            <div class="stat-box" style="border-color:#D4AF37;">
+                <div class="number gold">{{ sold_seats }}</div>
+                <div class="label">فروخته‌شده / VIP</div>
+            </div>
+        </div>
+
+        <!-- ===== فرم اصلی با فیلد مخفی action ===== -->
+        <form method="post" id="seatsForm">
+            {% csrf_token %}
+            <input type="hidden" name="action" id="actionInput" value="">
+            <input type="hidden" name="row_number" id="rowNumberInput" value="">
+
+            <!-- ===== نوار ابزار (دکمه‌ها با تابع submitAction) ===== -->
+            <div class="toolbar">
+                <div class="left-actions">
+                    <button type="button" class="btn-sm btn-success" onclick="submitAction('activate')">
+                        <i class="fas fa-check-circle"></i> فعال‌سازی انتخاب‌شده
+                    </button>
+                    <button type="button" class="btn-sm btn-danger" onclick="submitAction('deactivate')">
+                        <i class="fas fa-ban"></i> غیرفعال‌سازی انتخاب‌شده
+                    </button>
+                    <button type="button" class="btn-sm btn-warning" onclick="submitAction('toggle')">
+                        <i class="fas fa-sync"></i> تغییر وضعیت
+                    </button>
+                    <!-- دکمه‌های جدید: فعال‌سازی و غیرفعال‌سازی کل بلوک -->
+                    <button type="button" class="btn-sm btn-primary" onclick="if(confirm('آیا از فعال‌سازی همه صندلی‌های این بلوک اطمینان دارید؟ صندلی‌های دارای بلیط تغییر نمی‌کنند.')) submitAction('activate_block')">
+                        <i class="fas fa-check-circle"></i> فعال‌سازی کل بلوک
+                    </button>
+                    <button type="button" class="btn-sm btn-danger" onclick="if(confirm('آیا از غیرفعال‌سازی همه صندلی‌های این بلوک اطمینان دارید؟ صندلی‌های دارای بلیط غیرفعال نمی‌شوند.')) submitAction('deactivate_block')">
+                        <i class="fas fa-ban"></i> غیرفعال‌سازی کل بلوک
+                    </button>
+                </div>
+                <div class="right-actions">
+                    <button type="button" class="btn-sm btn-secondary" onclick="toggleAll()">
+                        <i class="fas fa-check-double"></i> انتخاب همه
+                    </button>
+                    <button type="button" class="btn-sm btn-secondary" onclick="deselectAll()">
+                        <i class="fas fa-times"></i> لغو انتخاب
+                    </button>
+                </div>
+            </div>
+
+            <!-- ===== گروه‌بندی صندلی‌ها با دکمه‌های فعال‌سازی و غیرفعال‌سازی هر ردیف ===== -->
+            <div id="seatsContainer">
+                {% regroup seats by row as row_list %}
+                {% for row_group in row_list %}
+                <div class="row-group">
+                    <div class="row-title">
+                        <i class="fas fa-rows"></i>
+                        ردیف {{ row_group.grouper.number }}
+                        <span class="row-count">{{ row_group.list|length }} صندلی</span>
+                        <!-- دکمه فعال‌سازی ردیف -->
+                        <button type="button" class="btn-sm btn-primary" style="margin-right:4px;"
+                                onclick="if(confirm('آیا از فعال‌سازی همه صندلی‌های این ردیف اطمینان دارید؟ صندلی‌های دارای بلیط تغییر نمی‌کنند.')) {
+                                    document.getElementById('actionInput').value = 'activate_row';
+                                    document.getElementById('rowNumberInput').value = '{{ row_group.grouper.number }}';
+                                    document.getElementById('seatsForm').submit();
+                                }">
+                            <i class="fas fa-check-circle"></i> فعال‌سازی ردیف
+                        </button>
+                        <!-- دکمه غیرفعال‌سازی ردیف -->
+                        <button type="button" class="btn-sm btn-danger" style="margin-right:auto;"
+                                onclick="if(confirm('آیا از غیرفعال‌سازی همه صندلی‌های این ردیف اطمینان دارید؟ صندلی‌های دارای بلیط غیرفعال نمی‌شوند.')) {
+                                    document.getElementById('actionInput').value = 'deactivate_row';
+                                    document.getElementById('rowNumberInput').value = '{{ row_group.grouper.number }}';
+                                    document.getElementById('seatsForm').submit();
+                                }">
+                            <i class="fas fa-ban"></i> غیرفعال‌سازی ردیف
+                        </button>
+                    </div>
+                    <div class="seats-grid">
+                        {% for seat in row_group.list %}
+                        {% with has_ticket=seat.has_ticket %}
+                        <label class="seat-card
+                            {% if has_ticket %}sold-seat
+                            {% elif seat.is_available %}active-seat
+                            {% else %}inactive-seat{% endif %}"
+                            data-seat-id="{{ seat.id }}"
+                            {% if has_ticket %}title="این صندلی قبلاً فروخته شده یا به VIP اختصاص یافته است"{% endif %}>
+                            <input type="checkbox" name="selected_seats" value="{{ seat.id }}" class="seat-checkbox"
+                                   {% if has_ticket %}disabled{% endif %}>
+                            <span class="selection-indicator"><i class="fas fa-check"></i></span>
+                            <span class="seat-number">{{ seat.number }}</span>
+                            <span class="seat-row-label">ردیف {{ seat.row.number }}</span>
+                            <span class="seat-status
+                                {% if has_ticket %}sold
+                                {% elif seat.is_available %}active
+                                {% else %}inactive{% endif %}">
+                                {% if has_ticket %}🎫 فروخته شده
+                                {% elif seat.is_available %}فعال
+                                {% else %}غیرفعال{% endif %}
+                            </span>
+                        </label>
+                        {% endwith %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <i class="fas fa-chair"></i>
+                    <h4>هیچ صندلی‌ای برای این بلوک تعریف نشده است</h4>
+                    <p>برای این بلوک هیچ صندلی‌ای وجود ندارد. ابتدا صندلی‌ها را ایجاد کنید.</p>
+                </div>
+                {% endfor %}
+            </div>
+
+        </form>
+        <!-- ===== پایان فرم ===== -->
+
+    {% else %}
+        <!-- ===== پیام انتخاب بلوک ===== -->
+        <div class="select-block-prompt">
+            <i class="fas fa-layer-group"></i>
+            <h4>یک بلوک را انتخاب کنید</h4>
+            <p>از منوی بالایی یک بلوک را انتخاب کنید تا صندلی‌های آن را مشاهده و مدیریت کنید.</p>
+        </div>
+    {% endif %}
+
 </div>
 
 <script>
-    const selectedSeats = new Set();
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.seat-checkbox:not([disabled])');
+    const form = document.getElementById('seatsForm');
 
-    function toggleSeat(element) {
-        // صندلی‌های دارای بلیط قابل انتخاب نیستند
-        if (element.classList.contains('has-ticket')) {
-            alert('این صندلی دارای بلیط فعال است و قابل تغییر نیست.');
-            return;
+    // ===== تابع submitAction برای تنظیم action و ارسال فرم =====
+    window.submitAction = function(action) {
+        document.getElementById('actionInput').value = action;
+        // اگر action مربوط به ردیف نباشد، row_number را خالی می‌کنیم
+        if (action !== 'activate_row' && action !== 'deactivate_row') {
+            document.getElementById('rowNumberInput').value = '';
         }
-        element.classList.toggle('selected');
-        const seatId = element.dataset.seatId;
-        if (element.classList.contains('selected')) {
-            selectedSeats.add(seatId);
-        } else {
-            selectedSeats.delete(seatId);
-        }
-        updateSelectedCount();
-    }
+        form.submit();
+    };
 
-    function toggleAllSeats() {
-        const items = document.querySelectorAll('.seat-item:not(.has-ticket)');
-        // اگر همه انتخاب شده‌اند، همه را لغو انتخاب کن، در غیر این صورت همه را انتخاب کن
-        const allSelected = items.length === selectedSeats.size && items.length > 0;
-        items.forEach(el => {
-            if (allSelected) {
-                el.classList.remove('selected');
-                selectedSeats.delete(el.dataset.seatId);
-            } else {
-                el.classList.add('selected');
-                selectedSeats.add(el.dataset.seatId);
-            }
+    // ===== تغییر وضعیت انتخاب یک صندلی =====
+    if (checkboxes.length) {
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', function() {
+                const card = this.closest('.seat-card');
+                if (card) {
+                    card.classList.toggle('selected', this.checked);
+                }
+            });
         });
-        updateSelectedCount();
     }
 
-    function updateSelectedCount() {
-        document.getElementById('selected-count').textContent = `تعداد انتخاب‌شده: ${selectedSeats.size}`;
-        document.getElementById('selected_seats_input').value = JSON.stringify(Array.from(selectedSeats));
+    // ===== انتخاب همه (فقط صندلی‌های قابل انتخاب) =====
+    window.toggleAll = function() {
+        const checkboxes = document.querySelectorAll('.seat-checkbox:not([disabled])');
+        const checked = document.querySelectorAll('.seat-checkbox:not([disabled]):checked');
+        const allChecked = checked.length === checkboxes.length;
+        checkboxes.forEach(cb => {
+            cb.checked = !allChecked;
+            const card = cb.closest('.seat-card');
+            if (card) card.classList.toggle('selected', cb.checked);
+        });
+    };
+
+    // ===== لغو انتخاب همه =====
+    window.deselectAll = function() {
+        document.querySelectorAll('.seat-checkbox:not([disabled])').forEach(cb => {
+            cb.checked = false;
+            const card = cb.closest('.seat-card');
+            if (card) card.classList.remove('selected');
+        });
+    };
+
+    // ===== غیرفعال کردن دکمه‌ها بعد از ارسال =====
+    if (form) {
+        form.addEventListener('submit', function() {
+            const btns = this.querySelectorAll('button[type="submit"]');
+            btns.forEach(btn => {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            });
+        });
     }
-
-    // ارسال فرم
-    document.querySelector('#seats-form').addEventListener('submit', function(e) {
-        if (selectedSeats.size === 0) {
-            const action = e.submitter ? e.submitter.value : '';
-            if (action === 'activate_selected' || action === 'deactivate_selected') {
-                alert('لطفاً حداقل یک صندلی را انتخاب کنید.');
-                e.preventDefault();
-                return;
-            }
-        }
-        document.getElementById('selected_seats_input').value = JSON.stringify(Array.from(selectedSeats));
-    });
-
-    // به‌روزرسانی اولیه
-    updateSelectedCount();
+});
 </script>
 {% endblock %}

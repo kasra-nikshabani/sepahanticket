@@ -22,11 +22,13 @@ class MatchForm(forms.ModelForm):
     class Meta:
         model = Match
         fields = [
+            'sport_type',
             'home_team', 'away_team',
             'home_team_logo', 'away_team_logo',
             'stadium', 'date_time', 'is_active'
         ]
         widgets = {
+            'sport_type': forms.Select(attrs={'class': 'form-select'}),
             'home_team': forms.TextInput(attrs={'class': 'form-control'}),
             'away_team': forms.TextInput(attrs={'class': 'form-control'}),
             'home_team_logo': forms.FileInput(attrs={'class': 'form-control'}),

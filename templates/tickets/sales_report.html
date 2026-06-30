@@ -5,12 +5,7 @@
 
 {% block extra_css %}
 <style>
-    /* ===== تنظیمات کلی ===== */
-    .report-page {
-        padding: 20px 0;
-    }
-
-    /* ===== هدر ===== */
+    .report-page { padding: 20px 0; }
     .page-header {
         display: flex;
         justify-content: space-between;
@@ -26,53 +21,30 @@
         margin: 0;
         font-size: 28px;
     }
-    .page-header h2 i {
-        color: #D4AF37;
-        margin-left: 12px;
-    }
-    .btn-export {
-        padding: 10px 22px;
-        border-radius: 10px;
-        border: none;
-        font-weight: 600;
-        font-size: 14px;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: linear-gradient(135deg, #28a745, #1e7e34);
-        color: #fff;
-    }
-    .btn-export:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
-        color: #fff;
-    }
+    .page-header h2 i { color: #D4AF37; margin-left: 12px; }
 
-    /* ===== کارت‌های آمار کلی ===== */
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 16px;
         margin-bottom: 30px;
     }
     .stat-card {
         background: #fff;
-        border-radius: 14px;
-        padding: 18px 16px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        border: 1px solid #e8eaed;
-        transition: all 0.3s ease;
+        border-radius: 12px;
+        padding: 16px;
         text-align: center;
+        border: 1px solid #e8eaed;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+        transition: all 0.3s ease;
     }
     .stat-card:hover {
         transform: translateY(-4px);
         border-color: #D4AF37;
-        box-shadow: 0 8px 30px rgba(212,175,55,0.12);
+        box-shadow: 0 8px 25px rgba(212,175,55,0.12);
     }
     .stat-card .stat-number {
-        font-size: 26px;
+        font-size: 24px;
         font-weight: 700;
         color: #1A1A2E;
     }
@@ -82,164 +54,145 @@
         margin: 4px 0 0;
     }
     .stat-card .stat-icon {
-        font-size: 20px;
-        margin-bottom: 6px;
+        font-size: 18px;
+        margin-bottom: 4px;
         display: block;
     }
     .stat-card.gold .stat-number { color: #D4AF37; }
     .stat-card.green .stat-number { color: #28a745; }
     .stat-card.blue .stat-number { color: #17a2b8; }
     .stat-card.orange .stat-number { color: #ffc107; }
-    .stat-card.red .stat-number { color: #dc3545; }
     .stat-card.purple .stat-number { color: #6f42c1; }
+    .stat-card.red .stat-number { color: #dc3545; }
 
-    /* ===== فیلتر ===== */
     .filter-section {
         background: #fff;
-        border-radius: 16px;
-        padding: 20px 24px;
+        border-radius: 12px;
+        padding: 16px 20px;
         margin-bottom: 30px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
         border: 1px solid #e8eaed;
         display: flex;
         flex-wrap: wrap;
-        align-items: center;
+        align-items: flex-end;
         gap: 16px;
     }
-    .filter-section .filter-label {
-        font-weight: 600;
-        color: #1A1A2E;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-    .filter-section .filter-label i { color: #D4AF37; }
     .filter-section .filter-group {
         display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
+        flex-direction: column;
+        gap: 4px;
     }
-    .filter-section input[type="date"] {
-        padding: 8px 14px;
-        border-radius: 8px;
-        border: 1.5px solid #e8eaed;
-        font-size: 14px;
-        background: #fafafa;
-        transition: all 0.3s ease;
-        color: #333;
+    .filter-section .filter-group label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #6c757d;
     }
-    .filter-section input[type="date"]:focus {
-        border-color: #D4AF37;
-        outline: none;
-        box-shadow: 0 0 0 4px rgba(212,175,55,0.15);
-        background: #fff;
-    }
+    .filter-section .filter-group label i { color: #D4AF37; }
+    .filter-section input[type="date"],
     .filter-section select {
-        padding: 8px 14px;
+        padding: 8px 12px;
         border-radius: 8px;
         border: 1.5px solid #e8eaed;
         font-size: 14px;
         background: #fafafa;
         transition: all 0.3s ease;
-        color: #333;
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236c757d' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: left 10px center;
-        padding-left: 30px;
-        cursor: pointer;
+        min-width: 150px;
     }
+    .filter-section input[type="date"]:focus,
     .filter-section select:focus {
         border-color: #D4AF37;
         outline: none;
-        box-shadow: 0 0 0 4px rgba(212,175,55,0.15);
+        box-shadow: 0 0 0 3px rgba(212,175,55,0.12);
         background: #fff;
     }
-    .filter-section .btn-filter {
+    .btn-filter {
         padding: 8px 24px;
         border-radius: 8px;
         border: none;
-        background: linear-gradient(135deg, #1A1A2E, #2A2A4E);
+        background: #1A1A2E;
         color: #fff;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
+        height: 42px;
     }
-    .filter-section .btn-filter:hover {
-        background: linear-gradient(135deg, #D4AF37, #B8960F);
+    .btn-filter:hover {
+        background: #D4AF37;
         color: #1A1A2E;
         transform: translateY(-2px);
     }
-    .filter-section .btn-reset {
+    .btn-reset {
         padding: 8px 18px;
         border-radius: 8px;
         border: 1.5px solid #e8eaed;
         background: #fff;
         color: #6c757d;
-        font-weight: 500;
         text-decoration: none;
         transition: all 0.3s ease;
-    }
-    .filter-section .btn-reset:hover {
-        border-color: #D4AF37;
-        color: #1A1A2E;
-    }
-
-    /* ===== بخش نمودارها ===== */
-    .charts-grid {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 24px;
-        margin-bottom: 30px;
-    }
-    .chart-card {
-        background: #fff;
-        border-radius: 16px;
-        border: 1px solid #e8eaed;
-        padding: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.04);
-        transition: all 0.3s ease;
-    }
-    .chart-card:hover {
-        box-shadow: 0 8px 30px rgba(212,175,55,0.08);
-        border-color: #D4AF37;
-    }
-    .chart-card .chart-title {
-        font-weight: 700;
-        font-size: 16px;
-        color: #1A1A2E;
-        margin-bottom: 16px;
-        display: flex;
+        height: 42px;
+        display: inline-flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
     }
-    .chart-card .chart-title i {
-        color: #D4AF37;
-    }
-    .chart-card canvas {
-        width: 100% !important;
-        height: auto !important;
-        max-height: 280px;
+    .btn-reset:hover {
+        border-color: #D4AF37;
+        color: #1A1A2E;
     }
 
-    /* ===== جدول ===== */
-    .table-wrapper {
-        background: #fff;
-        border-radius: 16px;
-        border: 1px solid #e8eaed;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.04);
-        margin-bottom: 30px;
-    }
-    .table-header {
+    .export-bar {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 12px 18px;
+        margin-bottom: 20px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 16px 20px;
+        flex-wrap: wrap;
+        gap: 12px;
+        border: 1px solid #e8eaed;
+    }
+    .export-bar .selection-info {
+        font-size: 14px;
+        color: #6c757d;
+    }
+    .export-bar .selection-info strong { color: #1A1A2E; }
+    .btn-export {
+        padding: 8px 20px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        font-size: 14px;
+        background: #28a745;
+        color: #fff;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .btn-export:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(40,167,69,0.3);
+    }
+    .btn-export:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .table-wrapper {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #e8eaed;
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+    .table-header {
+        padding: 14px 18px;
         background: #fafafa;
         border-bottom: 1px solid #e8eaed;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         flex-wrap: wrap;
         gap: 10px;
     }
@@ -260,21 +213,17 @@
         font-size: 13px;
         font-weight: 600;
     }
-    .table-responsive-custom {
-        overflow-x: auto;
-        padding: 0;
-    }
+    .table-responsive-custom { overflow-x: auto; }
     .table-custom {
         width: 100%;
         border-collapse: collapse;
         font-size: 14px;
-        margin: 0;
     }
     .table-custom thead {
         background: #f8f9fa;
     }
     .table-custom thead th {
-        padding: 12px 16px;
+        padding: 10px 14px;
         text-align: right;
         font-weight: 600;
         font-size: 13px;
@@ -282,30 +231,81 @@
         border-bottom: 2px solid #D4AF37;
         white-space: nowrap;
     }
-    .table-custom thead th i {
-        margin-left: 6px;
-        color: #D4AF37;
-    }
+    .table-custom thead th i { margin-left: 6px; color: #D4AF37; }
     .table-custom tbody td {
-        padding: 12px 16px;
+        padding: 10px 14px;
         border-bottom: 1px solid #f0f0f0;
         vertical-align: middle;
         color: #333;
     }
-    .table-custom tbody tr:hover {
-        background: #faf8f3;
-    }
-    .table-custom tbody tr:last-child td {
-        border-bottom: none;
-    }
+    .table-custom tbody tr:hover { background: #faf8f3; }
+    .table-custom tbody tr.selected { background: #fff9e6; }
     .table-custom .total-row {
         background: #f8f9fa;
         font-weight: 700;
     }
     .table-custom .total-row td {
         border-top: 2px solid #D4AF37;
+        padding: 12px 14px;
     }
-
+    .badge-sport {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 50px;
+        font-size: 11px;
+        font-weight: 600;
+        background: #e8eaed;
+        color: #1A1A2E;
+    }
+    .pagination-wrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 14px 18px;
+        background: #fafafa;
+        border-top: 1px solid #e8eaed;
+        gap: 10px;
+    }
+    .pagination-info { font-size: 14px; color: #6c757d; }
+    .pagination-info strong { color: #1A1A2E; }
+    .pagination-custom {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+    .pagination-custom a,
+    .pagination-custom .current {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 36px;
+        height: 36px;
+        padding: 0 10px;
+        border-radius: 8px;
+        border: 1px solid #e8eaed;
+        text-decoration: none;
+        color: #1A1A2E;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        background: #fff;
+    }
+    .pagination-custom a:hover {
+        border-color: #D4AF37;
+        color: #D4AF37;
+        transform: translateY(-2px);
+    }
+    .pagination-custom .current {
+        background: #D4AF37;
+        border-color: #D4AF37;
+        color: #1A1A2E;
+        font-weight: 700;
+    }
+    .pagination-custom .disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
     .empty-state {
         text-align: center;
         padding: 60px 20px;
@@ -321,132 +321,60 @@
         font-weight: 600;
         margin-bottom: 8px;
     }
-    .empty-state p {
-        color: #6c757d;
-        font-size: 16px;
-    }
+    .empty-state p { color: #6c757d; font-size: 16px; }
 
-    .pagination-wrapper {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        padding: 16px 20px;
-        background: #fafafa;
-        border-top: 1px solid #e8eaed;
-        gap: 10px;
+    .charts-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+        margin-bottom: 30px;
     }
-    .pagination-info {
-        font-size: 14px;
-        color: #6c757d;
-    }
-    .pagination-info strong {
-        color: #1A1A2E;
-    }
-    .pagination-custom {
-        display: flex;
-        gap: 4px;
-        flex-wrap: wrap;
-    }
-    .pagination-custom a,
-    .pagination-custom .current {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 38px;
-        height: 38px;
-        padding: 0 12px;
-        border-radius: 8px;
-        border: 1px solid #e8eaed;
-        text-decoration: none;
-        color: #1A1A2E;
-        font-size: 14px;
-        font-weight: 500;
-        transition: all 0.3s ease;
+    .chart-card {
         background: #fff;
+        border-radius: 12px;
+        border: 1px solid #e8eaed;
+        padding: 18px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.04);
     }
-    .pagination-custom a:hover {
-        border-color: #D4AF37;
-        color: #D4AF37;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(212,175,55,0.2);
-    }
-    .pagination-custom .current {
-        background: linear-gradient(135deg, #D4AF37, #B8960F);
-        border-color: #D4AF37;
-        color: #1A1A2E;
+    .chart-card .chart-title {
         font-weight: 700;
+        font-size: 16px;
+        color: #1A1A2E;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
-    .pagination-custom .disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
+    .chart-card .chart-title i { color: #D4AF37; }
+    .chart-card canvas {
+        width: 100% !important;
+        max-height: 260px;
     }
 
-    /* ===== واکنش‌گرایی ===== */
     @media (max-width: 768px) {
-        .page-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 12px;
-        }
-        .page-header h2 {
-            font-size: 22px;
-        }
-        .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-        .charts-grid {
-            grid-template-columns: 1fr;
-        }
-        .filter-section {
-            flex-direction: column;
-            align-items: stretch;
-        }
-        .filter-section .filter-group {
-            flex-direction: column;
-            align-items: stretch;
-        }
-        .filter-section input[type="date"],
-        .filter-section select {
-            width: 100%;
-        }
-        .table-header {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .pagination-wrapper {
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
+        .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+        .page-header h2 { font-size: 22px; }
+        .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        .charts-grid { grid-template-columns: 1fr; }
+        .filter-section { flex-direction: column; align-items: stretch; }
+        .filter-section .filter-group { width: 100%; }
+        .filter-section input[type="date"], .filter-section select { width: 100%; min-width: unset; }
+        .export-bar { flex-direction: column; align-items: stretch; text-align: center; }
+        .table-header { flex-direction: column; align-items: flex-start; }
+        .pagination-wrapper { flex-direction: column; align-items: center; text-align: center; }
     }
     @media (max-width: 480px) {
-        .stats-grid {
-            grid-template-columns: 1fr;
-        }
-        .page-header h2 {
-            font-size: 18px;
-        }
-        .table-custom thead th,
-        .table-custom tbody td {
-            padding: 8px 10px;
-            font-size: 12px;
-        }
+        .stats-grid { grid-template-columns: 1fr; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="report-page">
+
     <!-- ===== هدر ===== -->
     <div class="page-header">
-        <h2>
-            <i class="fas fa-chart-bar"></i>
-            گزارش فروش
-        </h2>
-        <a href="#" class="btn-export">
-            <i class="fas fa-file-excel"></i> خروجی اکسل
-        </a>
+        <h2><i class="fas fa-chart-bar"></i> گزارش فروش</h2>
     </div>
 
     <!-- ===== کارت‌های آمار ===== -->
@@ -469,12 +397,12 @@
         <div class="stat-card blue">
             <span class="stat-icon"><i class="fas fa-money-bill-wave"></i></span>
             <div class="stat-number">{{ total_revenue|floatformat:0|default:"0" }}</div>
-            <p class="stat-label">درآمد کل (تومان)</p>
+            <p class="stat-label">درآمد (تومان)</p>
         </div>
         <div class="stat-card purple">
             <span class="stat-icon"><i class="fas fa-chart-line"></i></span>
             <div class="stat-number">{{ average_price|floatformat:0|default:"0" }}</div>
-            <p class="stat-label">میانگین قیمت (تومان)</p>
+            <p class="stat-label">میانگین قیمت</p>
         </div>
         <div class="stat-card red">
             <span class="stat-icon"><i class="fas fa-calendar-day"></i></span>
@@ -485,17 +413,17 @@
 
     <!-- ===== فیلتر ===== -->
     <div class="filter-section">
-        <span class="filter-label"><i class="fas fa-filter"></i> فیلتر:</span>
-        <form method="get" style="flex:1; display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
+        <form method="get" id="filterForm" style="display:flex; flex-wrap:wrap; gap:16px; align-items:flex-end; width:100%;">
             <div class="filter-group">
-                <label for="start_date" style="font-size:14px; color:#6c757d;">از تاریخ:</label>
-                <input type="date" name="start_date" id="start_date" value="{{ start_date|default:'' }}">
+                <label><i class="fas fa-calendar-start"></i> از تاریخ</label>
+                <input type="date" name="start_date" value="{{ start_date|default:'' }}">
             </div>
             <div class="filter-group">
-                <label for="end_date" style="font-size:14px; color:#6c757d;">تا تاریخ:</label>
-                <input type="date" name="end_date" id="end_date" value="{{ end_date|default:'' }}">
+                <label><i class="fas fa-calendar-end"></i> تا تاریخ</label>
+                <input type="date" name="end_date" value="{{ end_date|default:'' }}">
             </div>
             <div class="filter-group">
+                <label><i class="fas fa-trophy"></i> مسابقه</label>
                 <select name="match_id">
                     <option value="">همه مسابقات</option>
                     {% for match in matches %}
@@ -505,256 +433,256 @@
                     {% endfor %}
                 </select>
             </div>
-            <button type="submit" class="btn-filter">
-                <i class="fas fa-search"></i> نمایش
-            </button>
-            {% if request.GET %}
-                <a href="{% url 'tickets:sales_report' %}" class="btn-reset">
-                    <i class="fas fa-undo"></i> بازنشانی
-                </a>
-            {% endif %}
+            <div class="filter-group" style="flex-direction:row; gap:8px;">
+                <button type="submit" class="btn-filter"><i class="fas fa-search"></i> نمایش</button>
+                {% if request.GET %}
+                    <a href="{% url 'tickets:sales_report' %}" class="btn-reset"><i class="fas fa-undo"></i> بازنشانی</a>
+                {% endif %}
+            </div>
         </form>
     </div>
 
-    <!-- ===== نمودارها ===== -->
-    {% if sales_data %}
-    <div class="charts-grid">
-        <!-- نمودار میله‌ای گروهی -->
-        <div class="chart-card">
-            <div class="chart-title">
-                <i class="fas fa-chart-bar"></i>
-                فروش به تفکیک مسابقات
-            </div>
-            <canvas id="barChart"></canvas>
-        </div>
-        <!-- نمودار دایره‌ای -->
-        <div class="chart-card">
-            <div class="chart-title">
-                <i class="fas fa-chart-pie"></i>
-                نسبت فروش و VIP
-            </div>
-            <canvas id="pieChart"></canvas>
-        </div>
-    </div>
-    {% endif %}
+    <!-- ===== فرم اصلی (شامل انتخاب و خروجی) ===== -->
+    <form method="post" action="{% url 'tickets:export_sales_report' %}" id="exportForm">
+        {% csrf_token %}
 
-    <!-- ===== جدول ===== -->
-    <div class="table-wrapper">
-        <div class="table-header">
-            <h5><i class="fas fa-list"></i> جزئیات فروش بر اساس مسابقه</h5>
-            <span class="count-badge">{{ sales_data|length }} مسابقه</span>
-        </div>
-        <div class="table-responsive-custom">
-            <table class="table-custom">
-                <thead>
-                    <tr>
-                        <th><i class="fas fa-trophy"></i> مسابقه</th>
-                        <th><i class="fas fa-calendar-day"></i> تاریخ</th>
-                        <th><i class="fas fa-ticket-alt"></i> فروخته‌شده</th>
-                        <th><i class="fas fa-crown"></i> VIP</th>
-                        <th><i class="fas fa-calculator"></i> جمع</th>
-                        <th><i class="fas fa-money-bill"></i> درآمد</th>
-                        <th><i class="fas fa-chair"></i> اشغال</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in sales_data %}
-                    <tr>
-                        <td>
-                            <strong>{{ item.match.home_team }}</strong>
-                            <span style="color:#999;font-size:12px;">vs</span>
-                            <strong>{{ item.match.away_team }}</strong>
-                        </td>
-                        <td style="font-size:13px; white-space:nowrap;">
-                            {{ item.match.date_time|date:"Y/m/d" }}
-                            <br>
-                            <small style="color:#999;">{{ item.match.date_time|date:"H:i" }}</small>
-                        </td>
-                        <td><span class="badge" style="background:#d1ecf1;color:#0c5460;padding:4px 12px;border-radius:50px;">{{ item.sold_count }}</span></td>
-                        <td><span class="badge" style="background:#fff3cd;color:#856404;padding:4px 12px;border-radius:50px;">{{ item.vip_count }}</span></td>
-                        <td><strong>{{ item.total_tickets }}</strong></td>
-                        <td style="font-weight:600; color:#28a745;">{{ item.revenue|floatformat:0|default:"0" }}</td>
-                        <td>
-                            <div style="display:flex; align-items:center; gap:6px;">
-                                <span style="font-size:13px;">{{ item.occupancy_percent }}%</span>
-                                <div style="width:60px; height:5px; background:#e8eaed; border-radius:3px; overflow:hidden;">
-                                    <div style="width:{{ item.occupancy_percent }}%; height:100%; background:linear-gradient(90deg, #D4AF37, #B8960F); border-radius:3px;"></div>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="7">
-                            <div class="empty-state">
-                                <i class="fas fa-chart-pie"></i>
-                                <h4>هیچ داده‌ای یافت نشد</h4>
-                                <p>با تغییر بازه تاریخ یا انتخاب مسابقه، داده‌ها را مشاهده کنید.</p>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-                {% if sales_data %}
-                <tfoot>
-                    <tr class="total-row">
-                        <td colspan="4" style="text-align:left;">جمع کل</td>
-                        <td><strong>{{ total_tickets|default:"0" }}</strong></td>
-                        <td style="color:#28a745;"><strong>{{ total_revenue|floatformat:0|default:"0" }}</strong></td>
-                        <td></td>
-                    </tr>
-                </tfoot>
-                {% endif %}
-            </table>
-        </div>
-        {% if sales_data|length > 10 %}
-        <div class="pagination-wrapper">
-            <div class="pagination-info">
-                نمایش <strong>{{ page_obj.start_index }}</strong> تا <strong>{{ page_obj.end_index }}</strong>
-                از <strong>{{ page_obj.paginator.count }}</strong> مسابقه
+        <!-- ===== نوار انتخاب و خروجی ===== -->
+        <div class="export-bar">
+            <div class="selection-info">
+                <i class="fas fa-check-circle" style="color:#D4AF37;"></i>
+                <span id="selectionText">مسابقات مورد نظر را انتخاب کنید و روی دکمه <strong>خروجی اکسل</strong> کلیک کنید.</span>
             </div>
-            <div class="pagination-custom">
-                <!-- صفحه‌بندی مشابه قبل -->
+            <button type="submit" class="btn-export" id="exportBtn" disabled>
+                <i class="fas fa-file-excel"></i> خروجی اکسل
+            </button>
+        </div>
+
+        <!-- ===== نمودارها ===== -->
+        {% if sales_data %}
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-title"><i class="fas fa-chart-bar"></i> فروش به تفکیک مسابقات</div>
+                <canvas id="barChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title"><i class="fas fa-chart-pie"></i> نسبت فروش و VIP</div>
+                <canvas id="pieChart"></canvas>
             </div>
         </div>
         {% endif %}
-    </div>
+
+        <!-- ===== جدول ===== -->
+        <div class="table-wrapper">
+            <div class="table-header">
+                <h5><i class="fas fa-list"></i> جزئیات فروش</h5>
+                <span class="count-badge">{{ sales_data|length }} مسابقه</span>
+            </div>
+            <div class="table-responsive-custom">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th style="width:40px; text-align:center;"><input type="checkbox" id="selectAll"></th>
+                            <th><i class="fas fa-trophy"></i> مسابقه</th>
+                            <th><i class="fas fa-tag"></i> رشته</th>
+                            <th><i class="fas fa-map-marker-alt"></i> ورزشگاه</th>
+                            <th><i class="fas fa-calendar-day"></i> تاریخ</th>
+                            <th><i class="fas fa-ticket-alt"></i> فروش</th>
+                            <th><i class="fas fa-crown"></i> VIP</th>
+                            <th><i class="fas fa-calculator"></i> جمع</th>
+                            <th><i class="fas fa-money-bill"></i> درآمد</th>
+                            <th><i class="fas fa-chair"></i> اشغال</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in sales_data %}
+                        <tr data-match-id="{{ item.match.id }}">
+                            <td style="text-align:center;">
+                                <input type="checkbox" name="match_ids" value="{{ item.match.id }}" class="row-checkbox">
+                            </td>
+                            <td><strong>{{ item.match.home_team }}</strong> <span style="color:#999;font-size:12px;">vs</span> <strong>{{ item.match.away_team }}</strong></td>
+                            <td><span class="badge-sport">{{ item.match.get_sport_type_display }}</span></td>
+                            <td>{{ item.match.stadium.name }}</td>
+                            <td style="white-space:nowrap;">{{ item.match.date_time|date:"Y/m/d" }}</td>
+                            <td><span style="background:#d1ecf1;color:#0c5460;padding:2px 12px;border-radius:50px;">{{ item.sold_count }}</span></td>
+                            <td><span style="background:#fff3cd;color:#856404;padding:2px 12px;border-radius:50px;">{{ item.vip_count }}</span></td>
+                            <td><strong>{{ item.total_tickets }}</strong></td>
+                            <td style="font-weight:600; color:#28a745;">{{ item.revenue|floatformat:0 }}</td>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <span>{{ item.occupancy_percent }}%</span>
+                                    <div style="width:50px; height:4px; background:#e8eaed; border-radius:3px; overflow:hidden;">
+                                        <div style="width:{{ item.occupancy_percent }}%; height:100%; background:#D4AF37; border-radius:3px;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="10">
+                                <div class="empty-state">
+                                    <i class="fas fa-chart-pie"></i>
+                                    <h4>هیچ داده‌ای یافت نشد</h4>
+                                    <p>با تغییر بازه تاریخ یا انتخاب مسابقه، داده‌ها را مشاهده کنید.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    {% if sales_data %}
+                    <tfoot>
+                        <tr class="total-row">
+                            <td></td>
+                            <td colspan="4" style="text-align:left;">جمع کل</td>
+                            <td>{{ total_sold|default:"0" }}</td>
+                            <td>{{ total_vip|default:"0" }}</td>
+                            <td><strong>{{ total_tickets|default:"0" }}</strong></td>
+                            <td style="color:#28a745;"><strong>{{ total_revenue|floatformat:0|default:"0" }}</strong></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                    {% endif %}
+                </table>
+            </div>
+
+            {% if page_obj and page_obj.paginator.num_pages > 1 %}
+            <div class="pagination-wrapper">
+                <div class="pagination-info">
+                    نمایش <strong>{{ page_obj.start_index }}</strong> تا <strong>{{ page_obj.end_index }}</strong>
+                    از <strong>{{ page_obj.paginator.count }}</strong> مسابقه
+                </div>
+                <div class="pagination-custom">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}"><i class="fas fa-angle-double-right"></i></a>
+                        <a href="?page={{ page_obj.previous_page_number }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}"><i class="fas fa-angle-right"></i></a>
+                    {% else %}
+                        <span class="disabled"><i class="fas fa-angle-double-right"></i></span>
+                        <span class="disabled"><i class="fas fa-angle-right"></i></span>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if num == page_obj.number %}
+                            <span class="current">{{ num }}</span>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <a href="?page={{ num }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}"><i class="fas fa-angle-left"></i></a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}"><i class="fas fa-angle-double-left"></i></a>
+                    {% else %}
+                        <span class="disabled"><i class="fas fa-angle-left"></i></span>
+                        <span class="disabled"><i class="fas fa-angle-double-left"></i></span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+    </form>
+
 </div>
-{% endblock %}
 
-{% block extra_js %}
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // ===== داده‌ها =====
-    const labels = [
-        {% for item in sales_data %}
-            "{{ item.match.home_team|truncatechars:10 }}",
-        {% endfor %}
-    ];
 
-    const soldData = [
-        {% for item in sales_data %}
-            {{ item.sold_count }},
-        {% endfor %}
-    ];
+    // ===== انتخاب همه =====
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.row-checkbox');
+    const exportBtn = document.getElementById('exportBtn');
+    const selectionText = document.getElementById('selectionText');
 
-    const vipData = [
-        {% for item in sales_data %}
-            {{ item.vip_count }},
-        {% endfor %}
-    ];
+    function updateSelection() {
+        const checked = document.querySelectorAll('.row-checkbox:checked');
+        const count = checked.length;
+        if (count > 0) {
+            selectionText.innerHTML = `<i class="fas fa-check-circle" style="color:#28a745;"></i> ${count} مسابقه انتخاب شده است.`;
+            exportBtn.disabled = false;
+        } else {
+            selectionText.innerHTML = `مسابقات مورد نظر را انتخاب کنید و روی دکمه <strong>خروجی اکسل</strong> کلیک کنید.`;
+            exportBtn.disabled = true;
+        }
+        // هایلایت ردیف‌ها
+        document.querySelectorAll('.row-checkbox').forEach(cb => {
+            const tr = cb.closest('tr');
+            if (tr) tr.classList.toggle('selected', cb.checked);
+        });
+    }
 
-    const revenueData = [
-        {% for item in sales_data %}
-            {{ item.revenue }},
-        {% endfor %}
-    ];
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            checkboxes.forEach(cb => cb.checked = this.checked);
+            updateSelection();
+        });
+    }
+    checkboxes.forEach(cb => cb.addEventListener('change', updateSelection));
+    updateSelection();
 
-    // ===== ۱. نمودار میله‌ای گروهی (فروش و VIP) =====
-    const ctx1 = document.getElementById('barChart').getContext('2d');
-    new Chart(ctx1, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'فروخته‌شده',
-                    data: soldData,
-                    backgroundColor: 'rgba(23, 162, 184, 0.7)',
-                    borderColor: 'rgba(23, 162, 184, 1)',
-                    borderWidth: 2,
-                    borderRadius: 4,
-                },
-                {
-                    label: 'VIP',
-                    data: vipData,
-                    backgroundColor: 'rgba(255, 193, 7, 0.7)',
-                    borderColor: 'rgba(255, 193, 7, 1)',
-                    borderWidth: 2,
-                    borderRadius: 4,
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    labels: {
-                        font: { size: 12 },
-                        boxWidth: 15,
-                        padding: 15,
-                    }
-                }
+    // ===== نمودارها =====
+    {% if sales_data %}
+    const labels = [{% for item in sales_data %}"{{ item.match.home_team|truncatechars:10 }}",{% endfor %}];
+    const sold = [{% for item in sales_data %}{{ item.sold_count }},{% endfor %}];
+    const vip = [{% for item in sales_data %}{{ item.vip_count }},{% endfor %}];
+
+    const ctx1 = document.getElementById('barChart');
+    if (ctx1 && labels.length) {
+        new Chart(ctx1.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'فروخته‌شده', data: sold, backgroundColor: 'rgba(23,162,184,0.7)', borderColor: 'rgba(23,162,184,1)', borderWidth: 2, borderRadius: 4 },
+                    { label: 'VIP', data: vip, backgroundColor: 'rgba(255,193,7,0.7)', borderColor: 'rgba(255,193,7,1)', borderWidth: 2, borderRadius: 4 }
+                ]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1,
-                        font: { size: 11 }
-                    }
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { labels: { font: {size: 12}, boxWidth: 15, padding: 15 } }
                 },
-                x: {
-                    ticks: {
-                        font: { size: 10 },
-                        maxRotation: 30,
-                        minRotation: 30,
-                    }
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1, font: {size: 11} } },
+                    x: { ticks: { font: {size: 10}, maxRotation: 30 } }
                 }
             }
-        }
-    });
+        });
+    }
 
-    // ===== ۲. نمودار دایره‌ای (نسبت فروش و VIP) =====
-    const totalSold = soldData.reduce((a, b) => a + b, 0);
-    const totalVip = vipData.reduce((a, b) => a + b, 0);
-
-    const ctx2 = document.getElementById('pieChart').getContext('2d');
-    new Chart(ctx2, {
-        type: 'doughnut',
-        data: {
-            labels: ['فروخته‌شده', 'VIP'],
-            datasets: [{
-                data: [totalSold, totalVip],
-                backgroundColor: [
-                    'rgba(23, 162, 184, 0.8)',
-                    'rgba(255, 193, 7, 0.8)'
-                ],
-                borderColor: [
-                    'rgba(23, 162, 184, 1)',
-                    'rgba(255, 193, 7, 1)'
-                ],
-                borderWidth: 2,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        font: { size: 13 },
-                        padding: 15,
-                        usePointStyle: true,
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percent = ((context.parsed / total) * 100).toFixed(1);
-                            return context.label + ': ' + context.parsed + ' (' + percent + '%)';
+    const totalSold = sold.reduce((a,b) => a+b, 0);
+    const totalVip = vip.reduce((a,b) => a+b, 0);
+    const ctx2 = document.getElementById('pieChart');
+    if (ctx2 && (totalSold > 0 || totalVip > 0)) {
+        new Chart(ctx2.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['فروخته‌شده', 'VIP'],
+                datasets: [{
+                    data: [totalSold, totalVip],
+                    backgroundColor: ['rgba(23,162,184,0.8)', 'rgba(255,193,7,0.8)'],
+                    borderColor: ['rgba(23,162,184,1)', 'rgba(255,193,7,1)'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { font: {size: 13}, padding: 15, usePointStyle: true } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
+                                return ctx.label + ': ' + ctx.parsed + ' (' + ((ctx.parsed/total)*100).toFixed(1) + '%)';
+                            }
                         }
                     }
                 }
             }
-        }
-    });
+        });
+    }
+    {% endif %}
 });
 </script>
 {% endblock %}

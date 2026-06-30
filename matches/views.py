@@ -1,10 +1,9 @@
 import json
 from datetime import timedelta
-from sqlite3 import IntegrityError
 
-from .forms import BlockForm, MatchForm, StadiumForm
+from django.urls import reverse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
@@ -15,6 +14,7 @@ from django.utils import timezone
 
 from tickets.models import Ticket
 from tickets.reservation import SeatReservation
+from .forms import BlockForm, MatchForm, StadiumForm
 from .models import Match, Row, Seat, MatchSeat, Block, Stadium
 
 
@@ -23,28 +23,69 @@ from .models import Match, Row, Seat, MatchSeat, Block, Stadium
 # ============================================================
 
 def home(request):
-    """صفحه اصلی - نمایش مسابقات فعال با ظرفیت‌ها"""
+    """صفحه اصلی - نمایش مسابقات با ظرفیت‌های دقیق"""
+
+    # ===== تعریف رشته‌های ورزشی =====
+    SPORT_CHOICES = (
+        ('football', 'فوتبال'),
+        ('volleyball', 'والیبال'),
+        ('handball', 'هندبال'),
+        ('basketball', 'بسکتبال'),
+        ('futsal', 'فوتسال'),
+        ('other', 'سایر'),
+    )
+
+    # ===== دریافت فیلترها =====
+    sport_filter = request.GET.get('sport')
+    stadium_filter = request.GET.get('stadium')
+
+    # ===== کوئری پایه =====
     matches = Match.objects.filter(is_active=True, date_time__gte=timezone.now()).order_by('date_time')
 
+    if sport_filter:
+        matches = matches.filter(sport_type=sport_filter)
+    if stadium_filter:
+        matches = matches.filter(stadium_id=stadium_filter)
+
+    # ===== محاسبه آمار برای هر مسابقه =====
     for match in matches:
-        all_seats = Seat.objects.all()
-        total_seats = all_seats.count()
-        sold_seats = MatchSeat.objects.filter(match=match, is_available=False).count()
-        seats_without_matchseat = all_seats.exclude(match_seats__match=match).count()
-        available_seats = seats_without_matchseat + MatchSeat.objects.filter(
-            match=match, is_available=True
+        # ===== ۱. ظرفیت کل = مجموع صندلی‌های بلوک‌های فعال ورزشگاه =====
+        total_seats = Seat.objects.filter(
+            row__block__stadium=match.stadium,
+            row__block__is_active=True,
+            row__is_active=True
         ).count()
+
+        # ===== ۲. فروخته‌شده = تعداد MatchSeatهای غیرفعال =====
+        sold_seats = MatchSeat.objects.filter(match=match, is_available=False).count()
+
+        # ===== ۳. باقی‌مانده = ظرفیت کل - فروخته‌شده =====
+        available_seats = total_seats - sold_seats
+
+        # ===== ۴. درصد اشغال =====
         occupancy = round((sold_seats / total_seats * 100) if total_seats > 0 else 0, 1)
 
+        # ===== ۵. اختصاص به آبجکت match =====
         match.total_capacity = total_seats
         match.sold_tickets = sold_seats
         match.available_seats = available_seats
         match.occupancy = occupancy
 
-    return render(request, 'matches/home.html', {'matches': matches})
+    # ===== دریافت لیست ورزشگاه‌ها =====
+    stadiums = Stadium.objects.all().order_by('name')
+
+    context = {
+        'matches': matches,
+        'stadiums': stadiums,
+        'sport_choices': SPORT_CHOICES,
+        'selected_sport': sport_filter,
+        'selected_stadium': int(stadium_filter) if stadium_filter else None,
+    }
+    return render(request, 'matches/home.html', context)
 
 
 def match_detail(request, match_id):
+    """نمایش جزئیات یک مسابقه"""
     match = get_object_or_404(Match, id=match_id, is_active=True)
     return render(request, 'matches/match_detail.html', {'match': match})
 
@@ -72,12 +113,10 @@ def select_floor(request, match_id):
 @login_required
 def select_block(request, match_id):
     match = get_object_or_404(Match, id=match_id, is_active=True)
-    stadium = match.stadium  # ورزشگاه مسابقه
+    stadium = match.stadium
 
-    # ===== دریافت طبقه انتخاب‌شده از session =====
     selected_floor = request.session.get('selected_floor', 'ground')
 
-    # ===== فیلتر بلوک‌ها بر اساس ورزشگاه و طبقه =====
     if selected_floor == 'second':
         blocks = Block.objects.filter(
             stadium=stadium,
@@ -90,7 +129,6 @@ def select_block(request, match_id):
             is_active=True
         ).exclude(name__contains='طبقه دوم').order_by('order')
 
-    # ===== اگر هیچ بلوکی وجود نداشت =====
     if not blocks.exists():
         messages.warning(
             request,
@@ -98,7 +136,6 @@ def select_block(request, match_id):
         )
         return redirect('matches:select_floor', match_id=match_id)
 
-    # ===== نگاشت zone_type به برچسب فارسی =====
     zone_labels = {
         'home': ('home', 'میزبان'),
         'away': ('away', 'میهمان'),
@@ -107,21 +144,15 @@ def select_block(request, match_id):
         'vip': ('vip', 'VIP'),
     }
 
-    # ===== محاسبه آمار برای هر بلوک =====
     for block in blocks:
-        # تعداد کل صندلی‌های این بلوک
         total_seats = Seat.objects.filter(row__block=block).count()
         block.total_seats = total_seats
 
-        # تعداد صندلی‌های موجود (آزاد) برای این مسابقه در این بلوک
-        # ۱. صندلی‌هایی که MatchSeat دارند و available هستند
         available_with_matchseat = MatchSeat.objects.filter(
             match=match,
             seat__row__block=block,
             is_available=True
         ).count()
-
-        # ۲. صندلی‌هایی که اصلاً MatchSeat ندارند (هنوز برای این مسابقه ایجاد نشده‌اند) -> به‌طور پیش‌فرض آزاد در نظر گرفته می‌شوند
         seats_without_matchseat = Seat.objects.filter(
             row__block=block
         ).exclude(match_seats__match=match).count()
@@ -129,40 +160,32 @@ def select_block(request, match_id):
         available_seats = available_with_matchseat + seats_without_matchseat
         block.available_seats = available_seats
 
-        # درصد اشغال
         block.occupancy = round(
             ((total_seats - available_seats) / total_seats * 100) if total_seats > 0 else 0,
             1
         )
 
-        # ===== تعیین نوع جایگاه بر اساس zone_type =====
         zone_type = block.zone_type
         if zone_type in zone_labels:
             block.team_type, block.team_type_label = zone_labels[zone_type]
         else:
             block.team_type, block.team_type_label = ('home', 'میزبان')
 
-    # ===== پردازش انتخاب بلوک (POST) =====
     if request.method == 'POST':
         block_id = request.POST.get('block_id')
         if block_id:
             block = get_object_or_404(Block, id=block_id)
-
-            # بررسی وجود صندلی در بلوک
             if Seat.objects.filter(row__block=block).count() == 0:
                 messages.error(
                     request,
                     f'بلوک "{block.name}" هیچ صندلی‌ای ندارد! لطفاً با مدیر تماس بگیرید.'
                 )
                 return redirect('matches:select_block', match_id=match_id)
-
-            # ذخیره بلوک انتخاب‌شده در session
             request.session['selected_block_id'] = block_id
             return redirect('matches:block_map', match_id=match_id)
         else:
             messages.error(request, 'لطفاً یک بلوک را انتخاب کنید.')
 
-    # ===== رندر صفحه =====
     context = {
         'match': match,
         'blocks': blocks,
@@ -259,8 +282,6 @@ def manage_rows(request):
     """مدیریت بلوک‌ها برای یک مسابقه خاص (جایگزین مدیریت ردیف‌ها)"""
     match_id = request.GET.get('match_id')
     matches = Match.objects.filter(is_active=True).order_by('-date_time')
-
-    # دریافت همه بلوک‌های فعال به ترتیب
     blocks = Block.objects.filter(is_active=True).order_by('order')
 
     if not match_id and matches.exists():
@@ -345,7 +366,7 @@ def manage_rows(request):
 
     context = {
         'matches': matches,
-        'block_status': block_status,  # تغییر نام به block_status
+        'block_status': block_status,
         'selected_match_id': int(match_id) if match_id else None,
         'selected_match': match,
     }
@@ -386,13 +407,11 @@ def manage_blocks(request):
                 'status': status,
             })
 
-    # ===== محاسبه آمار وضعیت‌ها =====
     active_count = sum(1 for item in block_status if item['status'] == 'active')
     inactive_count = sum(1 for item in block_status if item['status'] == 'inactive')
     partial_count = sum(1 for item in block_status if item['status'] == 'partial')
     no_seats_count = sum(1 for item in block_status if item['status'] == 'no_seats')
 
-    # ===== پردازش درخواست POST =====
     if request.method == 'POST':
         action = request.POST.get('action')
         block_id = request.POST.get('block_id')
@@ -453,7 +472,6 @@ def manage_blocks(request):
 
         return redirect(f'{request.path}?match_id={match_id_post}')
 
-    # ===== کانتکست نهایی =====
     context = {
         'matches': matches,
         'block_status': block_status,
@@ -639,189 +657,245 @@ def manage_seats(request, row_id):
 # ============================================================
 #  ویوهای API
 # ============================================================
+
 @staff_member_required
-def manage_block_seats(request, block_id):
-    """مدیریت تمام صندلی‌های یک بلوک (همه ردیف‌ها) برای یک مسابقه خاص"""
-    match_id = request.GET.get('match_id')
-    if not match_id:
-        messages.error(request, 'لطفاً یک مسابقه را انتخاب کنید.')
-        return redirect('matches:manage_rows')
+def manage_block_seats(request, block_id=None):
+    """
+    مدیریت صندلی‌های یک بلوک با نمایش وضعیت بلیط‌ها و قابلیت:
+    - غیرفعال/فعال/تغییر وضعیت انتخاب‌شده‌ها
+    - فعال‌سازی/غیرفعال‌سازی کل ردیف
+    - فعال‌سازی/غیرفعال‌سازی کل بلوک
+    """
 
-    match = get_object_or_404(Match, id=match_id)
-    block = get_object_or_404(Block, id=block_id)
+    # اگر block_id از URL دریافت نشد، از GET بگیر
+    if not block_id:
+        block_id = request.GET.get('block_id')
 
-    # دریافت همه صندلی‌های بلوک
-    all_seats = Seat.objects.filter(row__block=block).order_by('row__number', 'number')
-    match_seats = MatchSeat.objects.filter(match=match, seat__in=all_seats).select_related('seat')
-    match_seat_dict = {ms.seat_id: ms for ms in match_seats}
+    selected_block = None
+    seats = []
+    total_seats = 0
+    active_seats = 0
+    inactive_seats = 0
+    sold_seats = 0
 
-    seats_data = []
-    for seat in all_seats:
-        ms = match_seat_dict.get(seat.id)
-        if ms:
+    # لیست همه بلوک‌ها برای dropdown انتخاب بلوک
+    all_blocks = Block.objects.filter(is_active=True).order_by('order')
+
+    # اگر بلوکی انتخاب شده باشد، اطلاعات آن را بگیر
+    if block_id:
+        selected_block = get_object_or_404(Block, id=block_id)
+        seats = Seat.objects.filter(row__block=selected_block).order_by('row__number', 'number')
+
+        # برچسب‌گذاری صندلی‌های دارای بلیط
+        for seat in seats:
             has_ticket = Ticket.objects.filter(
-                match_seat=ms,
+                seat=seat,
                 status__in=['paid', 'admin_assigned', 'vip_issued']
             ).exists()
-            seats_data.append({
-                'seat': seat,
-                'match_seat': ms,
-                'is_available': ms.is_available,
-                'has_ticket': has_ticket,
-                'row_number': seat.row.number,
-            })
-        else:
-            seats_data.append({
-                'seat': seat,
-                'match_seat': None,
-                'is_available': False,
-                'has_ticket': False,
-                'row_number': seat.row.number,
-            })
+            seat.has_ticket = has_ticket
 
-    total = len(seats_data)
-    available = sum(1 for s in seats_data if s['is_available'])
-    unavailable = total - available
+        total_seats = seats.count()
+        active_seats = seats.filter(is_available=True).count()
+        inactive_seats = total_seats - active_seats
+        sold_seats = sum(1 for s in seats if s.has_ticket)
 
-    if request.method == 'POST':
+    # ===== پردازش درخواست POST =====
+    if request.method == 'POST' and selected_block:
         action = request.POST.get('action')
-        selected_seats_data = request.POST.get('selected_seats')
 
-        # فعال‌سازی انتخاب‌شده‌ها
-        if action == 'activate_selected' and selected_seats_data:
+        # ===== بررسی وجود action =====
+        if not action:
+            messages.error(request, 'خطا: عملیات مشخص نشده است. لطفاً دوباره تلاش کنید.')
+            return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
+
+        # ===== دیباگ =====
+        print(f">>>> ACTION RECEIVED: {action}")
+
+        selected_seats = request.POST.getlist('selected_seats')
+
+        # ---------- ۱. غیرفعال‌سازی انتخاب‌شده‌ها ----------
+        if action == 'deactivate':
+            if not selected_seats:
+                messages.warning(request, 'هیچ صندلی‌ای انتخاب نشده است.')
+            else:
+                # تفکیک صندلی‌های دارای بلیط
+                seats_with_ticket = Seat.objects.filter(
+                    id__in=selected_seats,
+                    ticket__status__in=['paid', 'admin_assigned', 'vip_issued']
+                ).distinct()
+                seats_without_ticket = Seat.objects.filter(
+                    id__in=selected_seats
+                ).exclude(id__in=seats_with_ticket.values_list('id', flat=True))
+
+                if seats_with_ticket.exists():
+                    messages.warning(
+                        request,
+                        f'صندلی‌های {", ".join(str(s.number) for s in seats_with_ticket)} دارای بلیط هستند و غیرفعال نشدند.'
+                    )
+                if seats_without_ticket.exists():
+                    count = seats_without_ticket.update(is_available=False)
+                    messages.success(request, f'{count} صندلی غیرفعال شدند.')
+                if not seats_with_ticket.exists() and not seats_without_ticket.exists():
+                    messages.info(request, 'همه صندلی‌های انتخاب‌شده قبلاً غیرفعال هستند.')
+            return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
+
+        # ---------- ۲. فعال‌سازی انتخاب‌شده‌ها ----------
+        elif action == 'activate':
+            if not selected_seats:
+                messages.warning(request, 'هیچ صندلی‌ای انتخاب نشده است.')
+            else:
+                # فقط صندلی‌های بدون بلیط را فعال کن
+                seats_without_ticket = Seat.objects.filter(
+                    id__in=selected_seats
+                ).exclude(
+                    ticket__status__in=['paid', 'admin_assigned', 'vip_issued']
+                )
+                count = seats_without_ticket.update(is_available=True)
+                if count > 0:
+                    messages.success(request, f'{count} صندلی فعال شدند.')
+                else:
+                    messages.info(request, 'صندلی‌های انتخاب‌شده دارای بلیط هستند یا قبلاً فعال هستند.')
+            return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
+
+        # ---------- ۳. تغییر وضعیت انتخاب‌شده‌ها ----------
+        elif action == 'toggle':
+            if not selected_seats:
+                messages.warning(request, 'هیچ صندلی‌ای انتخاب نشده است.')
+            else:
+                seats_with_ticket = Seat.objects.filter(
+                    id__in=selected_seats,
+                    ticket__status__in=['paid', 'admin_assigned', 'vip_issued']
+                ).distinct()
+                seats_without_ticket = Seat.objects.filter(
+                    id__in=selected_seats
+                ).exclude(id__in=seats_with_ticket.values_list('id', flat=True))
+
+                if seats_with_ticket.exists():
+                    messages.warning(
+                        request,
+                        f'صندلی‌های {", ".join(str(s.number) for s in seats_with_ticket)} دارای بلیط هستند و تغییر نکردند.'
+                    )
+                if seats_without_ticket.exists():
+                    for seat in seats_without_ticket:
+                        seat.is_available = not seat.is_available
+                        seat.save()
+                    messages.success(request, f'{seats_without_ticket.count()} صندلی تغییر وضعیت یافتند.')
+                if not seats_with_ticket.exists() and not seats_without_ticket.exists():
+                    messages.info(request, 'هیچ صندلی قابل تغییری انتخاب نشده است.')
+            return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
+
+        # ---------- ۴. فعال‌سازی کل ردیف (جدید) ----------
+        elif action == 'activate_row':
+            row_number = request.POST.get('row_number')
+            print(f">>>> Activating row: {row_number}")
+
+            if not row_number:
+                messages.error(request, 'شماره ردیف مشخص نشده است.')
+                return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
+
             try:
-                seat_ids = json.loads(selected_seats_data)
-            except json.JSONDecodeError:
-                messages.error(request, 'خطا در اطلاعات ارسال شده.')
-                return redirect(f'{request.path}?match_id={match_id}')
-
-            if not seat_ids:
-                messages.warning(request, 'هیچ صندلی انتخاب نشده است.')
-                return redirect(f'{request.path}?match_id={match_id}')
-
-            with transaction.atomic():
-                activated = 0
-                for seat_id in seat_ids:
-                    ms = match_seat_dict.get(seat_id)
-                    if ms:
-                        if not ms.is_available:
-                            has_ticket = Ticket.objects.filter(
-                                match_seat=ms,
-                                status__in=['paid', 'admin_assigned', 'vip_issued']
-                            ).exists()
-                            if not has_ticket:
-                                ms.is_available = True
-                                ms.save()
-                                activated += 1
+                row_num = int(row_number)
+                row = selected_block.rows.filter(number=row_num).first()
+                if row:
+                    # فقط صندلی‌های بدون بلیط را فعال کن
+                    seats_without_ticket = Seat.objects.filter(
+                        row=row
+                    ).exclude(
+                        ticket__status__in=['paid', 'admin_assigned', 'vip_issued']
+                    )
+                    count = seats_without_ticket.update(is_available=True)
+                    if count > 0:
+                        messages.success(request, f'{count} صندلی در ردیف {row_num} فعال شدند.')
                     else:
-                        seat = get_object_or_404(Seat, id=seat_id)
-                        MatchSeat.objects.create(match=match, seat=seat, is_available=True)
-                        activated += 1
-                        match_seat_dict[seat_id] = MatchSeat.objects.get(match=match, seat=seat)
-                messages.success(request, f'{activated} صندلی با موفقیت فعال شدند.')
-            return redirect(f'{request.path}?match_id={match_id}')
+                        messages.info(request, f'همه صندلی‌های ردیف {row_num} قبلاً فعال یا دارای بلیط هستند.')
+                else:
+                    messages.error(request, f'ردیف {row_num} یافت نشد.')
+            except ValueError:
+                messages.error(request, 'شماره ردیف نامعتبر است.')
+            return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
 
-        # غیرفعال‌سازی انتخاب‌شده‌ها
-        elif action == 'deactivate_selected' and selected_seats_data:
+        # ---------- ۵. غیرفعال‌سازی کل ردیف ----------
+        elif action == 'deactivate_row':
+            row_number = request.POST.get('row_number')
+            print(f">>>> Deactivating row: {row_number}")
+
+            if not row_number:
+                messages.error(request, 'شماره ردیف مشخص نشده است.')
+                return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
+
             try:
-                seat_ids = json.loads(selected_seats_data)
-            except json.JSONDecodeError:
-                messages.error(request, 'خطا در اطلاعات ارسال شده.')
-                return redirect(f'{request.path}?match_id={match_id}')
-
-            if not seat_ids:
-                messages.warning(request, 'هیچ صندلی انتخاب نشده است.')
-                return redirect(f'{request.path}?match_id={match_id}')
-
-            with transaction.atomic():
-                deactivated = 0
-                cancelled = 0
-                for seat_id in seat_ids:
-                    ms = match_seat_dict.get(seat_id)
-                    if ms:
-                        if ms.is_available:
-                            ms.is_available = False
-                            ms.save()
-                            deactivated += 1
-                            tickets = Ticket.objects.filter(
-                                match_seat=ms,
-                                status__in=['paid', 'admin_assigned', 'vip_issued']
-                            )
-                            if tickets.exists():
-                                cancelled += tickets.count()
-                                tickets.update(status='cancelled')
+                row_num = int(row_number)
+                row = selected_block.rows.filter(number=row_num).first()
+                if row:
+                    # فقط صندلی‌های بدون بلیط را غیرفعال کن
+                    seats_without_ticket = Seat.objects.filter(
+                        row=row
+                    ).exclude(
+                        ticket__status__in=['paid', 'admin_assigned', 'vip_issued']
+                    )
+                    count = seats_without_ticket.update(is_available=False)
+                    if count > 0:
+                        messages.success(request, f'{count} صندلی در ردیف {row_num} غیرفعال شدند.')
                     else:
-                        seat = get_object_or_404(Seat, id=seat_id)
-                        MatchSeat.objects.create(match=match, seat=seat, is_available=False)
-                        deactivated += 1
-                        match_seat_dict[seat_id] = MatchSeat.objects.get(match=match, seat=seat)
-                messages.success(request, f'{deactivated} صندلی غیرفعال شدند و {cancelled} بلیط لغو شدند.')
-            return redirect(f'{request.path}?match_id={match_id}')
+                        messages.info(request, f'همه صندلی‌های ردیف {row_num} قبلاً غیرفعال یا دارای بلیط هستند.')
+                else:
+                    messages.error(request, f'ردیف {row_num} یافت نشد.')
+            except ValueError:
+                messages.error(request, 'شماره ردیف نامعتبر است.')
+            return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
 
-        # فعال‌سازی همه
-        elif action == 'activate_all':
-            with transaction.atomic():
-                to_activate = []
-                for seat_data in seats_data:
-                    if not seat_data['has_ticket'] and not seat_data['is_available']:
-                        to_activate.append(seat_data['seat'])
-                activated = 0
-                for seat in to_activate:
-                    ms = match_seat_dict.get(seat.id)
-                    if ms:
-                        has_ticket = Ticket.objects.filter(
-                            match_seat=ms,
-                            status__in=['paid', 'admin_assigned', 'vip_issued']
-                        ).exists()
-                        if not has_ticket:
-                            ms.is_available = True
-                            ms.save()
-                            activated += 1
-                    else:
-                        MatchSeat.objects.create(match=match, seat=seat, is_available=True)
-                        activated += 1
-                messages.success(request, f'{activated} صندلی با موفقیت فعال شدند.')
-            return redirect(f'{request.path}?match_id={match_id}')
+        # ---------- ۶. فعال‌سازی کل بلوک (جدید) ----------
+        elif action == 'activate_block':
+            print(f">>>> Activating entire block: {selected_block.name}")
 
-        # غیرفعال‌سازی همه
-        elif action == 'deactivate_all':
-            with transaction.atomic():
-                deactivated = 0
-                cancelled = 0
-                for seat_data in seats_data:
-                    seat = seat_data['seat']
-                    ms = match_seat_dict.get(seat.id)
-                    if ms:
-                        if ms.is_available:
-                            ms.is_available = False
-                            ms.save()
-                            deactivated += 1
-                            tickets = Ticket.objects.filter(
-                                match_seat=ms,
-                                status__in=['paid', 'admin_assigned', 'vip_issued']
-                            )
-                            if tickets.exists():
-                                cancelled += tickets.count()
-                                tickets.update(status='cancelled')
-                    else:
-                        MatchSeat.objects.create(match=match, seat=seat, is_available=False)
-                        deactivated += 1
-                messages.success(request, f'{deactivated} صندلی غیرفعال شدند و {cancelled} بلیط لغو شدند.')
-            return redirect(f'{request.path}?match_id={match_id}')
+            # فقط صندلی‌های بدون بلیط را فعال کن
+            seats_without_ticket = Seat.objects.filter(
+                row__block=selected_block
+            ).exclude(
+                ticket__status__in=['paid', 'admin_assigned', 'vip_issued']
+            )
+            count = seats_without_ticket.update(is_available=True)
+            if count > 0:
+                messages.success(request, f'{count} صندلی از کل بلوک فعال شدند.')
+            else:
+                messages.info(request, 'همه صندلی‌های این بلوک قبلاً فعال یا دارای بلیط هستند.')
+            return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
 
+        # ---------- ۷. غیرفعال‌سازی کل بلوک ----------
+        elif action == 'deactivate_block':
+            print(f">>>> Deactivating entire block: {selected_block.name}")
+
+            # فقط صندلی‌های بدون بلیط را غیرفعال کن
+            seats_without_ticket = Seat.objects.filter(
+                row__block=selected_block
+            ).exclude(
+                ticket__status__in=['paid', 'admin_assigned', 'vip_issued']
+            )
+            count = seats_without_ticket.update(is_available=False)
+            if count > 0:
+                messages.success(request, f'{count} صندلی از کل بلوک غیرفعال شدند.')
+            else:
+                messages.info(request, 'همه صندلی‌های این بلوک قبلاً غیرفعال یا دارای بلیط هستند.')
+            return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
+
+        # ---------- ۸. در صورت دریافت action ناشناخته ----------
+        else:
+            messages.error(request, f'عملیات نامعتبر: {action}')
+            return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
+
+    # ===== نمایش صفحه (GET) =====
     context = {
-        'block': block,
-        'match': match,
-        'seats_data': seats_data,
-        'total': total,
-        'available': available,
-        'unavailable': unavailable,
+        'all_blocks': all_blocks,
+        'selected_block': selected_block,
+        'seats': seats,
+        'total_seats': total_seats,
+        'active_seats': active_seats,
+        'inactive_seats': inactive_seats,
+        'sold_seats': sold_seats,
     }
-    return render(request, 'matches/manage_seats.html', context)
-
-
+    return render(request, 'matches/manage_block_seats.html', context)
 # ============================================================
-#  ویوهای API
+#  ادامه ویوهای API و مدیریت
 # ============================================================
 
 def get_seats_status(request, match_id):
@@ -860,77 +934,95 @@ def get_seats_status(request, match_id):
 
 @staff_member_required
 def admin_match_list(request):
-    """صفحه مدیریت مسابقات برای ادمین"""
-    match_id = request.GET.get('match_id')
-    page = request.GET.get('page', 1)
+    """لیست مسابقات برای ادمین با آمار دقیق اشغال صندلی‌ها"""
+    sport_filter = request.GET.get('sport')
+    stadium_filter = request.GET.get('stadium')
+    match_filter = request.GET.get('match_id')
 
-    # دریافت مسابقات
-    matches = Match.objects.all().order_by('-date_time')
+    matches_qs = Match.objects.all().order_by('-date_time')
+    if sport_filter:
+        matches_qs = matches_qs.filter(sport_type=sport_filter)
+    if stadium_filter:
+        matches_qs = matches_qs.filter(stadium_id=stadium_filter)
+    if match_filter:
+        matches_qs = matches_qs.filter(id=match_filter)
 
-    # فیلتر بر اساس match_id (اگر انتخاب شده باشد)
-    if match_id:
-        matches = matches.filter(id=match_id)
-
-    # محاسبه آمار
     match_data = []
-    for match in matches:
+    total_sold = 0
+    total_vip = 0
+    total_revenue = 0
+
+    for match in matches_qs:
+        total_seats = Seat.objects.filter(
+            row__block__stadium=match.stadium,
+            row__block__is_active=True,
+            row__is_active=True
+        ).count()
+
         sold_tickets = Ticket.objects.filter(match=match, status='paid')
         vip_tickets = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued'])
+        sold_count = sold_tickets.count()
+        vip_count = vip_tickets.count()
+        sold_seats = MatchSeat.objects.filter(match=match, is_available=False).count()
 
-        sold_revenue = sum(
-            t.seat.row.block.price for t in sold_tickets
-            if t.seat and t.seat.row and t.seat.row.block
-        )
-        vip_revenue = sum(
-            t.seat.row.block.price for t in vip_tickets
-            if t.seat and t.seat.row and t.seat.row.block
-        )
-        occupied_seats = MatchSeat.objects.filter(match=match, is_available=False).count()
-        total_seats = Seat.objects.count()
+        revenue = sum(t.seat.row.block.price for t in sold_tickets if t.seat and t.seat.row and t.seat.row.block)
+        vip_revenue = sum(t.seat.row.block.price for t in vip_tickets if t.seat and t.seat.row and t.seat.row.block)
+        total_revenue_match = revenue + vip_revenue
+
+        occupancy = round((sold_seats / total_seats * 100) if total_seats > 0 else 0, 1)
 
         match_data.append({
             'match': match,
-            'sold_count': sold_tickets.count(),
-            'vip_count': vip_tickets.count(),
-            'total_revenue': sold_revenue + vip_revenue,
-            'occupied_seats': occupied_seats,
+            'sold_count': sold_count,
+            'vip_count': vip_count,
+            'total_tickets': sold_count + vip_count,
+            'total_revenue': total_revenue_match,
+            'sold_revenue': revenue,
+            'vip_revenue': vip_revenue,
+            'occupied_seats': sold_seats,
             'total_seats': total_seats,
-            'occupancy_percent': round((occupied_seats / total_seats * 100) if total_seats > 0 else 0, 1),
+            'occupancy_percent': occupancy,
         })
 
-    # صفحه‌بندی
+        total_sold += sold_count
+        total_vip += vip_count
+        total_revenue += total_revenue_match
+
     paginator = Paginator(match_data, 10)
+    page = request.GET.get('page', 1)
     try:
         page_obj = paginator.page(page)
-    except:
+    except (PageNotAnInteger, EmptyPage):
         page_obj = paginator.page(1)
 
-    # لیست همه مسابقات برای dropdown
     all_matches = Match.objects.all().order_by('-date_time')
+    stadiums = Stadium.objects.all().order_by('name')
+    sport_choices = getattr(Match, 'SPORT_CHOICES', [])
 
     context = {
         'page_obj': page_obj,
-        'selected_match_id': int(match_id) if match_id else None,
         'all_matches': all_matches,
-        'total_matches': matches.count(),
-        'total_revenue_all': sum(item['total_revenue'] for item in match_data),
-        'total_sold_all': sum(item['sold_count'] for item in match_data),
-        'total_vip_all': sum(item['vip_count'] for item in match_data),
+        'stadiums': stadiums,
+        'sport_choices': sport_choices,
+        'selected_sport': sport_filter,
+        'selected_stadium': int(stadium_filter) if stadium_filter else None,
+        'selected_match_id': int(match_filter) if match_filter else None,
+        'total_matches': matches_qs.count(),
+        'total_sold_all': total_sold,
+        'total_vip_all': total_vip,
+        'total_revenue_all': total_revenue,
     }
     return render(request, 'matches/admin_match_list.html', context)
 
 
 @staff_member_required
 def admin_match_detail(request, match_id):
-    """صفحه جزئیات مسابقه برای ادمین (مشابه پنل ادمین)"""
+    """صفحه جزئیات مسابقه برای ادمین با نمایش بلوک‌های ورزشگاه"""
     match = get_object_or_404(Match, id=match_id)
 
-    # دریافت بلیط‌ها بر اساس وضعیت
     sold_tickets_qs = Ticket.objects.filter(match=match, status='paid').order_by('-purchase_date')
-    vip_tickets_qs = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued']).order_by(
-        '-purchase_date')
+    vip_tickets_qs = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued']).order_by('-purchase_date')
 
-    # محاسبه درآمد
     sold_total = sum(
         t.seat.row.block.price for t in sold_tickets_qs
         if t.seat and t.seat.row and t.seat.row.block
@@ -940,7 +1032,6 @@ def admin_match_detail(request, match_id):
         if t.seat and t.seat.row and t.seat.row.block
     )
 
-    # صفحه‌بندی برای بلیط‌های فروخته‌شده
     per_page = 10
     sold_page_num = request.GET.get('sold_page', 1)
     vip_page_num = request.GET.get('vip_page', 1)
@@ -954,26 +1045,35 @@ def admin_match_detail(request, match_id):
     vip_paginator = Paginator(vip_tickets_qs, per_page)
     vip_page = vip_paginator.get_page(vip_page_num)
 
-    # آمار صندلی‌ها
-    match_seats = MatchSeat.objects.filter(match=match)
-    total_match_seats = match_seats.count()
-    occupied = match_seats.filter(is_available=False).count()
-    available = match_seats.filter(is_available=True).count()
+    total_match_seats = Seat.objects.filter(
+        row__block__stadium=match.stadium,
+        row__block__is_active=True,
+        row__is_active=True
+    ).count()
 
-    # آمار بلوک‌ها
-    blocks = Block.objects.filter(is_active=True).order_by('order')
-    block_stats = []
+    occupied = MatchSeat.objects.filter(match=match, is_available=False).count()
+    available = total_match_seats - occupied
+    occupancy_percent = round((occupied / total_match_seats * 100) if total_match_seats > 0 else 0, 1)
+
+    blocks = Block.objects.filter(stadium=match.stadium, is_active=True).order_by('order')
+    blocks_data = []
     for block in blocks:
-        block_seats = MatchSeat.objects.filter(match=match, seat__row__block=block)
-        block_total = block_seats.count()
-        block_occupied = block_seats.filter(is_available=False).count()
-        block_available = block_total - block_occupied
-        block_stats.append({
+        total_seats = Seat.objects.filter(row__block=block).count()
+        occupied_seats = MatchSeat.objects.filter(
+            match=match,
+            seat__row__block=block,
+            is_available=False
+        ).count()
+        available_seats = total_seats - occupied_seats
+        occupancy = round((occupied_seats / total_seats * 100) if total_seats > 0 else 0, 1)
+
+        blocks_data.append({
             'block': block,
-            'total': block_total,
-            'occupied': block_occupied,
-            'available': block_available,
-            'occupancy': round((block_occupied / block_total * 100) if block_total > 0 else 0, 1),
+            'total_seats': total_seats,
+            'occupied_seats': occupied_seats,
+            'available_seats': available_seats,
+            'occupancy': occupancy,
+            'row_count': Row.objects.filter(block=block, is_active=True).count(),
         })
 
     context = {
@@ -989,8 +1089,8 @@ def admin_match_detail(request, match_id):
         'total_match_seats': total_match_seats,
         'occupied': occupied,
         'available': available,
-        'occupancy_percent': round((occupied / total_match_seats * 100) if total_match_seats > 0 else 0, 1),
-        'block_stats': block_stats,
+        'occupancy_percent': occupancy_percent,
+        'blocks_data': blocks_data,
         'current_sold_page': sold_page.number,
         'current_vip_page': vip_page.number,
         'sold_page_range': sold_paginator.page_range,
@@ -1007,20 +1107,29 @@ def admin_match_detail(request, match_id):
 
 @staff_member_required
 def admin_block_list(request):
-    """مدیریت بلوک‌ها با قابلیت انتخاب ورزشگاه"""
+    match_id = request.GET.get('match_id')
     stadium_id = request.GET.get('stadium_id')
+
+    selected_match = None
     selected_stadium = None
     blocks = Block.objects.filter(is_active=True).order_by('order')
 
-    if stadium_id:
+    if match_id:
+        selected_match = get_object_or_404(Match, id=match_id)
+        selected_stadium = selected_match.stadium
+        blocks = blocks.filter(stadium=selected_stadium)
+    elif stadium_id:
         selected_stadium = get_object_or_404(Stadium, id=stadium_id)
         blocks = blocks.filter(stadium=selected_stadium)
 
+    matches = Match.objects.filter(is_active=True).order_by('-date_time')
     stadiums = Stadium.objects.all().order_by('name')
 
     context = {
         'blocks': blocks,
+        'matches': matches,
         'stadiums': stadiums,
+        'selected_match': selected_match,
         'selected_stadium': selected_stadium,
     }
     return render(request, 'matches/admin_block_list.html', context)
@@ -1028,7 +1137,6 @@ def admin_block_list(request):
 
 @staff_member_required
 def admin_block_edit(request, block_id=None):
-    """ایجاد یا ویرایش بلوک"""
     block = None
     if block_id:
         block = get_object_or_404(Block, id=block_id)
@@ -1049,7 +1157,6 @@ def admin_block_edit(request, block_id=None):
 
 @staff_member_required
 def admin_block_delete(request, block_id):
-    """حذف بلوک"""
     block = get_object_or_404(Block, id=block_id)
     if request.method == 'POST':
         block_name = block.name
@@ -1059,13 +1166,31 @@ def admin_block_delete(request, block_id):
     return render(request, 'matches/admin_block_confirm_delete.html', {'block': block})
 
 
+@staff_member_required
+def toggle_block_status(request, block_id):
+    block = get_object_or_404(Block, id=block_id)
+    block.is_active = not block.is_active
+    block.save()
+    status = 'فعال' if block.is_active else 'غیرفعال'
+    messages.success(request, f'بلوک "{block.name}" {status} شد.')
+    return redirect('matches:admin_block_list')
+
+
+@staff_member_required
+def toggle_seat_status(request, seat_id):
+    seat = get_object_or_404(Seat, id=seat_id)
+    seat.is_available = not seat.is_available
+    seat.save()
+    messages.success(request, f'وضعیت صندلی {seat.number} در ردیف {seat.row.number} تغییر کرد.')
+    return redirect('matches:manage_block_seats', block_id=seat.row.block.id)
+
+
 # ============================================================
 #  مدیریت مسابقات (فقط ادمین)
 # ============================================================
 
 @staff_member_required
 def admin_match_create(request):
-    """ایجاد مسابقه جدید"""
     if request.method == 'POST':
         form = MatchForm(request.POST, request.FILES)
         if form.is_valid():
@@ -1084,7 +1209,6 @@ def admin_match_create(request):
 
 @staff_member_required
 def admin_match_edit(request, match_id):
-    """ویرایش مسابقه"""
     match = get_object_or_404(Match, id=match_id)
 
     if request.method == 'POST':
@@ -1103,7 +1227,6 @@ def admin_match_edit(request, match_id):
 
 @staff_member_required
 def admin_match_delete(request, match_id):
-    """حذف مسابقه"""
     match = get_object_or_404(Match, id=match_id)
     if request.method == 'POST':
         match_name = f"{match.home_team} vs {match.away_team}"
@@ -1116,17 +1239,16 @@ def admin_match_delete(request, match_id):
 # ============================================================
 #  مدیریت ورزشگاه‌ها (فقط ادمین)
 # ============================================================
+
 @staff_member_required
 def admin_stadium_list(request):
     stadiums = Stadium.objects.all().order_by('name')
-
-    # آمار کلی
     total_blocks = Block.objects.filter(is_active=True).count()
     total_seats = Seat.objects.filter(is_available=True).count()
     total_matches = Match.objects.filter(is_active=True).count()
 
     context = {
-        'stadiums': stadiums,  # ← کلید اصلی
+        'stadiums': stadiums,
         'total_blocks': total_blocks,
         'total_seats': total_seats,
         'total_matches': total_matches,
@@ -1136,7 +1258,6 @@ def admin_stadium_list(request):
 
 @staff_member_required
 def admin_stadium_create(request):
-    """ایجاد ورزشگاه جدید"""
     if request.method == 'POST':
         form = StadiumForm(request.POST)
         if form.is_valid():
@@ -1153,7 +1274,6 @@ def admin_stadium_create(request):
 
 @staff_member_required
 def admin_stadium_edit(request, stadium_id):
-    """ویرایش ورزشگاه"""
     stadium = get_object_or_404(Stadium, id=stadium_id)
 
     if request.method == 'POST':
@@ -1172,7 +1292,6 @@ def admin_stadium_edit(request, stadium_id):
 
 @staff_member_required
 def admin_stadium_delete(request, stadium_id):
-    """حذف ورزشگاه"""
     stadium = get_object_or_404(Stadium, id=stadium_id)
     if request.method == 'POST':
         stadium_name = stadium.name
@@ -1185,15 +1304,9 @@ def admin_stadium_delete(request, stadium_id):
 
 @staff_member_required
 def admin_stadium_configure(request, stadium_id=None):
-    """
-    صفحه پیکربندی ورزشگاه:
-    - ایجاد ورزشگاه جدید با ساختار کامل (بلوک‌ها، ردیف‌ها، صندلی‌ها)
-    - ویرایش ساختار ورزشگاه موجود
-    """
     stadium = None
     blocks_data = []
 
-    # ===== دریافت داده‌های ورزشگاه برای نمایش در فرم (GET) =====
     if stadium_id:
         stadium = get_object_or_404(Stadium, id=stadium_id)
         blocks = Block.objects.filter(stadium=stadium, is_active=True).order_by('order')
@@ -1203,7 +1316,6 @@ def admin_stadium_configure(request, stadium_id=None):
             patterns = []
 
             if rows.exists():
-                # استخراج محدوده ردیف‌های پیوسته
                 row_numbers = list(rows.values_list('number', flat=True))
                 ranges = []
                 start = row_numbers[0]
@@ -1217,7 +1329,6 @@ def admin_stadium_configure(request, stadium_id=None):
                         start = end = num
                 ranges.append(f"{start}-{end}" if start != end else str(start))
 
-                # دریافت بازه صندلی‌ها از یک ردیف نمونه
                 sample_row = rows.first()
                 seats = Seat.objects.filter(row=sample_row).order_by('number')
                 if seats.exists():
@@ -1246,13 +1357,11 @@ def admin_stadium_configure(request, stadium_id=None):
                 'patterns': patterns,
             })
 
-    # ===== پردازش درخواست POST (ایجاد/ویرایش) =====
     if request.method == 'POST':
         stadium_name = request.POST.get('stadium_name', '').strip()
         stadium_capacity = request.POST.get('stadium_capacity', 0)
         block_count = request.POST.get('block_count', 0)
 
-        # اعتبارسنجی نام ورزشگاه
         if not stadium_name:
             messages.error(request, 'لطفاً نام ورزشگاه را وارد کنید.')
             return render(request, 'matches/admin_stadium_configure.html', {
@@ -1260,13 +1369,11 @@ def admin_stadium_configure(request, stadium_id=None):
                 'blocks_data': blocks_data,
             })
 
-        # اعتبارسنجی ظرفیت
         try:
             stadium_capacity = int(stadium_capacity) if stadium_capacity else 0
         except ValueError:
             stadium_capacity = 0
 
-        # اعتبارسنجی تعداد بلوک‌ها
         try:
             block_count = int(block_count) if block_count else 0
         except ValueError:
@@ -1279,15 +1386,12 @@ def admin_stadium_configure(request, stadium_id=None):
                 'blocks_data': blocks_data,
             })
 
-        # ===== شروع تراکنش =====
         with transaction.atomic():
             try:
-                # ایجاد یا به‌روزرسانی ورزشگاه
                 if stadium:
                     stadium.name = stadium_name
                     stadium.capacity = stadium_capacity
                     stadium.save()
-                    # حذف بلوک‌های قدیمی (برای بازسازی کامل)
                     Block.objects.filter(stadium=stadium).delete()
                     messages.info(request, f'بلوک‌های قدیمی ورزشگاه "{stadium.name}" حذف شدند.')
                 else:
@@ -1296,7 +1400,6 @@ def admin_stadium_configure(request, stadium_id=None):
                         capacity=stadium_capacity
                     )
 
-                # ===== ایجاد بلوک‌های جدید =====
                 for i in range(1, block_count + 1):
                     block_name = request.POST.get(f'block_name_{i}', '').strip()
                     if not block_name:
@@ -1314,7 +1417,6 @@ def admin_stadium_configure(request, stadium_id=None):
                     is_vip = request.POST.get(f'block_is_vip_{i}') == 'on'
                     is_class1 = request.POST.get(f'block_is_class1_{i}') == 'on'
 
-                    # ایجاد بلوک
                     block = Block.objects.create(
                         stadium=stadium,
                         name=block_name,
@@ -1326,7 +1428,6 @@ def admin_stadium_configure(request, stadium_id=None):
                         order=i,
                     )
 
-                    # ===== ایجاد ردیف‌ها بر اساس الگوها =====
                     pattern_count = request.POST.get(f'row_pattern_count_{i}', 0)
                     try:
                         pattern_count = int(pattern_count) if pattern_count else 0
@@ -1356,7 +1457,6 @@ def admin_stadium_configure(request, stadium_id=None):
                             )
                             continue
 
-                        # پردازش محدوده ردیف‌ها
                         if '-' in rows_range:
                             try:
                                 start_row, end_row = map(int, rows_range.split('-'))
@@ -1376,7 +1476,6 @@ def admin_stadium_configure(request, stadium_id=None):
                                 )
                                 continue
 
-                        # ایجاد ردیف‌ها و صندلی‌ها
                         for row_num in range(start_row, end_row + 1):
                             row = Row.objects.create(
                                 block=block,
@@ -1408,7 +1507,6 @@ def admin_stadium_configure(request, stadium_id=None):
                     'blocks_data': blocks_data,
                 })
 
-    # ===== رندر صفحه (GET) =====
     context = {
         'stadium': stadium,
         'blocks_data': blocks_data,

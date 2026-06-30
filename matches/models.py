@@ -9,6 +9,7 @@ from django.utils import timezone
 #         ('vip', 'VIP'),
 #         ('women', 'بانوان'),
 #     )
+
 class Stadium(models.Model):
     name = models.CharField(max_length=100, verbose_name="نام ورزشگاه")
     capacity = models.IntegerField(verbose_name="ظرفیت کل")
@@ -130,6 +131,21 @@ class Match(models.Model):
     created_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True)
     total_capacity = models.IntegerField(default=0, verbose_name="ظرفیت کل")
     sold_tickets = models.IntegerField(default=0, verbose_name="تعداد بلیط‌های فروخته‌شده")
+    # ===== انتخاب‌های رشته ورزشی =====
+    SPORT_CHOICES = (
+        ('football', 'فوتبال'),
+        ('volleyball', 'والیبال'),
+        ('handball', 'هندبال'),
+        ('basketball', 'بسکتبال'),
+        ('futsal', 'فوتسال'),
+        ('other', 'سایر'),
+    )
+    sport_type = models.CharField(
+        max_length=20,
+        choices=SPORT_CHOICES,
+        default='football',
+        verbose_name="رشته ورزشی"
+    )
 
     @property
     def available_capacity(self):

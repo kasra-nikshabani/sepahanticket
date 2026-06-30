@@ -48,11 +48,13 @@ class VIPAssignedTicketInline(admin.TabularInline):
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
     change_form_template = 'admin/matches/change_form_with_pagination.html'
-    list_display = ('home_team', 'away_team', 'date_time', 'stadium', 'is_active', 'report_link')
-    list_filter = ('is_active', 'date_time')
-    search_fields = ('home_team', 'away_team')
+    list_display = ('sport_type', 'home_team', 'away_team', 'date_time', 'stadium', 'is_active', 'report_link')
+    list_filter = ('sport_type', 'is_active', 'date_time')
+    search_fields = ('home_team', 'away_team','sport_type')
     inlines = []
     readonly_fields = ('created_by',)
+    fields = ('sport_type', 'home_team', 'away_team', 'home_team_logo', 'away_team_logo', 'stadium', 'date_time',
+              'is_active', 'created_by')
 
     def report_link(self, obj):
         url = reverse('admin:match_report', args=[obj.id])
