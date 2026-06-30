@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if is_edit %}ویرایش{% else %}ایجاد{% endif %} کد تخفیف{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        {% if is_edit %}
+                            <i class="fas fa-edit"></i> ویرایش کد تخفیف
+                        {% else %}
+                            <i class="fas fa-plus"></i> ایجاد کد تخفیف جدید
+                        {% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if is_edit %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            در حال ویرایش کد تخفیف <strong>{{ discount.code }}</strong>
+                        </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="id_code" class="form-label">کد تخفیف</label>
+                            {{ form.code }}
+                            <small class="text-muted">کد را با حروف بزرگ انگلیسی وارد کنید (مثلاً SUMMER20).</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_block" class="form-label">بلوک (اختیاری)</label>
+                            {{ form.block }}
+                            <small class="text-muted">در صورت انتخاب بلوک، تخفیف فقط برای آن بلوک معتبر است.</small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_discount_percent" class="form-label">درصد تخفیف</label>
+                                {{ form.discount_percent }}
+                                <small class="text-muted">عدد بین ۰ تا ۱۰۰</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_max_uses" class="form-label">حداکثر استفاده</label>
+                                {{ form.max_uses }}
+                                <small class="text-muted">تعداد دفعاتی که این کد قابل استفاده است.</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_expires_at" class="form-label">تاریخ انقضا (اختیاری)</label>
+                            {{ form.expires_at }}
+                            <small class="text-muted">در صورت خالی بودن، کد تاریخ انقضا ندارد.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="id_is_active">فعال</label>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-3">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-save"></i> {% if is_edit %}ذخیره تغییرات{% else %}ایجاد{% endif %}
+                            </button>
+                            <a href="{% url 'tickets:admin_discount_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i> بازگشت به لیست
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,94 @@
+<!-- templates/accounts/edit_profile.html -->
+{% extends 'base.html' %}
+
+{% block title %}ویرایش پروفایل{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="fas fa-user-cog"></i> پنل کاربری</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="{% url 'accounts:profile' %}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-id-card"></i> اطلاعات کاربری
+                </a>
+                <a href="{% url 'tickets:user_tickets' %}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-ticket-alt"></i> بلیط‌های من
+                </a>
+                <a href="{% url 'accounts:edit_profile' %}" class="list-group-item list-group-item-action active">
+                    <i class="fas fa-edit"></i> ویرایش پروفایل
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4>ویرایش اطلاعات کاربری</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">نام کاربری</label>
+                            <input type="text" class="form-control" value="{{ user.username }}" disabled>
+                            <small class="text-muted">نام کاربری قابل تغییر نیست.</small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">کد ملی</label>
+                            <input type="text" class="form-control" value="{{ user.national_code }}" disabled>
+                            <small class="text-muted">کد ملی قابل تغییر نیست.</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label">نام و نام خانوادگی</label>
+                        <input type="text" name="full_name" id="full_name" class="form-control"
+                               value="{{ user.get_full_name }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="phone_number" class="form-label">شماره موبایل</label>
+                        <input type="text" name="phone_number" id="phone_number" class="form-control"
+                               value="{{ user.phone_number }}" required>
+                        <small class="text-muted">شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">ایمیل (اختیاری)</label>
+                        <input type="email" name="email" id="email" class="form-control"
+                               value="{{ user.email }}">
+                    </div>
+
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> ذخیره تغییرات
+                        </button>
+                        <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> انصراف
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // اعتبارسنجی سمت کلاینت برای شماره موبایل
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const phone = document.getElementById('phone_number').value;
+        const phoneRegex = /^09\d{9}$/;
+        if (!phoneRegex.test(phone)) {
+            e.preventDefault();
+            alert('شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد.');
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,43 @@
+<!-- templates/includes/vip_sidebar.html -->
+<aside class="admin-sidebar">
+    <nav class="sidebar-nav">
+        <ul class="nav flex-column">
+
+            <!-- ===== دسته‌بندی: صدور بلیط ===== -->
+            <li class="nav-header">صدور بلیط</li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'tickets:vip_dashboard' %}">
+                    <i class="fas fa-ticket-alt"></i> صدور بلیط
+                </a>
+            </li>
+
+            <!-- ===== دسته‌بندی: بلیط‌های من ===== -->
+            <li class="nav-header">بلیط‌ها</li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'tickets:user_tickets' %}">
+                    <i class="fas fa-list"></i> بلیط‌های من
+                </a>
+            </li>
+            <li class="nav-header">پشتیبانی</li>
+{#            <li class="nav-item">#}
+{#                <a class="nav-link" href="{% url 'help' %}">#}
+{#                    <i class="fas fa-question-circle"></i> راهنما#}
+{#                </a>#}
+{#            </li>#}
+
+            <!-- ===== بخش کاربری ===== -->
+            <li class="nav-header">کاربری</li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:profile' %}">
+                    <i class="fas fa-user"></i> {{ user.username }}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:logout' %}">
+                    <i class="fas fa-sign-out-alt"></i> خروج
+                </a>
+            </li>
+
+        </ul>
+    </nav>
+</aside>

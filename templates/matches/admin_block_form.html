@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}{% if block %}ویرایش{% else %}ایجاد{% endif %} بلوک{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        {% if block %}
+                            <i class="fas fa-edit"></i> ویرایش بلوک "{{ block.name }}"
+                        {% else %}
+                            <i class="fas fa-plus"></i> ایجاد بلوک جدید
+                        {% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_name" class="form-label">نام بلوک</label>
+                                {{ form.name }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_order" class="form-label">ترتیب</label>
+                                {{ form.order }}
+                                <small class="text-muted">عدد کوچک‌تر = نمایش در ابتدا</small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_zone_type" class="form-label">نوع جایگاه</label>
+                                {{ form.zone_type }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_price" class="form-label">قیمت (تومان)</label>
+                                {{ form.price }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check">
+                                    {{ form.is_vip }}
+                                    <label class="form-check-label" for="id_is_vip">VIP</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check">
+                                    {{ form.is_class1 }}
+                                    <label class="form-check-label" for="id_is_class1">کلاس ۱</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="id_is_active">فعال</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-3">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-save"></i> ذخیره
+                            </button>
+                            <a href="{% url 'matches:admin_block_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i> بازگشت
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

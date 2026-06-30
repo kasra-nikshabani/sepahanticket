@@ -1,0 +1,41 @@
+{% extends "admin/change_form.html" %}
+
+{% block form_top %}
+    {{ block.super }}
+    {% if match_id %}
+        <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; background: #f9f9f9; border-radius: 6px;">
+            <h3 style="margin-top: 0;">📊 خلاصه مالی</h3>
+            <div style="display: flex; gap: 40px; flex-wrap: wrap; align-items: center;">
+                <div style="background: #e8f5e9; padding: 8px 16px; border-radius: 6px; border-right: 4px solid #28a745;">
+                    <strong>جمع بلیط‌های فروخته‌شده:</strong>
+                    <span style="color: #28a745; font-weight: bold; font-size: 1.1em;">{{ sold_total|default:0|floatformat:0 }}</span> تومان
+                </div>
+                <div style="background: #fff8e1; padding: 8px 16px; border-radius: 6px; border-right: 4px solid #b8860b;">
+                    <strong>جمع بلیط‌های تخصیص‌یافته به VIP:</strong>
+                    <span style="color: #b8860b; font-weight: bold; font-size: 1.1em;">{{ vip_total|default:0|floatformat:0 }}</span> تومان
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <a href="{% url 'admin:export_tickets' match_id %}" class="button" style="background: #28a745; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: bold;">
+                        ⬇️ خروجی کامل اکسل
+                    </a>
+                    <a href="{% url 'admin:export_vip_tickets' match_id %}" class="button" style="background: #b8860b; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: bold;">
+                        ⬇️ خروجی اکسل VIP
+                    </a>
+                </div>
+            </div>
+            <div style="margin-top: 10px; display: flex; gap: 15px; flex-wrap: wrap; border-top: 1px solid #ddd; padding-top: 10px;">
+                <a href="/admin/tickets/ticket/?match__id__exact={{ match_id }}&status__exact=paid" target="_blank" class="button" style="background: #17a2b8; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: bold;">
+                    👁️ مشاهده همه بلیط‌های فروخته‌شده
+                </a>
+                <a href="/admin/tickets/ticket/?match__id__exact={{ match_id }}&status__in=admin_assigned,vip_issued" target="_blank" class="button" style="background: #b8860b; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: bold;">
+                    👁️ مشاهده همه بلیط‌های VIP
+                </a>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block after_related_objects %}
+    {{ block.super }}
+    <!-- در صورت نیاز می‌توانید محتوای دیگری در پایین اضافه کنید -->
+{% endblock %}

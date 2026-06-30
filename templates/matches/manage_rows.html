@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}مدیریت بلوک‌ها{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    .status-active { background: #d4edda; color: #155724; }
+    .status-inactive { background: #f8d7da; color: #721c24; }
+    .status-partial { background: #fff3cd; color: #856404; }
+    .status-no_seats { background: #e2e3e5; color: #383d41; }
+    .action-buttons {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+    }
+    .filter-form {
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>مدیریت بلوک‌ها</h2>
+
+    <div class="filter-form">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <select name="match_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">انتخاب مسابقه...</option>
+                    {% for m in matches %}
+                        <option value="{{ m.id }}" {% if selected_match_id == m.id %}selected{% endif %}>
+                            {{ m.home_team }} vs {{ m.away_team }} - {{ m.date_time|date:"Y/m/d H:i" }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary">نمایش</button>
+            </div>
+        </form>
+    </div>
+
+    {% if selected_match %}
+        <p class="mb-3">مسابقه انتخاب‌شده: <strong>{{ selected_match.home_team }} vs {{ selected_match.away_team }}</strong></p>
+    {% endif %}
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>نام بلوک</th>
+                    <th>کل صندلی‌ها</th>
+                    <th>موجود</th>
+                    <th>وضعیت</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in block_status %}
+                <tr>
+                    <td><strong>{{ item.block.name }}</strong></td>
+                    <td>{{ item.total }}</td>
+                    <td>{{ item.available }}</td>
+                    <td>
+                        {% if item.status == 'active' %}
+                            <span class="status-badge status-active">فعال</span>
+                        {% elif item.status == 'inactive' %}
+                            <span class="status-badge status-inactive">غیرفعال</span>
+                        {% elif item.status == 'partial' %}
+                            <span class="status-badge status-partial">بخشی</span>
+                        {% else %}
+                            <span class="status-badge status-no_seats">بدون صندلی</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <!-- لینک به manage_block_seats با block_id -->
+                            <a href="{% url 'matches:manage_block_seats' item.block.id %}?match_id={{ selected_match.id }}" class="btn btn-info btn-sm">مدیریت صندلی‌ها</a>
+
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="block_id" value="{{ item.block.id }}">
+                                <input type="hidden" name="match_id" value="{{ selected_match.id }}">
+                                {% if item.status == 'active' or item.status == 'partial' %}
+                                    <button type="submit" name="action" value="deactivate" class="btn btn-danger btn-sm">غیرفعال کردن</button>
+                                {% else %}
+                                    <button type="submit" name="action" value="activate" class="btn btn-success btn-sm">فعال کردن</button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">هیچ بلوکی یافت نشد.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,705 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if stadium %}
+        پیکربندی ورزشگاه "{{ stadium.name }}"
+    {% else %}
+        ایجاد ورزشگاه جدید با پیکربندی کامل
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .config-page {
+            padding: 20px 0;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .page-header h2 {
+            font-weight: 700;
+            color: #1A1A2E;
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .page-header h2 i {
+            color: #D4AF37;
+            margin-left: 12px;
+        }
+
+        .config-section {
+            background: #fff;
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid #e8eaed;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+        }
+
+        .config-section .section-title {
+            font-weight: 700;
+            color: #1A1A2E;
+            font-size: 18px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .config-section .section-title i {
+            color: #D4AF37;
+        }
+
+        /* ===== بلوک کارت ===== */
+        .block-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            border: 2px solid #e8eaed;
+            transition: all 0.3s ease;
+        }
+
+        .block-card:hover {
+            border-color: #D4AF37;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.08);
+        }
+
+        .block-card .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .block-card .block-header .block-title {
+            font-weight: 700;
+            font-size: 16px;
+            color: #1A1A2E;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .block-card .block-header .block-title .badge-id {
+            background: #e8eaed;
+            padding: 2px 12px;
+            border-radius: 50px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .btn-remove-block {
+            background: none;
+            border: none;
+            color: #dc3545;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-remove-block:hover {
+            background: #f8d7da;
+            transform: scale(1.1);
+        }
+
+        .block-card .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .block-card .form-row .form-group {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .block-card .form-row .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6c757d;
+            margin-bottom: 3px;
+        }
+
+        .block-card .form-row .form-group input,
+        .block-card .form-row .form-group select {
+            width: 100%;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            background: #fff;
+        }
+
+        .block-card .form-row .form-group input:focus,
+        .block-card .form-row .form-group select:focus {
+            border-color: #D4AF37;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+        }
+
+        .block-card .form-row .form-group .checkbox-group {
+            display: flex;
+            gap: 16px;
+            padding-top: 4px;
+        }
+
+        .block-card .form-row .form-group .checkbox-group label {
+            font-weight: 400;
+            font-size: 13px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .block-card .form-row .form-group .checkbox-group input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #D4AF37;
+        }
+
+        /* ===== الگوی ردیف‌ها ===== */
+        .pattern-section {
+            margin-top: 10px;
+            padding-top: 12px;
+            border-top: 1px dashed #dee2e6;
+        }
+
+        .pattern-section .pattern-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .pattern-section .pattern-header .pattern-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .btn-add-pattern {
+            background: transparent;
+            border: 2px solid #D4AF37;
+            color: #D4AF37;
+            padding: 4px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-add-pattern:hover {
+            background: #D4AF37;
+            color: #fff;
+        }
+
+        .pattern-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            background: #fff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            border: 1px solid #e8eaed;
+        }
+
+        .pattern-row .p-group {
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .pattern-row .p-group label {
+            display: block;
+            font-size: 11px;
+            color: #6c757d;
+            margin-bottom: 1px;
+        }
+
+        .pattern-row .p-group input {
+            width: 100%;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #ced4da;
+            font-size: 13px;
+        }
+
+        .btn-remove-pattern {
+            background: none;
+            border: none;
+            color: #dc3545;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .btn-remove-pattern:hover {
+            background: #f8d7da;
+        }
+
+        /* ===== دکمه‌ها ===== */
+        .btn-add-block {
+            background: #28a745;
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-add-block:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-submit {
+            background: #D4AF37;
+            color: #1A1A2E;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-submit:hover {
+            background: #B8960F;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-back {
+            background: #6c757d;
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-back:hover {
+            background: #5a6268;
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        /* ===== وضعیت خالی ===== */
+        .empty-blocks {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+
+        .empty-blocks i {
+            font-size: 48px;
+            color: #dee2e6;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        /* ===== استعلام ===== */
+        .help-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+
+        @media (max-width: 768px) {
+            .block-card .form-row .form-group {
+                min-width: 100%;
+            }
+
+            .pattern-row .p-group {
+                min-width: 45%;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="config-page">
+
+        <!-- ===== هدر ===== -->
+        <div class="page-header">
+            <h2>
+                <i class="fas fa-cog"></i>
+                {% if stadium %}
+                    پیکربندی ورزشگاه "{{ stadium.name }}"
+                {% else %}
+                    ایجاد ورزشگاه جدید با پیکربندی کامل
+                {% endif %}
+            </h2>
+            <a href="{% url 'matches:admin_stadium_list' %}" class="btn-back">
+                <i class="fas fa-arrow-right"></i> بازگشت
+            </a>
+        </div>
+
+        <form method="post" id="configForm">
+            {% csrf_token %}
+
+            <!-- ============================================================
+            اطلاعات پایه ورزشگاه
+            ============================================================ -->
+            <div class="config-section">
+                <div class="section-title"><i class="fas fa-info-circle"></i> اطلاعات پایه</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">نام ورزشگاه <span class="text-danger">*</span></label>
+                        <input type="text" name="stadium_name" class="form-control"
+                               value="{{ stadium.name|default:'' }}" required
+                               placeholder="مثال: ورزشگاه نقش جهان">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">ظرفیت کل (تخمینی)</label>
+                        <input type="number" name="stadium_capacity" class="form-control"
+                               value="{{ stadium.capacity|default:0 }}" required
+                               placeholder="مثال: 75000">
+                        <div class="help-text">این عدد فقط برای نمایش است و بر اساس تعداد صندلی‌ها محاسبه می‌شود.</div>
+                    </div>
+                </div>
+                {% if stadium %}
+                    <div class="mt-3 alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        در حال ویرایش ورزشگاه <strong>{{ stadium.name }}</strong>.
+                        بلوک‌های موجود نمایش داده می‌شوند و می‌توانید آنها را ویرایش یا حذف کنید.
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- ============================================================
+            بلوک‌ها
+            ============================================================ -->
+            <!-- ============================================================
+بلوک‌ها
+============================================================ -->
+            <div class="config-section">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="section-title mb-0"><i class="fas fa-layer-group"></i> بلوک‌ها</div>
+                    <button type="button" class="btn-add-block" onclick="addBlock()">
+                        <i class="fas fa-plus"></i> افزودن بلوک
+                    </button>
+                </div>
+                <div class="help-text mt-2">هر بلوک شامل مجموعه‌ای از ردیف‌ها با الگوی صندلی مشخص است.</div>
+
+                <div id="blocksContainer" class="mt-3">
+                    {% if blocks_data %}
+                        {% for block_data in blocks_data %}
+                            {% with "block_data_"|add:forloop.counter as script_id %}
+                                {{ block_data|json_script:script_id }}
+                            {% endwith %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <input type="hidden" name="block_count" id="blockCount" value="0">
+                <input type="hidden" name="is_edit" value="{% if stadium %}true{% else %}false{% endif %}">
+            </div>
+
+            <!-- ============================================================
+            دکمه ارسال
+            ============================================================ -->
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-save"></i>
+                    {% if stadium %}ذخیره تغییرات{% else %}ایجاد ورزشگاه{% endif %}
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
+    <!-- ============================================================
+    جاوااسکریپت: مدیریت پویای بلوک‌ها و الگوها
+    ============================================================ -->
+    <script>
+        let blockCounter = 0;
+
+        // ===== افزودن بلوک جدید =====
+        function addBlock() {
+            blockCounter++;
+            const container = document.getElementById('blocksContainer');
+
+            // حذف پیام خالی اگر وجود داشت
+            const emptyMsg = container.querySelector('.empty-blocks');
+            if (emptyMsg) emptyMsg.remove();
+
+            const blockHtml = `
+            <div class="block-card" id="block_${blockCounter}">
+                <div class="block-header">
+                    <div class="block-title">
+                        <span>بلوک جدید</span>
+                        <span class="badge-id">#${blockCounter}</span>
+                    </div>
+                    <button type="button" class="btn-remove-block" onclick="removeBlock(${blockCounter})" title="حذف بلوک">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>نام بلوک <span class="text-danger">*</span></label>
+                        <input type="text" name="block_name_${blockCounter}" class="form-control"
+                               placeholder="مثلاً بلوک ۱" required>
+                    </div>
+                    <div class="form-group">
+                        <label>نوع جایگاه</label>
+                        <select name="block_zone_${blockCounter}" class="form-select">
+                            <option value="home">میزبان</option>
+                            <option value="away">میهمان</option>
+                            <option value="class1">کلاس ۱</option>
+                            <option value="women">بانوان</option>
+                            <option value="vip">VIP</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>قیمت (تومان) <span class="text-danger">*</span></label>
+                        <input type="number" name="block_price_${blockCounter}" class="form-control"
+                               placeholder="۵۰۰۰۰" value="50000" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ویژگی‌ها</label>
+                        <div class="checkbox-group">
+                            <label>
+                                <input type="checkbox" name="block_is_vip_${blockCounter}"> VIP
+                            </label>
+                            <label>
+                                <input type="checkbox" name="block_is_class1_${blockCounter}"> کلاس ۱
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pattern-section">
+                    <div class="pattern-header">
+                        <span class="pattern-title"><i class="fas fa-rows"></i> الگوهای ردیف‌ها و صندلی‌ها</span>
+                        <button type="button" class="btn-add-pattern" onclick="addPattern(${blockCounter})">
+                            <i class="fas fa-plus"></i> افزودن الگو
+                        </button>
+                    </div>
+                    <div id="patterns_${blockCounter}" class="mt-2">
+                        <!-- الگوها توسط جاوااسکریپت اضافه می‌شوند -->
+                    </div>
+                    <input type="hidden" name="row_pattern_count_${blockCounter}" id="patternCount_${blockCounter}" value="0">
+                    <div class="help-text mt-1">
+                        <i class="fas fa-info-circle"></i>
+                        هر الگو یک محدوده ردیف (مثلاً <code>1-3</code> یا <code>4-14</code>) و شماره صندلی‌ها را مشخص می‌کند.
+                        برای ردیف‌های ۱۶ تا ۱۸ که دو بازه مجزا دارند، دو الگوی جداگانه تعریف کنید.
+                    </div>
+                </div>
+            </div>
+        `;
+
+            container.insertAdjacentHTML('beforeend', blockHtml);
+            document.getElementById('blockCount').value = blockCounter;
+
+            // به‌طور خودکار یک الگو برای بلوک جدید اضافه کن
+            addPattern(blockCounter);
+        }
+
+        // ===== حذف بلوک =====
+        function removeBlock(blockId) {
+            const block = document.getElementById(`block_${blockId}`);
+            if (block && confirm('آیا از حذف این بلوک اطمینان دارید؟')) {
+                block.remove();
+                // به‌روزرسانی شمارنده
+                const container = document.getElementById('blocksContainer');
+                const remaining = container.querySelectorAll('.block-card');
+                if (remaining.length === 0) {
+                    container.innerHTML = `
+                    <div class="empty-blocks">
+                        <i class="fas fa-layer-group"></i>
+                        <p>هیچ بلوکی تعریف نشده است.</p>
+                        <button type="button" class="btn-add-block" onclick="addBlock()">
+                            <i class="fas fa-plus"></i> افزودن اولین بلوک
+                        </button>
+                    </div>
+                `;
+                }
+            }
+        }
+
+        // ===== افزودن الگوی ردیف به یک بلوک =====
+        function addPattern(blockId) {
+            const container = document.getElementById(`patterns_${blockId}`);
+            const countInput = document.getElementById(`patternCount_${blockId}`);
+            let patternIndex = parseInt(countInput.value) + 1;
+            countInput.value = patternIndex;
+
+            const patternHtml = `
+            <div class="pattern-row" id="pattern_${blockId}_${patternIndex}">
+                <div class="p-group">
+                    <label>محدوده ردیف‌ها <span class="text-danger">*</span></label>
+                    <input type="text" name="row_range_${blockId}_${patternIndex}"
+                           placeholder="مثلاً 1-3 یا 4-14" required>
+                </div>
+                <div class="p-group">
+                    <label>شماره شروع صندلی <span class="text-danger">*</span></label>
+                    <input type="number" name="seat_start_${blockId}_${patternIndex}" value="1" required>
+                </div>
+                <div class="p-group">
+                    <label>شماره پایان صندلی <span class="text-danger">*</span></label>
+                    <input type="number" name="seat_end_${blockId}_${patternIndex}" value="30" required>
+                </div>
+                <button type="button" class="btn-remove-pattern" onclick="removePattern(${blockId}, ${patternIndex})" title="حذف الگو">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+            container.insertAdjacentHTML('beforeend', patternHtml);
+        }
+
+        // ===== حذف الگوی ردیف =====
+        function removePattern(blockId, patternIndex) {
+            const pattern = document.getElementById(`pattern_${blockId}_${patternIndex}`);
+            if (pattern) {
+                pattern.remove();
+                // به‌روزرسانی تعداد الگوها
+                const container = document.getElementById(`patterns_${blockId}`);
+                const patterns = container.querySelectorAll('.pattern-row');
+                document.getElementById(`patternCount_${blockId}`).value = patterns.length;
+            }
+        }
+
+        // ===== بارگذاری داده‌های موجود (برای ویرایش ورزشگاه) =====
+        document.addEventListener('DOMContentLoaded', function () {
+            const isEdit = document.querySelector('input[name="is_edit"]')?.value === 'true';
+            if (isEdit) {
+                // بلوک‌های موجود از دیتابیس را به فرم اضافه کن
+                const blockDataScripts = document.querySelectorAll('script[id^="block_data_"]');
+                if (blockDataScripts.length > 0) {
+                    // حذف پیام خالی
+                    const container = document.getElementById('blocksContainer');
+                    const emptyMsg = container.querySelector('.empty-blocks');
+                    if (emptyMsg) emptyMsg.remove();
+
+                    blockDataScripts.forEach((script, index) => {
+                        try {
+                            const data = JSON.parse(script.textContent);
+                            blockCounter++;
+                            // ساخت بلوک با داده‌های موجود (برای ویرایش)
+                            // این بخش نیاز به تطبیق با ساختار داده‌های ارسال شده از ویو دارد
+                            // فعلاً یک بلوک نمونه با داده‌های placeholder اضافه می‌کنیم
+                            // (در عمل، داده‌ها از views.py به context ارسال می‌شوند)
+                            addBlock();
+                            // می‌توانید فیلدهای بلوک را با داده‌های موجود پر کنید
+                            // اما برای سادگی، اجازه می‌دهیم کاربر خودش ویرایش کند
+                        } catch (e) {
+                            console.error('خطا در بارگذاری داده‌های بلوک:', e);
+                        }
+                    });
+                    // اگر بلوکی وجود نداشت، یکی اضافه کن
+                    if (document.querySelectorAll('.block-card').length === 0) {
+                        addBlock();
+                    }
+                } else {
+                    // اگر داده‌ای وجود نداشت، یک بلوک پیش‌فرض اضافه کن
+                    addBlock();
+                }
+            } else {
+                // حالت ایجاد جدید: یک بلوک پیش‌فرض
+                addBlock();
+            }
+
+            // ===== اعتبارسنجی فرم قبل از ارسال =====
+            document.getElementById('configForm').addEventListener('submit', function (e) {
+                const blocks = document.querySelectorAll('.block-card');
+                if (blocks.length === 0) {
+                    e.preventDefault();
+                    alert('حداقل یک بلوک باید تعریف کنید!');
+                    return false;
+                }
+
+                // بررسی نام ورزشگاه
+                const stadiumName = document.querySelector('input[name="stadium_name"]');
+                if (!stadiumName.value.trim()) {
+                    e.preventDefault();
+                    alert('لطفاً نام ورزشگاه را وارد کنید.');
+                    stadiumName.focus();
+                    return false;
+                }
+
+                // بررسی هر بلوک
+                let hasError = false;
+                blocks.forEach((block, idx) => {
+                    const nameInput = block.querySelector('input[name^="block_name_"]');
+                    if (!nameInput || !nameInput.value.trim()) {
+                        alert(`لطفاً نام بلوک ${idx + 1} را وارد کنید.`);
+                        hasError = true;
+                        nameInput?.focus();
+                        return;
+                    }
+                    const patterns = block.querySelectorAll('.pattern-row');
+                    if (patterns.length === 0) {
+                        alert(`بلوک "${nameInput?.value || idx + 1}" حداقل باید یک الگوی ردیف داشته باشد.`);
+                        hasError = true;
+                        return;
+                    }
+                    patterns.forEach((p, pIdx) => {
+                        const range = p.querySelector('input[name^="row_range_"]');
+                        const start = p.querySelector('input[name^="seat_start_"]');
+                        const end = p.querySelector('input[name^="seat_end_"]');
+                        if (!range?.value.trim() || !start?.value || !end?.value) {
+                            alert(`الگوی ${pIdx + 1} در بلوک "${nameInput?.value || idx + 1}" کامل نیست.`);
+                            hasError = true;
+                        }
+                        if (parseInt(start?.value) > parseInt(end?.value)) {
+                            alert(`شماره شروع صندلی (${start?.value}) باید کمتر از شماره پایان (${end?.value}) باشد در الگوی ${pIdx + 1}.`);
+                            hasError = true;
+                        }
+                    });
+                });
+
+                if (hasError) {
+                    e.preventDefault();
+                    alert('لطفاً خطاها را اصلاح کنید.');
+
+                }
+            });
+        });
+    </script>
+{% endblock %}

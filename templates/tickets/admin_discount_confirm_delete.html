@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}حذف کد تخفیف{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-danger">
+                <div class="card-header bg-danger text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> تأیید حذف
+                    </h4>
+                </div>
+                <div class="card-body text-center">
+                    <h5>آیا از حذف کد تخفیف زیر اطمینان دارید؟</h5>
+                    <div class="alert alert-warning">
+                        <strong>{{ discount.code }}</strong>
+                        <br>
+                        <span class="text-muted">درصد تخفیف: {{ discount.discount_percent }}%</span>
+                        <br>
+                        <span class="text-muted">بلوک: {{ discount.block.name|default:"همه بلوک‌ها" }}</span>
+                        <br>
+                        <span class="text-muted">وضعیت: {{ discount.is_active|yesno:"فعال,غیرفعال" }}</span>
+                    </div>
+                    <p class="text-danger">⚠️ این عمل غیرقابل بازگشت است!</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> بله، حذف کن
+                            </button>
+                            <a href="{% url 'tickets:admin_discount_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i> لغو و بازگشت
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

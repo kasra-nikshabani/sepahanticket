@@ -1,0 +1,153 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    .report-container {
+      margin: 20px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .report-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #1A1A2E;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .stat-card {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      border-right: 4px solid #D4AF37;
+    }
+    .stat-card .number {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1A1A2E;
+    }
+    .stat-card .label {
+      color: #6c757d;
+      font-size: 14px;
+    }
+    .block-stats {
+      margin-top: 25px;
+    }
+    .block-stats table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .block-stats th {
+      background: #f8f9fa;
+      padding: 10px;
+      text-align: right;
+      border-bottom: 2px solid #D4AF37;
+    }
+    .block-stats td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #e8eaed;
+    }
+    .block-stats tr:hover { background: #f5f5f5; }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 15px;
+      color: #007bff;
+      text-decoration: none;
+    }
+    .back-link:hover { text-decoration: underline; }
+    .btn { 
+      display: inline-block; 
+      padding: 6px 16px; 
+      border-radius: 4px; 
+      text-decoration: none; 
+      color: #fff; 
+      margin: 0 5px;
+    }
+    .btn-success { background: #28a745; }
+    .btn-warning { background: #ffc107; color: #212529; }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+  <a href="{% url 'admin:matches_match_report' %}" class="back-link">← بازگشت به گزارش کلی</a>
+  <h1 class="report-title">📊 گزارش مسابقه: {{ match.home_team }} vs {{ match.away_team }}</h1>
+  <p><strong>ورزشگاه:</strong> {{ match.stadium.name }} | <strong>تاریخ:</strong> {{ match.date_time|date:"Y/m/d H:i" }}</p>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="number">{{ total_tickets }}</div>
+      <div class="label">جمع بلیط‌ها</div>
+    </div>
+    <div class="stat-card" style="border-color:#28a745;">
+      <div class="number">{{ total_sold }}</div>
+      <div class="label">بلیط فروخته‌شده</div>
+    </div>
+    <div class="stat-card" style="border-color:#ffc107;">
+      <div class="number">{{ total_vip }}</div>
+      <div class="label">بلیط VIP</div>
+    </div>
+    <div class="stat-card" style="border-color:#17a2b8;">
+      <div class="number">{{ total_revenue|floatformat:0|default:"0" }}</div>
+      <div class="label">درآمد کل (تومان)</div>
+    </div>
+    <div class="stat-card" style="border-color:#dc3545;">
+      <div class="number">{{ occupied }}</div>
+      <div class="label">صندلی‌های اشغال‌شده</div>
+    </div>
+    <div class="stat-card" style="border-color:#6c757d;">
+      <div class="number">{{ occupancy_percent }}%</div>
+      <div class="label">درصد اشغال صندلی‌ها</div>
+    </div>
+  </div>
+
+  {% if block_stats %}
+  <div class="block-stats">
+    <h3>جزئیات بلوک‌ها</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>نام بلوک</th>
+          <th>کل صندلی‌ها</th>
+          <th>اشغال‌شده</th>
+          <th>خالی</th>
+          <th>درصد اشغال</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for block in block_stats %}
+        <tr>
+          <td><strong>{{ block.block.name }}</strong></td>
+          <td>{{ block.total }}</td>
+          <td>{{ block.occupied }}</td>
+          <td>{{ block.available }}</td>
+          <td>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span>{{ block.occupancy }}%</span>
+              <div style="width:80px; height:6px; background:#e8eaed; border-radius:3px; overflow:hidden;">
+                <div style="width:{{ block.occupancy }}%; height:100%; background:linear-gradient(90deg, #D4AF37, #B8960F); border-radius:3px;"></div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <div style="margin-top: 30px;">
+    <h3>عملیات</h3>
+    <a href="{% url 'admin:export_tickets' match.id %}" class="btn btn-success">📥 دانلود اکسل فروش</a>
+    <a href="{% url 'admin:export_vip_tickets' match.id %}" class="btn btn-warning">📥 دانلود اکسل VIP</a>
+  </div>
+</div>
+{% endblock %}

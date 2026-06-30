@@ -1,0 +1,537 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}انتخاب بلوک{% endblock %}
+
+{% block extra_css %}
+    <style>
+        /* ===== کارت بلوک ===== */
+        .block-card {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #e8eaed;
+            padding: 16px 12px;
+            text-align: center;
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: default;
+        }
+
+        .block-card:hover {
+            border-color: #D4AF37;
+            box-shadow: 0 4px 16px rgba(212, 175, 55, 0.15);
+            transform: translateY(-3px);
+        }
+
+        .block-card .block-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1A1A2E;
+            margin-bottom: 4px;
+        }
+
+        .block-card .block-stats {
+            font-size: 0.8rem;
+            color: #5f6368;
+            margin: 6px 0 8px;
+            line-height: 1.6;
+            width: 100%;
+        }
+
+        .block-card .block-stats .available {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .block-card .block-stats .total {
+            color: #6c757d;
+        }
+
+        .block-card .block-stats .occupancy {
+            display: block;
+            font-size: 0.7rem;
+            color: #17a2b8;
+            margin-top: 2px;
+        }
+
+        .block-card .btn-select {
+            background: #D4AF37;
+            border: none;
+            color: #1A1A2E;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            padding: 6px 18px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            margin-top: 6px;
+            width: 100%;
+        }
+
+        .block-card .btn-select:hover {
+            background: #B8960F;
+            transform: scale(1.02);
+        }
+
+        /* ===== برچسب میزبان/میهمان ===== */
+        .team-badge {
+            font-size: 0.65rem;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .team-badge.team-home {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+
+        .team-badge.team-away {
+            background: #fff3e0;
+            color: #e65100;
+            border: 1px solid #ffcc80;
+        }
+
+        /* ===== برچسب VIP / کلاس ۱ ===== */
+        .block-badge {
+            font-size: 0.7rem;
+            padding: 2px 12px;
+            border-radius: 12px;
+            background: #f1f3f4;
+            color: #5f6368;
+            display: inline-block;
+            margin-bottom: 4px;
+        }
+
+        .block-badge.vip {
+            background: #D4AF37;
+            color: #1A1A2E;
+        }
+
+        .block-badge.class1 {
+            background: #1A1A2E;
+            color: #D4AF37;
+        }
+
+        .filter-info {
+            text-align: center;
+            margin-bottom: 16px;
+            font-size: 0.95rem;
+            color: #5f6368;
+        }
+
+        /* ===== تصویر استادیوم ===== */
+        .stadium-image-section {
+            margin-top: 48px;
+            padding-top: 32px;
+            border-top: 2px solid rgba(212, 175, 55, 0.3);
+            text-align: center;
+            position: relative;
+        }
+
+        .stadium-image-wrapper {
+            position: relative;
+            display: inline-block;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+            transition: all 0.4s ease;
+            border: 3px solid #D4AF37;
+            max-width: 90%;
+            margin: 0 auto;
+            cursor: pointer;
+        }
+
+        .stadium-image-wrapper:hover {
+            transform: scale(1.02);
+            box-shadow: 0 12px 60px rgba(212, 175, 55, 0.25);
+            border-color: #ffd700;
+        }
+
+        .stadium-image-wrapper img {
+            display: block;
+            width: 100%;
+            max-height: 450px;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .stadium-image-wrapper:hover img {
+            transform: scale(1.03);
+        }
+
+        .stadium-image-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, transparent 60%, rgba(26, 26, 46, 0.4) 100%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .stadium-image-placeholder {
+            background: linear-gradient(135deg, #1A1A2E, #16213E);
+            color: #D4AF37;
+            padding: 60px 20px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .stadium-image-label {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(26, 26, 46, 0.85);
+            color: #D4AF37;
+            padding: 8px 24px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            z-index: 2;
+            white-space: nowrap;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+        }
+
+        .stadium-image-label i {
+            margin-left: 8px;
+            color: #D4AF37;
+        }
+
+        .stadium-image-caption {
+            margin-top: 12px;
+            color: #6c757d;
+            font-size: 0.9rem;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+
+        .stadium-image-caption span {
+            color: #D4AF37;
+            font-weight: 600;
+        }
+
+        /* ===== لایت‌باکس ===== */
+        .lightbox-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            padding: 30px;
+            animation: lightboxFadeIn 0.3s ease;
+        }
+
+        .lightbox-overlay.show {
+            display: flex;
+        }
+
+        .lightbox-overlay img {
+            max-width: 95%;
+            max-height: 90vh;
+            border-radius: 12px;
+            box-shadow: 0 8px 60px rgba(0, 0, 0, 0.6);
+            border: 3px solid #D4AF37;
+            object-fit: contain;
+            animation: lightboxZoomIn 0.3s ease;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            color: #fff;
+            font-size: 2.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.1);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            font-weight: 300;
+            z-index: 10000;
+        }
+
+        .lightbox-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+            border-color: #D4AF37;
+        }
+
+        .lightbox-hint {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            pointer-events: none;
+        }
+
+        @keyframes lightboxFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes lightboxZoomIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .block-card .block-name {
+                font-size: 0.85rem;
+            }
+
+            .block-card .block-stats {
+                font-size: 0.7rem;
+            }
+
+            .stadium-image-wrapper {
+                max-width: 100%;
+                border-radius: 12px;
+            }
+
+            .stadium-image-wrapper img {
+                max-height: 250px;
+            }
+
+            .stadium-image-label {
+                font-size: 0.7rem;
+                padding: 4px 14px;
+                bottom: 12px;
+            }
+
+            .stadium-image-caption {
+                font-size: 0.8rem;
+            }
+
+            .lightbox-close {
+                top: 15px;
+                right: 15px;
+                font-size: 1.8rem;
+                width: 40px;
+                height: 40px;
+            }
+
+            .lightbox-hint {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stadium-image-wrapper img {
+                max-height: 180px;
+            }
+
+            .stadium-image-label {
+                font-size: 0.6rem;
+                padding: 3px 10px;
+                bottom: 8px;
+            }
+
+            .lightbox-overlay img {
+                max-width: 98%;
+                max-height: 80vh;
+            }
+
+            .lightbox-close {
+                top: 10px;
+                right: 10px;
+                font-size: 1.5rem;
+                width: 36px;
+                height: 36px;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- ===== لایت‌باکس ===== -->
+    <div class="lightbox-overlay" id="lightboxOverlay" onclick="closeLightbox()">
+        <div class="lightbox-close" onclick="closeLightbox()">✕</div>
+        <img src="{% static 'img/staduim.png' %}"
+             alt="نقشه ورزشگاه نقش جهان"
+             id="lightboxImage"
+             onerror="this.alt='تصویر یافت نشد'; this.style.fontSize='1.5rem'; this.style.color='#D4AF37';">
+        <div class="lightbox-hint">برای بستن، کلیک کنید یا Esc بزنید</div>
+    </div>
+    <div class="container mt-4">
+        <div class="text-center mb-3">
+            <h2>{{ match.home_team }} <span style="color:#D4AF37;">🆚</span> {{ match.away_team }}</h2>
+            <p class="text-muted">{{ match.date_time|date:"Y/m/d H:i" }}</p>
+            <p class="filter-info">برای انتخاب بلوک، روی دکمه‌ی "انتخاب" کلیک کنید.</p>
+        </div>
+
+        <!-- ============================================================
+        دکمه تغییر طبقه (جایگذاری اینجا)
+        ============================================================ -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">
+                <i class="fas fa-layer-group"></i>
+                {{ floor_label|default:"طبقه پایین" }}
+            </h5>
+            <a href="{% url 'matches:select_floor' match.id %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-exchange-alt"></i>
+                تغییر طبقه
+            </a>
+        </div>
+
+        <form method="post" id="blockForm">
+            {% csrf_token %}
+            <div class="row">
+                {% for block in blocks %}
+                    <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-3">
+                        <div class="block-card">
+                            <div class="block-name">{{ block.name }}</div>
+
+                            <!-- برچسب میزبان/میهمان -->
+                            <span class="team-badge {% if block.team_type == 'home' %}team-home{% else %}team-away{% endif %}">
+                            {{ block.team_type_label }}
+                        </span>
+
+                            <!-- برچسب VIP / کلاس ۱ -->
+                            {% if block.is_vip %}
+                                <span class="block-badge vip">VIP</span>
+                            {% elif block.is_class1 %}
+                                <span class="block-badge class1">کلاس ۱</span>
+                            {% else %}
+                                <span class="block-badge">عمومی</span>
+                            {% endif %}
+
+                            <!-- آمار -->
+                            <div class="block-stats">
+                                <span class="available">{{ block.available_seats|default:0 }}</span>
+                                <span class="text-muted">از</span>
+                                <span class="total">{{ block.total_seats|default:0 }}</span>
+                                <span class="text-muted">صندلی موجود</span>
+                                <span class="occupancy">
+                                اشغال: {{ block.occupancy|default:0 }}%
+                            </span>
+                            </div>
+                            <div class="block-card">
+                                <!-- ===== نمایش قیمت ===== -->
+                                <div class="block-price">
+                                    <span class="price-label">قیمت:</span>
+                                    <span class="price-value">{{ block.price|floatformat:0 }} تومان</span>
+                                </div>
+
+                            </div>
+
+                            <!-- دکمه انتخاب -->
+                            <button type="submit" name="block_id" value="{{ block.id }}" class="btn-select">
+                                انتخاب
+                            </button>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12 text-center text-muted">هیچ بلوکی تعریف نشده است.</div>
+                {% endfor %}
+            </div>
+        </form>
+
+        <div class="text-center mt-3">
+            <a href="{% url 'matches:home' %}" class="btn btn-secondary btn-sm">
+                <i class="fas fa-arrow-right"></i> بازگشت به صفحه اصلی
+            </a>
+        </div>
+
+        <!-- ============================================================
+        بخش تصویر ورزشگاه
+        ============================================================ -->
+        <div class="stadium-image-section">
+            <div class="stadium-image-wrapper" onclick="openLightbox()">
+                <img src="{% static 'img/staduim.png' %}"
+                     alt="نقشه ورزشگاه نقش جهان"
+                     loading="lazy"
+                     id="stadiumImage"
+                     onerror="this.style.display='none'; document.getElementById('placeholder').style.display='flex';">
+                <div class="stadium-image-placeholder" id="placeholder" style="display:none;">
+                    <i class="fas fa-image" style="font-size:2.5rem; color:#D4AF37;"></i>
+                    <span style="color:#D4AF37; font-weight:600;">تصویر ورزشگاه</span>
+                    <small style="color:#aaa;">(برای مشاهده کلیک کنید)</small>
+                </div>
+                <div class="stadium-image-label">
+                    <i class="fas fa-flag-checkered"></i>
+                    ورزشگاه نقش جهان
+                </div>
+            </div>
+            <div class="stadium-image-caption">
+                <i class="fas fa-map-marked-alt" style="color: #D4AF37;"></i>
+                نقشه <span>ورزشگاه نقش جهان</span> — اصفهان
+                <span style="display:inline-block; margin-right:12px; color:#6c757d; font-size:0.8rem;">
+                (برای مشاهده بزرگ‌تر کلیک کنید)
+            </span>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        function openLightbox() {
+            document.getElementById('lightboxOverlay').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightboxOverlay').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeLightbox();
+        });
+        document.getElementById('lightboxOverlay').addEventListener('click', function (e) {
+            if (e.target === this) closeLightbox();
+        });
+        document.getElementById('lightboxImage').addEventListener('click', function (e) {
+            e.stopPropagation();
+        });
+    </script>
+{% endblock %}

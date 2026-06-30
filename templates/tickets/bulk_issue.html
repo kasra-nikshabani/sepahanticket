@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}صدور گروهی بلیط{% endblock %}
+
+{% block extra_css %}
+<style>
+    .bulk-issue-container {
+        max-width: 900px;
+        margin: 30px auto;
+    }
+    .card-custom {
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e8eaed;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+    .card-custom:hover {
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    }
+    .card-header-custom {
+        background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
+        padding: 20px 30px;
+        border-bottom: 3px solid #D4AF37;
+        color: white;
+    }
+    .card-header-custom h4 {
+        margin: 0;
+        font-weight: 700;
+        color: #D4AF37;
+    }
+    .card-header-custom h4 i {
+        margin-left: 10px;
+        color: #D4AF37;
+    }
+    .card-body-custom {
+        padding: 30px;
+    }
+    .form-group-custom {
+        margin-bottom: 24px;
+    }
+    .form-group-custom label {
+        font-weight: 600;
+        color: #1A1A2E;
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.95rem;
+    }
+    .form-group-custom label i {
+        color: #D4AF37;
+        margin-left: 8px;
+        width: 20px;
+    }
+    .form-control-custom {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1.5px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        background: #fafafa;
+    }
+    .form-control-custom:focus {
+        border-color: #D4AF37;
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+        background: #fff;
+        outline: none;
+    }
+    select[multiple].form-control-custom {
+        min-height: 150px;
+    }
+    .form-text-custom {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 4px;
+    }
+    .btn-issue {
+        background: linear-gradient(135deg, #D4AF37, #B8960F);
+        border: none;
+        color: #1A1A2E;
+        font-weight: 700;
+        padding: 12px 36px;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    }
+    .btn-issue:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
+        color: #1A1A2E;
+        background: linear-gradient(135deg, #E8D58A, #D4AF37);
+    }
+    .btn-issue i {
+        margin-left: 8px;
+    }
+    .btn-secondary-custom {
+        background: #f1f3f4;
+        border: none;
+        color: #1A1A2E;
+        padding: 12px 28px;
+        border-radius: 12px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    .btn-secondary-custom:hover {
+        background: #e8eaed;
+        color: #1A1A2E;
+    }
+    .info-badge {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 12px 16px;
+        border-right: 4px solid #D4AF37;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #1A1A2E;
+    }
+    .info-badge i {
+        color: #D4AF37;
+        font-size: 1.3rem;
+    }
+    .selected-count {
+        background: #D4AF37;
+        color: #1A1A2E;
+        padding: 2px 12px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-right: 8px;
+    }
+    .alert-danger {
+        background: #fce4ec;
+        border: 1px solid #ef9a9a;
+        color: #c62828;
+        border-radius: 10px;
+        padding: 12px 18px;
+    }
+    .alert-danger i {
+        margin-left: 8px;
+    }
+    @media (max-width: 768px) {
+        .card-body-custom {
+            padding: 20px;
+        }
+        .btn-issue, .btn-secondary-custom {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .card-header-custom h4 {
+            font-size: 1.2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bulk-issue-container">
+    <div class="card-custom">
+        <div class="card-header-custom">
+            <h4><i class="fas fa-ticket-alt"></i> صدور گروهی بلیط برای کاربران ویژه</h4>
+        </div>
+        <div class="card-body-custom">
+            <div class="info-badge">
+                <i class="fas fa-info-circle"></i>
+                <span>با استفاده از این فرم می‌توانید به‌صورت همزمان برای چند کاربر ویژه بلیط صادر کنید. تعداد بلیط هر کاربر محدودیتی ندارد (به شرط موجودی صندلی در بلوک انتخاب‌شده).</span>
+            </div>
+
+            <form method="post" id="bulkIssueForm">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group-custom">
+                            <label for="{{ form.match.id_for_label }}">
+                                <i class="fas fa-futbol"></i> {{ form.match.label }}
+                            </label>
+                            {{ form.match }}
+                            {% if form.match.errors %}
+                                <div class="text-danger small mt-1">{{ form.match.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <!-- ===== تغییر: ردیف → بلوک ===== -->
+                        <div class="form-group-custom">
+                            <label for="{{ form.block.id_for_label }}">
+                                <i class="fas fa-layer-group"></i> {{ form.block.label }}
+                            </label>
+                            {{ form.block }}
+                            {% if form.block.errors %}
+                                <div class="text-danger small mt-1">{{ form.block.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group-custom">
+                    <label for="{{ form.users.id_for_label }}">
+                        <i class="fas fa-users"></i> {{ form.users.label }}
+                    </label>
+                    {{ form.users }}
+                    <div class="form-text-custom">
+                        برای انتخاب چند کاربر، کلید <kbd>Ctrl</kbd> (ویندوز) یا <kbd>⌘</kbd> (مک) را نگه دارید.
+                        <span id="userCountDisplay" class="selected-count">۰</span> کاربر انتخاب شده‌اند.
+                    </div>
+                    {% if form.users.errors %}
+                        <div class="text-danger small mt-1">{{ form.users.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group-custom">
+                            <label for="{{ form.seat_count_per_user.id_for_label }}">
+                                <i class="fas fa-sort-numeric-up"></i> {{ form.seat_count_per_user.label }}
+                            </label>
+                            {{ form.seat_count_per_user }}
+                            <div class="form-text-custom">تعداد بلیط برای هر کاربر (بدون محدودیت، به شرط موجودی).</div>
+                            {% if form.seat_count_per_user.errors %}
+                                <div class="text-danger small mt-1">{{ form.seat_count_per_user.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="form-group-custom w-100">
+                            <label>برآورد نیاز</label>
+                            <div class="p-3 bg-light rounded" style="border:1px solid #e0e0e0;">
+                                <span id="totalNeededDisplay">۰</span> صندلی مورد نیاز
+                                <span class="text-muted">(تعداد کاربران × تعداد بلیط هر کاربر)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex flex-wrap gap-2 justify-content-between">
+                    <div>
+                        <button type="submit" class="btn-issue">
+                            <i class="fas fa-check-circle"></i> صدور بلیط‌ها
+                        </button>
+                        <a href="{% url 'matches:home' %}" class="btn-secondary-custom">
+                            <i class="fas fa-times"></i> انصراف
+                        </a>
+                    </div>
+                    <div>
+                        <button type="reset" class="btn-secondary-custom">
+                            <i class="fas fa-undo"></i> پاک کردن فرم
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const userSelect = document.getElementById('{{ form.users.id_for_label }}');
+        const countDisplay = document.getElementById('userCountDisplay');
+        const seatCountInput = document.getElementById('{{ form.seat_count_per_user.id_for_label }}');
+        const totalNeededDisplay = document.getElementById('totalNeededDisplay');
+
+        function updateCounts() {
+            const selectedUsers = userSelect.selectedOptions.length;
+            countDisplay.textContent = selectedUsers;
+            const perUser = parseInt(seatCountInput.value) || 0;
+            const totalNeeded = selectedUsers * perUser;
+            totalNeededDisplay.textContent = totalNeeded;
+        }
+
+        userSelect.addEventListener('change', updateCounts);
+        seatCountInput.addEventListener('input', updateCounts);
+        // initial update
+        updateCounts();
+    })();
+</script>
+{% endblock %}

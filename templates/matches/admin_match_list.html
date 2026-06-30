@@ -1,0 +1,810 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}مدیریت مسابقات{% endblock %}
+
+{% block extra_css %}
+    <style>
+        /* ----- تنظیمات کلی ----- */
+        .admin-page {
+            padding: 20px 0;
+        }
+
+        /* ----- هدر ----- */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .page-header h2 {
+            font-weight: 700;
+            color: #1A1A2E;
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .page-header h2 i {
+            color: #D4AF37;
+            margin-left: 12px;
+        }
+
+        .page-header .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-admin {
+            padding: 10px 22px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-admin:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-primary-custom {
+            background: #1A1A2E;
+            color: #fff;
+        }
+
+        .btn-primary-custom:hover {
+            background: #2A2A4E;
+            color: #D4AF37;
+        }
+
+        .btn-success-custom {
+            background: #28a745;
+            color: #fff;
+        }
+
+        .btn-success-custom:hover {
+            background: #218838;
+            color: #fff;
+        }
+
+        .btn-outline-custom {
+            background: transparent;
+            color: #1A1A2E;
+            border: 2px solid #1A1A2E;
+        }
+
+        .btn-outline-custom:hover {
+            background: #1A1A2E;
+            color: #fff;
+        }
+
+        /* ----- کارت‌های آمار کلی ----- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 18px 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e8eaed;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: #D4AF37;
+            box-shadow: 0 8px 30px rgba(212, 175, 55, 0.12);
+        }
+
+        .stat-card .stat-number {
+            font-size: 26px;
+            font-weight: 700;
+            color: #1A1A2E;
+        }
+
+        .stat-card .stat-label {
+            font-size: 13px;
+            color: #6c757d;
+            margin: 4px 0 0;
+        }
+
+        .stat-card .stat-icon {
+            font-size: 20px;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .stat-card.gold .stat-number {
+            color: #D4AF37;
+        }
+
+        .stat-card.blue .stat-number {
+            color: #17a2b8;
+        }
+
+        .stat-card.green .stat-number {
+            color: #28a745;
+        }
+
+        .stat-card.orange .stat-number {
+            color: #ffc107;
+        }
+
+        /* ----- فیلتر مسابقه ----- */
+        .filter-section {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e8eaed;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .filter-section .filter-label {
+            font-weight: 600;
+            color: #1A1A2E;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .filter-section .filter-label i {
+            color: #D4AF37;
+        }
+
+        .filter-section select {
+            flex: 1;
+            min-width: 250px;
+            padding: 10px 16px;
+            border-radius: 10px;
+            border: 1.5px solid #e8eaed;
+            font-size: 14px;
+            background: #fafafa;
+            color: #333;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236c757d' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: left 12px center;
+            padding-left: 36px;
+            transition: all 0.3s ease;
+        }
+
+        .filter-section select:focus {
+            border-color: #D4AF37;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
+            background: #fff;
+        }
+
+        .filter-section .btn-reset {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 1.5px solid #e8eaed;
+            background: #fff;
+            color: #6c757d;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .filter-section .btn-reset:hover {
+            border-color: #D4AF37;
+            color: #1A1A2E;
+        }
+
+        /* ----- شبکه کارت‌های مسابقه ----- */
+        .matches-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .match-card {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid #e8eaed;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .match-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 40px rgba(212, 175, 55, 0.15);
+            border-color: #D4AF37;
+        }
+
+        .match-card .card-header {
+            background: linear-gradient(135deg, #1A1A2E, #16213E);
+            padding: 16px 20px;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .match-card .card-header .teams {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .match-card .card-header .teams i {
+            color: #D4AF37;
+            margin: 0 4px;
+        }
+
+        .match-card .card-header .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 14px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .match-card .card-header .status-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .match-card .card-header .status-badge.active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .match-card .card-header .status-badge.active .dot {
+            background: #28a745;
+        }
+
+        .match-card .card-header .status-badge.inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .match-card .card-header .status-badge.inactive .dot {
+            background: #dc3545;
+        }
+
+        .match-card .card-body {
+            padding: 18px 20px;
+            flex: 1;
+        }
+
+        .match-card .card-body .match-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 14px;
+        }
+
+        .match-card .card-body .match-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .match-card .card-body .match-meta i {
+            color: #D4AF37;
+            width: 16px;
+        }
+
+        .match-card .card-body .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 12px 0;
+            padding: 12px 0;
+            border-top: 1px solid #f0f0f0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .match-card .card-body .stats-row .stat-item {
+            text-align: center;
+        }
+
+        .match-card .card-body .stats-row .stat-item .number {
+            font-weight: 700;
+            font-size: 18px;
+            color: #1A1A2E;
+            display: block;
+        }
+
+        .match-card .card-body .stats-row .stat-item .label {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .match-card .card-body .stats-row .stat-item .number.sold {
+            color: #17a2b8;
+        }
+
+        .match-card .card-body .stats-row .stat-item .number.vip {
+            color: #ffc107;
+        }
+
+        .match-card .card-body .stats-row .stat-item .number.revenue {
+            color: #28a745;
+        }
+
+        .match-card .card-body .occupancy-section {
+            margin: 10px 0;
+        }
+
+        .match-card .card-body .occupancy-section .occupancy-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #6c757d;
+            margin-bottom: 4px;
+        }
+
+        .match-card .card-body .occupancy-section .progress-custom {
+            width: 100%;
+            height: 6px;
+            background: #e8eaed;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .match-card .card-body .occupancy-section .progress-custom .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #D4AF37, #B8960F);
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+
+        .match-card .card-body .occupancy-detail {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+
+        .match-card .card-footer {
+            background: #fafafa;
+            padding: 14px 20px;
+            border-top: 1px solid #e8eaed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .match-card .card-footer .card-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .match-card .card-footer .btn-sm {
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+        }
+
+        .match-card .card-footer .btn-sm:hover {
+            transform: translateY(-2px);
+        }
+
+        .match-card .card-footer .btn-detail {
+            background: #17a2b8;
+            color: #fff;
+        }
+
+        .match-card .card-footer .btn-detail:hover {
+            background: #138496;
+            box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+        }
+
+        .match-card .card-footer .btn-edit {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .match-card .card-footer .btn-edit:hover {
+            background: #e0a800;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        }
+
+        .match-card .card-footer .btn-delete {
+            background: #dc3545;
+            color: #fff;
+        }
+
+        .match-card .card-footer .btn-delete:hover {
+            background: #c82333;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        .match-card .card-footer .match-date {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        /* ----- صفحه‌بندی ----- */
+        .pagination-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 16px 0;
+            gap: 10px;
+            border-top: 1px solid #e8eaed;
+        }
+
+        .pagination-info {
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .pagination-info strong {
+            color: #1A1A2E;
+        }
+
+        .pagination-custom {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .pagination-custom a,
+        .pagination-custom .current {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 38px;
+            height: 38px;
+            padding: 0 12px;
+            border-radius: 8px;
+            border: 1px solid #e8eaed;
+            text-decoration: none;
+            color: #1A1A2E;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        .pagination-custom a:hover {
+            border-color: #D4AF37;
+            color: #D4AF37;
+            transform: translateY(-2px);
+        }
+
+        .pagination-custom .current {
+            background: linear-gradient(135deg, #D4AF37, #B8960F);
+            border-color: #D4AF37;
+            color: #1A1A2E;
+            font-weight: 700;
+        }
+
+        .pagination-custom .disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* ----- حالت خالی ----- */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            grid-column: 1 / -1;
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            color: #ddd;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .empty-state h4 {
+            color: #1A1A2E;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            color: #6c757d;
+            font-size: 16px;
+        }
+
+        /* ----- واکنش‌گرایی ----- */
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .page-header h2 {
+                font-size: 22px;
+            }
+
+            .page-header .header-actions {
+                width: 100%;
+            }
+
+            .page-header .header-actions .btn-admin {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .matches-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-section select {
+                min-width: 100%;
+            }
+
+            .filter-section .btn-reset {
+                align-self: flex-start;
+            }
+
+            .pagination-wrapper {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .match-card .card-footer {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .match-card .card-footer .card-actions {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .match-card .card-header .teams {
+                font-size: 14px;
+            }
+
+            .match-card .card-footer .card-actions .btn-sm {
+                flex: 1;
+                justify-content: center;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="admin-page">
+        <!-- ===== هدر با دکمه‌های مدیریت ===== -->
+        <div class="page-header">
+            <h2><i class="fas fa-calendar-alt"></i> مدیریت مسابقات</h2>
+            <div class="header-actions">
+                <a href="{% url 'matches:admin_match_create' %}" class="btn-admin btn-success-custom">
+                    <i class="fas fa-plus"></i> مسابقه جدید
+                </a>
+                <a href="{% url 'matches:admin_block_list' %}?stadium_id={{ item.match.stadium.id }}"
+                   class="btn-admin btn-outline-custom">
+                    <i class="fas fa-layer-group"></i> مدیریت بلوک‌ها
+                </a>
+                <a href="{% url 'admin:index' %}" target="_blank" class="btn-admin btn-primary-custom">
+                    <i class="fas fa-external-link-alt"></i> پنل ادمین
+                </a>
+            </div>
+        </div>
+
+        <!-- ===== کارت‌های آمار کلی ===== -->
+        <div class="stats-grid">
+            <div class="stat-card gold">
+                <span class="stat-icon"><i class="fas fa-calendar-check"></i></span>
+                <div class="stat-number">{{ total_matches }}</div>
+                <p class="stat-label">کل مسابقات</p>
+            </div>
+            <div class="stat-card blue">
+                <span class="stat-icon"><i class="fas fa-ticket-alt"></i></span>
+                <div class="stat-number">{{ total_sold_all|default:"0" }}</div>
+                <p class="stat-label">بلیط فروخته‌شده</p>
+            </div>
+            <div class="stat-card orange">
+                <span class="stat-icon"><i class="fas fa-crown"></i></span>
+                <div class="stat-number">{{ total_vip_all|default:"0" }}</div>
+                <p class="stat-label">بلیط VIP</p>
+            </div>
+            <div class="stat-card green">
+                <span class="stat-icon"><i class="fas fa-money-bill-wave"></i></span>
+                <div class="stat-number">{{ total_revenue_all|floatformat:0|default:"0" }}</div>
+                <p class="stat-label">درآمد کل (تومان)</p>
+            </div>
+        </div>
+
+        <!-- ===== فیلتر مسابقه ===== -->
+        <div class="filter-section">
+            <span class="filter-label"><i class="fas fa-filter"></i> انتخاب مسابقه:</span>
+            <select name="match_id" onchange="this.form.submit()" form="filterForm">
+                <option value="">همه مسابقات</option>
+                {% for match in all_matches %}
+                    <option value="{{ match.id }}" {% if selected_match_id == match.id %}selected{% endif %}>
+                        {{ match.home_team }} vs {{ match.away_team }} ({{ match.date_time|date:"Y/m/d" }})
+                    </option>
+                {% endfor %}
+            </select>
+            {% if selected_match_id %}
+                <a href="{% url 'matches:admin_match_list' %}" class="btn-reset">
+                    <i class="fas fa-undo"></i> نمایش همه
+                </a>
+            {% endif %}
+            <form id="filterForm" method="get" style="display:none;"></form>
+        </div>
+
+        <!-- ===== کارت‌های مسابقات ===== -->
+        <div class="matches-grid">
+            {% for item in page_obj %}
+                <div class="match-card">
+                    <div class="card-header">
+                        <div class="teams">
+                            {{ item.match.home_team }} <i class="fas fa-futbol"></i> {{ item.match.away_team }}
+                        </div>
+                        <span class="status-badge {% if item.match.is_active %}active{% else %}inactive{% endif %}">
+                    <span class="dot"></span> {{ item.match.is_active|yesno:"فعال,غیرفعال" }}
+                </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="match-meta">
+                            <span><i class="fas fa-calendar-day"></i> {{ item.match.date_time|date:"Y/m/d" }}</span>
+                            <span><i class="fas fa-clock"></i> {{ item.match.date_time|date:"H:i" }}</span>
+                            <span><i class="fas fa-map-marker-alt"></i> {{ item.match.stadium.name }}</span>
+                        </div>
+                        <div class="stats-row">
+                            <div class="stat-item">
+                                <span class="number sold">{{ item.sold_count }}</span>
+                                <span class="label">فروخته‌شده</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="number vip">{{ item.vip_count }}</span>
+                                <span class="label">VIP</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="number revenue">{{ item.total_revenue|floatformat:0|default:"0" }}</span>
+                                <span class="label">درآمد (تومان)</span>
+                            </div>
+                        </div>
+                        <div class="occupancy-section">
+                            <div class="occupancy-label">
+                                <span>اشغال صندلی‌ها</span>
+                                <span>{{ item.occupancy_percent }}%</span>
+                            </div>
+                            <div class="progress-custom">
+                                <div class="progress-fill" style="width: {{ item.occupancy_percent }}%;"></div>
+                            </div>
+                            <div class="occupancy-detail">
+                                {{ item.occupied_seats }} از {{ item.total_seats }} صندلی
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <span class="match-date"><i
+                                class="fas fa-calendar-plus"></i> {{ item.match.date_time|date:"Y/m/d" }}</span>
+                        <div class="card-actions">
+                            <a href="{% url 'matches:admin_match_detail' item.match.id %}" class="btn-sm btn-detail">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'matches:admin_match_edit' item.match.id %}" class="btn-sm btn-edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'matches:admin_match_delete' item.match.id %}" class="btn-sm btn-delete">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <i class="fas fa-calendar-times"></i>
+                    <h4>هیچ مسابقه‌ای یافت نشد</h4>
+                    <p>مسابقه‌ای با این مشخصات وجود ندارد.</p>
+                    <a href="{% url 'matches:admin_match_create' %}" class="btn-admin btn-success-custom mt-3">
+                        <i class="fas fa-plus"></i> ایجاد اولین مسابقه
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- ===== صفحه‌بندی ===== -->
+        {% if page_obj.paginator.num_pages > 1 %}
+            <div class="pagination-wrapper">
+                <div class="pagination-info">
+                    نمایش <strong>{{ page_obj.start_index }}</strong> تا <strong>{{ page_obj.end_index }}</strong>
+                    از <strong>{{ page_obj.paginator.count }}</strong> مسابقه
+                </div>
+                <div class="pagination-custom">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                        <a href="?page=
+                                {{ page_obj.previous_page_number }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    {% else %}
+                        <span class="disabled"><i class="fas fa-angle-double-right"></i></span>
+                        <span class="disabled"><i class="fas fa-angle-right"></i></span>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if num == page_obj.number %}
+                            <span class="current">{{ num }}</span>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <a href="?page=
+                                    {{ num }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}">
+                                {{ num }}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <a href="?page=
+                                {{ page_obj.next_page_number }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                        <a href="?page=
+                                {{ page_obj.paginator.num_pages }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    {% else %}
+                        <span class="disabled"><i class="fas fa-angle-left"></i></span>
+                        <span class="disabled"><i class="fas fa-angle-double-left"></i></span>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

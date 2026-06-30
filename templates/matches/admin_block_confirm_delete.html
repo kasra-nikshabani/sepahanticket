@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}حذف بلوک{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-danger">
+                <div class="card-header bg-danger text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> تأیید حذف
+                    </h4>
+                </div>
+                <div class="card-body text-center">
+                    <h5>آیا از حذف بلوک زیر اطمینان دارید؟</h5>
+                    <div class="alert alert-warning">
+                        <strong>{{ block.name }}</strong>
+                        <br>
+                        <span class="text-muted">نوع جایگاه: {{ block.get_zone_type_display }}</span>
+                        <br>
+                        <span class="text-muted">قیمت: {{ block.price|floatformat:0 }} تومان</span>
+                    </div>
+                    <p class="text-danger">این عمل غیرقابل بازگشت است!</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> بله، حذف کن
+                            </button>
+                            <a href="{% url 'matches:admin_block_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i> لغو و بازگشت
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

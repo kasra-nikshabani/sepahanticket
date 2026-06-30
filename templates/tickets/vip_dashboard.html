@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}پنل صدور بلیط{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-container { max-width: 1000px; margin: 30px auto; }
+    .card-custom { background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #e8eaed; overflow: hidden; margin-bottom: 24px; }
+    .card-header-custom { background: linear-gradient(135deg, #1A1A2E, #16213E); padding: 20px 30px; border-bottom: 3px solid #D4AF37; }
+    .card-header-custom h4 { margin: 0; font-weight: 700; color: #D4AF37; }
+    .card-header-custom h4 i { margin-left: 10px; }
+    .card-body-custom { padding: 30px; }
+
+    .filter-form {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 15px 20px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        border: 1px solid #e8eaed;
+    }
+    .filter-form select {
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        background: #fff;
+        font-size: 0.95rem;
+        min-width: 250px;
+    }
+    .filter-form .btn {
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .filter-form .btn-primary {
+        background: #1A1A2E;
+        color: white;
+    }
+    .filter-form .btn-primary:hover {
+        background: #D4AF37;
+        color: #1A1A2E;
+    }
+    .filter-form .btn-secondary {
+        background: #f1f3f4;
+        color: #1A1A2E;
+    }
+    .filter-form .btn-secondary:hover {
+        background: #e8eaed;
+    }
+
+    .quota-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 16px 20px;
+        border-right: 4px solid #D4AF37;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .quota-card .match-name {
+        font-weight: 600;
+        color: #1A1A2E;
+        min-width: 200px;
+    }
+    .quota-card .quota-info {
+        color: #6c757d;
+    }
+    .quota-card .quota-info strong {
+        color: #1A1A2E;
+    }
+    .quota-card .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .btn-issue {
+        background: linear-gradient(135deg, #D4AF37, #B8960F);
+        border: none;
+        color: #1A1A2E;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-block;
+        cursor: pointer;
+    }
+    .btn-issue:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(212,175,55,0.3);
+        color: #1A1A2E;
+    }
+    .btn-excel {
+        background: #28a745;
+        border: none;
+        color: #fff;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-block;
+        cursor: pointer;
+    }
+    .btn-excel:hover {
+        background: #1e7e34;
+        transform: translateY(-2px);
+        color: #fff;
+    }
+    .alert-info {
+        background: #e3f2fd;
+        color: #0d47a1;
+        border: 1px solid #90caf9;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-weight: 500;
+    }
+
+    @media (max-width: 768px) {
+        .filter-form { flex-direction: column; align-items: stretch; }
+        .filter-form select { min-width: auto; }
+        .card-body-custom { padding: 16px; }
+        .quota-card { flex-direction: column; align-items: stretch; }
+        .quota-card .actions { justify-content: center; }
+        .quota-card .match-name { text-align: center; }
+        .btn-issue, .btn-excel { text-align: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="card-custom">
+        <div class="card-header-custom">
+            <h4><i class="fas fa-ticket-alt"></i> پنل صدور بلیط - {{ user.get_full_name }}</h4>
+        </div>
+        <div class="card-body-custom">
+            <!-- ===== فیلتر مسابقه ===== -->
+            <form method="get" class="filter-form">
+                <select name="match_id">
+                    <option value="">همه مسابقات</option>
+                    {% for m in all_matches %}
+                        <option value="{{ m.id }}" {% if selected_match_id == m.id %}selected{% endif %}>
+                            {{ m.home_team }} vs {{ m.away_team }} - {{ m.date_time|date:"Y/m/d" }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary">اعمال فیلتر</button>
+                {% if selected_match_id %}
+                    <a href="{% url 'tickets:vip_dashboard' %}" class="btn btn-secondary">حذف فیلتر</a>
+                {% endif %}
+            </form>
+
+            <h5 class="mb-3">ظرفیت‌های شما</h5>
+
+            {% if quotas %}
+                {% for quota in quotas %}
+                    <div class="quota-card">
+                        <span class="match-name">{{ quota.match.home_team }} vs {{ quota.match.away_team }}</span>
+                        <span class="quota-info">
+                            ظرفیت: <strong>{{ quota.quota }}</strong> |
+                            استفاده‌شده: <strong>{{ quota.used }}</strong> |
+                            باقی‌مانده: <strong>{{ quota.remaining }}</strong>
+                        </span>
+                        <div class="actions">
+                            <a href="{% url 'tickets:vip_issue_manual' quota.match.id %}" class="btn-issue">
+                                <i class="fas fa-plus-circle"></i> صدور دستی
+                            </a>
+                            <a href="{% url 'tickets:vip_issue_excel' quota.match.id %}" class="btn-excel">
+                                <i class="fas fa-file-excel"></i> صدور با اکسل
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    {% if selected_match_id %}
+                        هیچ ظرفیتی برای مسابقه انتخاب‌شده به شما تخصیص داده نشده است.
+                    {% else %}
+                        هیچ ظرفیتی به شما تخصیص داده نشده است.
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

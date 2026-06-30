@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}ورود با شماره تلفن{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4><i class="fas fa-phone-alt"></i> ورود با شماره تلفن</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted text-center">
+                        برای ورود، شماره تلفن خود را وارد کنید. کد تأیید به شماره شما ارسال می‌شود.
+                    </p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.phone_number.label }}</label>
+                            {{ form.phone_number }}
+                            {% if form.phone_number.errors %}
+                                <div class="text-danger small mt-1">{{ form.phone_number.errors }}</div>
+                            {% endif %}
+                            <small class="text-muted">شماره تلفن را با ۰۹ وارد کنید (مثلاً ۰۹۱۲۳۴۵۶۷۸۹)</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-paper-plane"></i> ارسال کد تأیید
+                        </button>
+                    </form>
+                    <hr>
+                    <div class="text-center">
+                        <p class="mb-1">
+                            <a href="{% url 'accounts:login' %}">ورود با نام کاربری و رمز عبور</a>
+                        </p>
+                        <p class="mb-0">
+                            ثبت‌نام نکرده‌اید؟ <a href="{% url 'accounts:register' %}">ثبت‌نام کنید</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

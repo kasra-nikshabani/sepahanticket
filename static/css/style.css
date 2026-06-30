@@ -1,0 +1,694 @@
+/* ============================================
+   طراحی مینیمال با هویت سپاهان
+   رنگ‌ها: طلایی (D4AF37) و مشکی (1A1A2E)
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&display=swap');
+.team-type-badge.vip {
+    background: #9b59b6;  /* بنفش */
+    color: white;
+}
+/* ===== QR Code ===== */
+.qr-code {
+    text-align: center;
+    margin: 15px 0 20px;
+}
+
+.qr-code img {
+    width: 300px;    /* ← افزایش به ۲۲۰ پیکسل */
+    height: 3000px;   /* ← افزایش به ۲۲۰ پیکسل */
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 5px;
+    background: #fff;
+}
+
+.seat-grid.wrap-mode {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    max-height: none;
+    overflow-y: visible;
+}
+
+:root {
+    --gold: #D4AF37;
+    --gold-light: #E8D58A;
+    --gold-dark: #B8960F;
+    --black: #1A1A2E;
+    --dark: #16213E;
+    --bg-light: #F5F5F5;
+    --text-primary: #1A1A2E;
+    --text-secondary: #4A4A5A;
+    --text-light: #8A8A9A;
+    --white: #FFFFFF;
+    --border-color: #E0E0E0;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    --radius: 10px;
+    --transition: all 0.2s ease;
+}
+
+* {
+    font-family: 'Vazirmatn', sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: var(--bg-light);
+    color: var(--text-primary);
+    line-height: 1.7;
+    min-height: 100vh;
+}
+
+/* ----- هدر با هویت سپاهان ----- */
+.navbar {
+    background: var(--black) !important;
+    border-bottom: 2px solid var(--gold);
+    padding: 10px 0;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    color: var(--gold) !important;
+    font-size: 1.3rem;
+    letter-spacing: 0.5px;
+}
+
+.navbar-brand i {
+    color: var(--gold);
+    margin-left: 8px;
+}
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-weight: 500;
+    padding: 6px 16px !important;
+    border-radius: 6px;
+    transition: var(--transition);
+}
+
+.nav-link:hover {
+    background: rgba(212, 175, 55, 0.12);
+    color: var(--gold) !important;
+}
+
+.nav-link i {
+    margin-left: 6px;
+}
+
+/* ----- کارت‌های ساده با هویت طلایی ----- */
+.card {
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--gold);
+}
+
+.card-header {
+    background: var(--white) !important;
+    border-bottom: 1px solid var(--border-color);
+    padding: 14px 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* ----- دکمه‌های طلایی-مشکی ----- */
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 8px 24px;
+    transition: var(--transition);
+    border: none;
+}
+
+.btn-primary {
+    background: var(--gold);
+    color: var(--black);
+}
+
+.btn-primary:hover {
+    background: var(--gold-dark);
+    color: var(--white);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+
+.btn-outline-primary {
+    background: transparent;
+    color: var(--gold);
+    border: 1.5px solid var(--gold);
+}
+
+.btn-outline-primary:hover {
+    background: var(--gold);
+    color: var(--black);
+}
+
+.btn-success {
+    background: #2d7d46;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #1e5f34;
+}
+
+.btn-danger {
+    background: #c62828;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #b71c1c;
+}
+
+/* ----- فرم‌ها ----- */
+.form-control {
+    border: 1.5px solid var(--border-color);
+    border-radius: 6px;
+    padding: 10px 14px;
+    color: var(--text-primary);
+    background: var(--white);
+    transition: var(--transition);
+}
+
+.form-control:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+}
+
+.form-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* ----- صندلی‌ها (مینیمال با هویت) ----- */
+.seat-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 8px;
+    max-width: 650px;
+    margin: 0 auto;
+}
+
+.seat {
+    border-radius: 6px !important;
+    padding: 8px 4px;
+    font-size: 11px;
+    font-weight: 500;
+    text-align: center;
+    transition: var(--transition);
+    cursor: pointer;
+    border: 1.5px solid var(--border-color);
+    background: var(--white);
+    color: var(--text-secondary);
+}
+
+.seat.available {
+    background: #e8f5e9;
+    border-color: #a5d6a7;
+    color: #2e7d32;
+}
+
+.seat.available:hover {
+    background: #c8e6c9;
+    transform: scale(1.05);
+}
+
+.seat.unavailable {
+    background: #fce4ec;
+    border-color: #ef9a9a;
+    color: #c62828;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.seat.selected {
+    background: var(--gold);
+    border-color: var(--gold-dark);
+    color: var(--black);
+    transform: scale(1.08);
+}
+
+/* ----- برچسب‌های طلایی-مشکی ----- */
+.badge {
+    font-weight: 500;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+}
+
+.badge.bg-success {
+    background: #e8f5e9 !important;
+    color: #2e7d32 !important;
+}
+
+.badge.bg-warning {
+    background: #fff8e1 !important;
+    color: #b8960f !important;
+}
+
+.badge.bg-danger {
+    background: #fce4ec !important;
+    color: #c62828 !important;
+}
+
+.badge.bg-info {
+    background: #e3f2fd !important;
+    color: #0d47a1 !important;
+}
+
+/* ----- پیام‌ها ----- */
+.alert {
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    padding: 12px 20px;
+    font-weight: 500;
+}
+
+.alert-success {
+    background: #e8f5e9;
+    border-color: #a5d6a7;
+    color: #2e7d32;
+}
+
+.alert-danger {
+    background: #fce4ec;
+    border-color: #ef9a9a;
+    color: #c62828;
+}
+
+.alert-warning {
+    background: #fff8e1;
+    border-color: #ffd54f;
+    color: #b8960f;
+}
+
+.alert-info {
+    background: #e3f2fd;
+    border-color: #90caf9;
+    color: #0d47a1;
+}
+
+/* ----- فوتر مینیمال با هویت سپاهان ----- */
+.footer {
+    background: var(--black);
+    border-top: 2px solid var(--gold);
+    padding: 40px 0 20px;
+    margin-top: 60px;
+}
+
+.footer-logo {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--gold);
+}
+
+.footer-logo i {
+    color: var(--gold);
+}
+
+.footer-description {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.9rem;
+    max-width: 300px;
+    margin-top: 8px;
+}
+
+.footer-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--gold);
+    margin-bottom: 12px;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-links li {
+    margin-bottom: 6px;
+}
+
+.footer-links a {
+    color: rgba(255, 255, 255, 0.5);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.footer-links a:hover {
+    color: var(--gold);
+}
+
+.footer-links a i {
+    font-size: 0.6rem;
+    margin-left: 4px;
+    color: var(--gold);
+}
+
+.footer-contact {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-contact li {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+}
+
+.footer-contact li i {
+    width: 20px;
+    color: var(--gold);
+}
+
+.footer-divider {
+    border: none;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 24px 0 16px;
+}
+
+.footer-copy {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.85rem;
+}
+
+.footer-heart {
+    color: #ea4335;
+}
+
+.footer-badge {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.badge-gold {
+    background: rgba(212, 175, 55, 0.15);
+    color: var(--gold);
+    padding: 2px 14px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.badge-dark {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.4);
+    padding: 2px 14px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.4);
+    transition: var(--transition);
+    text-decoration: none;
+    margin-left: 6px;
+}
+
+.social-link:hover {
+    background: var(--gold);
+    color: var(--black);
+    transform: translateY(-2px);
+}
+
+/* ----- ابزارهای کمکی ----- */
+.text-muted {
+    color: var(--text-secondary) !important;
+}
+
+.shadow-sm {
+    box-shadow: var(--shadow-sm) !important;
+}
+
+.rounded-3 {
+    border-radius: var(--radius) !important;
+}
+
+/* ----- واکنش‌گرایی ----- */
+@media (max-width: 768px) {
+    .seat-grid {
+        grid-template-columns: repeat(8, 1fr);
+        gap: 6px;
+    }
+    .seat {
+        font-size: 9px;
+        padding: 6px 2px;
+    }
+    .footer-badge {
+        justify-content: center;
+        margin-top: 10px;
+    }
+    .footer-copy {
+        text-align: center;
+    }
+}
+
+/* ============================================
+   استایل‌های ادمین - سایدبار عمودی
+   ============================================ */
+
+/* ----- هدر ادمین ----- */
+.admin-header {
+    background: #1A1A2E;
+    border-bottom: 2px solid #D4AF37;
+    padding: 10px 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    height: 60px;
+}
+
+.admin-header-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.admin-header .header-brand {
+    color: #D4AF37;
+    font-weight: 700;
+    font-size: 1.2rem;
+    text-decoration: none;
+}
+.admin-header .header-brand i {
+    margin-left: 8px;
+}
+
+.sidebar-toggle {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: none;
+}
+.sidebar-toggle:hover {
+    color: #D4AF37;
+}
+
+/* ----- لایه‌بندی اصلی ادمین ----- */
+.admin-layout {
+    display: flex;
+    margin-top: 60px;
+    min-height: calc(100vh - 60px);
+}
+
+/* ----- سایدبار ----- */
+.admin-sidebar {
+    width: 250px;
+    background: #1A1A2E;
+    border-left: 2px solid rgba(212, 175, 55, 0.2);
+    padding: 20px 0;
+    height: calc(100vh - 60px);
+    position: fixed;
+    top: 60px;
+    right: 0;
+    overflow-y: auto;
+    transition: all 0.3s ease;
+    z-index: 1040;
+    flex-shrink: 0;
+}
+
+/* اسکرول بار سایدبار */
+.admin-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+.admin-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.admin-sidebar::-webkit-scrollbar-thumb {
+    background: #D4AF37;
+    border-radius: 4px;
+}
+
+.sidebar-header {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 15px;
+}
+
+.sidebar-brand {
+    color: #D4AF37;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+.sidebar-brand i {
+    margin-left: 10px;
+}
+
+.sidebar-user {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+    margin-top: 8px;
+}
+.sidebar-user i {
+    margin-left: 8px;
+}
+
+.sidebar-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-nav li {
+    margin-bottom: 2px;
+}
+
+.sidebar-nav .sidebar-title {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 10px 20px 5px;
+    font-weight: 700;
+}
+
+.sidebar-nav .sidebar-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.05);
+    margin: 8px 20px;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border-right: 3px solid transparent;
+    font-size: 0.9rem;
+}
+
+.sidebar-link i {
+    width: 20px;
+    text-align: center;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.4);
+    transition: all 0.2s ease;
+}
+
+.sidebar-link:hover {
+    background: rgba(212, 175, 55, 0.08);
+    color: #D4AF37;
+    text-decoration: none;
+    border-right-color: #D4AF37;
+}
+.sidebar-link:hover i {
+    color: #D4AF37;
+}
+
+.sidebar-link.active {
+    background: rgba(212, 175, 55, 0.12);
+    color: #D4AF37;
+    border-right-color: #D4AF37;
+}
+.sidebar-link.active i {
+    color: #D4AF37;
+}
+
+.sidebar-link.logout-link {
+    color: rgba(255, 100, 100, 0.7);
+}
+.sidebar-link.logout-link:hover {
+    background: rgba(255, 100, 100, 0.1);
+    color: #ff6b6b;
+    border-right-color: #ff6b6b;
+}
+.sidebar-link.logout-link:hover i {
+    color: #ff6b6b;
+}
+
+/* ----- محتوای اصلی ادمین ----- */
+.admin-main {
+    margin-right: 250px;
+    padding: 24px 30px;
+    flex: 1;
+    background: #f5f6fa;
+    min-height: calc(100vh - 60px);
+}
+
+/* ----- واکنش‌گرایی سایدبار ----- */
+@media (max-width: 992px) {
+    .sidebar-toggle {
+        display: block;
+    }
+
+    .admin-sidebar {
+        right: -280px;
+        width: 280px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+    }
+    .admin-sidebar.sidebar-collapsed {
+        right: 0;
+    }
+
+    .admin-main {
+        margin-right: 0;
+        padding: 16px;
+    }
+}
+
+@media (max-width: 576px) {
+    .admin-header .header-brand {
+        font-size: 1rem;
+    }
+    .admin-main {
+        padding: 12px;
+    }
+    .admin-sidebar {
+        width: 100%;
+        right: -100%;
+    }
+    .admin-sidebar.sidebar-collapsed {
+        right: 0;
+    }
+}

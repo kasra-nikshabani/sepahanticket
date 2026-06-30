@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}ورود{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white text-center">
+                    <h3><i class="fas fa-sign-in-alt"></i> ورود</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label">نام کاربری</label>
+                            <input type="text" name="username" class="form-control" placeholder="نام کاربری" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">رمز عبور</label>
+                            <input type="password" name="password" class="form-control" placeholder="رمز عبور" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-sign-in-alt"></i> ورود
+                        </button>
+                    </form>
+                    
+                    <hr>
+                    <p class="text-center">
+                        ثبت‌نام نکرده‌اید؟
+                        <a href="{% url 'accounts:register' %}">ثبت‌نام کنید</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

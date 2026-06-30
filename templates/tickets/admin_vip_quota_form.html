@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if is_edit %}ویرایش{% else %}ایجاد{% endif %} تخصیص ظرفیت{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        {% if is_edit %}
+                            <i class="fas fa-edit"></i> ویرایش تخصیص ظرفیت
+                        {% else %}
+                            <i class="fas fa-plus"></i> ایجاد تخصیص ظرفیت جدید
+                        {% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if is_edit %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            در حال ویرایش تخصیص کاربر 
+                            <strong>{{ quota.user.get_full_name|default:quota.user.username }}</strong>
+                            برای مسابقه 
+                            <strong>{{ quota.match.home_team }} vs {{ quota.match.away_team }}</strong>
+                        </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="id_user" class="form-label">کاربر VIP</label>
+                            {{ form.user }}
+                            <small class="text-muted">فقط کاربران ویژه (VIP) نمایش داده می‌شوند.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_match" class="form-label">مسابقه</label>
+                            {{ form.match }}
+                            <small class="text-muted">فقط مسابقات فعال نمایش داده می‌شوند.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_quota" class="form-label">ظرفیت مجاز</label>
+                            {{ form.quota }}
+                            <small class="text-muted">تعداد بلیط‌هایی که کاربر می‌تواند صادر کند.</small>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-3">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-save"></i> {% if is_edit %}ذخیره تغییرات{% else %}ایجاد{% endif %}
+                            </button>
+                            <a href="{% url 'tickets:admin_vip_quota_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i> بازگشت به لیست
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

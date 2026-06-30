@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}صدور دستی بلیط{% endblock %}
+
+{% block extra_css %}
+<style>
+    .issue-container {
+        max-width: 800px;
+        margin: 30px auto;
+        padding: 0 15px;
+    }
+    .card-custom {
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e8eaed;
+        overflow: hidden;
+    }
+    .card-header-custom {
+        background: linear-gradient(135deg, #1A1A2E, #16213E);
+        padding: 20px 30px;
+        border-bottom: 3px solid #D4AF37;
+        color: white;
+    }
+    .card-header-custom h4 {
+        margin: 0;
+        font-weight: 700;
+        color: #D4AF37;
+    }
+    .card-header-custom h4 i {
+        margin-left: 10px;
+        color: #D4AF37;
+    }
+    .card-body-custom {
+        padding: 30px;
+    }
+    .seat-grid {
+        display: grid;
+        grid-template-columns: repeat(10, 1fr);
+        gap: 6px;
+        max-width: 650px;
+        margin: 20px auto;
+    }
+    .seat {
+        padding: 8px 4px;
+        border-radius: 6px;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1.5px solid #e0e0e0;
+        background: #fff;
+        transition: all 0.2s;
+        user-select: none;
+    }
+    .seat.available {
+        background: #e8f5e9;
+        border-color: #a5d6a7;
+        color: #2e7d32;
+    }
+    .seat.available:hover {
+        background: #c8e6c9;
+        transform: scale(1.05);
+        box-shadow: 0 0 10px rgba(40, 167, 69, 0.3);
+    }
+    .seat.unavailable {
+        background: #fce4ec;
+        border-color: #ef9a9a;
+        color: #c62828;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+    .seat.selected {
+        background: #D4AF37;
+        border-color: #B8960F;
+        color: #1A1A2E;
+        transform: scale(1.08);
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+    }
+    .btn-issue {
+        background: linear-gradient(135deg, #D4AF37, #B8960F);
+        border: none;
+        color: #1A1A2E;
+        font-weight: 700;
+        padding: 12px 36px;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+        cursor: pointer;
+    }
+    .btn-issue:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
+        color: #1A1A2E;
+        background: linear-gradient(135deg, #E8D58A, #D4AF37);
+    }
+    .btn-secondary-custom {
+        background: #f1f3f4;
+        border: none;
+        color: #1A1A2E;
+        padding: 12px 28px;
+        border-radius: 12px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .btn-secondary-custom:hover {
+        background: #e8eaed;
+        color: #1A1A2E;
+    }
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1.5px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        background: #fafafa;
+    }
+    .form-control:focus {
+        border-color: #D4AF37;
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+        background: #fff;
+        outline: none;
+    }
+    .form-label {
+        font-weight: 600;
+        color: #1A1A2E;
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.95rem;
+    }
+    @media (max-width: 768px) {
+        .card-body-custom {
+            padding: 20px;
+        }
+        .seat-grid {
+            grid-template-columns: repeat(8, 1fr);
+            gap: 4px;
+        }
+        .seat {
+            font-size: 9px;
+            padding: 6px 2px;
+        }
+        .btn-issue,
+        .btn-secondary-custom {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="issue-container">
+    <div class="card-custom">
+        <div class="card-header-custom">
+            <h4><i class="fas fa-hand-holding-heart"></i> صدور دستی بلیط</h4>
+        </div>
+        <div class="card-body-custom">
+            <p><strong>مسابقه:</strong> {{ match.home_team }} vs {{ match.away_team }}</p>
+            <p><strong>ظرفیت باقی‌مانده شما:</strong> {{ quota.remaining }}</p>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">نام و نام خانوادگی</label>
+                        <input type="text" name="full_name" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">کد ملی</label>
+                        <input type="text" name="national_code" class="form-control" maxlength="10" required>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <label class="form-label">انتخاب صندلی</label>
+                    <div class="seat-grid">
+                        {% for ms in match_seats %}
+                            <div class="seat {% if ms.is_available %}available{% else %}unavailable{% endif %}"
+                                 data-seat-id="{{ ms.id }}"
+                                 data-number="{{ ms.seat.number }}"
+                                 onclick="selectSeat(this, {{ ms.id }})">
+                                {{ ms.seat.number }}
+                            </div>
+                        {% empty %}
+                            <div class="col-12 text-center text-muted">
+                                هیچ صندلی خالی در این مسابقه موجود نیست.
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="match_seat_id" id="selectedMatchSeatId" required>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <button type="submit" class="btn-issue">
+                        <i class="fas fa-check-circle"></i> صدور بلیط
+                    </button>
+                    <a href="{% url 'tickets:vip_dashboard' %}" class="btn-secondary-custom">انصراف</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function selectSeat(element, matchSeatId) {
+        // حذف انتخاب قبلی
+        document.querySelectorAll('.seat').forEach(s => s.classList.remove('selected'));
+        // انتخاب جدید
+        element.classList.add('selected');
+        // ذخیره match_seat_id در فیلد مخفی
+        document.getElementById('selectedMatchSeatId').value = matchSeatId;
+    }
+</script>
+{% endblock %}

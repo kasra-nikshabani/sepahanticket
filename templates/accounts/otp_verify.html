@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}تأیید کد{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-success text-white text-center">
+                    <h4><i class="fas fa-key"></i> تأیید کد</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-center">
+                        کد تأیید به شماره <strong>{{ phone_number }}</strong> ارسال شد.
+                    </p>
+                    <p class="text-center text-muted small" id="timer">
+                        زمان باقی‌مانده: <span id="countdown" style="font-weight:bold;color:#dc3545;">{{ remaining_time }}</span> ثانیه
+                    </p>
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.phone_number }}
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.code.label }}</label>
+                            {{ form.code }}
+                            {% if form.code.errors %}
+                                <div class="text-danger small mt-1">{{ form.code.errors }}</div>
+                            {% endif %}
+                            <small class="text-muted">کد ۶ رقمی را وارد کنید</small>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100" id="verifyBtn">
+                            <i class="fas fa-check-circle"></i> تأیید و ورود
+                        </button>
+                    </form>
+                    <hr>
+                    <div class="text-center d-flex justify-content-center gap-3">
+                        <a href="{% url 'accounts:resend_otp' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-redo"></i> ارسال مجدد کد
+                        </a>
+                        <a href="{% url 'accounts:phone_login' %}" class="btn btn-outline-danger btn-sm">
+                            <i class="fas fa-times"></i> تغییر شماره
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // ===== تایمر شمارش معکوس =====
+        let remaining = parseInt(document.getElementById('countdown').textContent);
+        const countdownElement = document.getElementById('countdown');
+        const verifyBtn = document.getElementById('verifyBtn');
+
+        if (remaining > 0) {
+            const timer = setInterval(function() {
+                remaining--;
+                countdownElement.textContent = remaining;
+
+                if (remaining <= 0) {
+                    clearInterval(timer);
+                    countdownElement.textContent = '0';
+                    countdownElement.style.color = '#dc3545';
+                    // غیرفعال کردن دکمه تأیید (اختیاری)
+                    // verifyBtn.disabled = true;
+                    // verifyBtn.innerHTML = '<i class="fas fa-clock"></i> کد منقضی شد';
+                } else if (remaining < 60) {
+                    countdownElement.style.color = '#dc3545';
+                }
+            }, 1000);
+        }
+    });
+</script>
+{% endblock %}

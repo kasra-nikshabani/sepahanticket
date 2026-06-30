@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}حذف ورزشگاه{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-danger">
+                <div class="card-header bg-danger text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> تأیید حذف
+                    </h4>
+                </div>
+                <div class="card-body text-center">
+                    <h5>آیا از حذف ورزشگاه زیر اطمینان دارید؟</h5>
+                    <div class="alert alert-warning">
+                        <strong>{{ stadium.name }}</strong>
+                        <br>
+                        <span class="text-muted">ظرفیت: {{ stadium.capacity|floatformat:0 }}</span>
+                        <br>
+                        <span class="text-muted">تعداد مسابقات: {{ stadium.match_set.count }}</span>
+                    </div>
+                    {% if stadium.match_set.count > 0 %}
+                        <p class="text-danger">
+                            ⚠️ این ورزشگاه دارای مسابقات است. حذف آن باعث حذف مسابقات مرتبط می‌شود!
+                        </p>
+                    {% endif %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> بله، حذف کن
+                            </button>
+                            <a href="{% url 'matches:admin_stadium_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i> لغو و بازگشت
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

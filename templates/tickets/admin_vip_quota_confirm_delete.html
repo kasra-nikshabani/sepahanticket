@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}حذف تخصیص ظرفیت{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-danger">
+                <div class="card-header bg-danger text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> تأیید حذف
+                    </h4>
+                </div>
+                <div class="card-body text-center">
+                    <h5>آیا از حذف تخصیص ظرفیت زیر اطمینان دارید؟</h5>
+                    <div class="alert alert-warning">
+                        <strong>{{ quota.user.get_full_name|default:quota.user.username }}</strong>
+                        <br>
+                        <span class="text-muted">{{ quota.match.home_team }} vs {{ quota.match.away_team }}</span>
+                        <br>
+                        <span class="text-muted">ظرفیت: {{ quota.quota }} | استفاده: {{ quota.used }} | باقی‌مانده: {{ quota.remaining }}</span>
+                    </div>
+                    <p class="text-danger">⚠️ این عمل غیرقابل بازگشت است!</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> بله، حذف کن
+                            </button>
+                            <a href="{% url 'tickets:admin_vip_quota_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i> لغو و بازگشت
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}انتخاب صندلی{% endblock %}
+
+{% block extra_head %}
+    <!-- جلوگیری از کش شدن صفحه -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- اطلاعات مسابقه -->
+    <div class="text-center mb-4">
+        <h2>{{ match.home_team }} <span style="color: var(--gold);">🆚</span> {{ match.away_team }}</h2>
+        <p class="text-muted">{{ match.date_time|date:"Y/m/d H:i" }}</p>
+        <p><strong>ردیف:</strong> {{ row.name }}</p>
+    </div>
+
+    <!-- راهنما -->
+    <div class="d-flex justify-content-center gap-4 mb-4">
+        <span><span class="badge bg-success">سبز</span> = خالی</span>
+        <span><span class="badge bg-danger">قرمز</span> = فروخته شده</span>
+        <span><span class="badge bg-warning text-dark">زرد</span> = انتخاب شما</span>
+        <span><span class="badge" style="background:#ff8c00; color:white;">نارنجی</span> = در حال رزرو توسط دیگران</span>
+    </div>
+
+    <!-- فرم انتخاب صندلی -->
+    <form method="post" action="{% url 'tickets:reserve_seats' match.id %}">
+        {% csrf_token %}
+        <input type="hidden" name="selected_seats" id="selectedSeatsInput">
+        <input type="hidden" name="row_id" value="{{ row.id }}">
+
+        <div class="seat-grid" id="seatGrid">
+            {% for match_seat in match_seats %}
+                <div class="seat {% if match_seat.is_available %}available{% else %}unavailable{% endif %}"
+                     data-seat-id="{{ match_seat.id }}"
+                     data-number="{{ match_seat.seat.number }}">
+                    {{ match_seat.seat.number }}
+                </div>
+            {% empty %}
+                <div class="col-12 text-center text-muted">
+                    <p>هیچ صندلی‌ای برای این ردیف در این مسابقه وجود ندارد.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-4">
+            <p>تعداد انتخاب شده: <span id="selectedCount">0</span> از ۵</p>
+            <button type="submit" class="btn btn-success btn-lg">
+                <i class="fas fa-credit-card"></i> ادامه به اطلاعات خریدار
+            </button>
+            <a href="{% url 'matches:select_section' match.id %}" class="btn btn-secondary btn-lg">
+                <i class="fas fa-arrow-right"></i> بازگشت به انتخاب ردیف
+            </a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .seat-grid {
+        display: grid;
+        grid-template-columns: repeat(10, 1fr);
+        gap: 8px;
+        max-width: 650px;
+        margin: 0 auto;
+    }
+    .seat {
+        padding: 10px 4px;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 2px solid #e8eaed;
+        background: #fff;
+        color: #1A1A2E;
+        user-select: none;
+    }
+    .seat.available {
+        background: #e8f5e9;
+        border-color: #a5d6a7;
+        color: #2e7d32;
+    }
+    .seat.available:hover {
+        background: #c8e6c9;
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    }
+    .seat.unavailable {
+        background: #fce4ec;
+        border-color: #ef9a9a;
+        color: #c62828;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+    .seat.selected {
+        background: #D4AF37 !important;
+        border-color: #B8960F !important;
+        color: #1A1A2E !important;
+        transform: scale(1.08);
+        box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+    }
+    .seat.reserved {
+        background: #ff8c00 !important;
+        border-color: #cc6a00 !important;
+        color: white !important;
+        cursor: not-allowed;
+        opacity: 0.8;
+    }
+    @media (max-width: 768px) {
+        .seat-grid {
+            grid-template-columns: repeat(8, 1fr);
+            gap: 6px;
+        }
+        .seat {
+            padding: 6px 2px;
+            font-size: 10px;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // ===== عناصر =====
+        const seatGrid = document.getElementById('seatGrid');
+        const selectedSeats = new Set();
+        const selectedCountSpan = document.getElementById('selectedCount');
+        const selectedInput = document.getElementById('selectedSeatsInput');
+
+        if (!seatGrid) {
+            console.error('seatGrid not found!');
+            return;
+        }
+
+        // ===== به‌روزرسانی تعداد انتخاب‌ها =====
+        function updateSelectedCount() {
+            selectedCountSpan.textContent = selectedSeats.size;
+            selectedInput.value = JSON.stringify(Array.from(selectedSeats));
+        }
+
+        // ===== پاک‌سازی کامل انتخاب‌ها در هنگام بارگذاری صفحه =====
+        function resetSelection() {
+            document.querySelectorAll('.seat.selected').forEach(seat => {
+                seat.classList.remove('selected');
+            });
+            selectedSeats.clear();
+            updateSelectedCount();
+            console.log('✅ انتخاب‌ها پاک شدند');
+        }
+
+        // ===== اجرای پاک‌سازی در ابتدای بارگذاری =====
+        resetSelection();
+
+        // ===== رویداد کلیک روی صندلی‌ها (Event Delegation) =====
+        seatGrid.addEventListener('click', function (e) {
+            const seat = e.target.closest('.seat');
+            if (!seat) return;
+            const seatId = parseInt(seat.dataset.seatId);
+
+            // اگر صندلی غیرفعال یا رزرو شده توسط دیگران است، کاری نکن
+            if (seat.classList.contains('unavailable') || seat.classList.contains('reserved')) {
+                return;
+            }
+
+            // اگر صندلی قبلاً انتخاب شده، آن را حذف کن
+            if (seat.classList.contains('selected')) {
+                seat.classList.remove('selected');
+                selectedSeats.delete(seatId);
+                updateSelectedCount();
+                return;
+            }
+
+            // محدودیت حداکثر ۵ صندلی
+            if (selectedSeats.size >= 5) {
+                alert('حداکثر ۵ صندلی می‌توانید انتخاب کنید.');
+                return;
+            }
+
+            // انتخاب جدید
+            seat.classList.add('selected');
+            selectedSeats.add(seatId);
+            updateSelectedCount();
+        });
+
+        // ===== اعتبارسنجی قبل از ارسال فرم =====
+        document.querySelector('form').addEventListener('submit', function (e) {
+            if (selectedSeats.size === 0) {
+                e.preventDefault();
+                alert('لطفاً حداقل یک صندلی انتخاب کنید.');
+                return;
+            }
+        });
+
+        // ===== بروزرسانی خودکار صندلی‌ها از سرور هر ۵ ثانیه =====
+        const matchId = {{ match.id }};
+        const rowId = {{ row.id }};
+        const seatMap = new Map();
+        document.querySelectorAll('.seat').forEach(el => {
+            seatMap.set(parseInt(el.dataset.seatId), el);
+        });
+
+        function updateSeats() {
+            fetch(`/matches/get-seats-status/${matchId}/?row_id=${rowId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.seats) {
+                        data.seats.forEach(seatData => {
+                            const element = seatMap.get(seatData.id);
+                            if (element) {
+                                const isAvailable = seatData.is_available;
+                                const isReserved = seatData.is_reserved;
+                                const reservedByMe = seatData.reserved_by_me;
+                                const seatId = parseInt(element.dataset.seatId);
+                                const isInSelected = selectedSeats.has(seatId);
+
+                                // پاک کردن کلاس‌های قبلی
+                                element.classList.remove('available', 'unavailable', 'selected', 'reserved');
+
+                                // تعیین کلاس جدید بر اساس وضعیت
+                                if (isReserved) {
+                                    if (reservedByMe) {
+                                        // رزرو شده توسط خود کاربر
+                                        // اگر در مجموعه انتخاب‌ها نیست، آن را اضافه کن (برای هماهنگی)
+                                        if (!isInSelected) {
+                                            selectedSeats.add(seatId);
+                                            updateSelectedCount();
+                                        }
+                                        element.classList.add('selected');
+                                    } else {
+                                        // رزرو شده توسط دیگران (نارنجی)
+                                        element.classList.add('reserved');
+                                        if (isInSelected) {
+                                            selectedSeats.delete(seatId);
+                                            updateSelectedCount();
+                                        }
+                                    }
+                                } else {
+                                    // رزرو نشده
+                                    if (isAvailable) {
+                                        if (isInSelected) {
+                                            element.classList.add('selected');
+                                        } else {
+                                            element.classList.add('available');
+                                        }
+                                    } else {
+                                        // فروخته شده (قرمز)
+                                        element.classList.add('unavailable');
+                                        if (isInSelected) {
+                                            selectedSeats.delete(seatId);
+                                            updateSelectedCount();
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                })
+                .catch(error => console.error('خطا در بروزرسانی صندلی‌ها:', error));
+        }
+
+        // ===== بروزرسانی اولیه و دوره‌ای =====
+        setTimeout(updateSeats, 500);   // بروزرسانی سریع بعد از بارگذاری
+        setInterval(updateSeats, 5000); // بروزرسانی هر ۵ ثانیه
+    });
+</script>
+{% endblock %}

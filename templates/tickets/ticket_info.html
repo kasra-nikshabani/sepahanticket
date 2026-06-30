@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+
+{% block title %}اطلاعات خریدار{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+        <div class="text-center mb-4">
+            <h2>اطلاعات خریدار</h2>
+            <p class="text-muted">{{ match.home_team }} 🆚 {{ match.away_team }}</p>
+            <p>{{ match.date_time|date:"Y/m/d H:i" }}</p>
+
+            <!-- ===== نمایش تایمر به دقیقه:ثانیه ===== -->
+            <div id="timer-container" class="text-center mb-3">
+                <div class="alert alert-warning" role="alert" style="max-width: 500px; margin: 0 auto;">
+                    <i class="fas fa-clock"></i>
+                    زمان باقی‌مانده برای تکمیل خرید:
+                    <span id="timer-display"
+                          style="font-weight: bold; font-size: 1.8rem; direction: ltr; display: inline-block; min-width: 80px;">
+                    00:00
+                </span>
+                </div>
+            </div>
+
+            <!-- ============================================================
+            نمایش مجموع قیمت (جدید)
+            ============================================================ -->
+            <div class="row justify-content-center mt-3">
+                <div class="col-md-8">
+                    <div class="card bg-success text-white">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span style="font-size: 1.1rem;">
+                                    <i class="fas fa-credit-card"></i> مجموع قیمت بلیط‌ها:
+                                </span>
+                                <span style="font-size: 1.8rem; font-weight: bold;"
+                                      id="totalPriceDisplay"
+                                      class="ticket-price"
+                                      data-base="{{ total_price|default:0 }}">
+                                    {{ total_price|default:0|floatformat:0 }} تومان
+                                </span>
+                            </div>
+                            <small class="d-block text-center text-white-50 mt-1">
+                                قیمت هر بلیط بر اساس بلوک محاسبه شده است
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" id="ticketForm">
+            {% csrf_token %}
+            <div class="row">
+                {% for seat in seats_data %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    صندلی {{ seat.number }} - {{ seat.row_name }}
+                                    <span class="badge {% if seat.is_home %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                                        {% if seat.is_home %}میزبان{% else %}میهمان{% endif %}
+                                    </span>
+                                </h5>
+                                <!-- ===== قیمت هر صندلی (جدید) ===== -->
+                                <span class="badge bg-primary ticket-price"
+                                      data-base="{{ seat.price|default:0 }}"
+                                      style="font-size: 0.9rem; padding: 6px 14px;">
+                                    {{ seat.price|default:0|floatformat:0 }} تومان
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">نام و نام خانوادگی</label>
+                                    <input type="text" name="full_name_{{ seat.id }}"
+                                           class="form-control" required
+                                           placeholder="نام و نام خانوادگی را وارد کنید">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">کد ملی</label>
+                                    <input type="text" name="national_code_{{ seat.id }}"
+                                           class="form-control" maxlength="10"
+                                           pattern="\d{10}" required
+                                           placeholder="۱۰ رقم بدون فاصله">
+                                    <small class="text-muted">کد ملی باید ۱۰ رقم باشد.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="text-center mt-4">
+                <div class="discount-section mt-3">
+                    <div class="input-group" style="max-width: 400px; margin: 0 auto;">
+                        <input type="text" id="discount_code" class="form-control"
+                               placeholder="کد تخفیف (اختیاری)" dir="ltr">
+                        <button type="button" class="btn btn-outline-warning" onclick="applyDiscount()">
+                            اعمال
+                        </button>
+                    </div>
+                    <div id="discount_msg" class="mt-1 small"></div>
+                </div>
+
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+                        <i class="fas fa-check"></i>
+                        تایید و دریافت بلیط
+                        <span id="submitPrice" class="ticket-price" data-base="{{ total_price|default:0 }}">
+                            ({{ total_price|default:0|floatformat:0 }} تومان)
+                        </span>
+                    </button>
+                    <a href="{% url 'tickets:cancel_reservation' match.id %}" class="btn btn-danger btn-lg"
+                       onclick="return confirm('آیا از لغو خرید مطمئن هستید؟ صندلی‌ها آزاد خواهند شد.')">
+                        <i class="fas fa-times"></i> انصراف از خرید
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const timerDisplay = document.getElementById('timer-display');
+            const form = document.getElementById('ticketForm');
+
+            // ===== تابع تبدیل ثانیه به فرمت MM:SS =====
+            function formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+
+            // ===== مقدار اولیه از بک‌اند (بر حسب ثانیه) =====
+            let remaining = {{ remaining_time|default:0 }};
+            let timerInterval = null;
+
+            if (remaining > 0) {
+                // نمایش اولیه
+                timerDisplay.textContent = formatTime(remaining);
+
+                timerInterval = setInterval(function () {
+                    remaining--;
+                    timerDisplay.textContent = formatTime(remaining);
+
+                    // وقتی کمتر از ۱ دقیقه مونده، رنگ قرمز
+                    if (remaining < 60) {
+                        timerDisplay.style.color = '#dc3545';
+                    }
+
+                    if (remaining <= 0) {
+                        clearInterval(timerInterval);
+                        timerDisplay.textContent = '⏰ زمان تمام شد';
+                        alert('⏰ زمان شما برای تکمیل خرید به پایان رسید. صندلی‌ها آزاد شدند.');
+                        window.location.href = "{% url 'tickets:cancel_reservation' match.id %}";
+                    }
+                }, 1000);
+            } else {
+                // اگر زمان باقی‌مانده صفر یا کمتر است، مستقیماً هدایت کن
+                window.location.href = "{% url 'tickets:cancel_reservation' match.id %}";
+            }
+
+            // ===== متوقف کردن تایمر در صورت ارسال موفق فرم =====
+            let formSubmitted = false;  // ← این را اضافه کن
+            form.addEventListener('submit', function () {
+                formSubmitted = true;   // ← این را اضافه کن
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                }
+            });
+
+// ===== لغو رزرو هنگام خروج از صفحه (اختیاری) =====
+            window.addEventListener('beforeunload', function (e) {
+                if (formSubmitted) return;  // ← این را اضافه کن
+                if (navigator.sendBeacon) {
+                    const url = "{% url 'tickets:release_reservation' %}";
+                    const formData = new FormData();
+                    formData.append('match_id', {{ match.id }});
+                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+                    if (csrfToken) {
+                        formData.append('csrfmiddlewaretoken', csrfToken);
+                    }
+                    navigator.sendBeacon(url, formData);
+                }
+            });
+        });
+        let discountPercent = 0;
+
+        function applyDiscount() {
+            const code = document.getElementById('discount_code').value.trim();
+            if (!code) return;
+
+            fetch("{% url 'tickets:check_discount' %}", {
+                method: 'POST',
+                headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `code=${code}`
+            })
+                .then(r => r.json())
+                .then(data => {
+                    const msg = document.getElementById('discount_msg');
+                    if (data.valid) {
+                        discountPercent = data.percent;
+                        msg.innerHTML = `<span class="text-success">✅ ${data.message}</span>`;
+                        updatePrices();
+                    } else {
+                        msg.innerHTML = `<span class="text-danger">❌ ${data.message}</span>`;
+                    }
+                });
+        }
+
+        function updatePrices() {
+            // قیمت‌ها را آپدیت کن
+            document.querySelectorAll('.ticket-price').forEach(el => {
+                const base = parseInt(el.dataset.base);
+                const final = Math.round(base * (1 - discountPercent / 100));
+                el.textContent = final.toLocaleString('fa-IR') + ' تومان';
+            });
+        }
+    </script>
+{% endblock %}

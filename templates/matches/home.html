@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load jalali %}  <!-- ← بارگذاری فیلترهای شمسی -->
+
+{% block content %}
+    <div class="container mt-4">
+        <div class="text-center mb-5 fade-in">
+            <h1 style="color: var(--gold); font-weight: 700;">
+                <i class="fas fa-trophy"></i> مسابقات فوتبال
+            </h1>
+            <p class="text-muted">ورزشگاه نقش جهان - اصفهان</p>
+        </div>
+
+        {% for match in matches %}
+            <div class="card mb-4 fade-in shadow-sm">
+                <div class="card-header bg-white">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h5 class="mb-0">
+                                {{ match.home_team }} <span class="text-muted">🆚</span> {{ match.away_team }}
+                            </h5>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <!-- تاریخ شمسی -->
+                            <span class="badge bg-primary">{{ match.date_time|to_jalali_full }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <!-- لوگوها -->
+                        <div class="col-md-5 text-center">
+                            <div class="d-flex justify-content-around align-items-center">
+                                <div>
+                                    {% if match.home_team_logo %}
+                                        <img src="{{ match.home_team_logo.url }}" alt="{{ match.home_team }}"
+                                             style="height: 60px; width: auto;">
+                                    {% endif %}
+                                    <h6 class="mt-1">{{ match.home_team }}</h6>
+                                    <span class="badge bg-success">میزبان</span>
+                                </div>
+                                <span class="text-muted" style="font-size: 1.5rem;">🆚</span>
+                                <div>
+                                    {% if match.away_team_logo %}
+                                        <img src="{{ match.away_team_logo.url }}" alt="{{ match.away_team }}"
+                                             style="height: 60px; width: auto;">
+                                    {% endif %}
+                                    <h6 class="mt-1">{{ match.away_team }}</h6>
+                                    <span class="badge bg-warning text-dark">میهمان</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- اطلاعات مسابقه + ظرفیت‌ها -->
+                        <div class="col-md-7">
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">تاریخ</small>
+                                    <p class="fw-bold mb-1">{{ match.date_time|to_jalali_date }}</p>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">ساعت</small>
+                                    <p class="fw-bold mb-1">{{ match.date_time|to_jalali_time }}</p>
+                                </div>
+                                <div class="col-12">
+                                    <small class="text-muted">ورزشگاه</small>
+                                    <p class="fw-bold mb-1">{{ match.stadium.name }}</p>
+                                </div>
+                            </div>
+
+                            <!-- نمایش ظرفیت‌ها (پیشرفته) -->
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="card bg-light border-0 p-2">
+                                        <div class="d-flex justify-content-around align-items-center">
+                                            <div>
+                                                <span class="badge bg-secondary">ظرفیت کل</span>
+                                                <span class="fw-bold fs-5">{{ match.total_capacity|default:0 }}</span>
+                                            </div>
+                                            <div>
+                                                <span class="badge bg-danger">فروخته‌شده</span>
+                                                <span class="fw-bold fs-5">{{ match.sold_tickets|default:0 }}</span>
+                                            </div>
+                                            <div>
+                                                <span class="badge bg-success">باقی‌مانده</span>
+                                                <span class="fw-bold fs-5">{{ match.available_seats|default:0 }}</span>
+                                            </div>
+                                            <div>
+                                                <span class="badge bg-info text-dark">درصد اشغال</span>
+                                                <span class="fw-bold fs-5">{{ match.occupancy|default:0 }}%</span>
+                                            </div>
+                                        </div>
+                                        <!-- نوار پیشرفت -->
+                                        <div class="progress mt-2" style="height: 6px;">
+                                            <div class="progress-bar bg-success"
+                                                 style="width: {{ match.occupancy|default:0 }}%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== دکمه خرید با شرط جلوگیری از VIP ===== -->
+                    <div class="text-center mt-4">
+                        {% if user.user_type != 'vip' %}
+                            <a href="{% url 'matches:select_floor' match.id %}" class="btn btn-sm btn-success">
+                                خرید بلیط
+                            </a>
+                        {% else %}
+                            <span class="badge bg-warning text-dark" style="font-size: 1rem; padding: 8px 16px;">
+                                <i class="fas "></i> صدور از طریق پنل
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="alert alert-info text-center fade-in">
+                <i class="fas fa-info-circle"></i> هیچ مسابقه فعالی وجود ندارد.
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+{% load static %}
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>بلیط ورود به ورزشگاه</title>
+    <style>
+        /* ===== تنظیمات پایه ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            direction: rtl;
+            background: #f0f0f0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .ticket-container {
+            width: 100%;
+            max-width: 600px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            padding: 25px 30px 20px;
+            border: 2px solid #1a3e6f;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ===== هدر با لوگو ===== */
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #1a3e6f;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 5px;
+        }
+
+        .header-logo {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .header h2 {
+            color: #1a3e6f;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .header .match-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin: 5px 0;
+        }
+
+        .header .match-datetime {
+            font-size: 14px;
+            color: #666;
+            margin-top: 3px;
+        }
+
+        /* ===== QR Code - بزرگتر ===== */
+        .qr-code {
+            text-align: center;
+            margin: 15px 0 20px;
+        }
+
+        .qr-code img {
+            width: 220px; /* ← افزایش یافته */
+            height: 220px; /* ← افزایش یافته */
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 8px; /* ← کمی بیشتر برای زیبایی */
+            background: #fff;
+        }
+
+        /* ===== اطلاعات بلیط ===== */
+        .info-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            border-right: 4px solid #1a3e6f;
+        }
+
+        .info-row .label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .info-row .value {
+            color: #222;
+            font-weight: 500;
+        }
+
+        /* ===== نوع تیم ===== */
+        .team-type-wrapper {
+            text-align: center;
+            margin: 15px 0 20px;
+        }
+
+        /* ===== فوتر ===== */
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            border-top: 1px dashed #ccc;
+            padding-top: 12px;
+            margin-top: 10px;
+        }
+
+        .ticket-number {
+            font-family: monospace;
+            letter-spacing: 1px;
+            background: #e9ecef;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+<div class="ticket-container">
+    <!-- هدر -->
+    <div class="header">
+        <div class="header-top">
+            <h2>🎫 بلیط ورود به ورزشگاه</h2>
+        </div>
+        <div class="match-title">
+            {{ match.home_team }} <span style="font-weight:normal;color:#888;">vs</span> {{ match.away_team }}
+        </div>
+        <div class="match-datetime">
+            {{ match.date_time|date:"Y/m/d - H:i" }}
+        </div>
+    </div>
+
+    <!-- QR Code -->
+    <!-- QR Code -->
+    <div class="qr-code">
+        {% if qr_base64 %}
+            <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR Code">
+        {% else %}
+            <p style="color:#999;">QR Code موجود نیست</p>
+        {% endif %}
+    </div>
+
+    <!-- اطلاعات بلیط -->
+    <div class="info-grid">
+        <div class="info-row">
+            <span class="label">شماره بلیط</span>
+            <span class="value ticket-number">{{ ticket.ticket_number }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">نام و نام خانوادگی</span>
+            <span class="value">{{ ticket.full_name }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">کد ملی</span>
+            <span class="value">{{ ticket.national_code }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">بلوک / ردیف</span>
+            <span class="value">{{ ticket.seat.row.name }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">شماره صندلی</span>
+            <span class="value">{{ ticket.seat.number }}</span>
+        </div>
+    </div>
+
+    <!-- نوع تیم -->
+    <div class="team-type-wrapper">
+        <div style="
+                display: inline-block;
+                padding: 8px 25px;
+                border-radius: 50px;
+                font-size: 18px;
+                font-weight: bold;
+                font-family: 'Tahoma', 'Vazir', sans-serif;
+                background-color:
+                {% if ticket.seat.row.zone_label == 'VIP' %}#9b59b6
+                {% elif ticket.seat.row.zone_label == 'میزبان' %}#28a745
+                {% elif ticket.seat.row.zone_label == 'میهمان' %}#ffc107
+                {% elif ticket.seat.row.zone_label == 'کلاس ۱' %}#007bff
+                {% elif ticket.seat.row.zone_label == 'بانوان' %}#e83e8c
+                {% else %}#6c757d{% endif %};
+                color:
+                {% if ticket.seat.row.zone_label == 'میهمان' %}#212529
+                {% else %}white{% endif %};
+                ">
+            {{ ticket.seat.row.zone_label }}
+        </div>
+    </div>
+
+    <!-- فوتر -->
+    <div class="footer">
+        ⚠️ این بلیط فقط با ارائه کارت ملی معتبر است.<br>
+        لطفاً ۳۰ دقیقه قبل از شروع مسابقه در ورزشگاه حاضر باشید.
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}انتخاب طبقه - {{ match.home_team }} vs {{ match.away_team }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-layer-group"></i>
+                        انتخاب طبقه
+                    </h4>
+                </div>
+                <div class="card-body text-center">
+                    <!-- اطلاعات مسابقه -->
+                    <div class="match-info mb-4">
+                        <h5>
+                            {{ match.home_team }} <span class="text-muted">vs</span> {{ match.away_team }}
+                        </h5>
+                        <p class="text-muted">
+                            <i class="fas fa-calendar-alt"></i> {{ match.date_time|date:"Y/m/d - H:i" }}
+                        </p>
+                    </div>
+
+                    <p class="text-muted mb-4">
+                        لطفاً طبقه‌ی مورد نظر خود را انتخاب کنید:
+                    </p>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <button type="submit" name="floor" value="ground" 
+                                        class="btn btn-outline-primary btn-lg w-100 py-4">
+                                    <i class="fas fa-arrow-down fa-2x d-block mb-2"></i>
+                                    <span class="fw-bold">طبقه پایین</span>
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button type="submit" name="floor" value="second" 
+                                        class="btn btn-outline-success btn-lg w-100 py-4">
+                                    <i class="fas fa-arrow-up fa-2x d-block mb-2"></i>
+                                    <span class="fw-bold">طبقه بالا</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="mt-4">
+                        <!-- ===== اصلاح: حذف match.id از اینجا ===== -->
+                        <a href="{% url 'matches:home' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-right"></i>
+                            بازگشت به صفحه اصلی
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

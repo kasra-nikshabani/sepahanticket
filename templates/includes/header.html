@@ -1,0 +1,97 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <!-- برند -->
+        <a class="navbar-brand" href="{% url 'matches:home' %}">
+            <i class="fas fa-futbol"></i> بلیط سپاهان
+        </a>
+
+        <!-- دکمه هَمبِرگِر برای موبایل -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- منوی اصلی -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="{% url 'matches:tutorial' %}">
+                    <i class="fas fa-graduation-cap"></i> آموزش خرید بلیط
+                </a></li>
+
+                {% if user.is_authenticated %}
+
+                    <!-- ==================================================== -->
+                    <!--  کاربر وارد شده است                                   -->
+                    <!-- ==================================================== -->
+
+                    {% if user.user_type == 'admin' or user.is_staff %}
+                        <!-- ===== منوی مدیریت (ادمین) ===== -->
+                        <li class="nav-item"><a class="nav-link" href="{% url 'tickets:user_tickets' %}"><i
+                                class="fas fa-ticket-alt"></i> بلیط‌های من</a></li>
+
+                        <!-- ===== لینک مدیریت مسابقات (جداگانه و برجسته) ===== -->
+                        <li class="nav-item"><a class="nav-link" href="{% url 'matches:admin_match_list' %}">
+                            <i class="fas fa-calendar-alt"></i> مدیریت مسابقات
+                        </a></li>
+
+                        <!-- ===== لینک مدیریت بلوک‌ها ===== -->
+                        <li class="nav-item"><a class="nav-link" href="{% url 'matches:manage_blocks' %}">
+                            <i class="fas fa-layer-group"></i> مدیریت بلوک‌ها
+                        </a></li>
+
+                        <!-- سایر ابزارهای مدیریتی -->
+                        <li class="nav-item"><a class="nav-link" href="{% url 'tickets:bulk_issue' %}"><i
+                                class="fas fa-ticket-alt"></i> صدور گروهی</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'tickets:manage_vip_users' %}"><i
+                                class="fas fa-users-cog"></i> مدیریت VIP</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'tickets:sales_report' %}"><i
+                                class="fas fa-chart-bar"></i> گزارش فروش</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'tickets:row_occupancy' %}"><i
+                                class="fas fa-chair"></i> اشغال صندلی‌ها</a></li>
+
+                    {% elif user.user_type == 'vip' %}
+                        <!-- ===== منوی کاربر ویژه (VIP) ===== -->
+                        <li class="nav-item"><a class="nav-link" href="{% url 'tickets:vip_tickets' %}"><i
+                                class="fas fa-ticket-alt"></i> بلیط‌های دریافتی</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'tickets:vip_dashboard' %}"><i
+                                class="fas fa-ticket-alt"></i> صدور بلیط</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'tickets:vip_issued_tickets' %}"><i
+                                class="fas fa-list"></i> بلیط‌های صادرشده</a></li>
+
+                    {% else %}
+                        <!-- ===== کاربر معمولی ===== -->
+                        <li class="nav-item"><a class="nav-link" href="{% url 'tickets:user_tickets' %}"><i
+                                class="fas fa-ticket-alt"></i> بلیط‌های من</a></li>
+
+                    {% endif %}
+
+                    <!-- ===== لینک‌های مشترک همه کاربران لاگین ===== -->
+                    <li class="nav-item"><a class="nav-link" href="{% url 'accounts:profile' %}"><i
+                            class="fas fa-user"></i> {{ user.username }}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'accounts:logout' %}"><i
+                            class="fas fa-sign-out-alt"></i> خروج</a></li>
+
+                {% else %}
+                    <!-- ==================================================== -->
+                    <!--  کاربر وارد نشده است                                 -->
+                    <!-- ==================================================== -->
+
+                    <!-- ورود با موبایل (در صورت فعال بودن در settings) -->
+                    {% if settings.OTP_ENABLED %}
+                        <li class="nav-item"><a class="nav-link" href="{% url 'accounts:phone_login' %}"><i
+                                class="fas fa-phone-alt"></i> ورود با موبایل</a></li>
+                    {% endif %}
+
+                    <!-- لینک‌های معمولی ورود و ثبت‌نام -->
+                    <li class="nav-item"><a class="nav-link" href="{% url 'accounts:login' %}"><i
+                            class="fas fa-sign-in-alt"></i> ورود</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'accounts:register' %}"><i
+                            class="fas fa-user-plus"></i> ثبت‌نام</a></li>
+                {% endif %}
+                <!-- خط دیباگ موقت – بعداً پاکش می‌کنیم -->
+
+
+            </ul>
+        </div>
+    </div>
+</nav>
