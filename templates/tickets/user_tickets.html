@@ -175,7 +175,7 @@
                                     </span>
                                     {% if ticket.is_used and ticket.used_at %}
                                         <small class="text-muted">
-                                            <i class="fas fa-clock"></i> {{ ticket.used_at|to_jalali_full }}
+                                            <i class="fas fa-clock"></i> {{ ticket.used_at_local|to_jalali_full }}
                                         </small>
                                     {% endif %}
                                 </div>

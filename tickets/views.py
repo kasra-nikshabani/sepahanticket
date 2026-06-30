@@ -18,6 +18,7 @@ from django.db.models import Count
 from django.views.decorators.csrf import csrf_exempt
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
+import pytz
 
 import matches
 from .models import Ticket, VIPQuota, DiscountCode
@@ -60,6 +61,12 @@ def user_tickets(request):
         if status_filter in ['paid', 'admin_assigned', 'vip_issued']:
             tickets_qs = tickets_qs.filter(status=status_filter)
 
+    local_tz = pytz.timezone('Asia/Tehran')
+    for ticket in tickets_qs:
+        if ticket.used_at:
+            ticket.used_at_local = ticket.used_at.astimezone(local_tz)
+        else:
+            ticket.used_at_local = None
     matches = Match.objects.filter(is_active=True).order_by('-date_time')
 
     context = {
@@ -1412,7 +1419,6 @@ def get_blocks_for_match(request):
         return JsonResponse({'blocks': blocks_data})
     except Match.DoesNotExist:
         return JsonResponse({'blocks': []})
-
 
 
 @login_required
