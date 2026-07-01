@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}ویرایش بلیط {{ ticket.ticket_number }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit"></i> ویرایش بلیط
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>شماره بلیط:</strong> {{ ticket.ticket_number }}
+                        <br>
+                        <strong>مسابقه:</strong> {{ ticket.match.home_team }} vs {{ ticket.match.away_team }}
+                        <br>
+                        <strong>صندلی:</strong> {{ ticket.seat.row.name }} - صندلی {{ ticket.seat.number }}
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="full_name" class="form-label">نام و نام خانوادگی</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="full_name"
+                                   name="full_name"
+                                   value="{{ ticket.full_name }}"
+                                   required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="national_code" class="form-label">کد ملی</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="national_code"
+                                   name="national_code"
+                                   value="{{ ticket.national_code }}"
+                                   pattern="\d{10}"
+                                   maxlength="10"
+                                   required>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> ذخیره تغییرات
+                            </button>
+                            <a href="{% url 'tickets:vip_issued_tickets' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i> بازگشت به لیست
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

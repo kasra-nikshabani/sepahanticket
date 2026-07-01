@@ -39,6 +39,8 @@ urlpatterns = [
     path('api/get-blocks-for-match/', views.get_blocks_for_match, name='get_blocks_for_match'),
     path('export-sales-report/', views.export_sales_report_excel, name='export_sales_report'),
     path('bulk-download-user-tickets/', views.bulk_download_user_tickets, name='bulk_download_user_tickets'),
+    path('vip-edit-issued-ticket/<int:ticket_id>/', views.vip_edit_issued_ticket, name='vip_edit_issued_ticket'),
+    path('vip-delete-issued-ticket/<int:ticket_id>/', views.vip_delete_issued_ticket, name='vip_delete_issued_ticket'),
 ]
 
 # from django.urls import path

@@ -5,7 +5,7 @@
     {% if selected_block %}
         مدیریت صندلی‌های {{ selected_block.name }}
     {% else %}
-        مدیریت صندلی‌های بلوک
+        مدیریت صندلی‌های سکو
     {% endif %}
 {% endblock %}
 
@@ -449,7 +449,7 @@
                 {% if selected_block %}
                     مدیریت صندلی‌های {{ selected_block.name }}
                 {% else %}
-                    مدیریت صندلی‌های بلوک
+                    مدیریت صندلی‌های سکو
                 {% endif %}
             </h2>
             {% if selected_block %}
@@ -461,15 +461,15 @@
             {% endif %}
         </div>
         <a href="{% url 'matches:admin_block_list' %}" class="back-link">
-            <i class="fas fa-arrow-right"></i> بازگشت به مدیریت بلوک‌ها
+            <i class="fas fa-arrow-right"></i> بازگشت به مدیریت سکو ها
         </a>
     </div>
 
     <!-- ===== انتخابگر بلوک ===== -->
     <div class="block-selector">
-        <label for="blockSelect"><i class="fas fa-layer-group"></i> انتخاب بلوک:</label>
+        <label for="blockSelect"><i class="fas fa-layer-group"></i> انتخاب سکو:</label>
         <select id="blockSelect" onchange="location.href='?block_id='+this.value">
-            <option value="">یک بلوک انتخاب کنید...</option>
+            <option value="">یک سکو انتخاب کنید...</option>
             {% for block in all_blocks %}
                 <option value="{{ block.id }}" {% if selected_block and selected_block.id == block.id %}selected{% endif %}>
                     {{ block.name }} ({{ block.stadium.name }})
@@ -526,11 +526,11 @@
                         <i class="fas fa-sync"></i> تغییر وضعیت
                     </button>
                     <!-- دکمه‌های جدید: فعال‌سازی و غیرفعال‌سازی کل بلوک -->
-                    <button type="button" class="btn-sm btn-primary" onclick="if(confirm('آیا از فعال‌سازی همه صندلی‌های این بلوک اطمینان دارید؟ صندلی‌های دارای بلیط تغییر نمی‌کنند.')) submitAction('activate_block')">
-                        <i class="fas fa-check-circle"></i> فعال‌سازی کل بلوک
+                    <button type="button" class="btn-sm btn-primary" onclick="if(confirm('آیا از فعال‌سازی همه صندلی‌های این سکو اطمینان دارید؟ صندلی‌های دارای بلیط تغییر نمی‌کنند.')) submitAction('activate_block')">
+                        <i class="fas fa-check-circle"></i> فعال‌سازی کل سکو
                     </button>
-                    <button type="button" class="btn-sm btn-danger" onclick="if(confirm('آیا از غیرفعال‌سازی همه صندلی‌های این بلوک اطمینان دارید؟ صندلی‌های دارای بلیط غیرفعال نمی‌شوند.')) submitAction('deactivate_block')">
-                        <i class="fas fa-ban"></i> غیرفعال‌سازی کل بلوک
+                    <button type="button" class="btn-sm btn-danger" onclick="if(confirm('آیا از غیرفعال‌سازی همه صندلی‌های این سکو اطمینان دارید؟ صندلی‌های دارای بلیط غیرفعال نمی‌شوند.')) submitAction('deactivate_block')">
+                        <i class="fas fa-ban"></i> غیرفعال‌سازی کل سکو
                     </button>
                 </div>
                 <div class="right-actions">
@@ -601,8 +601,8 @@
                 {% empty %}
                 <div class="empty-state">
                     <i class="fas fa-chair"></i>
-                    <h4>هیچ صندلی‌ای برای این بلوک تعریف نشده است</h4>
-                    <p>برای این بلوک هیچ صندلی‌ای وجود ندارد. ابتدا صندلی‌ها را ایجاد کنید.</p>
+                    <h4>هیچ صندلی‌ای برای این سکو تعریف نشده است</h4>
+                    <p>برای این سکو هیچ صندلی‌ای وجود ندارد. ابتدا صندلی‌ها را ایجاد کنید.</p>
                 </div>
                 {% endfor %}
             </div>
@@ -614,8 +614,8 @@
         <!-- ===== پیام انتخاب بلوک ===== -->
         <div class="select-block-prompt">
             <i class="fas fa-layer-group"></i>
-            <h4>یک بلوک را انتخاب کنید</h4>
-            <p>از منوی بالایی یک بلوک را انتخاب کنید تا صندلی‌های آن را مشاهده و مدیریت کنید.</p>
+            <h4>یک سکو را انتخاب کنید</h4>
+            <p>از منوی بالایی یک سکو را انتخاب کنید تا صندلی‌های آن را مشاهده و مدیریت کنید.</p>
         </div>
     {% endif %}
 

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}انتخاب بلوک{% endblock %}
+{% block title %}انتخاب سکو{% endblock %}
 
 {% block extra_css %}
     <style>
@@ -405,7 +405,7 @@
         <div class="text-center mb-3">
             <h2>{{ match.home_team }} <span style="color:#D4AF37;">🆚</span> {{ match.away_team }}</h2>
             <p class="text-muted">{{ match.date_time|date:"Y/m/d H:i" }}</p>
-            <p class="filter-info">برای انتخاب بلوک، روی دکمه‌ی "انتخاب" کلیک کنید.</p>
+            <p class="filter-info">برای انتخاب سکو، روی دکمه‌ی "انتخاب" کلیک کنید.</p>
         </div>
 
         <!-- ============================================================
@@ -428,21 +428,28 @@
                 {% for block in blocks %}
                     <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-3">
                         <div class="block-card">
-                            <div class="block-name">{{ block.name }}</div>
+                            <!-- ===== نمایش نام سکو: حذف "بلوک" از نام دیتابیس و اضافه کردن "سکو" ===== -->
+                            <div class="block-name">سکو {{ block.name|cut:"بلوک " }}</div>
 
                             <!-- برچسب میزبان/میهمان -->
                             <span class="team-badge {% if block.team_type == 'home' %}team-home{% else %}team-away{% endif %}">
-                            {{ block.team_type_label }}
-                        </span>
+                              {{ block.team_type_label }}
+                            </span>
 
                             <!-- برچسب VIP / کلاس ۱ -->
                             {% if block.is_vip %}
                                 <span class="block-badge vip">VIP</span>
                             {% elif block.is_class1 %}
-                                <span class="block-badge class1">کلاس ۱</span>
+                                <span class="block-badge class1">سکو کلاس ۱</span>
                             {% else %}
                                 <span class="block-badge">عمومی</span>
                             {% endif %}
+
+                            <!-- قیمت -->
+                            <div class="block-price mb-1">
+                                <span class="price-label">قیمت:</span>
+                                <span class="price-value">{{ block.price|floatformat:0 }} تومان</span>
+                            </div>
 
                             <!-- آمار -->
                             <div class="block-stats">
@@ -450,27 +457,15 @@
                                 <span class="text-muted">از</span>
                                 <span class="total">{{ block.total_seats|default:0 }}</span>
                                 <span class="text-muted">صندلی موجود</span>
-                                <span class="occupancy">
-                                اشغال: {{ block.occupancy|default:0 }}%
-                            </span>
-                            </div>
-                            <div class="block-card">
-                                <!-- ===== نمایش قیمت ===== -->
-                                <div class="block-price">
-                                    <span class="price-label">قیمت:</span>
-                                    <span class="price-value">{{ block.price|floatformat:0 }} تومان</span>
-                                </div>
-
+                                <span class="occupancy">اشغال: {{ block.occupancy|default:0 }}%</span>
                             </div>
 
                             <!-- دکمه انتخاب -->
                             <button type="submit" name="block_id" value="{{ block.id }}" class="btn-select">
-                                انتخاب
+                                انتخاب سکو
                             </button>
                         </div>
                     </div>
-                {% empty %}
-                    <div class="col-12 text-center text-muted">هیچ بلوکی تعریف نشده است.</div>
                 {% endfor %}
             </div>
         </form>

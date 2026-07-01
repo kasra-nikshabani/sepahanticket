@@ -51,12 +51,21 @@
 
                     {% elif user.user_type == 'vip' %}
                         <!-- ===== منوی کاربر ویژه (VIP) ===== -->
-                        <li class="nav-item"><a class="nav-link" href="{% url 'tickets:vip_tickets' %}"><i
-                                class="fas fa-ticket-alt"></i> بلیط‌های دریافتی</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'tickets:vip_dashboard' %}"><i
-                                class="fas fa-ticket-alt"></i> صدور بلیط</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'tickets:vip_issued_tickets' %}"><i
-                                class="fas fa-list"></i> بلیط‌های صادرشده</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'tickets:vip_tickets' %}">
+                                <i class="fas fa-inbox"></i> بلیط‌های دریافتی
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'tickets:vip_dashboard' %}">
+                                <i class="fas fa-chart-pie"></i> صدور بلیط
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'tickets:vip_issued_tickets' %}">
+                                <i class="fas fa-ticket-alt"></i> بلیط‌های صادرشده
+                            </a>
+                        </li>
 
                     {% else %}
                         <!-- ===== کاربر معمولی ===== -->

@@ -38,7 +38,7 @@ class Block(models.Model):
         blank=True,
         verbose_name="ورزشگاه"
     )
-    name = models.CharField(max_length=50, verbose_name="نام بلوک")
+    name = models.CharField(max_length=50, verbose_name="نام سکو")
     order = models.IntegerField(default=0, verbose_name="ترتیب")
     is_vip = models.BooleanField(default=False, verbose_name="VIP")
     is_class1 = models.BooleanField(default=False, verbose_name="کلاس ۱")

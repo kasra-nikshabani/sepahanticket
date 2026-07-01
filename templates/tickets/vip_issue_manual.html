@@ -1,220 +1,299 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}صدور دستی بلیط{% endblock %}
-
-{% block extra_css %}
-<style>
-    .issue-container {
-        max-width: 800px;
-        margin: 30px auto;
-        padding: 0 15px;
-    }
-    .card-custom {
-        background: #ffffff;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-        border: 1px solid #e8eaed;
-        overflow: hidden;
-    }
-    .card-header-custom {
-        background: linear-gradient(135deg, #1A1A2E, #16213E);
-        padding: 20px 30px;
-        border-bottom: 3px solid #D4AF37;
-        color: white;
-    }
-    .card-header-custom h4 {
-        margin: 0;
-        font-weight: 700;
-        color: #D4AF37;
-    }
-    .card-header-custom h4 i {
-        margin-left: 10px;
-        color: #D4AF37;
-    }
-    .card-body-custom {
-        padding: 30px;
-    }
-    .seat-grid {
-        display: grid;
-        grid-template-columns: repeat(10, 1fr);
-        gap: 6px;
-        max-width: 650px;
-        margin: 20px auto;
-    }
-    .seat {
-        padding: 8px 4px;
-        border-radius: 6px;
-        text-align: center;
-        font-size: 11px;
-        font-weight: 600;
-        cursor: pointer;
-        border: 1.5px solid #e0e0e0;
-        background: #fff;
-        transition: all 0.2s;
-        user-select: none;
-    }
-    .seat.available {
-        background: #e8f5e9;
-        border-color: #a5d6a7;
-        color: #2e7d32;
-    }
-    .seat.available:hover {
-        background: #c8e6c9;
-        transform: scale(1.05);
-        box-shadow: 0 0 10px rgba(40, 167, 69, 0.3);
-    }
-    .seat.unavailable {
-        background: #fce4ec;
-        border-color: #ef9a9a;
-        color: #c62828;
-        cursor: not-allowed;
-        opacity: 0.6;
-    }
-    .seat.selected {
-        background: #D4AF37;
-        border-color: #B8960F;
-        color: #1A1A2E;
-        transform: scale(1.08);
-        box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
-    }
-    .btn-issue {
-        background: linear-gradient(135deg, #D4AF37, #B8960F);
-        border: none;
-        color: #1A1A2E;
-        font-weight: 700;
-        padding: 12px 36px;
-        border-radius: 12px;
-        font-size: 1.1rem;
-        transition: all 0.2s ease;
-        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
-        cursor: pointer;
-    }
-    .btn-issue:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
-        color: #1A1A2E;
-        background: linear-gradient(135deg, #E8D58A, #D4AF37);
-    }
-    .btn-secondary-custom {
-        background: #f1f3f4;
-        border: none;
-        color: #1A1A2E;
-        padding: 12px 28px;
-        border-radius: 12px;
-        font-weight: 500;
-        transition: all 0.2s ease;
-        text-decoration: none;
-        display: inline-block;
-    }
-    .btn-secondary-custom:hover {
-        background: #e8eaed;
-        color: #1A1A2E;
-    }
-    .form-control {
-        width: 100%;
-        padding: 10px 14px;
-        border: 1.5px solid #e0e0e0;
-        border-radius: 10px;
-        font-size: 0.95rem;
-        transition: border-color 0.2s, box-shadow 0.2s;
-        background: #fafafa;
-    }
-    .form-control:focus {
-        border-color: #D4AF37;
-        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
-        background: #fff;
-        outline: none;
-    }
-    .form-label {
-        font-weight: 600;
-        color: #1A1A2E;
-        display: block;
-        margin-bottom: 6px;
-        font-size: 0.95rem;
-    }
-    @media (max-width: 768px) {
-        .card-body-custom {
-            padding: 20px;
-        }
-        .seat-grid {
-            grid-template-columns: repeat(8, 1fr);
-            gap: 4px;
-        }
-        .seat {
-            font-size: 9px;
-            padding: 6px 2px;
-        }
-        .btn-issue,
-        .btn-secondary-custom {
-            width: 100%;
-            margin-bottom: 10px;
-        }
-    }
-</style>
-{% endblock %}
+{% block title %}صدور دستی بلیط - {{ match.home_team }} vs {{ match.away_team }}{% endblock %}
 
 {% block content %}
-<div class="issue-container">
-    <div class="card-custom">
-        <div class="card-header-custom">
-            <h4><i class="fas fa-hand-holding-heart"></i> صدور دستی بلیط</h4>
-        </div>
-        <div class="card-body-custom">
-            <p><strong>مسابقه:</strong> {{ match.home_team }} vs {{ match.away_team }}</p>
-            <p><strong>ظرفیت باقی‌مانده شما:</strong> {{ quota.remaining }}</p>
-
-            <form method="post">
-                {% csrf_token %}
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">نام و نام خانوادگی</label>
-                        <input type="text" name="full_name" class="form-control" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">کد ملی</label>
-                        <input type="text" name="national_code" class="form-control" maxlength="10" required>
-                    </div>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-hand-holding-heart"></i>
+                        صدور دستی بلیط
+                    </h4>
                 </div>
+                <div class="card-body">
+                    <!-- اطلاعات مسابقه -->
+                    <div class="match-info mb-4 p-3 bg-light rounded">
+                        <h5 class="text-center">
+                            {{ match.home_team }} <span class="text-muted">vs</span> {{ match.away_team }}
+                        </h5>
+                        <p class="text-center text-muted mb-0">
+                            <i class="fas fa-calendar-alt"></i> {{ match.date_time|date:"Y/m/d - H:i" }}
+                        </p>
+                        <p class="text-center text-muted mb-0">
+                            <i class="fas fa-ticket-alt"></i>
+                            ظرفیت باقی‌مانده شما: <strong>{{ quota.remaining }}</strong> بلیط
+                        </p>
+                    </div>
 
-                <div class="mt-4">
-                    <label class="form-label">انتخاب صندلی</label>
-                    <div class="seat-grid">
-                        {% for ms in match_seats %}
-                            <div class="seat {% if ms.is_available %}available{% else %}unavailable{% endif %}"
-                                 data-seat-id="{{ ms.id }}"
-                                 data-number="{{ ms.seat.number }}"
-                                 onclick="selectSeat(this, {{ ms.id }})">
-                                {{ ms.seat.number }}
+                    <!-- ===== فرم انتخاب بلوک و ردیف (GET) ===== -->
+                    <form method="get" class="mb-4">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-layer-group"></i> سکو
+                                </label>
+                                <select name="block_id" class="form-select" onchange="this.form.submit()">
+                                    <option value="">یک سکو انتخاب کنید...</option>
+                                    {% for block in blocks %}
+                                        <option value="{{ block.id }}" {% if selected_block and selected_block.id == block.id %}selected{% endif %}>
+                                            {{ block.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
                             </div>
-                        {% empty %}
-                            <div class="col-12 text-center text-muted">
-                                هیچ صندلی خالی در این مسابقه موجود نیست.
-                            </div>
-                        {% endfor %}
-                    </div>
-                    <input type="hidden" name="match_seat_id" id="selectedMatchSeatId" required>
-                </div>
 
-                <div class="mt-4 text-center">
-                    <button type="submit" class="btn-issue">
-                        <i class="fas fa-check-circle"></i> صدور بلیط
-                    </button>
-                    <a href="{% url 'tickets:vip_dashboard' %}" class="btn-secondary-custom">انصراف</a>
+                            {% if selected_block %}
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">
+                                        <i class="fas fa-rows"></i> ردیف
+                                    </label>
+                                    <select name="row_id" class="form-select" onchange="this.form.submit()">
+                                        <option value="">همه ردیف‌ها</option>
+                                        {% for row in rows %}
+                                            <option value="{{ row.id }}" {% if selected_row_id == row.id %}selected{% endif %}>
+                                                ردیف {{ row.number }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <a href="{% url 'tickets:vip_issue_manual' match.id %}" class="btn btn-outline-secondary w-100">
+                                        <i class="fas fa-times"></i> لغو فیلتر
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </form>
+
+                    <!-- ===== نمایش آمار صندلی‌ها ===== -->
+                    {% if selected_block %}
+                        <div class="alert alert-info d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="fas fa-info-circle"></i>
+                                صندلی‌های خالی: <strong>{{ available_count }}</strong>
+                            </span>
+                            <span>
+                                <span class="badge bg-success">🟢 خالی</span>
+                                <span class="badge bg-danger">🔴 فروخته/تخصیص</span>
+                            </span>
+                        </div>
+                    {% endif %}
+
+                    <!-- ===== فرم اصلی صدور بلیط (POST) ===== -->
+                    <form method="post" id="issueForm">
+                        {% csrf_token %}
+
+                        <!-- انتخاب صندلی -->
+                        {% if selected_block %}
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-chair"></i> انتخاب صندلی
+                                </label>
+                                {% if all_seats %}
+                                    <div class="row g-2">
+                                        {% for seat in all_seats %}
+                                            <div class="col-4 col-md-3">
+                                                <div class="seat-card {% if not seat.is_available %}sold{% endif %}">
+                                                    <input type="radio"
+                                                           name="match_seat_id"
+                                                           id="seat_{{ seat.id }}"
+                                                           value="{{ seat.match_seat.id }}"
+                                                           class="seat-radio"
+                                                           {% if not seat.is_available %}disabled{% endif %}
+                                                           required>
+                                                    <label for="seat_{{ seat.id }}" class="seat-label">
+                                                        <i class="fas fa-chair"></i>
+                                                        <span class="seat-number">{{ seat.number }}</span>
+                                                        <small class="seat-row">ردیف {{ seat.row.number }}</small>
+                                                        <span class="seat-status {% if seat.is_available %}available{% else %}unavailable{% endif %}">
+                                                            {% if seat.is_available %}
+                                                                ✅ خالی
+                                                            {% else %}
+                                                                ❌ فروخته
+                                                            {% endif %}
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        هیچ صندلی‌ای در این سکو یافت نشد.
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        <!-- اطلاعات خریدار -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="full_name" class="form-label">
+                                    <i class="fas fa-user"></i> نام و نام خانوادگی
+                                </label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="full_name"
+                                       name="full_name"
+                                       placeholder="مثال: علی محمدی"
+                                       required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="national_code" class="form-label">
+                                    <i class="fas fa-id-card"></i> کد ملی
+                                </label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="national_code"
+                                       name="national_code"
+                                       placeholder="۱۰ رقم"
+                                       pattern="\d{10}"
+                                       maxlength="10"
+                                       required>
+                            </div>
+                        </div>
+
+                        <!-- دکمه‌ها -->
+                        <div class="d-grid gap-2 mt-3">
+                            <button type="submit" class="btn btn-success btn-lg" id="submitBtn"
+                                    {% if not available_count %}disabled{% endif %}>
+                                <i class="fas fa-check-circle"></i>
+                                {% if available_count > 0 %}
+                                    صدور بلیط
+                                {% else %}
+                                    صندلی خالی موجود نیست
+                                {% endif %}
+                            </button>
+                            <a href="{% url 'tickets:vip_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-right"></i>
+                                بازگشت به داشبورد
+                            </a>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
 
-<script>
-    function selectSeat(element, matchSeatId) {
-        // حذف انتخاب قبلی
-        document.querySelectorAll('.seat').forEach(s => s.classList.remove('selected'));
-        // انتخاب جدید
-        element.classList.add('selected');
-        // ذخیره match_seat_id در فیلد مخفی
-        document.getElementById('selectedMatchSeatId').value = matchSeatId;
+<style>
+    .seat-card {
+        position: relative;
+        margin-bottom: 8px;
     }
+    .seat-card.sold {
+        opacity: 0.7;
+    }
+    .seat-card.sold .seat-label {
+        border-color: #dc3545;
+        background: #f8d7da;
+        cursor: not-allowed;
+    }
+    .seat-card.sold .seat-label i {
+        color: #dc3545;
+    }
+    .seat-card.sold .seat-label .seat-status.unavailable {
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .seat-radio {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .seat-label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 5px;
+        background: #f8f9fa;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 13px;
+        text-align: center;
+        min-height: 70px;
+        width: 100%;
+    }
+    .seat-label i {
+        font-size: 18px;
+        color: #6c757d;
+        margin-bottom: 2px;
+    }
+    .seat-label .seat-number {
+        font-weight: bold;
+        font-size: 16px;
+    }
+    .seat-label .seat-row {
+        font-size: 10px;
+        color: #6c757d;
+    }
+    .seat-label .seat-status {
+        font-size: 10px;
+        font-weight: 600;
+        margin-top: 2px;
+    }
+    .seat-label .seat-status.available {
+        color: #28a745;
+    }
+    .seat-label .seat-status.unavailable {
+        color: #dc3545;
+    }
+
+    .seat-radio:not(:disabled):checked + .seat-label {
+        background: #d4edda;
+        border-color: #28a745;
+        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.25);
+    }
+    .seat-radio:not(:disabled):checked + .seat-label i {
+        color: #28a745;
+    }
+    .seat-radio:not(:disabled):checked + .seat-label .seat-status.available {
+        color: #155724;
+    }
+
+    .seat-label:hover:not(.seat-card.sold .seat-label) {
+        background: #e9ecef;
+        border-color: #adb5bd;
+    }
+    .seat-card.sold .seat-label:hover {
+        transform: none;
+        box-shadow: none;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('issueForm');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // فعال کردن دکمه فقط در صورت انتخاب صندلی خالی
+        const radioButtons = document.querySelectorAll('input[name="match_seat_id"]:not([disabled])');
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', function() {
+                submitBtn.disabled = false;
+            });
+        });
+
+        // غیرفعال کردن دکمه بعد از ارسال
+        form.addEventListener('submit', function() {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال صدور...';
+        });
+
+        // اگر هیچ صندلی خالی وجود نداشته باشد، دکمه غیرفعال است
+        if ({{ available_count }} === 0) {
+            submitBtn.disabled = true;
+        }
+    });
 </script>
 {% endblock %}

@@ -178,10 +178,9 @@ def vip_issued_tickets(request):
 @login_required
 def vip_issue_manual(request, match_id):
     """
-    صدور خودکار بلیط توسط کاربر ویژه (بدون انتخاب صندلی)
-    پس از صدور، به صفحه بلیط‌های صادرشده با فیلتر همان مسابقه هدایت می‌شود.
+    صدور دستی بلیط توسط کاربر ویژه با انتخاب بلوک، ردیف و صندلی
+    نمایش همه صندلی‌ها با رنگ‌بندی (سبز=خالی، قرمز=فروخته/تخصیص)
     """
-    # ===== بررسی دسترسی =====
     if request.user.user_type != 'vip':
         messages.error(request, 'شما دسترسی به این بخش ندارید.')
         return redirect('matches:home')
@@ -193,35 +192,55 @@ def vip_issue_manual(request, match_id):
         messages.error(request, 'ظرفیت شما برای این مسابقه تکمیل شده است.')
         return redirect('tickets:vip_dashboard')
 
-    # ===== ۱. ایجاد خودکار MatchSeat برای صندلی‌هایی که وجود ندارند =====
-    all_seats = Seat.objects.filter(row__is_active=True)
-    existing_match_seats = MatchSeat.objects.filter(match=match, seat__in=all_seats)
-    existing_seat_ids = existing_match_seats.values_list('seat_id', flat=True)
+    # ===== دریافت فیلترها از GET =====
+    selected_block_id = request.GET.get('block_id')
+    selected_row_id = request.GET.get('row_id')
 
-    missing_seat_ids = all_seats.exclude(id__in=existing_seat_ids).values_list('id', flat=True)
-    if missing_seat_ids:
-        new_match_seats = [
-            MatchSeat(match=match, seat_id=seat_id, is_available=True)
-            for seat_id in missing_seat_ids
-        ]
-        MatchSeat.objects.bulk_create(new_match_seats)
+    # ===== دریافت بلوک‌های ورزشگاه =====
+    blocks = Block.objects.filter(stadium=match.stadium, is_active=True).order_by('order')
 
-    # ===== ۲. پیدا کردن اولین صندلی خالی =====
-    available_seat = MatchSeat.objects.filter(
-        match=match,
-        is_available=True
-    ).select_related('seat', 'seat__row').order_by(
-        'seat__row__block__order',
-        'seat__row__number',
-        'seat__number'
-    ).first()
+    selected_block = None
+    rows = []
+    all_seats = []  # لیست دیکشنری‌های شامل اطلاعات هر صندلی
 
-    # ===== ۳. پردازش فرم (POST) =====
+    if selected_block_id:
+        selected_block = get_object_or_404(Block, id=selected_block_id)
+        rows = Row.objects.filter(block=selected_block, is_active=True).order_by('number')
+
+        # بررسی اعتبار row_id
+        if selected_row_id:
+            if not rows.filter(id=selected_row_id).exists():
+                selected_row_id = None
+
+        # ===== دریافت همه صندلی‌های بلوک (و ردیف در صورت انتخاب) =====
+        seats_qs = Seat.objects.filter(row__block=selected_block, row__is_active=True)
+        if selected_row_id:
+            seats_qs = seats_qs.filter(row_id=selected_row_id)
+        seats_qs = seats_qs.order_by('row__number', 'number')
+
+        # ===== ساخت لیست کامل صندلی‌ها با وضعیت =====
+        for seat in seats_qs:
+            # بررسی یا ایجاد MatchSeat
+            match_seat, created = MatchSeat.objects.get_or_create(
+                match=match,
+                seat=seat,
+                defaults={'is_available': True}
+            )
+            # اگر MatchSeat تازه ایجاد شده، دسترسی داشته باشیم
+            seat.match_seat = match_seat
+            seat.is_available = match_seat.is_available
+            all_seats.append(seat)
+
+        # تعداد صندلی‌های خالی
+        available_count = sum(1 for s in all_seats if s.is_available)
+
+    # ===== پردازش فرم (POST) =====
     if request.method == 'POST':
+        match_seat_id = request.POST.get('match_seat_id')
         full_name = request.POST.get('full_name')
         national_code = request.POST.get('national_code')
 
-        if not full_name or not national_code:
+        if not match_seat_id or not full_name or not national_code:
             messages.error(request, 'لطفاً تمام اطلاعات را وارد کنید.')
             return redirect('tickets:vip_issue_manual', match_id=match_id)
 
@@ -229,15 +248,13 @@ def vip_issue_manual(request, match_id):
             messages.error(request, 'کد ملی باید ۱۰ رقم باشد.')
             return redirect('tickets:vip_issue_manual', match_id=match_id)
 
-        if not available_seat:
-            messages.error(request, 'هیچ صندلی خالی برای این مسابقه موجود نیست.')
-            return redirect('tickets:vip_dashboard')
-
         with transaction.atomic():
-            # قفل کردن صندلی برای جلوگیری از race condition
-            match_seat = MatchSeat.objects.select_for_update().get(id=available_seat.id)
-            if not match_seat.is_available:
-                messages.error(request, 'صندلی انتخاب‌شده قبلاً پر شده است. لطفاً دوباره تلاش کنید.')
+            try:
+                match_seat = MatchSeat.objects.select_for_update().get(
+                    id=match_seat_id, match=match, is_available=True
+                )
+            except MatchSeat.DoesNotExist:
+                messages.error(request, 'صندلی انتخاب‌شده معتبر نیست یا قبلاً فروخته شده است.')
                 return redirect('tickets:vip_issue_manual', match_id=match_id)
 
             ticket = Ticket.objects.create(
@@ -260,20 +277,101 @@ def vip_issue_manual(request, match_id):
         messages.success(
             request,
             f'✅ بلیط برای {full_name} با موفقیت صادر شد.\n'
-            f'ردیف: {match_seat.seat.row.name} - صندلی: {match_seat.seat.number}'
+            f'بلوک: {match_seat.seat.row.block.name} - ردیف: {match_seat.seat.row.number} - صندلی: {match_seat.seat.number}'
         )
-
-        # ===== هدایت به صفحه بلیط‌های صادرشده (بخش مخصوص کاربر ویژه) =====
         return redirect(f'{reverse("tickets:vip_issued_tickets")}?match_id={match.id}')
 
-    # ===== ۴. نمایش فرم (GET) =====
+    # ===== نمایش فرم (GET) =====
     context = {
         'match': match,
         'quota': quota,
-        'available_seat': available_seat,
+        'blocks': blocks,
+        'selected_block': selected_block,
+        'rows': rows,
+        'selected_row_id': int(selected_row_id) if selected_row_id else None,
+        'all_seats': all_seats,
+        'available_count': sum(1 for s in all_seats if s.is_available) if all_seats else 0,
     }
     return render(request, 'tickets/vip_issue_manual.html', context)
 
+
+@login_required
+def vip_edit_issued_ticket(request, ticket_id):
+    """
+    ویرایش بلیط صادرشده توسط کاربر ویژه (فقط نام و کد ملی)
+    """
+    if request.user.user_type != 'vip':
+        messages.error(request, 'شما دسترسی به این بخش ندارید.')
+        return redirect('matches:home')
+
+    ticket = get_object_or_404(Ticket, id=ticket_id, user=request.user, status='vip_issued')
+
+    if request.method == 'POST':
+        full_name = request.POST.get('full_name')
+        national_code = request.POST.get('national_code')
+
+        if not full_name or not national_code:
+            messages.error(request, 'لطفاً تمام اطلاعات را وارد کنید.')
+            return redirect('tickets:vip_edit_issued_ticket', ticket_id=ticket.id)
+
+        if len(national_code) != 10 or not national_code.isdigit():
+            messages.error(request, 'کد ملی باید ۱۰ رقم باشد.')
+            return redirect('tickets:vip_edit_issued_ticket', ticket_id=ticket.id)
+
+        # ذخیره تغییرات
+        ticket.full_name = full_name
+        ticket.national_code = national_code
+        ticket.save()
+
+        # بازتولید PDF با اطلاعات جدید
+        if ticket.pdf_file:
+            ticket.pdf_file.delete(save=False)
+        ticket.generate_pdf()
+        ticket.save()
+
+        messages.success(request, f'✅ اطلاعات بلیط {ticket.ticket_number} با موفقیت ویرایش شد.')
+        return redirect('tickets:vip_issued_tickets')
+
+    context = {
+        'ticket': ticket,
+    }
+    return render(request, 'tickets/vip_edit_issued_ticket.html', context)
+
+
+@login_required
+def vip_delete_issued_ticket(request, ticket_id):
+    """
+    حذف (لغو) بلیط صادرشده توسط کاربر ویژه و آزادسازی صندلی
+    """
+    if request.user.user_type != 'vip':
+        messages.error(request, 'شما دسترسی به این بخش ندارید.')
+        return redirect('matches:home')
+
+    ticket = get_object_or_404(Ticket, id=ticket_id, user=request.user, status='vip_issued')
+
+    if request.method == 'POST':
+        with transaction.atomic():
+            # آزادسازی MatchSeat
+            if ticket.match_seat:
+                ticket.match_seat.is_available = True
+                ticket.match_seat.save()
+
+            # حذف فایل‌های مرتبط
+            if ticket.pdf_file:
+                ticket.pdf_file.delete(save=False)
+            if ticket.qr_code:
+                ticket.qr_code.delete(save=False)
+
+            # حذف بلیط
+            ticket.delete()
+
+        messages.success(request, '✅ بلیط با موفقیت لغو شد و صندلی آزاد شد.')
+        return redirect('tickets:vip_issued_tickets')
+
+    context = {
+        'ticket': ticket,
+    }
+    return render(request, 'tickets/vip_delete_issued_ticket.html', context)
 
 @login_required
 def vip_issue_excel(request, match_id):
@@ -858,18 +956,29 @@ def bulk_issue_tickets(request):
             block = form.cleaned_data['block']
             count_per_user = form.cleaned_data['seat_count_per_user']
 
-            # ===== دریافت MatchSeatهای موجود در کل بلوک =====
-            available_match_seats = MatchSeat.objects.filter(
-                match=match,
-                seat__row__block=block,
+            # ===== دریافت صندلی‌های بلوک =====
+            seats_in_block = Seat.objects.filter(
+                row__block=block,
+                row__is_active=True,
                 is_available=True
-            ).select_related('seat').order_by('seat__row__number', 'seat__number')
+            ).order_by('row__number', 'number')
+
+            # ===== ساخت MatchSeat برای هر صندلی (با match صحیح) =====
+            available_match_seats = []
+            for seat in seats_in_block:
+                match_seat, created = MatchSeat.objects.get_or_create(
+                    match=match,
+                    seat=seat,
+                    defaults={'is_available': True}
+                )
+                if match_seat.is_available:
+                    available_match_seats.append(match_seat)
 
             total_needed = users.count() * count_per_user
-            if available_match_seats.count() < total_needed:
+            if len(available_match_seats) < total_needed:
                 messages.error(
                     request,
-                    f'تعداد صندلی‌های موجود در بلوک "{block.name}" ({available_match_seats.count()}) کافی نیست. '
+                    f'تعداد صندلی‌های موجود در بلوک "{block.name}" ({len(available_match_seats)}) کافی نیست. '
                     f'به {total_needed} صندلی نیاز است.'
                 )
                 return render(request, 'tickets/bulk_issue.html', {'form': form})
@@ -878,16 +987,20 @@ def bulk_issue_tickets(request):
             with transaction.atomic():
                 ticket_index = 0
                 created_count = 0
-                match_seats_list = list(available_match_seats)
 
                 for user in users:
                     for _ in range(count_per_user):
-                        if ticket_index >= len(match_seats_list):
+                        if ticket_index >= len(available_match_seats):
                             break
-                        match_seat = match_seats_list[ticket_index]
+                        match_seat = available_match_seats[ticket_index]
                         ticket_index += 1
 
-                        # ایجاد بلیط
+                        # ===== بررسی مجدد تطابق MatchSeat با مسابقه =====
+                        if match_seat.match_id != match.id:
+                            # در صورت عدم تطابق، MatchSeat را اصلاح کن
+                            match_seat.match = match
+                            match_seat.save()
+
                         ticket = Ticket.objects.create(
                             user=user,
                             match=match,
@@ -920,7 +1033,6 @@ def bulk_issue_tickets(request):
         form = BulkTicketForm()
 
     return render(request, 'tickets/bulk_issue.html', {'form': form})
-
 
 @login_required
 @staff_member_required

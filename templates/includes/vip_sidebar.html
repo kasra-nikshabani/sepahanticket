@@ -18,12 +18,22 @@
                     <i class="fas fa-list"></i> بلیط‌های من
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'tickets:vip_tickets' %}">
+                    <i class="fas fa-inbox"></i> بلیط‌های دریافتی
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'tickets:vip_issued_tickets' %}">
+                    <i class="fas fa-ticket-alt"></i> بلیط‌های صادرشده
+                </a>
+            </li>
             <li class="nav-header">پشتیبانی</li>
-{#            <li class="nav-item">#}
-{#                <a class="nav-link" href="{% url 'help' %}">#}
-{#                    <i class="fas fa-question-circle"></i> راهنما#}
-{#                </a>#}
-{#            </li>#}
+            {#            <li class="nav-item">#}
+            {#                <a class="nav-link" href="{% url 'help' %}">#}
+            {#                    <i class="fas fa-question-circle"></i> راهنما#}
+            {#                </a>#}
+            {#            </li>#}
 
             <!-- ===== بخش کاربری ===== -->
             <li class="nav-header">کاربری</li>

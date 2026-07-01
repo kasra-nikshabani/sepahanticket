@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}مدیریت بلوک‌ها{% endblock %}
+{% block title %}مدیریت سکو ها{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -297,7 +297,7 @@
 
     <!-- ===== هدر ===== -->
     <div class="page-header">
-        <h2><i class="fas fa-layer-group"></i> مدیریت بلوک‌ها</h2>
+        <h2><i class="fas fa-layer-group"></i> مدیریت سکو ها</h2>
         <div class="header-actions">
             <a href="{% url 'matches:admin_stadium_list' %}" class="btn-admin btn-outline-custom">
                 <i class="fas fa-arrow-right"></i> مدیریت ورزشگاه‌ها
@@ -345,7 +345,7 @@
         </form>
         <div class="filter-stats mt-2">
             <i class="fas fa-info-circle"></i>
-            <strong>{{ blocks|length }}</strong> بلوک
+            <strong>{{ blocks|length }}</strong> سکو
             {% if selected_match %}
                 در مسابقه <strong>{{ selected_match.home_team }} vs {{ selected_match.away_team }}</strong>
             {% elif selected_stadium %}
@@ -409,7 +409,7 @@
             <div class="card-footer">
                 <a href="{% url 'matches:toggle_block_status' block.id %}"
                    class="btn-sm btn-toggle"
-                   onclick="return confirm('آیا از تغییر وضعیت این بلوک اطمینان دارید؟')">
+                   onclick="return confirm('آیا از تغییر وضعیت این سکو اطمینان دارید؟')">
                     <i class="fas {% if block.is_active %}fa-ban{% else %}fa-check{% endif %}"></i>
                     {% if block.is_active %}غیرفعال{% else %}فعال{% endif %}
                 </a>
@@ -427,14 +427,14 @@
         {% empty %}
         <div class="empty-state">
             <i class="fas fa-layer-group"></i>
-            <h4>هیچ بلوکی یافت نشد</h4>
+            <h4>هیچ سکویی یافت نشد</h4>
             <p>
                 {% if selected_match %}
-                    برای مسابقه "{{ selected_match.home_team }} vs {{ selected_match.away_team }}" بلوکی تعریف نشده است.
+                    برای مسابقه "{{ selected_match.home_team }} vs {{ selected_match.away_team }}" سکویی تعریف نشده است.
                 {% elif selected_stadium %}
-                    برای ورزشگاه "{{ selected_stadium.name }}" بلوکی تعریف نشده است.
+                    برای ورزشگاه "{{ selected_stadium.name }}" سکویی تعریف نشده است.
                 {% else %}
-                    هیچ بلوکی در سیستم تعریف نشده است.
+                    هیچ سکویی در سیستم تعریف نشده است.
                 {% endif %}
             </p>
             <a href="{% url 'matches:admin_stadium_list' %}" class="btn-admin btn-success-custom">

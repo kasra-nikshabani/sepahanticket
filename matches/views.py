@@ -934,7 +934,9 @@ def get_seats_status(request, match_id):
 
 @staff_member_required
 def admin_match_list(request):
-    """لیست مسابقات برای ادمین با آمار دقیق اشغال صندلی‌ها"""
+    """لیست مسابقات برای ادمین با آمار دقیق اشغال صندلی‌ها و درآمد فقط از بلیط‌های فروخته‌شده"""
+
+    # دریافت فیلترها
     sport_filter = request.GET.get('sport')
     stadium_filter = request.GET.get('stadium')
     match_filter = request.GET.get('match_id')
@@ -947,28 +949,39 @@ def admin_match_list(request):
     if match_filter:
         matches_qs = matches_qs.filter(id=match_filter)
 
+    # محاسبه آمار دقیق
     match_data = []
     total_sold = 0
     total_vip = 0
     total_revenue = 0
 
     for match in matches_qs:
+        # 1. ظرفیت کل = مجموع صندلی‌های بلوک‌های ورزشگاه
         total_seats = Seat.objects.filter(
             row__block__stadium=match.stadium,
             row__block__is_active=True,
             row__is_active=True
         ).count()
 
+        # 2. بلیط‌ها
         sold_tickets = Ticket.objects.filter(match=match, status='paid')
         vip_tickets = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued'])
         sold_count = sold_tickets.count()
         vip_count = vip_tickets.count()
+
+        # ===== درآمد فقط از بلیط‌های فروخته‌شده (paid) =====
+        revenue = sum(
+            t.seat.row.block.price for t in sold_tickets
+            if t.seat and t.seat.row and t.seat.row.block
+        )
+        vip_revenue = sum(
+            t.seat.row.block.price for t in vip_tickets
+            if t.seat and t.seat.row and t.seat.row.block
+        )
+        total_revenue_match = revenue  # ← فقط درآمد فروش
+
+        # 3. درصد اشغال (بر اساس MatchSeatهای غیرفعال)
         sold_seats = MatchSeat.objects.filter(match=match, is_available=False).count()
-
-        revenue = sum(t.seat.row.block.price for t in sold_tickets if t.seat and t.seat.row and t.seat.row.block)
-        vip_revenue = sum(t.seat.row.block.price for t in vip_tickets if t.seat and t.seat.row and t.seat.row.block)
-        total_revenue_match = revenue + vip_revenue
-
         occupancy = round((sold_seats / total_seats * 100) if total_seats > 0 else 0, 1)
 
         match_data.append({
@@ -976,9 +989,9 @@ def admin_match_list(request):
             'sold_count': sold_count,
             'vip_count': vip_count,
             'total_tickets': sold_count + vip_count,
-            'total_revenue': total_revenue_match,
-            'sold_revenue': revenue,
-            'vip_revenue': vip_revenue,
+            'total_revenue': total_revenue_match,  # ← فقط فروش
+            'sold_revenue': revenue,  # ← درآمد فروش
+            'vip_revenue': vip_revenue,  # ← درآمد VIP (برای نمایش در صورت نیاز)
             'occupied_seats': sold_seats,
             'total_seats': total_seats,
             'occupancy_percent': occupancy,
@@ -988,6 +1001,7 @@ def admin_match_list(request):
         total_vip += vip_count
         total_revenue += total_revenue_match
 
+    # صفحه‌بندی
     paginator = Paginator(match_data, 10)
     page = request.GET.get('page', 1)
     try:
@@ -995,6 +1009,7 @@ def admin_match_list(request):
     except (PageNotAnInteger, EmptyPage):
         page_obj = paginator.page(1)
 
+    # لیست‌ها برای فیلتر
     all_matches = Match.objects.all().order_by('-date_time')
     stadiums = Stadium.objects.all().order_by('name')
     sport_choices = getattr(Match, 'SPORT_CHOICES', [])
@@ -1010,7 +1025,7 @@ def admin_match_list(request):
         'total_matches': matches_qs.count(),
         'total_sold_all': total_sold,
         'total_vip_all': total_vip,
-        'total_revenue_all': total_revenue,
+        'total_revenue_all': total_revenue,  # ← فقط درآمد فروش
     }
     return render(request, 'matches/admin_match_list.html', context)
 

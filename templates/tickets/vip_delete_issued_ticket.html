@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}لغو بلیط {{ ticket.ticket_number }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-danger">
+                <div class="card-header bg-danger text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> تأیید لغو بلیط
+                    </h4>
+                </div>
+                <div class="card-body text-center">
+                    <h5>آیا از لغو بلیط زیر اطمینان دارید؟</h5>
+                    <div class="alert alert-warning">
+                        <strong>{{ ticket.ticket_number }}</strong>
+                        <br>
+                        <span class="text-muted">{{ ticket.match.home_team }} vs {{ ticket.match.away_team }}</span>
+                        <br>
+                        <span class="text-muted">{{ ticket.seat.row.name }} - صندلی {{ ticket.seat.number }}</span>
+                        <br>
+                        <span class="text-muted">نام: {{ ticket.full_name }}</span>
+                    </div>
+                    <p class="text-danger">
+                        ⚠️ پس از لغو، صندلی آزاد می‌شود و بلیط قابل بازیابی نیست.
+                    </p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> بله، لغو کن
+                            </button>
+                            <a href="{% url 'tickets:vip_issued_tickets' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i> بازگشت
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
