@@ -762,7 +762,8 @@ def release_reservation(request):
 
 @staff_member_required
 def sales_report(request):
-    """گزارش فروش بلیط‌ها با نمودار"""
+    """گزارش فروش بلیط‌ها با نمودار - درآمد فقط از بلیط‌های فروخته‌شده (paid)"""
+
     # دریافت فیلترها
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
@@ -779,7 +780,10 @@ def sales_report(request):
 
     # محاسبه داده‌های فروش
     sales_data = []
-    total_sold = total_vip = total_tickets = total_revenue = 0
+    total_sold = 0
+    total_vip = 0
+    total_tickets = 0
+    total_revenue = 0  # فقط از بلیط‌های فروخته‌شده (paid)
 
     for match in matches_qs:
         sold_tickets = Ticket.objects.filter(match=match, status='paid')
@@ -788,8 +792,15 @@ def sales_report(request):
         sold_count = sold_tickets.count()
         vip_count = vip_tickets.count()
 
-        revenue = sum(t.seat.row.block.price for t in sold_tickets if t.seat and t.seat.row and t.seat.row.block)
-        vip_revenue = sum(t.seat.row.block.price for t in vip_tickets if t.seat and t.seat.row and t.seat.row.block)
+        # ===== درآمد فقط از بلیط‌های فروخته‌شده (paid) =====
+        revenue = sum(
+            t.seat.row.block.price for t in sold_tickets
+            if t.seat and t.seat.row and t.seat.row.block
+        )
+        vip_revenue = sum(
+            t.seat.row.block.price for t in vip_tickets
+            if t.seat and t.seat.row and t.seat.row.block
+        )
 
         occupied = MatchSeat.objects.filter(match=match, is_available=False).count()
         total = MatchSeat.objects.filter(match=match).count()
@@ -799,14 +810,15 @@ def sales_report(request):
             'sold_count': sold_count,
             'vip_count': vip_count,
             'total_tickets': sold_count + vip_count,
-            'revenue': revenue + vip_revenue,
+            'revenue': revenue,  # ← فقط درآمد فروش
+            'vip_revenue': vip_revenue,  # ← درآمد VIP (برای نمایش جداگانه)
             'occupancy_percent': round((occupied / total * 100) if total > 0 else 0, 1),
         })
 
         total_sold += sold_count
         total_vip += vip_count
         total_tickets += sold_count + vip_count
-        total_revenue += revenue + vip_revenue
+        total_revenue += revenue  # ← فقط فروش (paid)
 
     # صفحه‌بندی
     paginator = Paginator(sales_data, 10)
@@ -822,8 +834,8 @@ def sales_report(request):
         'total_sold': total_sold,
         'total_vip': total_vip,
         'total_tickets': total_tickets,
-        'total_revenue': total_revenue,
-        'average_price': total_revenue / total_tickets if total_tickets > 0 else 0,
+        'total_revenue': total_revenue,  # ← فقط درآمد فروش
+        'average_price': total_revenue / total_sold if total_sold > 0 else 0,
         'period_days': (timezone.now().date() - timezone.datetime.strptime(start_date,
                                                                            '%Y-%m-%d').date()).days if start_date else 30,
         'matches': Match.objects.all().order_by('-date_time'),
