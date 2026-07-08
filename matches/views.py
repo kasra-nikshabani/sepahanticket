@@ -1,6 +1,4 @@
 import json
-from datetime import timedelta
-
 from django.urls import reverse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction, IntegrityError
@@ -11,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 
 from tickets.models import Ticket
 from tickets.reservation import SeatReservation
@@ -24,7 +23,9 @@ from .models import Match, Row, Seat, MatchSeat, Block, Stadium
 
 def home(request):
     """صفحه اصلی - نمایش مسابقات با ظرفیت‌های دقیق"""
-
+    # ===== بررسی نمایش صفحه لودینگ =====
+    if not request.session.get('splash_seen'):
+        return redirect('matches:splash')
     # ===== تعریف رشته‌های ورزشی =====
     SPORT_CHOICES = (
         ('football', 'فوتبال'),
@@ -82,6 +83,20 @@ def home(request):
         'selected_stadium': int(stadium_filter) if stadium_filter else None,
     }
     return render(request, 'matches/home.html', context)
+
+
+def splash(request):
+    """صفحه لودینگ (Splash Screen)"""
+    return render(request, 'matches/splash.html')
+
+
+@csrf_exempt
+def set_splash_seen(request):
+    """تنظیم splash_seen در session برای جلوگیری از نمایش مجدد"""
+    if request.method == 'POST':
+        request.session['splash_seen'] = True
+        return JsonResponse({'status': 'ok'})
+    return JsonResponse({'status': 'error'}, status=400)
 
 
 def match_detail(request, match_id):
@@ -191,6 +206,7 @@ def select_block(request, match_id):
         'blocks': blocks,
         'selected_floor': selected_floor,
         'floor_label': 'طبقه بالا' if selected_floor == 'second' else 'طبقه پایین',
+        'stadium_image': stadium.image.url if stadium.image else None,  # ← اضافه شد
     }
     return render(request, 'matches/select_block.html', context)
 
@@ -894,6 +910,8 @@ def manage_block_seats(request, block_id=None):
         'sold_seats': sold_seats,
     }
     return render(request, 'matches/manage_block_seats.html', context)
+
+
 # ============================================================
 #  ادامه ویوهای API و مدیریت
 # ============================================================
@@ -1036,7 +1054,8 @@ def admin_match_detail(request, match_id):
     match = get_object_or_404(Match, id=match_id)
 
     sold_tickets_qs = Ticket.objects.filter(match=match, status='paid').order_by('-purchase_date')
-    vip_tickets_qs = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued']).order_by('-purchase_date')
+    vip_tickets_qs = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued']).order_by(
+        '-purchase_date')
 
     sold_total = sum(
         t.seat.row.block.price for t in sold_tickets_qs
@@ -1274,7 +1293,7 @@ def admin_stadium_list(request):
 @staff_member_required
 def admin_stadium_create(request):
     if request.method == 'POST':
-        form = StadiumForm(request.POST)
+        form = StadiumForm(request.POST, request.FILES)  # ← FILES اضافه شد
         if form.is_valid():
             stadium = form.save()
             messages.success(request, f'ورزشگاه "{stadium.name}" با موفقیت ایجاد شد.')
@@ -1283,7 +1302,6 @@ def admin_stadium_create(request):
             messages.error(request, 'خطا در فرم. لطفاً دوباره تلاش کنید.')
     else:
         form = StadiumForm()
-
     return render(request, 'matches/admin_stadium_form.html', {'form': form, 'is_edit': False})
 
 
@@ -1292,17 +1310,29 @@ def admin_stadium_edit(request, stadium_id):
     stadium = get_object_or_404(Stadium, id=stadium_id)
 
     if request.method == 'POST':
-        form = StadiumForm(request.POST, instance=stadium)
+        print("=" * 50)
+        print("POST data:", request.POST)
+        print("FILES data:", request.FILES)  # ← باید شامل تصویر باشد
+        print("=" * 50)
+
+        form = StadiumForm(request.POST, request.FILES, instance=stadium)  # ← FILES مهم است
         if form.is_valid():
-            form.save()
+            stadium = form.save()
             messages.success(request, f'ورزشگاه "{stadium.name}" با موفقیت ویرایش شد.')
             return redirect('matches:admin_stadium_list')
         else:
-            messages.error(request, 'خطا در فرم. لطفاً دوباره تلاش کنید.')
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
+            print("Form errors:", form.errors)
     else:
         form = StadiumForm(instance=stadium)
 
-    return render(request, 'matches/admin_stadium_form.html', {'form': form, 'stadium': stadium, 'is_edit': True})
+    return render(request, 'matches/admin_stadium_form.html', {
+        'form': form,
+        'stadium': stadium,
+        'is_edit': True
+    })
 
 
 @staff_member_required
@@ -1376,6 +1406,7 @@ def admin_stadium_configure(request, stadium_id=None):
         stadium_name = request.POST.get('stadium_name', '').strip()
         stadium_capacity = request.POST.get('stadium_capacity', 0)
         block_count = request.POST.get('block_count', 0)
+        stadium_image = request.FILES.get('stadium_image')
 
         if not stadium_name:
             messages.error(request, 'لطفاً نام ورزشگاه را وارد کنید.')
@@ -1406,15 +1437,19 @@ def admin_stadium_configure(request, stadium_id=None):
                 if stadium:
                     stadium.name = stadium_name
                     stadium.capacity = stadium_capacity
+                    if stadium_image:
+                        stadium.image = stadium_image
                     stadium.save()
                     Block.objects.filter(stadium=stadium).delete()
                     messages.info(request, f'بلوک‌های قدیمی ورزشگاه "{stadium.name}" حذف شدند.')
                 else:
                     stadium = Stadium.objects.create(
                         name=stadium_name,
-                        capacity=stadium_capacity
+                        capacity=stadium_capacity,
+                        image=stadium_image
                     )
 
+                # ===== ایجاد بلوک‌ها =====
                 for i in range(1, block_count + 1):
                     block_name = request.POST.get(f'block_name_{i}', '').strip()
                     if not block_name:
@@ -1423,7 +1458,6 @@ def admin_stadium_configure(request, stadium_id=None):
 
                     zone_type = request.POST.get(f'block_zone_{i}', 'home')
                     price = request.POST.get(f'block_price_{i}', 0)
-
                     try:
                         price = int(price) if price else 0
                     except ValueError:
@@ -1492,11 +1526,7 @@ def admin_stadium_configure(request, stadium_id=None):
                                 continue
 
                         for row_num in range(start_row, end_row + 1):
-                            row = Row.objects.create(
-                                block=block,
-                                number=row_num,
-                                is_active=True
-                            )
+                            row = Row.objects.create(block=block, number=row_num, is_active=True)
                             seats = [
                                 Seat(row=row, number=num, is_available=True)
                                 for num in range(seat_start, seat_end + 1)

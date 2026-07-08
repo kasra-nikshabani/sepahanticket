@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}اطلاعات خریدار{% endblock %}
 
@@ -9,7 +10,7 @@
             <p class="text-muted">{{ match.home_team }} 🆚 {{ match.away_team }}</p>
             <p>{{ match.date_time|date:"Y/m/d H:i" }}</p>
 
-            <!-- ===== نمایش تایمر به دقیقه:ثانیه ===== -->
+            <!-- ===== تایمر ===== -->
             <div id="timer-container" class="text-center mb-3">
                 <div class="alert alert-warning" role="alert" style="max-width: 500px; margin: 0 auto;">
                     <i class="fas fa-clock"></i>
@@ -21,26 +22,24 @@
                 </div>
             </div>
 
-            <!-- ============================================================
-            نمایش مجموع قیمت (جدید)
-            ============================================================ -->
+            <!-- ===== مجموع قیمت ===== -->
             <div class="row justify-content-center mt-3">
                 <div class="col-md-8">
                     <div class="card bg-success text-white">
                         <div class="card-body py-2">
                             <div class="d-flex justify-content-between align-items-center">
-                                <span style="font-size: 1.1rem;">
-                                    <i class="fas fa-credit-card"></i> مجموع قیمت بلیط‌ها:
-                                </span>
+                            <span style="font-size: 1.1rem;">
+                                <i class="fas fa-credit-card"></i> مجموع قیمت بلیط‌ها:
+                            </span>
                                 <span style="font-size: 1.8rem; font-weight: bold;"
                                       id="totalPriceDisplay"
                                       class="ticket-price"
                                       data-base="{{ total_price|default:0 }}">
-                                    {{ total_price|default:0|floatformat:0 }} تومان
-                                </span>
+                                {{ total_price|default:0|floatformat:0 }} تومان
+                            </span>
                             </div>
                             <small class="d-block text-center text-white-50 mt-1">
-                                قیمت هر بلیط بر اساس بلوک محاسبه شده است
+                                قیمت هر بلیط بر اساس سکو محاسبه شده است
                             </small>
                         </div>
                     </div>
@@ -50,6 +49,8 @@
 
         <form method="post" id="ticketForm">
             {% csrf_token %}
+
+            <!-- ===== اطلاعات خریدار ===== -->
             <div class="row">
                 {% for seat in seats_data %}
                     <div class="col-md-6 mb-3">
@@ -58,15 +59,14 @@
                                 <h5 class="mb-0">
                                     صندلی {{ seat.number }} - {{ seat.row_name }}
                                     <span class="badge {% if seat.is_home %}bg-success{% else %}bg-warning text-dark{% endif %}">
-                                        {% if seat.is_home %}میزبان{% else %}میهمان{% endif %}
-                                    </span>
+                                    {% if seat.is_home %}میزبان{% else %}میهمان{% endif %}
+                                </span>
                                 </h5>
-                                <!-- ===== قیمت هر صندلی (جدید) ===== -->
                                 <span class="badge bg-primary ticket-price"
                                       data-base="{{ seat.price|default:0 }}"
                                       style="font-size: 0.9rem; padding: 6px 14px;">
-                                    {{ seat.price|default:0|floatformat:0 }} تومان
-                                </span>
+                                {{ seat.price|default:0|floatformat:0 }} تومان
+                            </span>
                             </div>
                             <div class="card-body">
                                 <div class="mb-3">
@@ -89,64 +89,116 @@
                 {% endfor %}
             </div>
 
-            <div class="text-center mt-4">
-                <div class="discount-section mt-3">
-                    <div class="input-group" style="max-width: 400px; margin: 0 auto;">
-                        <input type="text" id="discount_code" class="form-control"
-                               placeholder="کد تخفیف (اختیاری)" dir="ltr">
-                        <button type="button" class="btn btn-outline-warning" onclick="applyDiscount()">
-                            اعمال
-                        </button>
+            <!-- ===== بخش کد تخفیف ===== -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-tags"></i> کد تخفیف</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <input type="text" id="discount_code" class="form-control form-control-lg"
+                                       placeholder="کد تخفیف را وارد کنید..." dir="ltr">
+                                <button type="button" class="btn btn-warning btn-lg" onclick="applyDiscount()">
+                                    <i class="fas fa-check-circle"></i> اعمال
+                                </button>
+                            </div>
+                            <div id="discount_msg" class="mt-2 small"></div>
+                        </div>
+                        <div class="col-md-4 text-center d-flex align-items-center">
+                            <div class="w-100">
+                                <small class="text-muted d-block">پس از اعمال تخفیف، قیمت‌ها به‌روز می‌شوند.</small>
+                            </div>
+                            <!-- فیلدهای مخفی برای تخفیف -->
+                            <input type="hidden" name="discount_code" id="discount_code_input" value="">
+                            <input type="hidden" name="discount_percent" id="discount_percent_input" value="0">
+                        </div>
                     </div>
-                    <div id="discount_msg" class="mt-1 small"></div>
                 </div>
+            </div>
 
-                <div class="mt-3">
-                    <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
-                        <i class="fas fa-check"></i>
-                        تایید و دریافت بلیط
-                        <span id="submitPrice" class="ticket-price" data-base="{{ total_price|default:0 }}">
-                            ({{ total_price|default:0|floatformat:0 }} تومان)
-                        </span>
-                    </button>
-                    <a href="{% url 'tickets:cancel_reservation' match.id %}" class="btn btn-danger btn-lg"
-                       onclick="return confirm('آیا از لغو خرید مطمئن هستید؟ صندلی‌ها آزاد خواهند شد.')">
-                        <i class="fas fa-times"></i> انصراف از خرید
-                    </a>
+            <!-- ===== بخش کیف پول ===== -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-wallet"></i> پرداخت با کیف پول</h5>
                 </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>موجودی کیف پول شما:</strong> <span
+                                    id="displayBalance">{{ wallet_balance|floatformat:0 }}</span> تومان</p>
+                            <p><strong>مبلغ کل خرید:</strong> {{ total_price|floatformat:0 }} تومان</p>
+                        </div>
+                        <div class="col-md-6">
+                            <!-- سوئیچ -->
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="useWalletSwitch"
+                                       onchange="toggleWallet(this.checked)">
+                                <label class="form-check-label fw-bold" for="useWalletSwitch">
+                                    <i class="fas fa-wallet"></i> استفاده از کیف پول
+                                </label>
+                            </div>
+
+                            <!-- نمایش مبالغ -->
+                            <div id="walletAmountDisplay" class="mt-2">
+                                <p class="mb-1">مبلغ قابل پرداخت از کیف پول:
+                                    <strong id="walletPayAmount">0</strong> تومان
+                                </p>
+                                <p class="mb-1">مبلغ نهایی پرداختی:
+                                    <strong id="finalAmount">{{ total_price|floatformat:0 }}</strong> تومان
+                                </p>
+                                <div id="wallet_info" class="mt-2"></div>
+                            </div>
+
+                            <!-- فیلدهای مخفی -->
+                            <input type="hidden" name="wallet_amount" id="walletAmountInput" value="0">
+                            <input type="hidden" name="use_wallet" id="useWalletInput" value="false">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== دکمه تأیید ===== -->
+            <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+                    <i class="fas fa-check-circle"></i>
+                    تأیید و دریافت بلیط
+                    <span id="finalPriceDisplay" class="badge bg-light text-dark ms-2">
+                    {{ total_price|floatformat:0 }} تومان
+                </span>
+                </button>
+                <a href="{% url 'tickets:cancel_reservation' match.id %}" class="btn btn-outline-danger">
+                    <i class="fas fa-times-circle"></i> انصراف از خرید
+                </a>
             </div>
         </form>
     </div>
 
+    <!-- ===== اسکریپت‌ها ===== -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // ===== تایمر =====
             const timerDisplay = document.getElementById('timer-display');
             const form = document.getElementById('ticketForm');
+            let remaining = {{ remaining_time|default:0 }};
+            let timerInterval = null;
+            let formSubmitted = false;
 
-            // ===== تابع تبدیل ثانیه به فرمت MM:SS =====
             function formatTime(seconds) {
                 const mins = Math.floor(seconds / 60);
                 const secs = seconds % 60;
                 return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
             }
 
-            // ===== مقدار اولیه از بک‌اند (بر حسب ثانیه) =====
-            let remaining = {{ remaining_time|default:0 }};
-            let timerInterval = null;
-
             if (remaining > 0) {
-                // نمایش اولیه
                 timerDisplay.textContent = formatTime(remaining);
-
                 timerInterval = setInterval(function () {
                     remaining--;
                     timerDisplay.textContent = formatTime(remaining);
-
-                    // وقتی کمتر از ۱ دقیقه مونده، رنگ قرمز
                     if (remaining < 60) {
                         timerDisplay.style.color = '#dc3545';
                     }
-
                     if (remaining <= 0) {
                         clearInterval(timerInterval);
                         timerDisplay.textContent = '⏰ زمان تمام شد';
@@ -155,22 +207,18 @@
                     }
                 }, 1000);
             } else {
-                // اگر زمان باقی‌مانده صفر یا کمتر است، مستقیماً هدایت کن
                 window.location.href = "{% url 'tickets:cancel_reservation' match.id %}";
             }
 
-            // ===== متوقف کردن تایمر در صورت ارسال موفق فرم =====
-            let formSubmitted = false;  // ← این را اضافه کن
             form.addEventListener('submit', function () {
-                formSubmitted = true;   // ← این را اضافه کن
+                formSubmitted = true;
                 if (timerInterval) {
                     clearInterval(timerInterval);
                 }
             });
 
-// ===== لغو رزرو هنگام خروج از صفحه (اختیاری) =====
             window.addEventListener('beforeunload', function (e) {
-                if (formSubmitted) return;  // ← این را اضافه کن
+                if (formSubmitted) return;
                 if (navigator.sendBeacon) {
                     const url = "{% url 'tickets:release_reservation' %}";
                     const formData = new FormData();
@@ -182,38 +230,173 @@
                     navigator.sendBeacon(url, formData);
                 }
             });
-        });
-        let discountPercent = 0;
 
-        function applyDiscount() {
-            const code = document.getElementById('discount_code').value.trim();
-            if (!code) return;
+            // ===== تخفیف =====
+            window.discountPercent = 0;
 
-            fetch("{% url 'tickets:check_discount' %}", {
-                method: 'POST',
-                headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/x-www-form-urlencoded'},
-                body: `code=${code}`
-            })
-                .then(r => r.json())
-                .then(data => {
-                    const msg = document.getElementById('discount_msg');
-                    if (data.valid) {
-                        discountPercent = data.percent;
-                        msg.innerHTML = `<span class="text-success">✅ ${data.message}</span>`;
+            window.applyDiscount = function () {
+                const code = document.getElementById('discount_code').value.trim();
+                const msg = document.getElementById('discount_msg');
+
+                // اعتبارسنجی اولیه
+                if (!code) {
+                    msg.innerHTML = '<span class="text-warning">⚠️ لطفاً کد تخفیف را وارد کنید.</span>';
+                    return;
+                }
+
+                const matchId = {{ match.id }};
+
+                // ارسال درخواست به سرور
+                fetch("{% url 'tickets:check_discount' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `code=${encodeURIComponent(code)}&match_id=${matchId}`
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.valid) {
+                            // کد تخفیف معتبر است
+                            document.getElementById('discount_code_input').value = code;
+                            document.getElementById('discount_percent_input').value = data.percent;
+                            window.discountPercent = data.percent;
+                            msg.innerHTML = `<span class="text-success">✅ ${data.message}</span>`;
+                        } else {
+                            // کد تخفیف نامعتبر است
+                            document.getElementById('discount_code_input').value = '';
+                            document.getElementById('discount_percent_input').value = '0';
+                            window.discountPercent = 0;
+                            msg.innerHTML = `<span class="text-danger">❌ ${data.message}</span>`;
+                        }
+                        // به‌روزرسانی قیمت‌ها
                         updatePrices();
-                    } else {
-                        msg.innerHTML = `<span class="text-danger">❌ ${data.message}</span>`;
-                    }
-                });
-        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        msg.innerHTML = '<span class="text-danger">❌ خطا در ارتباط با سرور</span>';
+                        // در صورت خطا، تخفیف را لغو کن
+                        document.getElementById('discount_code_input').value = '';
+                        document.getElementById('discount_percent_input').value = '0';
+                        window.discountPercent = 0;
+                        updatePrices();
+                    });
+            };
 
-        function updatePrices() {
-            // قیمت‌ها را آپدیت کن
-            document.querySelectorAll('.ticket-price').forEach(el => {
-                const base = parseInt(el.dataset.base);
-                const final = Math.round(base * (1 - discountPercent / 100));
-                el.textContent = final.toLocaleString('fa-IR') + ' تومان';
-            });
-        }
+            function updatePrices() {
+                // به‌روزرسانی قیمت هر صندلی
+                document.querySelectorAll('.ticket-price').forEach(el => {
+                    const base = parseInt(el.dataset.base);
+                    const final = Math.round(base * (1 - (window.discountPercent || 0) / 100));
+                    el.textContent = final.toLocaleString('fa-IR') + ' تومان';
+                });
+                // به‌روزرسانی مجموع قیمت
+                const totalEl = document.getElementById('totalPriceDisplay');
+                if (totalEl) {
+                    const base = parseInt(totalEl.dataset.base);
+                    const final = Math.round(base * (1 - (window.discountPercent || 0) / 100));
+                    totalEl.textContent = final.toLocaleString('fa-IR') + ' تومان';
+                    // به‌روزرسانی مبلغ نهایی در دکمه
+                    const finalPriceDisplay = document.getElementById('finalPriceDisplay');
+                    if (finalPriceDisplay) {
+                        if (final === 0) {
+                            finalPriceDisplay.textContent = 'رایگان';
+                        } else {
+                            finalPriceDisplay.textContent = final.toLocaleString('fa-IR') + ' تومان';
+                        }
+                    }
+                    // به‌روزرسانی مبلغ کل در بخش کیف پول
+                    const finalAmountEl = document.getElementById('finalAmount');
+                    if (finalAmountEl) {
+                        // مبلغ نهایی با تخفیف
+                        // باید با کیف پول هماهنگ شود
+                        toggleWallet(document.getElementById('useWalletSwitch').checked);
+                    }
+                }
+            }
+
+            // ===== کیف پول =====
+            const totalPrice = {{ total_price }};
+            const walletBalance = {{ wallet_balance }};
+            const finalPriceDisplay = document.getElementById('finalPriceDisplay');
+            const finalAmountEl = document.getElementById('finalAmount');
+            const submitBtn = document.getElementById('submitBtn');
+            const useWalletInput = document.getElementById('useWalletInput');
+            const walletAmountInput = document.getElementById('walletAmountInput');
+            const walletPayAmount = document.getElementById('walletPayAmount');
+            const walletInfo = document.getElementById('wallet_info');
+
+            window.toggleWallet = function (checked) {
+                useWalletInput.value = checked ? 'true' : 'false';
+
+                // محاسبه مبلغ نهایی با در نظر گرفتن تخفیف
+                const discount = (window.discountPercent || 0) / 100;
+                const totalWithDiscount = Math.round(totalPrice * (1 - discount));
+
+                let walletPay = 0;
+                let finalAmount = totalWithDiscount;
+
+                if (checked) {
+                    walletPay = Math.min(walletBalance, totalWithDiscount);
+                    finalAmount = totalWithDiscount - walletPay;
+                }
+
+                // به‌روزرسانی اعداد
+                walletPayAmount.textContent = walletPay.toLocaleString('fa-IR');
+                finalAmountEl.textContent = finalAmount.toLocaleString('fa-IR');
+                walletAmountInput.value = walletPay;
+
+                // به‌روزرسانی دکمه
+                if (finalAmount === 0) {
+                    finalPriceDisplay.textContent = 'رایگان';
+                    submitBtn.innerHTML = `
+                    <i class="fas fa-check-circle"></i>
+                    تأیید و دریافت بلیط
+                    <span class="badge bg-light text-dark ms-2">رایگان</span>
+                `;
+                } else {
+                    finalPriceDisplay.textContent = finalAmount.toLocaleString('fa-IR') + ' تومان';
+                    submitBtn.innerHTML = `
+                    <i class="fas fa-check-circle"></i>
+                    تأیید و دریافت بلیط
+                    <span class="badge bg-light text-dark ms-2">${finalAmount.toLocaleString('fa-IR')} تومان</span>
+                `;
+                }
+
+                // پیام‌ها
+                if (checked) {
+                    if (walletPay === 0) {
+                        walletInfo.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle"></i>
+                            موجودی کیف پول شما صفر است. لطفاً ابتدا کیف پول خود را شارژ کنید.
+                        </div>
+                    `;
+                    } else if (finalAmount === 0) {
+                        walletInfo.innerHTML = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            مبلغ کل خرید (${totalWithDiscount.toLocaleString('fa-IR')} تومان) از کیف پول کسر می‌شود.
+                            مبلغ نهایی پرداختی: <strong>۰ تومان</strong>
+                        </div>
+                    `;
+                    } else {
+                        walletInfo.innerHTML = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            مبلغ ${walletPay.toLocaleString('fa-IR')} تومان از کیف پول کسر می‌شود.
+                            مبلغ باقی‌مانده (${finalAmount.toLocaleString('fa-IR')} تومان) باید به‌صورت نقدی پرداخت شود.
+                        </div>
+                    `;
+                    }
+                } else {
+                    walletInfo.innerHTML = '';
+                }
+            };
+
+            // ===== اجرای اولیه =====
+            toggleWallet(false);
+        });
     </script>
 {% endblock %}

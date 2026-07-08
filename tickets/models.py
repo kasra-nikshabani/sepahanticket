@@ -52,6 +52,7 @@ class Ticket(models.Model):
 
     is_used = models.BooleanField(default=False, verbose_name="استفاده شده")
     used_at = models.DateTimeField(null=True, blank=True, verbose_name="زمان استفاده")
+
     # ===== متدها =====
     def generate_ticket_number(self):
         import random
@@ -164,13 +165,24 @@ class VIPQuota(models.Model):
         return f"{self.user.username} - {self.match} - باقی‌مانده: {self.remaining}"
 
 
+from matches.models import Match
+
+
 class DiscountCode(models.Model):
     code = models.CharField(max_length=20, unique=True, verbose_name="کد تخفیف")
+    match = models.ForeignKey(
+        Match,
+        on_delete=models.CASCADE,
+        null=True,  # ← اضافه شد
+        blank=True,
+        verbose_name="مسابقه",
+        help_text="این کد تخفیف فقط برای این مسابقه معتبر است."
+    )
     block = models.ForeignKey(
         'matches.Block',
         on_delete=models.CASCADE,
         null=True, blank=True,
-        verbose_name="بلوک (خالی = همه بلوک‌ها)"
+        verbose_name="بلوک (اختیاری)"
     )
     discount_percent = models.IntegerField(verbose_name="درصد تخفیف")
     max_uses = models.IntegerField(default=1, verbose_name="حداکثر استفاده")
@@ -183,7 +195,7 @@ class DiscountCode(models.Model):
         verbose_name = "کد تخفیف"
         verbose_name_plural = "کدهای تخفیف"
 
-    def is_valid(self, block=None):
+    def is_valid(self, match=None, block=None):
         from django.utils import timezone
         if not self.is_active:
             return False, "کد تخفیف غیرفعال است"
@@ -191,10 +203,8 @@ class DiscountCode(models.Model):
             return False, "کد تخفیف به حداکثر استفاده رسیده است"
         if self.expires_at and self.expires_at < timezone.now():
             return False, "کد تخفیف منقضی شده است"
+        if self.match and match and self.match != match:
+            return False, "این کد تخفیف برای این مسابقه معتبر نیست"
         if self.block and block and self.block != block:
             return False, "این کد تخفیف برای این بلوک معتبر نیست"
         return True, "معتبر"
-
-    def __str__(self):
-        block_name = self.block.name if self.block else "همه بلوک‌ها"
-        return f"{self.code} - {self.discount_percent}% - {block_name}"

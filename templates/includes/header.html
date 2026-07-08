@@ -70,7 +70,13 @@
                     {% else %}
                         <!-- ===== کاربر معمولی ===== -->
                         <li class="nav-item"><a class="nav-link" href="{% url 'tickets:user_tickets' %}"><i
-                                class="fas fa-ticket-alt"></i> بلیط‌های من</a></li>
+                                class="fas fa-ticket-alt"></i> بلیط‌های من</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'wallet:dashboard' %}">
+                                <i class="fas fa-wallet"></i> کیف پول
+                            </a>
+                        </li>
 
                     {% endif %}
 

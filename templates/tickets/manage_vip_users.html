@@ -5,10 +5,120 @@
 
 {% block extra_css %}
 <style>
+    /* ===== تنظیمات کلی ===== */
     .manage-container {
-        max-width: 1000px;
+        max-width: 1100px;
         margin: 30px auto;
+        padding: 0 15px;
     }
+
+    /* ===== هدر ===== */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+    }
+    .page-header h2 {
+        font-weight: 700;
+        color: #1A1A2E;
+        margin: 0;
+        font-size: 28px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .page-header h2 i {
+        color: #D4AF37;
+    }
+    .page-header .subtitle {
+        color: #6c757d;
+        font-size: 14px;
+    }
+    .btn-back {
+        background: #1A1A2E;
+        color: #fff;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-back:hover {
+        background: #2A2A4E;
+        color: #D4AF37;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    /* ===== کارت‌های آمار ===== */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 30px;
+    }
+    .stat-card {
+        background: #fff;
+        border-radius: 14px;
+        padding: 18px 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e8eaed;
+        transition: all 0.3s ease;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, #D4AF37, #B8960F);
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+        border-color: #D4AF37;
+        box-shadow: 0 8px 30px rgba(212, 175, 55, 0.12);
+    }
+    .stat-card .stat-number {
+        font-size: 26px;
+        font-weight: 700;
+        color: #1A1A2E;
+    }
+    .stat-card .stat-label {
+        font-size: 13px;
+        color: #6c757d;
+        margin-top: 4px;
+    }
+    .stat-card .stat-icon {
+        font-size: 22px;
+        margin-bottom: 6px;
+        display: block;
+    }
+    .stat-card.gold .stat-number {
+        color: #D4AF37;
+    }
+    .stat-card.blue .stat-number {
+        color: #17a2b8;
+    }
+    .stat-card.green .stat-number {
+        color: #28a745;
+    }
+    .stat-card.orange .stat-number {
+        color: #ffc107;
+    }
+
+    /* ===== کارت اصلی ===== */
     .card-custom {
         background: #ffffff;
         border-radius: 16px;
@@ -25,18 +135,115 @@
         padding: 20px 30px;
         border-bottom: 3px solid #D4AF37;
         color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
     }
     .card-header-custom h4 {
         margin: 0;
         font-weight: 700;
         color: #D4AF37;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
     .card-header-custom h4 i {
-        margin-left: 10px;
         color: #D4AF37;
+    }
+    .card-header-custom .badge-count {
+        background: rgba(212, 175, 55, 0.15);
+        color: #D4AF37;
+        padding: 4px 16px;
+        border-radius: 50px;
+        font-size: 14px;
+        font-weight: 600;
+        border: 1px solid rgba(212, 175, 55, 0.2);
     }
     .card-body-custom {
         padding: 30px;
+    }
+
+    /* ===== فیلتر ===== */
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 24px;
+        border: 1px solid #e8eaed;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+    }
+    .filter-section .filter-label {
+        font-weight: 600;
+        color: #1A1A2E;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+    }
+    .filter-section .filter-label i {
+        color: #D4AF37;
+    }
+    .filter-section select {
+        flex: 1;
+        min-width: 200px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        border: 1.5px solid #e8eaed;
+        background: #fff;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236c757d' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: left 12px center;
+        padding-left: 36px;
+        cursor: pointer;
+        color: #333;
+    }
+    .filter-section select:focus {
+        border-color: #D4AF37;
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.12);
+    }
+    .filter-section .btn-reset {
+        padding: 8px 18px;
+        border-radius: 8px;
+        border: 1.5px solid #e8eaed;
+        background: #fff;
+        color: #6c757d;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .filter-section .btn-reset:hover {
+        border-color: #D4AF37;
+        color: #1A1A2E;
+    }
+    .filter-section .selected-info {
+        background: #fff9e6;
+        border-radius: 8px;
+        padding: 4px 14px;
+        font-size: 13px;
+        border: 1px solid #D4AF37;
+        color: #1A1A2E;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .filter-section .selected-info i {
+        color: #D4AF37;
+    }
+
+    /* ===== جدول ===== */
+    .table-responsive-custom {
         overflow-x: auto;
     }
     .table-custom {
@@ -51,80 +258,115 @@
         padding: 12px 16px;
         text-align: right;
         border-bottom: 2px solid #D4AF37;
+        white-space: nowrap;
+    }
+    .table-custom thead th i {
+        margin-left: 4px;
+        color: #D4AF37;
     }
     .table-custom tbody td {
         padding: 12px 16px;
         border-bottom: 1px solid #e8eaed;
         vertical-align: middle;
     }
-    .table-custom tbody tr:hover {
-        background: #fafafa;
+    .table-custom tbody tr {
+        transition: all 0.2s ease;
     }
-    .badge-count {
+    .table-custom tbody tr:hover {
+        background: #faf8f3;
+    }
+    .table-custom tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #D4AF37, #B8960F);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #1A1A2E;
+        font-weight: 700;
+        font-size: 14px;
+    }
+
+    .badge-ticket {
         background: #D4AF37;
         color: #1A1A2E;
         padding: 4px 14px;
         border-radius: 20px;
         font-weight: 700;
         font-size: 0.9rem;
+        display: inline-block;
     }
-    .badge-count.zero {
+    .badge-ticket.zero {
         background: #e8eaed;
         color: #6c757d;
     }
-    .btn-action {
-        background: #f1f3f4;
+
+    .btn-primary-gold {
+        background: linear-gradient(135deg, #D4AF37, #B8960F);
         border: none;
         color: #1A1A2E;
-        padding: 6px 16px;
+        padding: 8px 18px;
         border-radius: 8px;
-        font-weight: 500;
+        font-weight: 600;
         font-size: 0.85rem;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
         gap: 6px;
     }
-    .btn-action:hover {
-        background: #D4AF37;
-        color: #1A1A2E;
-        text-decoration: none;
-    }
-    .btn-action i {
-        font-size: 0.9rem;
-    }
-    .btn-back {
-        background: #f1f3f4;
-        border: none;
-        color: #1A1A2E;
-        padding: 8px 20px;
-        border-radius: 8px;
-        font-weight: 500;
-        transition: all 0.2s ease;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-    .btn-back:hover {
-        background: #e8eaed;
-        text-decoration: none;
+    .btn-primary-gold:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
         color: #1A1A2E;
     }
+
+    /* ===== حالت خالی ===== */
     .empty-state {
         text-align: center;
-        padding: 40px 20px;
+        padding: 60px 20px;
         color: #6c757d;
     }
     .empty-state i {
-        font-size: 3rem;
+        font-size: 3.5rem;
         color: #D4AF37;
-        margin-bottom: 12px;
+        margin-bottom: 16px;
+        display: block;
     }
+    .empty-state h5 {
+        color: #1A1A2E;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    /* ===== واکنش‌گرایی ===== */
     @media (max-width: 768px) {
         .card-body-custom {
             padding: 16px;
+        }
+        .card-header-custom {
+            padding: 16px 20px;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .card-header-custom h4 {
+            font-size: 1.1rem;
+        }
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .page-header h2 {
+            font-size: 22px;
+        }
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
         }
         .table-custom {
             font-size: 0.8rem;
@@ -133,82 +375,170 @@
         .table-custom tbody td {
             padding: 8px 10px;
         }
-        .btn-action {
-            padding: 4px 10px;
+        .filter-section {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .filter-section select {
+            min-width: 100%;
+        }
+        .btn-primary-gold {
+            padding: 6px 14px;
             font-size: 0.75rem;
         }
-        .card-header-custom h4 {
-            font-size: 1.1rem;
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            font-size: 11px;
         }
     }
-    .filter-form {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        align-items: center;
-        margin-bottom: 20px;
-        background: #f9f9f9;
-        padding: 15px 20px;
-        border-radius: 12px;
-        border: 1px solid #e8eaed;
+    @media (max-width: 480px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        .page-header h2 {
+            font-size: 18px;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="manage-container">
-    <div class="card-custom">
-        <div class="card-header-custom">
-            <h4><i class="fas fa-users-cog"></i> مدیریت بلیط‌های کاربران ویژه</h4>
-        </div>
-        <div class="card-body-custom">
-            <!-- ===== فیلتر مسابقه ===== -->
-            <form method="get" class="filter-form">
-                <select name="match_id">
-                    <option value="">همه مسابقات</option>
-                    {% for m in matches %}
-                        <option value="{{ m.id }}" {% if selected_match_id == m.id %}selected{% endif %}>
-                            {{ m.home_team }} vs {{ m.away_team }} - {{ m.date_time|date:"Y/m/d" }}
-                        </option>
-                    {% endfor %}
-                </select>
-                <button type="submit" class="btn btn-primary">اعمال فیلتر</button>
-                {% if selected_match_id %}
-                    <a href="{% url 'tickets:manage_vip_users' %}" class="btn btn-secondary">حذف فیلتر</a>
-                {% endif %}
-            </form>
 
-            <table class="table-custom">
-                <thead>
-                    <tr>
-                        <th>نام کاربری</th>
-                        <th>نام و نام خانوادگی</th>
-                        <th>تعداد بلیط</th>
-                        <th>عملیات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in user_data %}
-                    <tr>
-                        <td><strong>{{ item.user.username }}</strong></td>
-                        <td>{{ item.user.get_full_name }}</td>
-                        <td>
-                            <span class="badge-count {% if item.ticket_count == 0 %}zero{% endif %}">
-                                {{ item.ticket_count }}
-                            </span>
-                        </td>
-                        <td>
-                            <a href="{% url 'tickets:manage_user_tickets' item.user.id %}" class="btn-action">
-                                <i class="fas fa-eye"></i> مشاهده و مدیریت
-                            </a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="4" class="text-center">هیچ کاربر ویژه‌ای یافت نشد.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <!-- ===== هدر ===== -->
+    <div class="page-header">
+        <div>
+            <h2><i class="fas fa-crown"></i> مدیریت کاربران ویژه</h2>
+            <div class="subtitle">مدیریت و مشاهده بلیط‌های تخصیص‌یافته به کاربران VIP</div>
+        </div>
+        <a href="{% url 'matches:admin_match_list' %}" class="btn-back">
+            <i class="fas fa-arrow-right"></i> بازگشت به مدیریت مسابقات
+        </a>
+    </div>
+
+    <!-- ===== کارت‌های آمار ===== -->
+    <div class="stats-grid">
+        <div class="stat-card gold">
+            <span class="stat-icon"><i class="fas fa-users"></i></span>
+            <div class="stat-number">{{ user_data|length }}</div>
+            <div class="stat-label">کل کاربران ویژه</div>
+        </div>
+        <div class="stat-card blue">
+            <span class="stat-icon"><i class="fas fa-ticket-alt"></i></span>
+            <div class="stat-number">{{ total_tickets|default:"0" }}</div>
+            <div class="stat-label">کل بلیط‌های تخصیص‌یافته</div>
+        </div>
+        <div class="stat-card green">
+            <span class="stat-icon"><i class="fas fa-check-circle"></i></span>
+            <div class="stat-number">{{ active_users|default:"0" }}</div>
+            <div class="stat-label">کاربران دارای بلیط</div>
+        </div>
+        <div class="stat-card orange">
+            <span class="stat-icon"><i class="fas fa-clock"></i></span>
+            <div class="stat-number">{{ avg_tickets|floatformat:1|default:"0" }}</div>
+            <div class="stat-label">میانگین بلیط به ازای هر کاربر</div>
         </div>
     </div>
+
+    <!-- ===== کارت اصلی ===== -->
+    <div class="card-custom">
+        <div class="card-header-custom">
+            <h4><i class="fas fa-list"></i> لیست کاربران ویژه</h4>
+            <span class="badge-count"><i class="fas fa-users"></i> {{ user_data|length }} کاربر</span>
+        </div>
+        <div class="card-body-custom">
+
+            <!-- ===== فیلتر مسابقه ===== -->
+            <div class="filter-section">
+                <span class="filter-label"><i class="fas fa-filter"></i> فیلتر مسابقه:</span>
+                <form method="get" style="flex:1; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                    <select name="match_id" onchange="this.form.submit()">
+                        <option value="">همه مسابقات</option>
+                        {% for match in matches %}
+                            <option value="{{ match.id }}" {% if selected_match_id == match.id %}selected{% endif %}>
+                                {{ match.home_team }} vs {{ match.away_team }}
+                                ({{ match.date_time|date:"Y/m/d" }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                    {% if selected_match_id %}
+                        <a href="{% url 'tickets:manage_vip_users' %}" class="btn-reset">
+                            <i class="fas fa-times"></i> حذف فیلتر
+                        </a>
+                    {% endif %}
+                </form>
+                {% if selected_match_id %}
+                    <span class="selected-info">
+                        <i class="fas fa-check-circle"></i>
+                        فیلتر شده: {{ selected_match_id|yesno:"فعال,غیرفعال" }}
+                    </span>
+                {% endif %}
+            </div>
+
+            <!-- ===== جدول کاربران ===== -->
+            {% if user_data %}
+                <div class="table-responsive-custom">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-hashtag"></i> #</th>
+                                <th><i class="fas fa-user"></i> کاربر</th>
+                                <th><i class="fas fa-user-tag"></i> نام کامل</th>
+                                <th><i class="fas fa-envelope"></i> ایمیل</th>
+                                <th><i class="fas fa-ticket-alt"></i> بلیط‌ها</th>
+                                <th style="text-align:center;"><i class="fas fa-cog"></i> عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in user_data %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <div style="display:flex; align-items:center; gap:10px;">
+                                            <span class="user-avatar">{{ item.user.username|slice:":1"|upper }}</span>
+                                            <span style="font-weight:600;">{{ item.user.username }}</span>
+                                        </div>
+                                    </td>
+                                    <td>{{ item.user.get_full_name|default:"-" }}</td>
+                                    <td>{{ item.user.email|default:"-" }}</td>
+                                    <td>
+                                        <span class="badge-ticket {% if item.ticket_count == 0 %}zero{% endif %}">
+                                            {{ item.ticket_count }}
+                                        </span>
+                                    </td>
+                                    <td style="text-align:center;">
+                                        <a href="{% url 'tickets:manage_user_tickets' item.user.id %}{% if selected_match_id %}?match_id={{ selected_match_id }}{% endif %}"
+                                           class="btn-primary-gold"
+                                           title="مشاهده و مدیریت بلیط‌های این کاربر">
+                                            <i class="fas fa-eye"></i> مدیریت
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-users"></i>
+                    <h5>هیچ کاربر ویژه‌ای یافت نشد</h5>
+                    <p class="text-muted">
+                        {% if selected_match_id %}
+                            هیچ کاربری برای مسابقه انتخاب‌شده بلیط ندارد.
+                        {% else %}
+                            در حال حاضر هیچ کاربری با نقش VIP در سیستم وجود ندارد.
+                        {% endif %}
+                    </p>
+                    {% if not selected_match_id %}
+                        <a href="{% url 'admin:index' %}" class="btn-primary-gold" style="display:inline-flex; margin-top:12px;">
+                            <i class="fas fa-user-plus"></i> ایجاد کاربر ویژه در پنل ادمین
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
 </div>
 {% endblock %}

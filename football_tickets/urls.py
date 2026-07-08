@@ -21,11 +21,12 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('accounts/', include('accounts.urls')),
-    path('matches/', include('matches.urls')),
-    path('tickets/', include('tickets.urls')),
-    path('payments/', include('payments.urls')),
-    path('', include(('matches.urls', 'matches'), namespace='matches')),
+                  path('admin/', admin.site.urls),
+                  path('accounts/', include('accounts.urls')),
+                  path('matches/', include('matches.urls')),
+                  path('tickets/', include('tickets.urls')),
+                  path('payments/', include('payments.urls')),
+                  path('', include(('matches.urls', 'matches'), namespace='matches')),
+                  path('wallet/', include('wallet.urls')),
 
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+              ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

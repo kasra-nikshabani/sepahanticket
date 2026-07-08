@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'tickets',
     'payments',
     'crispy_forms',
+    'wallet',
 ]
 
 MIDDLEWARE = [

@@ -3,81 +3,392 @@
 
 {% block title %}{% if is_edit %}ویرایش{% else %}ایجاد{% endif %} کد تخفیف{% endblock %}
 
+{% block extra_css %}
+    <style>
+        .discount-form-page {
+            padding: 20px 0;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .page-header h2 {
+            font-weight: 700;
+            color: #1A1A2E;
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .page-header h2 i {
+            color: #D4AF37;
+            margin-left: 12px;
+        }
+
+        .form-card {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid #e8eaed;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        .form-card .card-header {
+            background: linear-gradient(135deg, #1A1A2E, #16213E);
+            padding: 18px 24px;
+            border-bottom: 2px solid #D4AF37;
+            color: #fff;
+        }
+
+        .form-card .card-header h5 {
+            margin: 0;
+            font-weight: 700;
+            color: #D4AF37;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-card .card-body {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #1A1A2E;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .form-group label i {
+            color: #D4AF37;
+        }
+
+        .form-group .form-control,
+        .form-group .form-select {
+            border-radius: 10px;
+            border: 1.5px solid #e8eaed;
+            padding: 10px 14px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .form-group .form-control:focus,
+        .form-group .form-select:focus {
+            border-color: #D4AF37;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
+            background: #fff;
+        }
+
+        .form-group .help-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .form-group .help-text i {
+            color: #D4AF37;
+        }
+
+        .form-check-input {
+            width: 20px;
+            height: 20px;
+            margin-top: 0;
+            border-radius: 4px;
+            border: 1.5px solid #ced4da;
+            transition: all 0.3s ease;
+        }
+
+        .form-check-input:checked {
+            background-color: #D4AF37;
+            border-color: #D4AF37;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #D4AF37, #B8960F);
+            color: #1A1A2E;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(212, 175, 55, 0.3);
+            color: #1A1A2E;
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .btn-cancel:hover {
+            background: #5a6268;
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .row-eq-height {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .loading-blocks {
+            display: none;
+            color: #6c757d;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        .loading-blocks i {
+            margin-left: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .page-header h2 {
+                font-size: 22px;
+            }
+
+            .form-card .card-body {
+                padding: 16px;
+            }
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card shadow-lg">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">
-                        {% if is_edit %}
-                            <i class="fas fa-edit"></i> ویرایش کد تخفیف
-                        {% else %}
-                            <i class="fas fa-plus"></i> ایجاد کد تخفیف جدید
-                        {% endif %}
-                    </h4>
-                </div>
-                <div class="card-body">
+    <div class="discount-form-page">
+
+        <!-- ===== هدر ===== -->
+        <div class="page-header">
+            <h2>
+                <i class="fas fa-tag"></i>
+                {% if is_edit %}
+                    ویرایش کد تخفیف
+                {% else %}
+                    ایجاد کد تخفیف جدید
+                {% endif %}
+            </h2>
+            <a href="{% url 'tickets:admin_discount_list' %}" class="btn-cancel">
+                <i class="fas fa-arrow-right"></i> بازگشت به لیست
+            </a>
+        </div>
+
+        <!-- ===== فرم ===== -->
+        <div class="form-card">
+            <div class="card-header">
+                <h5>
+                    <i class="fas fa-percent"></i>
                     {% if is_edit %}
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i>
-                            در حال ویرایش کد تخفیف <strong>{{ discount.code }}</strong>
-                        </div>
+                        ویرایش کد تخفیف
+                    {% else %}
+                        اطلاعات کد تخفیف جدید
                     {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="discountForm">
+                    {% csrf_token %}
 
-                    <form method="post">
-                        {% csrf_token %}
-                        
-                        <div class="mb-3">
-                            <label for="id_code" class="form-label">کد تخفیف</label>
-                            {{ form.code }}
-                            <small class="text-muted">کد را با حروف بزرگ انگلیسی وارد کنید (مثلاً SUMMER20).</small>
+                    <div class="row">
+                        <!-- کد تخفیف -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="id_code"><i class="fas fa-key"></i> کد تخفیف</label>
+                                {{ form.code }}
+                                <div class="help-text">
+                                    <i class="fas fa-info-circle"></i>
+                                    کد را با حروف بزرگ انگلیسی و بدون فاصله وارد کنید (مثلاً SUMMER20)
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="id_block" class="form-label">بلوک (اختیاری)</label>
-                            {{ form.block }}
-                            <small class="text-muted">در صورت انتخاب بلوک، تخفیف فقط برای آن بلوک معتبر است.</small>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="id_discount_percent" class="form-label">درصد تخفیف</label>
+                        <!-- درصد تخفیف -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="id_discount_percent"><i class="fas fa-percent"></i> درصد تخفیف</label>
                                 {{ form.discount_percent }}
-                                <small class="text-muted">عدد بین ۰ تا ۱۰۰</small>
+                                <div class="help-text">
+                                    <i class="fas fa-info-circle"></i>
+                                    عددی بین ۰ تا ۱۰۰
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="id_max_uses" class="form-label">حداکثر استفاده</label>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- مسابقه -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="id_match"><i class="fas fa-trophy"></i> مسابقه</label>
+                                {{ form.match }}
+                                <div class="help-text">
+                                    <i class="fas fa-info-circle"></i>
+                                    این کد تخفیف فقط برای مسابقه‌ی انتخاب‌شده معتبر است.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- بلوک -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="id_block"><i class="fas fa-layer-group"></i> بلوک (اختیاری)</label>
+                                {{ form.block }}
+                                <div class="help-text">
+                                    <i class="fas fa-info-circle"></i>
+                                    در صورت انتخاب بلوک، تخفیف فقط برای آن بلوک معتبر است.
+                                </div>
+                                <div class="loading-blocks" id="loadingBlocks">
+                                    <i class="fas fa-spinner fa-spin"></i> در حال بارگذاری بلوک‌ها...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- حداکثر استفاده -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="id_max_uses"><i class="fas fa-users"></i> حداکثر استفاده</label>
                                 {{ form.max_uses }}
-                                <small class="text-muted">تعداد دفعاتی که این کد قابل استفاده است.</small>
+                                <div class="help-text">
+                                    <i class="fas fa-info-circle"></i>
+                                    تعداد دفعاتی که این کد قابل استفاده است.
+                                </div>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="id_expires_at" class="form-label">تاریخ انقضا (اختیاری)</label>
-                            {{ form.expires_at }}
-                            <small class="text-muted">در صورت خالی بودن، کد تاریخ انقضا ندارد.</small>
-                        </div>
-
-                        <div class="mb-3">
-                            <div class="form-check">
-                                {{ form.is_active }}
-                                <label class="form-check-label" for="id_is_active">فعال</label>
+                        <!-- تاریخ انقضا -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="id_expires_at"><i class="fas fa-calendar-alt"></i> تاریخ انقضا
+                                    (اختیاری)</label>
+                                {{ form.expires_at }}
+                                <div class="help-text">
+                                    <i class="fas fa-info-circle"></i>
+                                    در صورت خالی بودن، کد تاریخ انقضا ندارد.
+                                </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="d-grid gap-2 mt-3">
-                            <button type="submit" class="btn btn-success btn-lg">
-                                <i class="fas fa-save"></i> {% if is_edit %}ذخیره تغییرات{% else %}ایجاد{% endif %}
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="id_is_active">
+                                        <i class="fas fa-check-circle"></i> فعال
+                                    </label>
+                                </div>
+                                <div class="help-text">
+                                    <i class="fas fa-info-circle"></i>
+                                    در صورت غیرفعال بودن، کد قابل استفاده نیست.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <button type="submit" class="btn-save">
+                                <i class="fas fa-save"></i>
+                                {% if is_edit %}ذخیره تغییرات{% else %}ایجاد کد تخفیف{% endif %}
                             </button>
-                            <a href="{% url 'tickets:admin_discount_list' %}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-right"></i> بازگشت به لیست
-                            </a>
                         </div>
-                    </form>
-                </div>
+                    </div>
+
+                </form>
             </div>
         </div>
+
     </div>
-</div>
+
+    <!-- ===== اسکریپت بارگذاری بلوک‌ها بر اساس مسابقه ===== -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const matchSelect = document.getElementById('id_match');
+            const blockSelect = document.getElementById('id_block');
+            const loadingDiv = document.getElementById('loadingBlocks');
+
+            // تابع بارگذاری بلوک‌ها
+            function loadBlocks(matchId) {
+                if (!matchId) {
+                    blockSelect.innerHTML = '<option value="">---------</option>';
+                    return;
+                }
+
+                loadingDiv.style.display = 'block';
+                blockSelect.disabled = true;
+                blockSelect.innerHTML = '<option value="">در حال بارگذاری...</option>';
+
+                fetch(`/tickets/api/get-blocks-for-match/?match_id=${matchId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        blockSelect.innerHTML = '<option value="">---------</option>';
+                        data.blocks.forEach(block => {
+                            const option = document.createElement('option');
+                            option.value = block.id;
+                            option.textContent = block.name;
+                            blockSelect.appendChild(option);
+                        });
+                        blockSelect.disabled = false;
+                        loadingDiv.style.display = 'none';
+                    })
+                    .catch(error => {
+                        console.error('Error loading blocks:', error);
+                        blockSelect.innerHTML = '<option value="">خطا در بارگذاری</option>';
+                        blockSelect.disabled = false;
+                        loadingDiv.style.display = 'none';
+                    });
+            }
+
+            // رویداد تغییر مسابقه
+            matchSelect.addEventListener('change', function () {
+                loadBlocks(this.value);
+            });
+
+            // اجرا در ابتدا (اگر مسابقه‌ای از پیش انتخاب شده باشد)
+            if (matchSelect.value) {
+                loadBlocks(matchSelect.value);
+            }
+        });
+    </script>
 {% endblock %}

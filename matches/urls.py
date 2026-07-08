@@ -53,4 +53,7 @@ urlpatterns = [
     path('admin/seats/toggle/<int:seat_id>/', views.toggle_seat_status, name='toggle_seat_status'),
     path('admin/blocks/manage-seats/', views.manage_block_seats, name='manage_block_seats'),
     path('admin/blocks/manage-seats/<int:block_id>/', views.manage_block_seats, name='manage_block_seats'),
+    path('splash/', views.splash, name='splash'),
+    path('api/set-splash-seen/', views.set_splash_seen, name='set_splash_seen'),
+
 ]

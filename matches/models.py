@@ -13,7 +13,12 @@ from django.utils import timezone
 class Stadium(models.Model):
     name = models.CharField(max_length=100, verbose_name="نام ورزشگاه")
     capacity = models.IntegerField(verbose_name="ظرفیت کل")
-
+    image = models.ImageField(
+        upload_to='stadium_images/',
+        null=True,
+        blank=True,
+        verbose_name="تصویر ورزشگاه"
+    )
     def __str__(self): return self.name
 
 

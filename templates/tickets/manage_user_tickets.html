@@ -6,7 +6,7 @@
 {% block extra_css %}
 <style>
     .manage-container {
-        max-width: 1000px;
+        max-width: 1100px;
         margin: 30px auto;
     }
     .card-custom {
@@ -25,6 +25,11 @@
         padding: 20px 30px;
         border-bottom: 3px solid #D4AF37;
         color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
     }
     .card-header-custom h4 {
         margin: 0;
@@ -35,10 +40,136 @@
         margin-left: 10px;
         color: #D4AF37;
     }
+    .card-header-custom .ticket-count {
+        background: rgba(212, 175, 55, 0.15);
+        color: #D4AF37;
+        padding: 4px 16px;
+        border-radius: 50px;
+        font-size: 14px;
+        font-weight: 600;
+        border: 1px solid rgba(212, 175, 55, 0.2);
+    }
     .card-body-custom {
         padding: 30px;
         overflow-x: auto;
     }
+
+    /* ===== فیلتر مسابقه ===== */
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+        border: 1px solid #e8eaed;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+    }
+    .filter-section .filter-label {
+        font-weight: 600;
+        color: #1A1A2E;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .filter-section .filter-label i {
+        color: #D4AF37;
+    }
+    .filter-section select {
+        flex: 1;
+        min-width: 200px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        border: 1.5px solid #e8eaed;
+        background: #fff;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236c757d' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: left 12px center;
+        padding-left: 36px;
+        cursor: pointer;
+    }
+    .filter-section select:focus {
+        border-color: #D4AF37;
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.12);
+    }
+    .filter-section .btn-filter {
+        padding: 8px 20px;
+        border-radius: 8px;
+        border: none;
+        background: #1A1A2E;
+        color: #fff;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .filter-section .btn-filter:hover {
+        background: #D4AF37;
+        color: #1A1A2E;
+    }
+    .filter-section .btn-reset {
+        padding: 8px 18px;
+        border-radius: 8px;
+        border: 1.5px solid #e8eaed;
+        background: #fff;
+        color: #6c757d;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    .filter-section .btn-reset:hover {
+        border-color: #D4AF37;
+        color: #1A1A2E;
+    }
+    .filter-section .selected-match-info {
+        background: #fff9e6;
+        border-radius: 8px;
+        padding: 6px 14px;
+        font-size: 13px;
+        border: 1px solid #D4AF37;
+        color: #1A1A2E;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .filter-section .selected-match-info i {
+        color: #D4AF37;
+    }
+
+    /* ===== اطلاعات کاربر ===== */
+    .user-info {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 12px 20px;
+        margin-bottom: 20px;
+        border-right: 4px solid #D4AF37;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        align-items: center;
+    }
+    .user-info span {
+        font-weight: 500;
+    }
+    .user-info .label {
+        color: #6c757d;
+        font-weight: 400;
+        margin-left: 4px;
+    }
+    .badge-ticket {
+        background: #D4AF37;
+        color: #1A1A2E;
+        padding: 4px 14px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+
+    /* ===== جدول ===== */
     .table-custom {
         width: 100%;
         border-collapse: collapse;
@@ -51,6 +182,11 @@
         padding: 12px 16px;
         text-align: right;
         border-bottom: 2px solid #D4AF37;
+        white-space: nowrap;
+    }
+    .table-custom thead th i {
+        margin-left: 4px;
+        color: #D4AF37;
     }
     .table-custom tbody td {
         padding: 12px 16px;
@@ -60,6 +196,30 @@
     .table-custom tbody tr:hover {
         background: #fafafa;
     }
+    .table-custom .match-cell {
+        font-size: 0.9rem;
+    }
+    .table-custom .match-cell .match-date {
+        display: block;
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+    .table-custom .status-badge {
+        padding: 3px 12px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .table-custom .status-badge.used {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    .table-custom .status-badge.unused {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    /* ===== دکمه‌ها ===== */
     .btn-delete {
         background: #fce4ec;
         border: none;
@@ -99,46 +259,55 @@
         text-decoration: none;
         color: #1A1A2E;
     }
+    .btn-download {
+        background: #D4AF37;
+        border: none;
+        color: #1A1A2E;
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .btn-download:hover {
+        background: #B8960F;
+        color: #1A1A2E;
+    }
+
+    /* ===== حالت خالی ===== */
     .empty-state {
         text-align: center;
-        padding: 40px 20px;
+        padding: 60px 20px;
         color: #6c757d;
     }
     .empty-state i {
-        font-size: 3rem;
+        font-size: 3.5rem;
         color: #D4AF37;
-        margin-bottom: 12px;
+        margin-bottom: 16px;
+        display: block;
     }
-    .user-info {
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 12px 20px;
-        margin-bottom: 20px;
-        border-right: 4px solid #D4AF37;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-        align-items: center;
-    }
-    .user-info span {
-        font-weight: 500;
-    }
-    .user-info .label {
-        color: #6c757d;
-        font-weight: 400;
-        margin-left: 4px;
-    }
-    .badge-ticket {
-        background: #D4AF37;
+    .empty-state h5 {
         color: #1A1A2E;
-        padding: 4px 14px;
-        border-radius: 20px;
-        font-weight: 700;
-        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 8px;
     }
+
+    /* ===== واکنش‌گرایی ===== */
     @media (max-width: 768px) {
         .card-body-custom {
             padding: 16px;
+        }
+        .card-header-custom {
+            padding: 16px 20px;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .card-header-custom h4 {
+            font-size: 1.1rem;
         }
         .table-custom {
             font-size: 0.8rem;
@@ -151,13 +320,42 @@
             padding: 4px 10px;
             font-size: 0.75rem;
         }
-        .card-header-custom h4 {
-            font-size: 1.1rem;
-        }
         .user-info {
             flex-direction: column;
             align-items: flex-start;
             gap: 8px;
+        }
+        .filter-section {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .filter-section select {
+            min-width: 100%;
+        }
+        .filter-section .filter-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .filter-section .filter-actions .btn-filter,
+        .filter-section .filter-actions .btn-reset {
+            flex: 1;
+            text-align: center;
+            justify-content: center;
+        }
+    }
+    @media (max-width: 480px) {
+        .table-custom thead th,
+        .table-custom tbody td {
+            padding: 6px 8px;
+            font-size: 0.7rem;
+        }
+        .btn-delete {
+            padding: 2px 8px;
+            font-size: 0.7rem;
+        }
+        .card-header-custom .ticket-count {
+            font-size: 12px;
+            padding: 2px 12px;
         }
     }
 </style>
@@ -167,59 +365,115 @@
 <div class="manage-container">
     <div class="card-custom">
         <div class="card-header-custom">
-            <h4><i class="fas fa-ticket-alt"></i> بلیط‌های {{ target_user.get_full_name }}</h4>
+            <h4><i class="fas fa-ticket-alt"></i> بلیط‌های {{ target_user.get_full_name|default:target_user.username }}</h4>
+            <span class="ticket-count"><i class="fas fa-list"></i> {{ tickets|length }} بلیط</span>
         </div>
         <div class="card-body-custom">
+
+            <!-- ===== دکمه بازگشت ===== -->
             <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                <a href="{% url 'tickets:manage_vip_users' %}" class="btn-back">
+                <a href="{% url 'tickets:manage_vip_users' %}{% if selected_match_id %}?match_id={{ selected_match_id }}{% endif %}" class="btn-back">
                     <i class="fas fa-arrow-right"></i> بازگشت به لیست کاربران
                 </a>
+                {% if selected_match %}
+                    <a href="{% url 'tickets:manage_user_tickets' target_user.id %}" class="btn-back">
+                        <i class="fas fa-times"></i> حذف فیلتر مسابقه
+                    </a>
+                {% endif %}
             </div>
 
+            <!-- ===== اطلاعات کاربر ===== -->
             <div class="user-info">
                 <span><span class="label">نام کاربری:</span> {{ target_user.username }}</span>
-                <span><span class="label">نام کامل:</span> {{ target_user.get_full_name }}</span>
+                <span><span class="label">نام کامل:</span> {{ target_user.get_full_name|default:"-" }}</span>
                 <span><span class="label">تعداد بلیط:</span> <span class="badge-ticket">{{ tickets|length }}</span></span>
+                {% if selected_match %}
+                    <span><span class="label">مسابقه فیلترشده:</span> {{ selected_match.home_team }} vs {{ selected_match.away_team }}</span>
+                {% endif %}
             </div>
 
-            {% if tickets %}
-            <table class="table-custom">
-                <thead>
-                    <tr>
-                        <th>شماره بلیط</th>
-                        <th>مسابقه</th>
-                        <th>ردیف</th>
-                        <th>صندلی</th>
-                        <th>تاریخ صدور</th>
-                        <th>عملیات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for ticket in tickets %}
-                    <tr>
-                        <td><strong>{{ ticket.ticket_number }}</strong></td>
-                        <td>{{ ticket.match.home_team }} vs {{ ticket.match.away_team }}</td>
-                        <td>{{ ticket.seat.row.name }}</td>
-                        <td>{{ ticket.seat.number }}</td>
-                        <td>{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
-                        <td>
-                            <form method="post" style="display:inline;" onsubmit="return confirm('آیا از حذف این بلیط مطمئن هستید؟ صندلی مربوطه آزاد خواهد شد.');">
-                                {% csrf_token %}
-                                <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
-                                <button type="submit" class="btn-delete">
-                                    <i class="fas fa-trash-alt"></i> حذف
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <div class="empty-state">
-                <i class="fas fa-ticket-alt"></i>
-                <p>هیچ بلیطی برای این کاربر صادر نشده است.</p>
+            <!-- ===== فیلتر مسابقه ===== -->
+            <div class="filter-section">
+                <span class="filter-label"><i class="fas fa-filter"></i> فیلتر مسابقه:</span>
+                <form method="get" style="flex:1; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                    <select name="match_id" onchange="this.form.submit()">
+                        <option value="">همه مسابقات</option>
+                        {% for match in matches %}
+                            <option value="{{ match.id }}" {% if selected_match_id == match.id %}selected{% endif %}>
+                                {{ match.home_team }} vs {{ match.away_team }} ({{ match.date_time|date:"Y/m/d" }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                    {% if selected_match_id %}
+                        <a href="{% url 'tickets:manage_user_tickets' target_user.id %}" class="btn-reset">
+                            <i class="fas fa-times"></i> حذف فیلتر
+                        </a>
+                    {% endif %}
+                </form>
             </div>
+
+            <!-- ===== لیست بلیط‌ها ===== -->
+            {% if tickets %}
+                <div class="table-responsive">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-hashtag"></i> شماره</th>
+                                <th><i class="fas fa-trophy"></i> مسابقه</th>
+                                <th><i class="fas fa-chair"></i> صندلی</th>
+                                <th><i class="fas fa-user"></i> خریدار</th>
+                                <th><i class="fas fa-calendar-day"></i> تاریخ صدور</th>
+                                <th><i class="fas fa-check-circle"></i> وضعیت</th>
+                                <th><i class="fas fa-cog"></i> عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in tickets %}
+                                <tr>
+                                    <td><strong>{{ ticket.ticket_number }}</strong></td>
+                                    <td class="match-cell">
+                                        {{ ticket.match.home_team }} vs {{ ticket.match.away_team }}
+                                        <span class="match-date">{{ ticket.match.date_time|date:"Y/m/d H:i" }}</span>
+                                    </td>
+                                    <td>{{ ticket.seat.row.block.name }} - ردیف {{ ticket.seat.row.number }} - صندلی {{ ticket.seat.number }}</td>
+                                    <td>{{ ticket.full_name }}</td>
+                                    <td>{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
+                                    <td>
+                                        <span class="status-badge {% if ticket.is_used %}used{% else %}unused{% endif %}">
+                                            {% if ticket.is_used %}استفاده شده{% else %}استفاده نشده{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                                            <a href="{{ ticket.pdf_file.url }}" target="_blank" class="btn-download" title="دانلود PDF">
+                                                <i class="fas fa-file-pdf"></i>
+                                            </a>
+                                            <form method="post" style="display:inline;" onsubmit="return confirm('آیا از حذف این بلیط مطمئن هستید؟ صندلی مربوطه آزاد خواهد شد.');">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+                                                <button type="submit" class="btn-delete" title="حذف بلیط">
+                                                    <i class="fas fa-trash-alt"></i> حذف
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-ticket-alt"></i>
+                    <h5>هیچ بلیطی یافت نشد</h5>
+                    <p class="text-muted">
+                        {% if selected_match %}
+                            کاربر مورد نظر هیچ بلیطی برای مسابقه انتخاب‌شده ندارد.
+                        {% else %}
+                            برای این کاربر هیچ بلیطی صادر نشده است.
+                        {% endif %}
+                    </p>
+                </div>
             {% endif %}
         </div>
     </div>

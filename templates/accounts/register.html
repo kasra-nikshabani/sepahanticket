@@ -4,62 +4,69 @@
 {% block title %}ثبت‌نام{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white text-center">
-                    <h3><i class="fas fa-user-plus"></i> ثبت‌نام</h3>
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        
-                        <div class="mb-3">
-                            <label class="form-label">نام و نام خانوادگی</label>
-                            <input type="text" name="full_name" class="form-control" placeholder="نام و نام خانوادگی" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">نام کاربری</label>
-                            <input type="text" name="username" class="form-control" placeholder="نام کاربری" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">کد ملی</label>
-                            <input type="text" name="national_code" class="form-control" placeholder="کد ملی (۱۰ رقم)" maxlength="10" required>
-                            <small class="text-muted">کد ملی باید ۱۰ رقم باشد.</small>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">شماره موبایل</label>
-                            <input type="text" name="phone_number" class="form-control" placeholder="شماره موبایل (۰۹۱۲۳۴۵۶۷۸۹)" maxlength="11" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">رمز عبور</label>
-                            <input type="password" name="password1" class="form-control" placeholder="رمز عبور" required>
-                            <small class="text-muted">حداقل ۸ کاراکتر و شامل حروف و اعداد</small>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">تکرار رمز عبور</label>
-                            <input type="password" name="password2" class="form-control" placeholder="تکرار رمز عبور" required>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-check"></i> ثبت‌نام
-                        </button>
-                    </form>
-                    
-                    <hr>
-                    <p class="text-center">
-                        قبلاً ثبت‌نام کرده‌اید؟
-                        <a href="{% url 'accounts:login' %}">وارد شوید</a>
-                    </p>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white text-center">
+                        <h3><i class="fas fa-user-plus"></i> ثبت‌نام</h3>
+                    </div>
+                    <div class="card-body">
+                        <p style="text-align: center">ثبت‌نام</p>
+
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label class="form-label">نام و نام خانوادگی</label>
+                                <input type="text" name="full_name" class="form-control"
+                                       placeholder="نام و نام خانوادگی" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">نام کاربری</label>
+                                <input type="text" name="username" class="form-control" placeholder="نام کاربری"
+                                       required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">کد ملی</label>
+                                <input type="text" name="national_code" class="form-control"
+                                       placeholder="کد ملی (۱۰ رقم)" maxlength="10" required>
+                                <small class="text-muted">کد ملی باید ۱۰ رقم باشد.</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">شماره موبایل</label>
+                                <input type="text" name="phone_number" class="form-control"
+                                       placeholder="شماره موبایل (۰۹۱۲۳۴۵۶۷۸۹)" maxlength="11" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">رمز عبور</label>
+                                <input type="password" name="password1" class="form-control" placeholder="رمز عبور"
+                                       required>
+                                <small class="text-muted">حداقل ۸ کاراکتر و شامل حروف و اعداد</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">تکرار رمز عبور</label>
+                                <input type="password" name="password2" class="form-control"
+                                       placeholder="تکرار رمز عبور" required>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-check"></i> ثبت‌نام
+                            </button>
+                        </form>
+
+                        <hr>
+                        <p class="text-center">
+                            قبلاً ثبت‌نام کرده‌اید؟
+                            <a href="{% url 'accounts:login' %}">وارد شوید</a>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 {% endblock %}

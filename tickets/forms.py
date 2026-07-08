@@ -57,6 +57,7 @@ class BulkTicketForm(forms.Form):
                 )
         return cleaned_data
 
+
 class VIPQuotaForm(forms.ModelForm):
     class Meta:
         model = VIPQuota
@@ -74,13 +75,15 @@ class VIPQuotaForm(forms.ModelForm):
         # فقط مسابقات فعال را نمایش بده
         self.fields['match'].queryset = Match.objects.filter(is_active=True)
 
+
 class DiscountCodeForm(forms.ModelForm):
     class Meta:
         model = DiscountCode
-        fields = ['code', 'block', 'discount_percent', 'max_uses', 'is_active', 'expires_at']
+        fields = ['code', 'match', 'block', 'discount_percent', 'max_uses', 'is_active', 'expires_at']
         widgets = {
-            'code': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
-            'block': forms.Select(attrs={'class': 'form-select'}),
+            'code': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr', 'placeholder': 'SUMMER20'}),
+            'match': forms.Select(attrs={'class': 'form-select', 'id': 'id_match'}),
+            'block': forms.Select(attrs={'class': 'form-select', 'id': 'id_block'}),
             'discount_percent': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 100}),
             'max_uses': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
@@ -88,6 +91,7 @@ class DiscountCodeForm(forms.ModelForm):
         }
         labels = {
             'code': 'کد تخفیف',
+            'match': 'مسابقه',
             'block': 'بلوک (اختیاری)',
             'discount_percent': 'درصد تخفیف',
             'max_uses': 'حداکثر استفاده',
@@ -97,7 +101,14 @@ class DiscountCodeForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # فقط بلوک‌های فعال را نمایش بده
+        # فقط مسابقات فعال را نمایش بده
+        self.fields['match'].queryset = Match.objects.filter(is_active=True).order_by('-date_time')
         self.fields['block'].queryset = Block.objects.filter(is_active=True)
         self.fields['block'].required = False
         self.fields['expires_at'].required = False
+
+        # اگر مسابقه‌ای وجود نداشت، پیام مناسب نمایش بده
+        if not self.fields['match'].queryset.exists():
+            self.fields['match'].empty_label = "هیچ مسابقه‌ای یافت نشد. ابتدا یک مسابقه ایجاد کنید."
+        else:
+            self.fields['match'].empty_label = "یک مسابقه انتخاب کنید..."

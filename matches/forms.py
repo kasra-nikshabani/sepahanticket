@@ -42,15 +42,17 @@ class MatchForm(forms.ModelForm):
 from django import forms
 from .models import Stadium
 
+
+# matches/forms.py
 class StadiumForm(forms.ModelForm):
     class Meta:
         model = Stadium
-        fields = ['name', 'capacity']
+        fields = ['name', 'capacity', 'image']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'capacity': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'image': forms.FileInput(attrs={'class': 'form-control'}),
         }
         labels = {
-            'name': 'نام ورزشگاه',
-            'capacity': 'ظرفیت کل',
+            'image': 'تصویر ورزشگاه',
         }

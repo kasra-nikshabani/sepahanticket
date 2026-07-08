@@ -1,0 +1,271 @@
+{% load static %}
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سپاهان تیکت</title>
+    <style>
+        /* ===== تنظیمات کلی ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            direction: rtl;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 40%, #0f0f23 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* ===== پس‌زمینه با ستاره‌ها ===== */
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .star {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle 2s infinite alternate;
+            opacity: 0.3;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.2; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* ===== کانتینر اصلی ===== */
+        .splash-container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            animation: fadeInUp 1.2s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* ===== لوگو ===== */
+        .logo-wrapper {
+            display: inline-block;
+            background: linear-gradient(135deg, #D4AF37, #B8960F);
+            border-radius: 50%;
+            padding: 20px;
+            box-shadow: 0 0 60px rgba(212, 175, 55, 0.3);
+            animation: pulseGlow 2s infinite alternate;
+            margin-bottom: 30px;
+        }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 40px rgba(212, 175, 55, 0.2); }
+            100% { box-shadow: 0 0 80px rgba(212, 175, 55, 0.5); }
+        }
+
+        .logo-wrapper img {
+            width: 120px;
+            height: 120px;
+            display: block;
+            border-radius: 50%;
+            background: #fff;
+            padding: 8px;
+            object-fit: contain;
+        }
+
+        /* ===== عنوان ===== */
+        .splash-title {
+            color: #D4AF37;
+            font-size: 42px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
+            margin-bottom: 8px;
+        }
+
+        .splash-title span {
+            color: #fff;
+            font-weight: 300;
+        }
+
+        .splash-subtitle {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 16px;
+            letter-spacing: 4px;
+            margin-bottom: 40px;
+            font-weight: 300;
+        }
+
+        /* ===== نوار لودینگ ===== */
+        .loading-bar {
+            width: 200px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin: 0 auto 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .loading-bar .fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #D4AF37, #f9e078);
+            border-radius: 4px;
+            animation: loadProgress 3s ease forwards;
+        }
+
+        @keyframes loadProgress {
+            0% { width: 0%; }
+            30% { width: 35%; }
+            60% { width: 70%; }
+            90% { width: 95%; }
+            100% { width: 100%; }
+        }
+
+        .loading-text {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 12px;
+            letter-spacing: 2px;
+            font-weight: 300;
+        }
+
+        /* ===== فوتر ===== */
+        .splash-footer {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.15);
+            font-size: 12px;
+            letter-spacing: 1px;
+            z-index: 10;
+            font-weight: 300;
+        }
+
+        /* ===== واکنش‌گرایی ===== */
+        @media (max-width: 768px) {
+            .logo-wrapper img {
+                width: 90px;
+                height: 90px;
+            }
+            .splash-title {
+                font-size: 32px;
+            }
+            .splash-subtitle {
+                font-size: 13px;
+                letter-spacing: 2px;
+            }
+            .loading-bar {
+                width: 160px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo-wrapper img {
+                width: 70px;
+                height: 70px;
+            }
+            .splash-title {
+                font-size: 26px;
+            }
+            .splash-subtitle {
+                font-size: 11px;
+            }
+            .loading-bar {
+                width: 140px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== ستاره‌های پس‌زمینه ===== -->
+    <div class="stars" id="stars"></div>
+
+    <!-- ===== کانتینر اصلی ===== -->
+    <div class="splash-container">
+
+        <!-- لوگو -->
+        <div class="logo-wrapper">
+            <img src="{% static 'img/sepahan-logo.png' %}" alt="سپاهان تیکت" id="logoImage"
+                 onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\'font-size:60px; color:#D4AF37;\'>⚽</span>'">
+        </div>
+
+        <!-- عنوان -->
+        <div class="splash-title">
+            سپاهان <span>تیکت</span>
+        </div>
+        <div class="splash-subtitle">
+            ⚡ سیستم فروش بلیط الکترونیک ⚡
+        </div>
+
+        <!-- نوار لودینگ -->
+        <div class="loading-bar">
+            <div class="fill"></div>
+        </div>
+        <div class="loading-text">در حال بارگذاری ...</div>
+
+    </div>
+
+    <!-- ===== فوتر ===== -->
+    <div class="splash-footer">
+        © ۱۴۰۴ باشگاه فرهنگی ورزشی فولاد مبارکه سپاهان
+    </div>
+
+    <!-- ===== اسکریپت‌ها ===== -->
+    <script>
+        // ===== ایجاد ستاره‌ها =====
+        (function createStars() {
+            const container = document.getElementById('stars');
+            const count = 120;
+            for (let i = 0; i < count; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 3 + 1;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                star.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+                container.appendChild(star);
+            }
+        })();
+
+        // ===== تایمر ۳ ثانیه =====
+        setTimeout(function() {
+            // تنظیم session برای عدم نمایش مجدد
+            fetch('/matches/api/set-splash-seen/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            }).finally(function() {
+                // هدایت به صفحه اصلی
+                window.location.href = "{% url 'matches:home' %}";
+            });
+        }, 3000);
+    </script>
+
+</body>
+</html>
