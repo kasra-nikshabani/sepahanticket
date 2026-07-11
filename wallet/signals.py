@@ -3,7 +3,10 @@ from django.dispatch import receiver
 from django.conf import settings
 from .models import Wallet
 
+
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_wallet_for_user(sender, instance, created, **kwargs):
+    if kwargs.get("raw"):
+        return
     if created and instance.user_type != 'vip':
         Wallet.objects.create(user=instance)

@@ -4,6 +4,9 @@ from .models import Match, MatchSeat, Seat
 
 @receiver(post_save, sender=Match)
 def create_match_seats(sender, instance, created, **kwargs):
+    if kwargs.get("raw"):
+        return
+	
     if created:
         # برای هر صندلی موجود، یک MatchSeat ایجاد کن
         seats = Seat.objects.all()
