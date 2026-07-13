@@ -6,6 +6,8 @@ from . import api
 app_name = 'tickets'
 
 urlpatterns = [
+    path('admin-reports/', views.sales_report, name='admin_reports'),  # ← اضافه کنید
+
     path('select/<int:match_id>/', views.select_seats, name='select_seats'),
     path('ticket-info/<int:match_id>/', views.ticket_info, name='ticket_info'),
     path('my-tickets/', views.user_tickets, name='user_tickets'),

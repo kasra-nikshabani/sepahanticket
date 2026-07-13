@@ -1,112 +1,301 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-        <!-- برند -->
-        <a class="navbar-brand" href="{% url 'matches:home' %}">
-            <i class="fas fa-futbol"></i> بلیط سپاهان
-        </a>
+{% load static %}
+{% load currency_filters %}
 
-        <!-- دکمه هَمبِرگِر برای موبایل -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+<header class="custom-header">
+    <nav class="navbar navbar-expand-md">
+        <div class="container-fluid">
+            <!-- لوگو و برند -->
+            <a class="navbar-brand" href="{% url 'matches:home' %}">
+                <img src="{% static 'img/sepahan-logo.png' %}" alt="لوگوی سپاهان" height="45" class="d-inline-block align-top" onerror="this.style.display='none'">
+                <span class="brand-text">فولاد مبارکه سپاهان</span>
+            </a>
 
-        <!-- منوی اصلی -->
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="{% url 'matches:tutorial' %}">
-                    <i class="fas fa-graduation-cap"></i> آموزش خرید بلیط
-                </a></li>
+            <!-- ===== منوی دسکتاپ (فقط در اندازه‌های بزرگتر از موبایل) ===== -->
+            <div class="d-none d-md-flex align-items-center">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center gap-1">
 
-                {% if user.is_authenticated %}
+                    <!-- لینک‌های عمومی (فقط دسکتاپ) -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'matches:home' %}">
+                            <i class="fas fa-home"></i> خانه
+                        </a>
+                    </li>
+                    <!-- ===== لینک مسابقات در دسکتاپ حذف شد ===== -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'tutorial' %}">
+                            <i class="fas fa-question-circle"></i> راهنما
+                        </a>
+                    </li>
 
-                    <!-- ==================================================== -->
-                    <!--  کاربر وارد شده است                                   -->
-                    <!-- ==================================================== -->
+                    {% if user.is_authenticated %}
+                        <!-- ===== کاربر لاگین کرده ===== -->
+                        {% if user.user_type == 'normal' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'tickets:user_tickets' %}">
+                                    <i class="fas fa-ticket-alt"></i> بلیط‌ها
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'wallet:dashboard' %}">
+                                    <i class="fas fa-wallet"></i> کیف پول
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'accounts:profile' %}">
+                                    <i class="fas fa-user"></i> پروفایل
+                                </a>
+                            </li>
 
-                    {% if user.user_type == 'admin' or user.is_staff %}
-                        <!-- ===== منوی مدیریت (ادمین) ===== -->
-                        <li class="nav-item"><a class="nav-link" href="{% url 'tickets:user_tickets' %}"><i
-                                class="fas fa-ticket-alt"></i> بلیط‌های من</a></li>
+                        {% elif user.user_type == 'vip' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'tickets:vip_dashboard' %}">
+                                    <i class="fas fa-crown"></i> داشبورد
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'tickets:vip_tickets' %}">
+                                    <i class="fas fa-ticket-alt"></i> بلیط‌ها
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'accounts:profile' %}">
+                                    <i class="fas fa-user"></i> پروفایل
+                                </a>
+                            </li>
 
-                        <!-- ===== لینک مدیریت مسابقات (جداگانه و برجسته) ===== -->
-                        <li class="nav-item"><a class="nav-link" href="{% url 'matches:admin_match_list' %}">
-                            <i class="fas fa-calendar-alt"></i> مدیریت مسابقات
-                        </a></li>
+                        {% elif user.user_type == 'admin' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'admin:index' %}">
+                                    <i class="fas fa-cogs"></i> مدیریت
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'tickets:sales_report' %}">
+                                    <i class="fas fa-chart-bar"></i> گزارشات
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'accounts:profile' %}">
+                                    <i class="fas fa-user"></i> پروفایل
+                                </a>
+                            </li>
+                        {% endif %}
 
-                        <!-- ===== لینک مدیریت بلوک‌ها ===== -->
-                        <li class="nav-item"><a class="nav-link" href="{% url 'matches:manage_blocks' %}">
-                            <i class="fas fa-layer-group"></i> مدیریت بلوک‌ها
-                        </a></li>
-
-                        <!-- سایر ابزارهای مدیریتی -->
-                        <li class="nav-item"><a class="nav-link" href="{% url 'tickets:bulk_issue' %}"><i
-                                class="fas fa-ticket-alt"></i> صدور گروهی</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'tickets:manage_vip_users' %}"><i
-                                class="fas fa-users-cog"></i> مدیریت VIP</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'tickets:sales_report' %}"><i
-                                class="fas fa-chart-bar"></i> گزارش فروش</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'tickets:row_occupancy' %}"><i
-                                class="fas fa-chair"></i> اشغال صندلی‌ها</a></li>
-
-                    {% elif user.user_type == 'vip' %}
-                        <!-- ===== منوی کاربر ویژه (VIP) ===== -->
+                        <!-- خروج -->
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'tickets:vip_tickets' %}">
-                                <i class="fas fa-inbox"></i> بلیط‌های دریافتی
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'tickets:vip_dashboard' %}">
-                                <i class="fas fa-chart-pie"></i> صدور بلیط
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'tickets:vip_issued_tickets' %}">
-                                <i class="fas fa-ticket-alt"></i> بلیط‌های صادرشده
+                            <a class="nav-link btn-logout" href="{% url 'accounts:logout' %}">
+                                <i class="fas fa-sign-out-alt"></i> خروج
                             </a>
                         </li>
 
                     {% else %}
-                        <!-- ===== کاربر معمولی ===== -->
-                        <li class="nav-item"><a class="nav-link" href="{% url 'tickets:user_tickets' %}"><i
-                                class="fas fa-ticket-alt"></i> بلیط‌های من</a>
-                        </li>
+                        <!-- ===== کاربر مهمان ===== -->
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'wallet:dashboard' %}">
-                                <i class="fas fa-wallet"></i> کیف پول
+                            <a class="nav-link btn-login" href="{% url 'accounts:phone_login' %}">
+                                <i class="fas fa-arrow-left"></i> ورود
                             </a>
                         </li>
-
+                        <li class="nav-item">
+                            <a class="nav-link btn-register" href="{% url 'accounts:phone_register' %}">
+                                <i class="fas fa-user-plus"></i> ثبت‌نام
+                            </a>
+                        </li>
                     {% endif %}
 
-                    <!-- ===== لینک‌های مشترک همه کاربران لاگین ===== -->
-                    <li class="nav-item"><a class="nav-link" href="{% url 'accounts:profile' %}"><i
-                            class="fas fa-user"></i> {{ user.username }}</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'accounts:logout' %}"><i
-                            class="fas fa-sign-out-alt"></i> خروج</a></li>
-
-                {% else %}
-                    <!-- ==================================================== -->
-                    <!--  کاربر وارد نشده است                                 -->
-                    <!-- ==================================================== -->
-
-                    <!-- ورود با موبایل (در صورت فعال بودن در settings) -->
-                    {% if settings.OTP_ENABLED %}
-                        <li class="nav-item"><a class="nav-link" href="{% url 'accounts:phone_login' %}"><i
-                                class="fas fa-phone-alt"></i> ورود با موبایل</a></li>
-                    {% endif %}
-
-                    <!-- لینک‌های معمولی ورود و ثبت‌نام -->
-                    <li class="nav-item"><a class="nav-link" href="{% url 'accounts:login' %}"><i
-                            class="fas fa-sign-in-alt"></i> ورود</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'accounts:register' %}"><i
-                            class="fas fa-user-plus"></i> ثبت‌نام</a></li>
-                {% endif %}
-                <!-- خط دیباگ موقت – بعداً پاکش می‌کنیم -->
-
-
-            </ul>
+                </ul>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
+</header>
+
+<style>
+    /* ===== استایل هدر ===== */
+    .custom-header {
+        background: linear-gradient(135deg, #1A1A2E 0%, #2D2D44 100%);
+        border-bottom: 2px solid rgba(212, 175, 55, 0.20);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        padding: 6px 0;
+        position: sticky;
+        top: 0;
+        z-index: 1040;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    .custom-header .navbar {
+        padding: 0;
+    }
+
+    .custom-header .navbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 1.2rem;
+        text-decoration: none;
+        padding: 4px 0;
+    }
+
+    .custom-header .navbar-brand .brand-text {
+        color: #D4AF37;
+        font-weight: 700;
+        font-size: 1.15rem;
+        letter-spacing: 0.3px;
+        white-space: nowrap;
+    }
+
+    .custom-header .navbar-brand img {
+        height: 40px;
+        width: auto;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.04);
+        padding: 2px;
+        object-fit: contain;
+    }
+
+    .custom-header .navbar-nav {
+        gap: 2px;
+    }
+
+    .custom-header .navbar-nav .nav-link {
+        color: rgba(255, 255, 255, 0.75);
+        font-weight: 500;
+        font-size: 14px;
+        padding: 6px 14px;
+        border-radius: 10px;
+        transition: all 0.25s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .custom-header .navbar-nav .nav-link i {
+        font-size: 15px;
+        color: #D4AF37;
+        width: 18px;
+        text-align: center;
+        transition: all 0.25s ease;
+    }
+
+    .custom-header .navbar-nav .nav-link:hover {
+        background: rgba(212, 175, 55, 0.10);
+        color: #ffffff;
+        transform: translateY(-1px);
+    }
+
+    .custom-header .navbar-nav .nav-link:hover i {
+        color: #D4AF37;
+    }
+
+    .custom-header .navbar-nav .nav-link.active {
+        background: rgba(212, 175, 55, 0.14);
+        color: #D4AF37;
+    }
+    .custom-header .navbar-nav .nav-link.active i {
+        color: #D4AF37;
+    }
+
+    /* دکمه‌های ورود/خروج */
+    .custom-header .btn-login {
+        background: linear-gradient(135deg, #D4AF37, #B8960F);
+        color: #1A1A2E !important;
+        font-weight: 700;
+        padding: 5px 20px !important;
+        border-radius: 50px !important;
+        box-shadow: 0 4px 16px rgba(212, 175, 55, 0.25);
+        transition: all 0.3s ease;
+    }
+    .custom-header .btn-login i {
+        color: #1A1A2E !important;
+    }
+    .custom-header .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(212, 175, 55, 0.35);
+        background: linear-gradient(135deg, #dbb93e, #c4a21a);
+        color: #1A1A2E !important;
+    }
+
+    .custom-header .btn-register {
+        border: 2px solid rgba(212, 175, 55, 0.25);
+        color: #D4AF37 !important;
+        padding: 5px 20px !important;
+        border-radius: 50px !important;
+        transition: all 0.3s ease;
+        background: transparent;
+    }
+    .custom-header .btn-register i {
+        color: #D4AF37 !important;
+    }
+    .custom-header .btn-register:hover {
+        background: rgba(212, 175, 55, 0.10);
+        border-color: #D4AF37;
+        transform: translateY(-1px);
+    }
+
+    .custom-header .btn-logout {
+        background: rgba(220, 53, 69, 0.10);
+        color: #f8a7a7 !important;
+        border-radius: 50px !important;
+        padding: 5px 18px !important;
+        transition: all 0.3s ease;
+    }
+    .custom-header .btn-logout i {
+        color: #f8a7a7 !important;
+    }
+    .custom-header .btn-logout:hover {
+        background: rgba(220, 53, 69, 0.22);
+        color: #ffffff !important;
+    }
+    .custom-header .btn-logout:hover i {
+        color: #ffffff !important;
+    }
+
+    /* ===== واکنش‌گرایی ===== */
+    @media (max-width: 991.98px) {
+        .custom-header .navbar-nav .nav-link {
+            font-size: 13px;
+            padding: 5px 10px;
+        }
+        .custom-header .navbar-brand .brand-text {
+            font-size: 1rem;
+        }
+        .custom-header .navbar-brand img {
+            height: 34px;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .custom-header .navbar-brand {
+            gap: 12px;
+            flex-direction: row;
+            justify-content: flex-start;
+            width: 100%;
+        }
+        .custom-header .navbar-brand .brand-text {
+            font-size: 1.2rem;
+            white-space: nowrap;
+        }
+        .custom-header .navbar-brand img {
+            height: 50px;
+            width: auto;
+        }
+        .custom-header .navbar-nav .nav-link {
+            font-size: 12px;
+            padding: 4px 8px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .custom-header .navbar-brand .brand-text {
+            font-size: 1rem;
+        }
+        .custom-header .navbar-brand img {
+            height: 42px;
+        }
+        .custom-header {
+            padding: 4px 0;
+        }
+    }
+</style>

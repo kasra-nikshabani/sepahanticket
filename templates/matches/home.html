@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load jalali %}  <!-- ← بارگذاری فیلترهای شمسی -->
+{% load currency_filters %}
 
 {% block content %}
     <div class="container mt-4">
         <div class="text-center mb-5 fade-in">
-            <h1 style="color: var(--gold); font-weight: 700;">
+            <h1 style="color: var(--gold, #D4AF37); font-weight: 700;">
                 <i class="fas fa-trophy"></i> مسابقات فوتبال
             </h1>
             <p class="text-muted">ورزشگاه نقش جهان - اصفهان</p>
@@ -21,8 +21,8 @@
                             </h5>
                         </div>
                         <div class="col-md-4 text-md-end">
-                            <!-- تاریخ شمسی -->
-                            <span class="badge bg-primary">{{ match.date_time|to_jalali_full }}</span>
+                            <!-- استفاده از فیلتر پیش‌فرض به جای jalali -->
+                            <span class="badge bg-primary">{{ match.date_time|date:"Y/m/d - H:i" }}</span>
                         </div>
                     </div>
                 </div>
@@ -56,11 +56,11 @@
                             <div class="row">
                                 <div class="col-6">
                                     <small class="text-muted">تاریخ</small>
-                                    <p class="fw-bold mb-1">{{ match.date_time|to_jalali_date }}</p>
+                                    <p class="fw-bold mb-1">{{ match.date_time|date:"Y/m/d" }}</p>
                                 </div>
                                 <div class="col-6">
                                     <small class="text-muted">ساعت</small>
-                                    <p class="fw-bold mb-1">{{ match.date_time|to_jalali_time }}</p>
+                                    <p class="fw-bold mb-1">{{ match.date_time|date:"H:i" }}</p>
                                 </div>
                                 <div class="col-12">
                                     <small class="text-muted">ورزشگاه</small>
@@ -68,7 +68,7 @@
                                 </div>
                             </div>
 
-                            <!-- نمایش ظرفیت‌ها (پیشرفته) -->
+                            <!-- نمایش ظرفیت‌ها -->
                             <div class="row mt-3">
                                 <div class="col-12">
                                     <div class="card bg-light border-0 p-2">
@@ -102,7 +102,7 @@
                         </div>
                     </div>
 
-                    <!-- ===== دکمه خرید با شرط جلوگیری از VIP ===== -->
+                    <!-- ===== دکمه خرید ===== -->
                     <div class="text-center mt-4">
                         {% if user.user_type != 'vip' %}
                             <a href="{% url 'matches:select_floor' match.id %}" class="btn btn-sm btn-success">
@@ -110,7 +110,7 @@
                             </a>
                         {% else %}
                             <span class="badge bg-warning text-dark" style="font-size: 1rem; padding: 8px 16px;">
-                                <i class="fas "></i> صدور از طریق پنل
+                                <i class="fas fa-crown"></i> صدور از طریق پنل
                             </span>
                         {% endif %}
                     </div>

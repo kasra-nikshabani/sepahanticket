@@ -154,9 +154,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'your_email@gmail.com'
 EMAIL_HOST_PASSWORD = 'your_password'
 
-# تنظیمات ورود و خروج
-LOGIN_URL = 'accounts:login'
-LOGIN_REDIRECT_URL = 'accounts:dashboard_redirect'
+
 # تنظیمات پیام‌ها
 from django.contrib.messages import constants as messages
 
@@ -169,12 +167,38 @@ MESSAGE_TAGS = {
 }
 
 # ===== تنظیمات sms.ir =====
-SMS_IR_API_KEY = 'zMsRETt3ThMBpu3JTuetWmn2L8QH298xoNaa6Xbp7yk24NB9'  # API Key دریافتی از پنل
-SMS_IR_LINE_NUMBER = '50003181890144'
-SMS_IR_SEND_URL = 'https://api.sms.ir/v1/send'  # آدرس API ارسال پیامک
-OTP_ENABLED = False
+# football_tickets/settings.py
+
+# ===== SMS.ir =====
+# محیط Sandbox (True برای تست، False برای تولید)
+SMS_IR_SANDBOX = True  # ← در لوکال True کنید
+
+# کلید API مخصوص Sandbox (از پنل SMS.ir دریافت کنید)
+SMS_IR_API_KEY = 'DOGayRyuWQjdxJxFYIhcGIeivpL2qNCIVvkDRfrnpqqk9gfd'
+
+# URL متد Verify (برای Sandbox و Production یکسان است)
+SMS_IR_SEND_URL = 'https://api.sms.ir/v1/send/verify'
+
+# شناسه قالب (در Sandbox فقط 123456 معتبر است)
+SMS_IR_TEMPLATE_ID = 123456  # پیش‌فرض Sandbox
+
+# شماره خط (در Sandbox نیازی نیست، اما برای ساختار保持一致 می‌گذاریم)
+SMS_IR_LINE_NUMBER = '1000xxxx'  # در Sandbox استفاده نمی‌شود
 
 # تنظیمات زیبال
 ZIBAL_MERCHANT_ID = os.getenv('ZIBAL_MERCHANT_ID', 'zibal')
 ZIBAL_SANDBOX = os.getenv('ZIBAL_SANDBOX', 'True') == 'True'
 ZIBAL_CALLBACK_URL = 'http://127.0.0.1:8000/payment/verify/'  # آدرس بازگشت
+
+# ===== احراز هویت =====
+AUTHENTICATION_BACKENDS = [
+    'accounts.backends.PhoneBackend',  # برای OTP
+    'django.contrib.auth.backends.ModelBackend',  # برای رمز عبور
+]
+
+# football_tickets/settings.py
+# یا
+LOGIN_URL = 'accounts:choose_login'  # صفحه انتخاب روش
+LOGIN_REDIRECT_URL = 'matches:home'
+LOGOUT_REDIRECT_URL = 'accounts:choose_login'
+OTP_ENABLED = True

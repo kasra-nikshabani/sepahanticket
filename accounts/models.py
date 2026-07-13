@@ -7,37 +7,52 @@ from datetime import timedelta
 
 class User(AbstractUser):
     USER_TYPES = (
-        ('admin', 'مدیر'),
-        ('vip', 'کاربر ویژه'),
         ('normal', 'کاربر معمولی'),
+        ('vip', 'کاربر ویژه'),
+        ('admin', 'مدیر'),
     )
-
     user_type = models.CharField(max_length=10, choices=USER_TYPES, default='normal')
-    national_code = models.CharField(max_length=10, unique=True, verbose_name="کد ملی")
-    phone_number = models.CharField(max_length=11, verbose_name="شماره موبایل")
+    phone_number = models.CharField(max_length=11, unique=True, null=True, blank=True)
+    is_phone_verified = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "کاربر"
         verbose_name_plural = "کاربران"
 
+
+# accounts/models.py
+from django.db import models
+from django.utils import timezone
+from datetime import timedelta
+
+
 class OTP(models.Model):
-    phone_number = models.CharField(max_length=11, verbose_name="شماره موبایل")
-    code = models.CharField(max_length=6, verbose_name="کد تأیید")
+    phone_number = models.CharField(max_length=11, db_index=True)
+    code = models.CharField(max_length=5)  # ← تغییر به ۵
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    attempts = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
-        verbose_name = "کد یکبار مصرف"
-        verbose_name_plural = "کدهای یکبار مصرف"
         ordering = ['-created_at']
+
+    def is_valid(self):
+        if self.is_used:
+            return False
+        if self.attempts >= 3:
+            return False
+        if timezone.now() > self.expires_at:
+            return False
+        return True
+
+    def use(self):
+        self.is_used = True
+        self.save(update_fields=['is_used'])
+
+    def increment_attempts(self):
+        self.attempts += 1
+        self.save(update_fields=['attempts'])
 
     def __str__(self):
         return f"{self.phone_number} - {self.code}"
-
-    def is_valid(self):
-        return timezone.now() < self.expires_at
-
-    def save(self, *args, **kwargs):
-        if not self.expires_at:
-            self.expires_at = timezone.now() + timedelta(minutes=5)
-        super().save(*args, **kwargs)

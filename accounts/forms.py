@@ -129,44 +129,28 @@ class PhoneLoginForm(forms.Form):
         return phone
 
 
+# accounts/forms.py
 class OTPVerifyForm(forms.Form):
-    """فرم تأیید کد OTP (مرحله دوم)"""
-    phone_number = forms.CharField(widget=forms.HiddenInput())
-    code = forms.CharField(
-        max_length=6,
-        min_length=6,
+    otp_code = forms.CharField(
+        max_length=5,
+        min_length=5,  # ← تغییر به ۵
+        label='کد تأیید',
         widget=forms.TextInput(attrs={
-            'class': 'form-control text-center',
-            'placeholder': 'کد ۶ رقمی',
-            'maxlength': '6',
-            'pattern': '[0-9]{6}',
-            'inputmode': 'numeric',
+            'class': 'form-control form-control-lg text-center',
+            'placeholder': '۱۲۳۴۵',
             'dir': 'ltr',
-            'style': 'font-size: 1.5rem; letter-spacing: 8px;'
-        }),
-        label="کد تأیید"
+            'style': 'font-size: 2rem; letter-spacing: 10px; font-weight: bold;',
+            'maxlength': '5'  # ← محدودیت ورودی
+        })
     )
 
-    def clean(self):
-        cleaned_data = super().clean()
-        phone_number = cleaned_data.get('phone_number')
-        code = cleaned_data.get('code')
-
-        if phone_number and code:
-            code = code.replace(' ', '').strip()
-            try:
-                otp = OTP.objects.get(
-                    phone_number=phone_number,
-                    code=code,
-                    expires_at__gt=timezone.now()
-                )
-                self.otp = otp
-            except OTP.DoesNotExist:
-                if OTP.objects.filter(phone_number=phone_number, code=code).exists():
-                    raise ValidationError('کد منقضی شده است. لطفاً دوباره درخواست کنید.')
-                raise ValidationError('کد وارد شده صحیح نیست.')
-            cleaned_data['code'] = code
-        return cleaned_data
+    def clean_otp_code(self):
+        code = self.cleaned_data['otp_code']
+        if not code.isdigit():
+            raise ValidationError('کد باید عددی باشد.')
+        if len(code) != 5:  # ← بررسی ۵ رقم
+            raise ValidationError('کد باید دقیقاً ۵ رقم باشد.')
+        return code
 
 
 class PhoneRegisterForm(forms.Form):

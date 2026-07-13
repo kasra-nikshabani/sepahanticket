@@ -1,0 +1,383 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block title %}ثبت‌نام با شماره تلفن{% endblock %}
+
+{% block extra_css %}
+<style>
+    .register-phone-page {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 30px 20px;
+        background: linear-gradient(135deg, #f5f0e8 0%, #e8e0d5 100%);
+    }
+
+    .register-phone-card {
+        background: #ffffff;
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.10), 0 6px 24px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+        width: 100%;
+        max-width: 480px;
+        transition: transform 0.3s ease;
+        border: 1px solid rgba(212, 175, 55, 0.10);
+    }
+
+    .register-phone-card:hover {
+        transform: translateY(-4px);
+    }
+
+    .register-phone-header {
+        background: linear-gradient(135deg, #1A1A2E 0%, #2D2D44 100%);
+        padding: 32px 28px 24px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .register-phone-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -30%;
+        width: 280px;
+        height: 280px;
+        background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .register-phone-header::after {
+        content: '';
+        position: absolute;
+        bottom: -40%;
+        left: -20%;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .register-phone-header .header-logo {
+        position: relative;
+        z-index: 2;
+        width: 80px;
+        height: 80px;
+        background: rgba(212, 175, 55, 0.12);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        border: 2px solid rgba(212, 175, 55, 0.20);
+    }
+
+    .register-phone-header .header-logo img {
+        width: 50px;
+        height: auto;
+        border-radius: 4px;
+    }
+
+    .register-phone-header h2 {
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 24px;
+        margin: 0 0 4px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .register-phone-header .subtitle {
+        color: rgba(255, 255, 255, 0.55);
+        font-size: 14px;
+        position: relative;
+        z-index: 2;
+        margin: 0;
+    }
+
+    .register-phone-body {
+        padding: 28px 28px 24px;
+    }
+
+    .register-phone-body .form-group {
+        margin-bottom: 18px;
+    }
+
+    .register-phone-body .form-group label {
+        font-weight: 600;
+        font-size: 14px;
+        color: #1A1A2E;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .register-phone-body .form-group label .label-icon {
+        color: #D4AF37;
+        margin-left: 6px;
+    }
+
+    .register-phone-body .form-group .input-group-text {
+        background: #f8f6f2;
+        border: 2px solid #e2e8f0;
+        border-left: none;
+        color: #8a8a9a;
+        padding: 0 14px;
+        border-radius: 12px 0 0 12px;
+        font-size: 14px;
+    }
+
+    .register-phone-body .form-group .form-control {
+        border: 2px solid #e2e8f0;
+        border-radius: 0 12px 12px 0;
+        padding: 10px 16px;
+        font-size: 14px;
+        background: #fafbfc;
+        transition: all 0.3s ease;
+        height: 48px;
+    }
+
+    .register-phone-body .form-group .form-control:focus {
+        border-color: #D4AF37;
+        box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.08);
+        background: #ffffff;
+        outline: none;
+    }
+
+    .register-phone-body .form-group .form-control.is-invalid {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.08);
+    }
+
+    .register-phone-body .form-group .form-text {
+        font-size: 12px;
+        color: #8a8a9a;
+        margin-top: 4px;
+        display: block;
+    }
+
+    .register-phone-body .form-group .form-text i {
+        margin-left: 4px;
+    }
+
+    .register-phone-body .error-message {
+        color: #dc3545;
+        font-size: 13px;
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .register-phone-body .error-message i {
+        font-size: 14px;
+    }
+
+    .btn-register-phone {
+        background: linear-gradient(135deg, #D4AF37, #B8960F);
+        border: none;
+        color: #1A1A2E;
+        font-weight: 700;
+        font-size: 16px;
+        padding: 14px 20px;
+        border-radius: 14px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 4px 20px rgba(212, 175, 55, 0.25);
+        width: 100%;
+    }
+
+    .btn-register-phone:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 35px rgba(212, 175, 55, 0.35);
+        color: #1A1A2E;
+        background: linear-gradient(135deg, #dbb93e, #c4a21a);
+    }
+
+    .btn-register-phone:active {
+        transform: translateY(0);
+    }
+
+    .register-phone-footer {
+        text-align: center;
+        padding-top: 16px;
+        border-top: 1px solid #f0ebe3;
+        margin-top: 4px;
+    }
+
+    .register-phone-footer p {
+        color: #6c7a8a;
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .register-phone-footer a {
+        color: #D4AF37;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .register-phone-footer a:hover {
+        color: #b8960f;
+        text-decoration: underline;
+    }
+
+    .register-phone-footer .divider {
+        display: inline-block;
+        width: 1px;
+        height: 18px;
+        background: #e2e8f0;
+        margin: 0 12px;
+        vertical-align: middle;
+    }
+
+    /* ===== واکنش‌گرایی ===== */
+    @media (max-width: 576px) {
+        .register-phone-header {
+            padding: 24px 20px 18px;
+        }
+        .register-phone-header .header-logo {
+            width: 64px;
+            height: 64px;
+        }
+        .register-phone-header .header-logo img {
+            width: 40px;
+        }
+        .register-phone-header h2 {
+            font-size: 20px;
+        }
+        .register-phone-body {
+            padding: 20px 16px 18px;
+        }
+        .register-phone-body .form-group .form-control {
+            height: 44px;
+            font-size: 13px;
+        }
+        .register-phone-footer .divider {
+            display: none;
+        }
+        .register-phone-footer {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="register-phone-page">
+    <div class="register-phone-card">
+
+        <!-- ===== هدر ===== -->
+        <div class="register-phone-header">
+            <div class="header-logo">
+                <img src="{% static 'img/sepahan-logo.png' %}" alt="لوگو سپاهان" onerror="this.style.display='none'">
+            </div>
+            <h2>ثبت‌نام</h2>
+            <p class="subtitle">با شماره تلفن خود ثبت‌نام کنید</p>
+        </div>
+
+        <!-- ===== بدنه ===== -->
+        <div class="register-phone-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <!-- نام و نام خانوادگی -->
+                <div class="form-group">
+                    <label><i class="fas fa-user label-icon"></i> نام و نام خانوادگی</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                        <input type="text" name="full_name" class="form-control"
+                               placeholder="نام و نام خانوادگی خود را وارد کنید" required>
+                    </div>
+                    {% if form.full_name.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {% for error in form.full_name.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- شماره تلفن -->
+                <div class="form-group">
+                    <label><i class="fas fa-mobile-alt label-icon"></i> شماره تلفن</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                        <input type="tel" name="phone_number" class="form-control"
+                               placeholder="۰۹۱۲۳۴۵۶۷۸۹" dir="ltr" maxlength="11"
+                               pattern="09[0-9]{9}" inputmode="numeric" required>
+                    </div>
+                    <small class="form-text"><i class="fas fa-info-circle"></i> شماره تلفن را به صورت ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید</small>
+                    {% if form.phone_number.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {% for error in form.phone_number.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="btn-register-phone">
+                    <i class="fas fa-paper-plane"></i> دریافت کد تأیید
+                </button>
+            </form>
+
+            <!-- ===== فوتر ===== -->
+            <div class="register-phone-footer">
+                <p>
+                    قبلاً ثبت‌نام کرده‌اید؟
+                    <a href="{% url 'accounts:phone_login' %}">
+                        <i class="fas fa-arrow-left"></i> وارد شوید
+                    </a>
+                </p>
+                <p class="text-muted small mt-1">
+                    <i class="fas fa-info-circle"></i>
+                    با ثبت‌نام، شما با <a href="#" style="color: #D4AF37;">قوانین</a> و
+                    <a href="#" style="color: #D4AF37;">حریم خصوصی</a> موافقت می‌کنید.
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ===== اعتبارسنجی سمت کلاینت ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const phoneInput = document.querySelector('input[name="phone_number"]');
+
+        // محدود کردن ورودی شماره موبایل به عدد
+        phoneInput.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '').slice(0, 11);
+        });
+
+        // اعتبارسنجی قبل از ارسال
+        form.addEventListener('submit', function(e) {
+            const phone = phoneInput.value;
+            const phonePattern = /^09[0-9]{9}$/;
+
+            if (!phonePattern.test(phone)) {
+                e.preventDefault();
+                phoneInput.classList.add('is-invalid');
+                alert('⚠️ شماره تلفن معتبر نیست. لطفاً به صورت ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید.');
+            } else {
+                phoneInput.classList.remove('is-invalid');
+            }
+        });
+
+        // حذف کلاس is-invalid هنگام تایپ
+        phoneInput.addEventListener('input', function() {
+            this.classList.remove('is-invalid');
+        });
+    });
+</script>
+{% endblock %}

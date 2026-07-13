@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-
+{% load currency_filters %}
 {% block title %}کیف پول من{% endblock %}
 
 {% block extra_css %}
@@ -467,8 +467,8 @@
         <div class="balance-card">
             <div class="balance-label"><i class="fas fa-coins"></i> موجودی کیف پول</div>
             <div class="balance-amount">
-                {{ wallet.balance|floatformat:0|default:"۰" }}
-                <span class="currency">تومان</span>
+                {% load currency_filters %}
+                {{ wallet.balance|to_rial }} ریال
             </div>
             <div class="balance-updated">
                 <i class="fas fa-clock"></i>

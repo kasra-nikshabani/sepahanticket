@@ -778,11 +778,11 @@ def ticket_info(request, match_id):
                     success = wallet.deduct_balance(
                         amount=wallet_amount,
                         description=f"پرداخت {wallet_amount:,} تومان از کل {discounted_total:,} تومان (با تخفیف {discount_percent}%) برای خرید {len(tickets)} بلیط - مسابقه {match.home_team} vs {match.away_team}",
-                        reference_id=f"TICKET-{tickets[0].ticket_number}" if tickets else None
+                        reference_id=f"TICKET-{tickets[0].ticket_number}" if tickets else None,
+                        tx_type='ticket_purchase'  # ← اضافه کنید
                     )
                     if not success:
                         raise Exception("خطا در کسر از کیف پول")
-
                     if wallet_amount == discounted_total:
                         messages.success(request, f'{len(tickets)} بلیط با موفقیت صادر شد. کل مبلغ از کیف پول کسر شد.')
                     else:

@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 
+
 class Wallet(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -21,7 +22,6 @@ class Wallet(models.Model):
         return f"کیف پول {self.user.username} - {self.balance} تومان"
 
     def add_balance(self, amount, description="", reference_id=None):
-        """افزایش موجودی و ثبت تراکنش"""
         if amount <= 0:
             return False
         self.balance += amount
@@ -33,11 +33,12 @@ class Wallet(models.Model):
             description=description or f"شارژ کیف پول به مبلغ {amount} تومان",
             reference_id=reference_id,
             balance_after=self.balance,
+            is_wallet=True,  # ← اضافه کنید
         )
         return True
 
-    def deduct_balance(self, amount, description="", reference_id=None):
-        """کسر از موجودی و ثبت تراکنش"""
+    def deduct_balance(self, amount, description="", reference_id=None, tx_type='withdraw'):
+        """کسر از موجودی و ثبت تراکنش با نوع قابل انتخاب"""
         if amount <= 0:
             return False
         if self.balance < amount:
@@ -47,10 +48,11 @@ class Wallet(models.Model):
         Transaction.objects.create(
             user=self.user,
             amount=amount,
-            transaction_type='withdraw',
+            transaction_type=tx_type,  # ← نوع تراکنش قابل انتخاب
             description=description or f"برداشت از کیف پول به مبلغ {amount} تومان",
             reference_id=reference_id,
             balance_after=self.balance,
+            is_wallet=True,
         )
         return True
 
@@ -60,6 +62,8 @@ class Transaction(models.Model):
         ('deposit', 'شارژ'),
         ('withdraw', 'برداشت'),
         ('refund', 'بازگشت'),
+        ('ticket_purchase', 'خرید بلیط'),  # ← اضافه کنید
+
     )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -67,11 +71,16 @@ class Transaction(models.Model):
         related_name='transactions'
     )
     amount = models.DecimalField(max_digits=12, decimal_places=0, verbose_name="مبلغ")
-    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES, verbose_name="نوع تراکنش")
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES, verbose_name="نوع تراکنش")
     description = models.CharField(max_length=255, verbose_name="توضیحات")
     reference_id = models.CharField(max_length=100, blank=True, null=True, verbose_name="شناسه مرجع")
     balance_after = models.DecimalField(max_digits=12, decimal_places=0, verbose_name="موجودی بعد از تراکنش")
     created_at = models.DateTimeField(auto_now_add=True)
+    is_wallet = models.BooleanField(
+        default=True,
+        verbose_name="تراکنش کیف پول",
+        help_text="آیا این تراکنش مستقیماً به کیف پول مربوط می‌شود؟"
+    )
 
     class Meta:
         ordering = ['-created_at']

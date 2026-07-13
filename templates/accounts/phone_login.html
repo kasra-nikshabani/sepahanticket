@@ -1,45 +1,79 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
 
-{% block title %}ورود با شماره تلفن{% endblock %}
+{% block title %}ورود به سامانه{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-5">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-primary text-white text-center">
-                    <h4><i class="fas fa-phone-alt"></i> ورود با شماره تلفن</h4>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted text-center">
-                        برای ورود، شماره تلفن خود را وارد کنید. کد تأیید به شماره شما ارسال می‌شود.
-                    </p>
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label class="form-label">{{ form.phone_number.label }}</label>
-                            {{ form.phone_number }}
-                            {% if form.phone_number.errors %}
-                                <div class="text-danger small mt-1">{{ form.phone_number.errors }}</div>
-                            {% endif %}
-                            <small class="text-muted">شماره تلفن را با ۰۹ وارد کنید (مثلاً ۰۹۱۲۳۴۵۶۷۸۹)</small>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card shadow-lg border-0 rounded-4">
+                    <div class="card-body p-4 p-lg-5">
+                        <div class="text-center mb-4">
+                            <img src="{% static 'img/sepahan-logo.png' %}"
+                                 alt="لوگوی فولاد مبارکه سپاهان"
+                                 class="login-logo"
+                                 width="100"
+                                 height="auto">
+                            <h3 class="mt-3 fw-bold">فولاد مبارکه سپاهان</h3>
+                            <p class="text-muted small">برای ورود شماره تلفن خود را وارد کنید</p>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-paper-plane"></i> ارسال کد تأیید
-                        </button>
-                    </form>
-                    <hr>
-                    <div class="text-center">
-                        <p class="mb-1">
-                            <a href="{% url 'accounts:login' %}">ورود با نام کاربری و رمز عبور</a>
-                        </p>
-                        <p class="mb-0">
-                            ثبت‌نام نکرده‌اید؟ <a href="{% url 'accounts:register' %}">ثبت‌نام کنید</a>
-                        </p>
+
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">شماره تلفن</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-mobile-alt"></i></span>
+                                    <input type="text" name="phone_number" class="form-control form-control-lg"
+                                           placeholder="۰۹۱۲۳۴۵۶۷۸۹" dir="ltr" maxlength="11" required>
+                                </div>
+                                {% if form.phone_number.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.phone_number.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="text-muted">شماره تلفن خود را به صورت ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید</small>
+                            </div>
+
+                            <button type="submit" class="btn btn-warning btn-lg w-100"
+                                    style="background: linear-gradient(135deg, #D4AF37, #B8960F); border: none; color: #1A1A2E; font-weight: 700;">
+                                <i class="fas fa-arrow-left"></i> ورود
+                            </button>
+                        </form>
+
+                        <hr class="my-4">
+
+                        <div class="text-center">
+                            <p class="text-muted small mb-0">
+                                <i class="fas fa-key"></i>
+                                <a href="{% url 'accounts:login_password' %}" class="text-decoration-none fw-semibold">
+                                    ورود با رمز عبور ثابت
+                                </a>
+                            </p>
+                            <p class="text-muted small mt-2">
+                                <i class="fas fa-info-circle"></i>
+                                کاربران ویژه و مدیران از طریق رمز عبور وارد می‌شوند.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+
+    <script>
+        document.querySelector('form').addEventListener('submit', function (e) {
+            const phone = document.querySelector('input[name="phone_number"]').value;
+            const phonePattern = /^09[0-9]{9}$/;
+            if (!phonePattern.test(phone)) {
+                e.preventDefault();
+                alert('⚠️ شماره تلفن معتبر نیست. لطفاً به صورت ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید.');
+            }
+        });
+    </script>
 {% endblock %}

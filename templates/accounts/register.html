@@ -1,72 +1,490 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load currency_filters %}
 
 {% block title %}ثبت‌نام{% endblock %}
 
+{% block extra_css %}
+<style>
+    .register-page {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 30px 20px;
+        background: linear-gradient(135deg, #f5f0e8 0%, #e8e0d5 100%);
+    }
+
+    .register-card {
+        background: #ffffff;
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.10), 0 6px 24px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+        width: 100%;
+        max-width: 520px;
+        transition: transform 0.3s ease;
+        border: 1px solid rgba(212, 175, 55, 0.10);
+    }
+
+    .register-card:hover {
+        transform: translateY(-4px);
+    }
+
+    .register-header {
+        background: linear-gradient(135deg, #1A1A2E 0%, #2D2D44 100%);
+        padding: 32px 28px 24px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .register-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -30%;
+        width: 280px;
+        height: 280px;
+        background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .register-header::after {
+        content: '';
+        position: absolute;
+        bottom: -40%;
+        left: -20%;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .register-header .register-logo {
+        position: relative;
+        z-index: 2;
+        width: 80px;
+        height: 80px;
+        background: rgba(212, 175, 55, 0.12);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        border: 2px solid rgba(212, 175, 55, 0.20);
+    }
+
+    .register-header .register-logo img {
+        width: 50px;
+        height: auto;
+        border-radius: 4px;
+    }
+
+    .register-header h2 {
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 24px;
+        margin: 0 0 4px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .register-header .subtitle {
+        color: rgba(255, 255, 255, 0.55);
+        font-size: 14px;
+        position: relative;
+        z-index: 2;
+        margin: 0;
+    }
+
+    .register-body {
+        padding: 28px 28px 24px;
+    }
+
+    .register-body .form-group {
+        margin-bottom: 16px;
+    }
+
+    .register-body .form-group label {
+        font-weight: 600;
+        font-size: 14px;
+        color: #1A1A2E;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .register-body .form-group label .label-icon {
+        color: #D4AF37;
+        margin-left: 6px;
+    }
+
+    .register-body .form-group .input-group-text {
+        background: #f8f6f2;
+        border: 2px solid #e2e8f0;
+        border-left: none;
+        color: #8a8a9a;
+        padding: 0 14px;
+        border-radius: 12px 0 0 12px;
+        font-size: 14px;
+    }
+
+    .register-body .form-group .form-control {
+        border: 2px solid #e2e8f0;
+        border-radius: 0 12px 12px 0;
+        padding: 10px 16px;
+        font-size: 14px;
+        background: #fafbfc;
+        transition: all 0.3s ease;
+        height: 48px;
+    }
+
+    .register-body .form-group .form-control:focus {
+        border-color: #D4AF37;
+        box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.08);
+        background: #ffffff;
+        outline: none;
+    }
+
+    .register-body .form-group .form-control.is-invalid {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.08);
+    }
+
+    .register-body .form-group .form-text {
+        font-size: 12px;
+        color: #8a8a9a;
+        margin-top: 4px;
+        display: block;
+    }
+
+    .register-body .form-group .form-text i {
+        margin-left: 4px;
+    }
+
+    .btn-register {
+        background: linear-gradient(135deg, #D4AF37, #B8960F);
+        border: none;
+        color: #1A1A2E;
+        font-weight: 700;
+        font-size: 16px;
+        padding: 14px 20px;
+        border-radius: 14px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 4px 20px rgba(212, 175, 55, 0.25);
+        width: 100%;
+    }
+
+    .btn-register:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 35px rgba(212, 175, 55, 0.35);
+        color: #1A1A2E;
+        background: linear-gradient(135deg, #dbb93e, #c4a21a);
+    }
+
+    .btn-register:active {
+        transform: translateY(0);
+    }
+
+    .register-footer {
+        text-align: center;
+        padding-top: 16px;
+        border-top: 1px solid #f0ebe3;
+        margin-top: 4px;
+    }
+
+    .register-footer p {
+        color: #6c7a8a;
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .register-footer a {
+        color: #D4AF37;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .register-footer a:hover {
+        color: #b8960f;
+        text-decoration: underline;
+    }
+
+    .register-footer .divider {
+        display: inline-block;
+        width: 1px;
+        height: 18px;
+        background: #e2e8f0;
+        margin: 0 12px;
+        vertical-align: middle;
+    }
+
+    /* ===== اعتبارسنجی خطا ===== */
+    .error-message {
+        color: #dc3545;
+        font-size: 13px;
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .error-message i {
+        font-size: 14px;
+    }
+
+    /* ===== واکنش‌گرایی ===== */
+    @media (max-width: 576px) {
+        .register-header {
+            padding: 24px 20px 18px;
+        }
+        .register-header .register-logo {
+            width: 64px;
+            height: 64px;
+        }
+        .register-header .register-logo img {
+            width: 40px;
+        }
+        .register-header h2 {
+            font-size: 20px;
+        }
+        .register-body {
+            padding: 20px 16px 18px;
+        }
+        .register-body .form-group .form-control {
+            height: 44px;
+            font-size: 13px;
+        }
+        .register-footer .divider {
+            display: none;
+        }
+        .register-footer {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card shadow">
-                    <div class="card-header bg-primary text-white text-center">
-                        <h3><i class="fas fa-user-plus"></i> ثبت‌نام</h3>
+<div class="register-page">
+    <div class="register-card">
+
+        <!-- ===== هدر ===== -->
+        <div class="register-header">
+            <div class="register-logo">
+                <img src="{% static 'img/sepahan-logo.png' %}" alt="لوگو سپاهان" onerror="this.style.display='none'">
+            </div>
+            <h2>ثبت‌نام</h2>
+            <p class="subtitle">ایجاد حساب کاربری جدید</p>
+        </div>
+
+        <!-- ===== بدنه ===== -->
+        <div class="register-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <!-- نام و نام خانوادگی -->
+                <div class="form-group">
+                    <label><i class="fas fa-user label-icon"></i> نام و نام خانوادگی</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                        <input type="text" name="full_name" class="form-control"
+                               placeholder="نام و نام خانوادگی خود را وارد کنید" required>
                     </div>
-                    <div class="card-body">
-                        <p style="text-align: center">ثبت‌نام</p>
-
-                        <form method="post">
-                            {% csrf_token %}
-                            <div class="mb-3">
-                                <label class="form-label">نام و نام خانوادگی</label>
-                                <input type="text" name="full_name" class="form-control"
-                                       placeholder="نام و نام خانوادگی" required>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">نام کاربری</label>
-                                <input type="text" name="username" class="form-control" placeholder="نام کاربری"
-                                       required>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">کد ملی</label>
-                                <input type="text" name="national_code" class="form-control"
-                                       placeholder="کد ملی (۱۰ رقم)" maxlength="10" required>
-                                <small class="text-muted">کد ملی باید ۱۰ رقم باشد.</small>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">شماره موبایل</label>
-                                <input type="text" name="phone_number" class="form-control"
-                                       placeholder="شماره موبایل (۰۹۱۲۳۴۵۶۷۸۹)" maxlength="11" required>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">رمز عبور</label>
-                                <input type="password" name="password1" class="form-control" placeholder="رمز عبور"
-                                       required>
-                                <small class="text-muted">حداقل ۸ کاراکتر و شامل حروف و اعداد</small>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">تکرار رمز عبور</label>
-                                <input type="password" name="password2" class="form-control"
-                                       placeholder="تکرار رمز عبور" required>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="fas fa-check"></i> ثبت‌نام
-                            </button>
-                        </form>
-
-                        <hr>
-                        <p class="text-center">
-                            قبلاً ثبت‌نام کرده‌اید؟
-                            <a href="{% url 'accounts:login' %}">وارد شوید</a>
-                        </p>
-                    </div>
+                    {% if form.full_name.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {% for error in form.full_name.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
+
+                <!-- نام کاربری -->
+                <div class="form-group">
+                    <label><i class="fas fa-user-tag label-icon"></i> نام کاربری</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        <input type="text" name="username" class="form-control"
+                               placeholder="نام کاربری خود را وارد کنید" required>
+                    </div>
+                    {% if form.username.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {% for error in form.username.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- کد ملی -->
+                <div class="form-group">
+                    <label><i class="fas fa-id-badge label-icon"></i> کد ملی</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-fingerprint"></i></span>
+                        <input type="text" name="national_code" class="form-control"
+                               placeholder="کد ملی (۱۰ رقم)" maxlength="10"
+                               pattern="\d{10}" inputmode="numeric" required>
+                    </div>
+                    <small class="form-text"><i class="fas fa-info-circle"></i> کد ملی باید ۱۰ رقم باشد.</small>
+                    {% if form.national_code.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {% for error in form.national_code.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- شماره موبایل -->
+                <div class="form-group">
+                    <label><i class="fas fa-mobile-alt label-icon"></i> شماره موبایل</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                        <input type="tel" name="phone_number" class="form-control"
+                               placeholder="۰۹۱۲۳۴۵۶۷۸۹" maxlength="11"
+                               pattern="09[0-9]{9}" inputmode="numeric" required>
+                    </div>
+                    <small class="form-text"><i class="fas fa-info-circle"></i> شماره موبایل را به صورت ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید.</small>
+                    {% if form.phone_number.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {% for error in form.phone_number.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- رمز عبور -->
+                <div class="form-group">
+                    <label><i class="fas fa-key label-icon"></i> رمز عبور</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                        <input type="password" name="password1" class="form-control"
+                               placeholder="رمز عبور خود را وارد کنید" required>
+                    </div>
+                    <small class="form-text"><i class="fas fa-info-circle"></i> حداقل ۸ کاراکتر و شامل حروف و اعداد</small>
+                    {% if form.password1.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {% for error in form.password1.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- تکرار رمز عبور -->
+                <div class="form-group">
+                    <label><i class="fas fa-check-circle label-icon"></i> تکرار رمز عبور</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-shield-alt"></i></span>
+                        <input type="password" name="password2" class="form-control"
+                               placeholder="رمز عبور را مجدداً وارد کنید" required>
+                    </div>
+                    {% if form.password2.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {% for error in form.password2.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="btn-register">
+                    <i class="fas fa-check-circle"></i> ثبت‌نام
+                </button>
+            </form>
+
+            <!-- ===== فوتر ===== -->
+            <div class="register-footer">
+                <p>
+                    قبلاً ثبت‌نام کرده‌اید؟
+                    <a href="{% url 'accounts:login' %}">
+                        <i class="fas fa-arrow-left"></i> وارد شوید
+                    </a>
+                </p>
+                <p class="text-muted small mt-1">
+                    <i class="fas fa-info-circle"></i>
+                    این فرم مخصوص ثبت‌نام مدیران و کاربران ویژه است.
+                </p>
             </div>
         </div>
+
     </div>
+</div>
+
+<!-- ===== اعتبارسنجی سمت کلاینت ===== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const phoneInput = document.querySelector('input[name="phone_number"]');
+        const nationalCodeInput = document.querySelector('input[name="national_code"]');
+        const password1 = document.querySelector('input[name="password1"]');
+        const password2 = document.querySelector('input[name="password2"]');
+
+        // محدود کردن ورودی کد ملی به عدد
+        nationalCodeInput.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '').slice(0, 10);
+        });
+
+        // محدود کردن ورودی شماره موبایل به عدد
+        phoneInput.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '').slice(0, 11);
+        });
+
+        // اعتبارسنجی قبل از ارسال
+        form.addEventListener('submit', function(e) {
+            let hasError = false;
+
+            // بررسی کد ملی
+            if (nationalCodeInput.value.length !== 10) {
+                nationalCodeInput.classList.add('is-invalid');
+                hasError = true;
+            } else {
+                nationalCodeInput.classList.remove('is-invalid');
+            }
+
+            // بررسی شماره موبایل
+            const phonePattern = /^09[0-9]{9}$/;
+            if (!phonePattern.test(phoneInput.value)) {
+                phoneInput.classList.add('is-invalid');
+                hasError = true;
+            } else {
+                phoneInput.classList.remove('is-invalid');
+            }
+
+            // بررسی تطابق رمز عبور
+            if (password1.value !== password2.value) {
+                password2.classList.add('is-invalid');
+                hasError = true;
+            } else {
+                password2.classList.remove('is-invalid');
+            }
+
+            // بررسی طول رمز عبور
+            if (password1.value.length < 8) {
+                password1.classList.add('is-invalid');
+                hasError = true;
+            } else {
+                password1.classList.remove('is-invalid');
+            }
+
+            if (hasError) {
+                e.preventDefault();
+                // نمایش پیام هشدار
+                alert('⚠️ لطفاً اطلاعات را به‌درستی وارد کنید.\n- کد ملی ۱۰ رقم\n- شماره موبایل ۰۹۱۲۳۴۵۶۷۸۹\n- رمز عبور حداقل ۸ کاراکتر\n- تطابق رمز عبور');
+            }
+        });
+
+        // حذف کلاس is-invalid هنگام تایپ
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', function() {
+                this.classList.remove('is-invalid');
+            });
+        });
+    });
+</script>
 {% endblock %}

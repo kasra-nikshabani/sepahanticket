@@ -1,18 +1,27 @@
+# accounts/urls.py
 from django.urls import path
 from . import views
 
 app_name = 'accounts'
 
 urlpatterns = [
-    path('register/', views.register_view, name='register'),
-    path('login/', views.login_view, name='login'),
+    # ===== OTP =====
+    path('login/', views.phone_login, name='phone_login'),
+    path('login/', views.phone_login, name='login'),  # ← alias برای سازگاری
+
+    path('register/', views.phone_register, name='phone_register'),
+    path('register/', views.phone_register, name='register'),  # ← alias
+
+    path('verify/', views.otp_verify, name='otp_verify'),
+    path('resend-otp/', views.resend_otp, name='resend_otp'),
+
+    # ===== ورود با رمز (ادمین و VIP) =====
+    path('login-password/', views.login_view, name='login_password'),
+
     path('logout/', views.logout_view, name='logout'),
     path('profile/', views.profile_view, name='profile'),
-    path('profile/edit/', views.edit_profile_view, name='edit_profile'),
-
-    path('phone-login/', views.phone_login, name='phone_login'),
-    path('otp-verify/', views.otp_verify, name='otp_verify'),
-    path('resend-otp/', views.resend_otp, name='resend_otp'),
-    path('dashboard-redirect/', views.dashboard_redirect, name='dashboard_redirect'),
+    path('edit-profile/', views.edit_profile_view, name='edit_profile'),
+    path('choose-login/', views.phone_login, name='choose_login'),  # ← اضافه کنید
+    # ← اضافه کنید
 
 ]
