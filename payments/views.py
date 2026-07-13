@@ -146,46 +146,70 @@ def payment_verify(request):
             if match_id and buyer_info:
                 try:
                     from tickets.models import Ticket
-                    from matches.models import Match, Seat
+                    from matches.models import Match, MatchSeat  # ← Seat به‌جاش MatchSeat
+                    from tickets.reservation import SeatReservation
 
                     match = Match.objects.get(id=match_id)
 
                     # پردازش اطلاعات خریدار
                     for key, full_name in buyer_info.items():
                         if key.startswith('full_name_'):
-                            seat_pk = key.replace('full_name_', '')
-                            national_code_key = f'national_code_{seat_pk}'
+                            match_seat_pk = key.replace('full_name_', '')
+                            national_code_key = f'national_code_{match_seat_pk}'
                             national_code = buyer_info.get(national_code_key, '')
 
                             try:
-                                # پیدا کردن صندلی
-                                seat = Seat.objects.get(id=int(seat_pk))
+                                # پیدا کردن صندلیِ همین مسابقه (نه Seat خام)
+                                match_seat = MatchSeat.objects.select_related(
+                                    'seat__row__block'
+                                ).get(id=int(match_seat_pk), match=match)
+
+                                # قیمت از روی بلوک صندلی
+                                seat_price = match_seat.seat.row.block.price if match_seat.seat.row.block else 0
 
                                 # ایجاد بلیط
                                 ticket = Ticket.objects.create(
                                     match=match,
-                                    seat=seat,
+                                    seat=match_seat.seat,
+                                    match_seat=match_seat,
                                     user=request.user,
                                     full_name=full_name,
                                     national_code=national_code,
-                                    price=seat.price,
-                                    status='valid'
+                                    status='paid',  # ← مقدار درست را با choices مدل Ticket چک کن
+                                    is_admin_assigned=False,
                                 )
                                 tickets_created.append(ticket)
-                                print(f"✅ Ticket created for seat {seat_pk}")
 
-                            except Seat.DoesNotExist:
-                                print(f"❌ Seat {seat_pk} not found in database")
+                                # آزادسازی رزرو و علامت‌گذاری صندلی به‌عنوان فروخته‌شده
+                                match_seat.is_available = False
+                                match_seat.reserved_until = None
+                                match_seat.save()
+                                SeatReservation.release(match_seat.id)
+
+                                print(f"✅ Ticket created for match_seat {match_seat_pk}")
+
+                            except MatchSeat.DoesNotExist:
+                                print(f"❌ MatchSeat {match_seat_pk} not found in database")
                                 messages.warning(
                                     request,
-                                    f"صندلی با شناسه {seat_pk} یافت نشد. لطفاً دوباره از ابتدا انتخاب کنید."
+                                    f"صندلی با شناسه {match_seat_pk} یافت نشد. لطفاً دوباره از ابتدا انتخاب کنید."
                                 )
                                 # ادامه می‌دهیم تا بقیه بلیط‌ها ساخته شوند
                                 continue
 
                             except Exception as e:
-                                print(f"❌ Error creating ticket for seat {seat_pk}: {e}")
+                                print(f"❌ Error creating ticket for match_seat {match_seat_pk}: {e}")
                                 continue
+
+                    # افزایش تعداد استفاده از کد تخفیف (در صورت وجود)
+                    if discount_code and tickets_created:
+                        try:
+                            from tickets.models import DiscountCode
+                            discount_obj = DiscountCode.objects.get(code=discount_code)
+                            discount_obj.used_count += 1
+                            discount_obj.save()
+                        except Exception as e:
+                            print(f"⚠️ Could not update discount usage: {e}")
 
                     # پاک کردن سشن
                     request.session.pop('pending_match_id', None)
