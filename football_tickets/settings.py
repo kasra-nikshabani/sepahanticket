@@ -11,7 +11,9 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
+load_dotenv()  # بارگذاری متغیرهای .env
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -76,23 +78,23 @@ WSGI_APPLICATION = 'football_tickets.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'sepahan_ticket',
-        'USER': 'sepahan_user',
-        'PASSWORD': 'kasra123',
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'sepahan_ticket',
+#         'USER': 'sepahan_user',
+#         'PASSWORD': 'kasra123',
+#         'HOST': '127.0.0.1',
+#         'PORT': '5432',
+#     }
+# }
 
 
 
@@ -171,3 +173,8 @@ SMS_IR_API_KEY = 'zMsRETt3ThMBpu3JTuetWmn2L8QH298xoNaa6Xbp7yk24NB9'  # API Key �
 SMS_IR_LINE_NUMBER = '50003181890144'
 SMS_IR_SEND_URL = 'https://api.sms.ir/v1/send'  # آدرس API ارسال پیامک
 OTP_ENABLED = False
+
+# تنظیمات زیبال
+ZIBAL_MERCHANT_ID = os.getenv('ZIBAL_MERCHANT_ID', 'zibal')
+ZIBAL_SANDBOX = os.getenv('ZIBAL_SANDBOX', 'True') == 'True'
+ZIBAL_CALLBACK_URL = 'http://127.0.0.1:8000/payment/verify/'  # آدرس بازگشت

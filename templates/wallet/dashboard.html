@@ -452,7 +452,8 @@
                     <span>کیف پول من</span>
                 </div>
                 <div class="header-actions">
-                    <a href="{% url 'wallet:charge' %}" class="btn-charge">
+                    <!-- دکمه شارژ با زیبال -->
+                    <a href="#" class="btn-charge" data-bs-toggle="modal" data-bs-target="#chargeModal">
                         <i class="fas fa-plus-circle"></i> شارژ کیف پول
                     </a>
                     <a href="{% url 'matches:home' %}" class="btn-back">
@@ -563,5 +564,71 @@
             </div>
         </div>
 
+    </div>
+    <!-- ===== مودال شارژ کیف پول ===== -->
+    <div class="modal fade" id="chargeModal" tabindex="-1" aria-labelledby="chargeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #1A1A2E, #2D2D44); border: none;">
+                    <h5 class="modal-title text-white" id="chargeModalLabel">
+                        <i class="fas fa-wallet text-warning"></i> شارژ کیف پول
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">مبلغ مورد نظر را برای شارژ انتخاب کنید:</p>
+                    <div class="row g-2">
+                        <!-- گزینه‌های شارژ سریع -->
+                        <div class="col-6">
+                            <form method="post" action="{% url 'payments:payment_request' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="amount" value="50000">
+                                <button type="submit" class="btn btn-outline-success w-100 py-3">
+                                    <strong>۵,۰۰۰</strong> تومان
+                                </button>
+                            </form>
+                        </div>
+                        <div class="col-6">
+                            <form method="post" action="{% url 'payments:payment_request' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="amount" value="100000">
+                                <button type="submit" class="btn btn-outline-success w-100 py-3">
+                                    <strong>۱۰,۰۰۰</strong> تومان
+                                </button>
+                            </form>
+                        </div>
+                        <div class="col-6">
+                            <form method="post" action="{% url 'payments:payment_request' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="amount" value="200000">
+                                <button type="submit" class="btn btn-outline-success w-100 py-3">
+                                    <strong>۲۰,۰۰۰</strong> تومان
+                                </button>
+                            </form>
+                        </div>
+                        <div class="col-6">
+                            <form method="post" action="{% url 'payments:payment_request' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="amount" value="500000">
+                                <button type="submit" class="btn btn-outline-success w-100 py-3">
+                                    <strong>۵۰,۰۰۰</strong> تومان
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <hr>
+                    <p class="text-muted small">یا مبلغ دلخواه را وارد کنید:</p>
+                    <form method="post" action="{% url 'payments:payment_request' %}" id="customChargeForm">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="number" name="amount" class="form-control"
+                                   placeholder="مبلغ به ریال" min="10000" required>
+                            <button type="submit" class="btn btn-success">شارژ</button>
+                        </div>
+                        <small class="text-muted">* مبلغ را به **ریال** وارد کنید (۱۰۰۰ تومان = ۱۰۰۰۰ ریال)</small>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}
