@@ -13,7 +13,10 @@
 
             <!-- ===== تایمر ===== -->
             <div id="timer-container" class="text-center mb-3">
-                <div class="alert alert-warning" role="alert" style="max-width: 500px; margin: 0 auto;">
+                <div class="timer-box" role="alert"
+                     style="max-width: 500px; margin: 0 auto; padding: 0.75rem 1.25rem;
+                            border: 1px solid #ffeeba; background-color: #fff3cd;
+                            color: #856404; border-radius: 0.375rem;">
                     <i class="fas fa-clock"></i>
                     زمان باقی‌مانده برای تکمیل خرید:
                     <span id="timer-display"
@@ -36,7 +39,7 @@
                                       id="totalPriceDisplay"
                                       class="ticket-price"
                                       data-base="{{ total_price|default:0 }}">
-                                    {{ total_price|to_rial }} ریال
+                                    {{ total_price|rial_display }} ریال
                                 </span>
                             </div>
                             <small class="d-block text-center text-white-50 mt-1">
@@ -51,7 +54,11 @@
         <!-- ================================================== -->
         <!-- ===== فرم اصلی (ارسال به زیبال با تخفیف و کیف پول) ===== -->
         <!-- ================================================== -->
-        <form method="post" action="{% url 'payments:payment_request' %}" id="ticketForm">
+        <form method="post"
+              action="{% url 'payments:payment_request' %}"
+              id="ticketForm"
+              data-payment-url="{% url 'payments:payment_request' %}"
+              data-free-checkout-url="{% url 'tickets:ticket_info' match.id %}">
             {% csrf_token %}
 
             <!-- ===== فیلدهای مخفی برای اطلاعات خریدار و پرداخت ===== -->
@@ -62,7 +69,7 @@
             <input type="hidden" name="wallet_amount" id="walletAmountInput" value="0">
             <input type="hidden" name="next_url" value="{% url 'tickets:user_tickets' %}">
             <!-- مبلغ نهایی به ریال (با احتساب تخفیف و کیف پول) -->
-            <input type="hidden" name="amount" id="finalAmountInput" value="{{ total_price|rial_value }}">
+            <input type="hidden" name="amount" id="finalAmountInput" value="{{ total_price }}">
 
             <!-- محفظه‌ای برای اطلاعات خریدار که توسط جاوااسکریپت پر می‌شود -->
             <div id="zibal_buyer_info"></div>
@@ -82,7 +89,7 @@
                                 <span class="badge bg-primary ticket-price"
                                       data-base="{{ seat.price|default:0 }}"
                                       style="font-size: 0.9rem; padding: 6px 14px;">
-                                    {{ seat.price|to_rial }} ریال
+                                    {{ seat.price|rial_display }} ریال
                                 </span>
                             </div>
                             <div class="card-body">
@@ -144,8 +151,8 @@
                     <div class="row">
                         <div class="col-md-6">
                             <p><strong>موجودی کیف پول شما:</strong> <span
-                                    id="displayBalance">{{ wallet_balance|to_rial }}</span> ریال</p>
-                            <p><strong>مبلغ کل خرید (بدون تخفیف):</strong> {{ total_price|to_rial }} ریال</p>
+                                    id="displayBalance">{{ wallet_balance|rial_display }}</span> ریال</p>
+                            <p><strong>مبلغ کل خرید (بدون تخفیف):</strong> {{ total_price|rial_display }} ریال</p>
                         </div>
                         <div class="col-md-6">
                             <!-- سوئیچ -->
@@ -163,7 +170,7 @@
                                     <strong id="walletPayAmount">۰</strong> ریال
                                 </p>
                                 <p class="mb-1">مبلغ نهایی پرداختی (با تخفیف و کیف پول):
-                                    <strong id="finalAmountDisplay">{{ total_price|to_rial }}</strong> ریال
+                                    <strong id="finalAmountDisplay">{{ total_price|rial_display }}</strong> ریال
                                 </p>
                                 <div id="wallet_info" class="mt-2"></div>
                             </div>
@@ -178,7 +185,7 @@
                     <i class="fas fa-credit-card"></i>
                     پرداخت و دریافت بلیط
                     <span id="finalPriceDisplay" class="badge bg-light text-dark ms-2">
-                        {{ total_price|to_rial }} ریال
+                        {{ total_price|rial_display }} ریال
                     </span>
                 </button>
                 <a href="{% url 'tickets:cancel_reservation' match.id %}" class="btn btn-outline-danger">
@@ -196,15 +203,14 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // ===== تابع تبدیل به ریال با جداکننده (برای نمایش) =====
-            function toRial(toman) {
-                if (toman === 0 || toman === null || toman === undefined) return '۰';
-                const rial = Math.round(toman * 10);
-                return rial.toLocaleString('fa-IR');
+            function toRial(amount) {
+                if (amount === 0 || amount === null || amount === undefined) return '۰';
+                return amount.toLocaleString('fa-IR');
             }
 
             // ===== تعریف متغیرهای مورد نیاز =====
-            const totalPrice = {{ total_price }};
-            const walletBalance = {{ wallet_balance }};
+            const totalPrice = {{ total_price }};  // به ریال
+            const walletBalance = {{ wallet_balance }};  // به ریال
             const timerDisplay = document.getElementById('timer-display');
             const form = document.getElementById('ticketForm');
             let remaining = {{ remaining_time|default:0 }};
@@ -218,7 +224,7 @@
                 return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
             }
 
-            if (remaining > 0) {
+            if (timerDisplay && remaining > 0) {
                 timerDisplay.textContent = formatTime(remaining);
                 timerInterval = setInterval(function () {
                     remaining--;
@@ -229,20 +235,24 @@
                     if (remaining <= 0) {
                         clearInterval(timerInterval);
                         timerDisplay.textContent = '⏰ زمان تمام شد';
+                        timerDisplay.style.color = '#dc3545';
                         alert('⏰ زمان شما برای تکمیل خرید به پایان رسید. صندلی‌ها آزاد شدند.');
                         window.location.href = "{% url 'tickets:cancel_reservation' match.id %}";
                     }
                 }, 1000);
-            } else {
-                window.location.href = "{% url 'tickets:cancel_reservation' match.id %}";
+            } else if (timerDisplay) {
+                timerDisplay.textContent = '⏰ زمان تمام شد';
+                timerDisplay.style.color = '#dc3545';
             }
 
-            form.addEventListener('submit', function () {
-                formSubmitted = true;
-                if (timerInterval) {
-                    clearInterval(timerInterval);
-                }
-            });
+            if (form) {
+                form.addEventListener('submit', function () {
+                    formSubmitted = true;
+                    if (timerInterval) {
+                        clearInterval(timerInterval);
+                    }
+                });
+            }
 
             window.addEventListener('beforeunload', function (e) {
                 if (formSubmitted) return;
@@ -307,14 +317,12 @@
 
             // ===== به‌روزرسانی قیمت‌ها =====
             function updatePrices() {
-                // به‌روزرسانی قیمت هر صندلی
                 document.querySelectorAll('.ticket-price').forEach(el => {
                     const base = parseInt(el.dataset.base);
                     const final = Math.round(base * (1 - (window.discountPercent || 0) / 100));
                     el.textContent = toRial(final) + ' ریال';
                 });
 
-                // به‌روزرسانی مجموع قیمت
                 const totalEl = document.getElementById('totalPriceDisplay');
                 if (totalEl) {
                     const base = parseInt(totalEl.dataset.base);
@@ -339,121 +347,175 @@
             const walletInfo = document.getElementById('wallet_info');
             const submitBtn = document.getElementById('submitBtn');
             const finalPriceDisplay = document.getElementById('finalPriceDisplay');
+            const useWalletSwitch = document.getElementById('useWalletSwitch');
+
+            // ===== تابع به‌روزرسانی دکمه اصلی =====
+            function updateSubmitButton(finalAmount) {
+                if (finalAmount === 0) {
+                    finalPriceDisplay.textContent = 'رایگان';
+                    submitBtn.innerHTML = `
+                    <i class="fas fa-credit-card"></i>
+                    پرداخت و دریافت بلیط
+                    <span class="badge bg-light text-dark ms-2">رایگان</span>
+                `;
+                } else {
+                    finalPriceDisplay.textContent = toRial(finalAmount) + ' ریال';
+                    submitBtn.innerHTML = `
+                    <i class="fas fa-credit-card"></i>
+                    پرداخت و دریافت بلیط
+                    <span class="badge bg-light text-dark ms-2">${toRial(finalAmount)} ریال</span>
+                `;
+                }
+            }
 
             window.toggleWallet = function (checked) {
+                // ۱. ذخیره وضعیت سوئیچ
                 useWalletInput.value = checked ? 'true' : 'false';
 
+                // ۲. محاسبه مبلغ با تخفیف (به ریال)
                 const discount = (window.discountPercent || 0) / 100;
                 const totalWithDiscount = Math.round(totalPrice * (1 - discount));
 
                 let walletPay = 0;
                 let finalAmount = totalWithDiscount;
 
+                // ۳. محاسبه مبلغ قابل پرداخت از کیف پول
                 if (checked) {
+                    // اگر موجودی کیف پول صفر یا کمتر از صفر است
+                    if (walletBalance <= 0) {
+                        // غیرفعال کردن سوئیچ و نمایش پیام
+                        useWalletSwitch.checked = false;
+                        useWalletInput.value = 'false';
+                        walletInfo.innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            موجودی کیف پول شما صفر است. لطفاً ابتدا کیف پول خود را شارژ کنید.
+                        </div>
+                    `;
+                        // به‌روزرسانی دکمه با مبلغ کامل
+                        updateSubmitButton(totalWithDiscount);
+                        // به‌روزرسانی نمایش مبالغ
+                        walletPayAmount.textContent = '۰';
+                        finalAmountDisplay.textContent = toRial(totalWithDiscount) + ' ریال';
+                        walletAmountInput.value = 0;
+                        finalAmountInput.value = totalWithDiscount;
+                        return;
+                    }
+
+                    // محاسبه مبلغ قابل پرداخت از کیف پول (حداکثر موجودی یا مبلغ کل)
                     walletPay = Math.min(walletBalance, totalWithDiscount);
                     finalAmount = totalWithDiscount - walletPay;
                 }
 
-                // نمایش مقادیر
+                // ۴. نمایش مقادیر (به ریال)
                 walletPayAmount.textContent = toRial(walletPay);
-                finalAmountDisplay.textContent = toRial(finalAmount);
-                walletAmountInput.value = walletPay;
-                finalAmountInput.value = finalAmount * 10; // تبدیل به ریال برای ارسال به درگاه
+                finalAmountDisplay.textContent = toRial(finalAmount) + ' ریال';
 
-                // به‌روزرسانی دکمه اصلی
-                if (finalAmount === 0) {
-                    finalPriceDisplay.textContent = 'رایگان';
-                    submitBtn.innerHTML = `
-                        <i class="fas fa-credit-card"></i>
-                        پرداخت و دریافت بلیط
-                        <span class="badge bg-light text-dark ms-2">رایگان</span>
-                    `;
+                // ذخیره در فیلدهای مخفی برای ارسال به سرور (به ریال)
+                if (checked) {
+                    walletAmountInput.value = walletPay;
                 } else {
-                    finalPriceDisplay.textContent = toRial(finalAmount) + ' ریال';
-                    submitBtn.innerHTML = `
-                        <i class="fas fa-credit-card"></i>
-                        پرداخت و دریافت بلیط
-                        <span class="badge bg-light text-dark ms-2">${toRial(finalAmount)} ریال</span>
-                    `;
+                    walletAmountInput.value = 0;
                 }
+                finalAmountInput.value = finalAmount; // تبدیل به ریال برای درگاه
 
-                // پیام‌ها
+                // ۵. به‌روزرسانی دکمه اصلی
+                updateSubmitButton(finalAmount);
+
+                // ۶. نمایش پیام‌های راهنما
                 if (checked) {
                     if (walletPay === 0) {
                         walletInfo.innerHTML = `
-                            <div class="alert alert-danger">
-                                <i class="fas fa-exclamation-circle"></i>
-                                موجودی کیف پول شما صفر است. لطفاً ابتدا کیف پول خود را شارژ کنید.
-                            </div>
-                        `;
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle"></i>
+                            موجودی کیف پول شما صفر است. لطفاً ابتدا کیف پول خود را شارژ کنید.
+                        </div>
+                    `;
                     } else if (finalAmount === 0) {
                         walletInfo.innerHTML = `
-                            <div class="alert alert-success">
-                                <i class="fas fa-check-circle"></i>
-                                مبلغ کل خرید (${toRial(totalWithDiscount)} ریال) از کیف پول کسر می‌شود.
-                                مبلغ نهایی پرداختی: <strong>۰ ریال</strong>
-                            </div>
-                        `;
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            مبلغ کل خرید (<strong>${toRial(totalWithDiscount)}</strong> ریال) از کیف پول کسر می‌شود.
+                            <br>
+                            مبلغ نهایی پرداختی: <strong>۰ ریال</strong>
+                        </div>
+                    `;
                     } else {
                         walletInfo.innerHTML = `
-                            <div class="alert alert-success">
-                                <i class="fas fa-check-circle"></i>
-                                مبلغ ${toRial(walletPay)} ریال از کیف پول کسر می‌شود.
-                                مبلغ باقی‌مانده (${toRial(finalAmount)} ریال) به‌صورت آنلاین پرداخت می‌شود.
-                            </div>
-                        `;
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            مبلغ <strong>${toRial(walletPay)}</strong> ریال از کیف پول کسر می‌شود.
+                            <br>
+                            مبلغ باقی‌مانده (<strong>${toRial(finalAmount)}</strong> ریال) به‌صورت آنلاین پرداخت می‌شود.
+                        </div>
+                    `;
                     }
                 } else {
-                    walletInfo.innerHTML = '';
+                    walletInfo.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        با فعال‌سازی این گزینه، مبلغ از کیف پول شما کسر می‌شود.
+                        <br>
+                        <small class="text-muted">موجودی کیف پول: <strong>${toRial(walletBalance)}</strong> ریال</small>
+                    </div>
+                `;
                 }
 
-                // بروزرسانی فیلدهای مخفی تخفیف (برای ارسال به سرور)
-                document.getElementById('discount_code_input_zibal').value = document.getElementById('discount_code_input').value;
-                document.getElementById('discount_percent_input_zibal').value = document.getElementById('discount_percent_input').value;
+                // ۷. بروزرسانی فیلدهای مخفی تخفیف (برای ارسال به سرور)
+                const discountCodeInput = document.getElementById('discount_code_input');
+                const discountPercentInput = document.getElementById('discount_percent_input');
+                if (discountCodeInput && discountPercentInput) {
+                    document.getElementById('discount_code_input_zibal').value = discountCodeInput.value;
+                    document.getElementById('discount_percent_input_zibal').value = discountPercentInput.value;
+                }
             };
 
-            // ===== ارسال اطلاعات خریدار با فرم اصلی =====
+            // ===== اعتبارسنجی و مسیریابی قبل از ارسال فرم =====
             document.getElementById('ticketForm').addEventListener('submit', function (e) {
-                // جمع‌آوری اطلاعات خریداران از فرم اصلی
-                const buyerInfo = {};
-                let hasData = false;
-                document.querySelectorAll('#ticketForm input[name^="full_name_"]').forEach(input => {
-                    const name = input.name;
-                    const value = input.value;
-                    const seatId = name.replace('full_name_', '');
-                    const nationalCodeInput = document.querySelector(`#ticketForm input[name="national_code_${seatId}"]`);
-                    if (nationalCodeInput) {
-                        buyerInfo[`full_name_${seatId}`] = value;
-                        buyerInfo[`national_code_${seatId}`] = nationalCodeInput.value;
-                        if (value && value.trim() !== '') {
-                            hasData = true;
-                        }
-                    }
-                });
+                const useWallet = document.getElementById('useWalletSwitch').checked;
+                const walletAmount = parseInt(document.getElementById('walletAmountInput').value) || 0;  // به ریال
+                const finalAmount = parseInt(document.getElementById('finalAmountInput').value) || 0;  // به ریال
 
-                // بررسی پر بودن اطلاعات
-                const buyerContainer = document.getElementById('zibal_buyer_info');
-                buyerContainer.innerHTML = '';
-                for (const [key, value] of Object.entries(buyerInfo)) {
-                    if (value && value.trim() !== '') {
-                        const input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = key;
-                        input.value = value;
-                        buyerContainer.appendChild(input);
-                    }
+                // اگر کاربر کیف پول را فعال کرده ولی موجودی کافی نیست
+                if (useWallet && walletAmount <= 0 && finalAmount > 0) {
+                    e.preventDefault();
+                    alert('⚠️ موجودی کیف پول شما کافی نیست. لطفاً کیف پول خود را شارژ کنید.');
+                    return false;
                 }
 
-                // اگر اطلاعات خریدار پر نشده بود، هشدار بده و ارسال را متوقف کن
-                if (!hasData) {
-                    alert('⚠️ لطفاً ابتدا اطلاعات خریدار را وارد کنید.');
-                    e.preventDefault();
-                    return false;
+                // ===== اگر مبلغ نهایی صفر شد =====
+                if (finalAmount === 0) {
+                    this.action = this.dataset.freeCheckoutUrl;
+                } else {
+                    this.action = this.dataset.paymentUrl;
                 }
             });
 
             // ===== اجرای اولیه =====
-            toggleWallet(false);
+            // اگر موجودی کیف پول صفر است، سوئیچ را غیرفعال کنید
+            if (walletBalance <= 0) {
+                useWalletSwitch.disabled = true;
+                useWalletSwitch.checked = false;
+                walletInfo.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    موجودی کیف پول شما صفر است. لطفاً ابتدا کیف پول خود را شارژ کنید.
+                </div>
+            `;
+                const totalWithDiscount = Math.round(totalPrice * (1 - (window.discountPercent || 0) / 100));
+                updateSubmitButton(totalWithDiscount);
+                finalAmountDisplay.textContent = toRial(totalWithDiscount) + ' ریال';
+                walletAmountInput.value = 0;
+                finalAmountInput.value = totalWithDiscount;
+            } else {
+                // اجرای اولیه با وضعیت غیرفعال
+                window.toggleWallet(false);
+            }
+
+            // ===== رویداد تغییر سوئیچ =====
+            useWalletSwitch.addEventListener('change', function () {
+                window.toggleWallet(this.checked);
+            });
         });
     </script>
 {% endblock %}

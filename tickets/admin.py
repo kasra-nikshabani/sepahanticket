@@ -1,13 +1,17 @@
+# tickets/admin.py
 from django.contrib import admin
-from django.shortcuts import redirect
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.contrib import messages
-from .models import Ticket, DiscountCode
-from .models import VIPQuota
+from .models import Ticket, DiscountCode, VIPQuota, Transaction, Order
 
+
+# ============================================================
+#  اکشن‌های سفارشی
+# ============================================================
 
 @admin.action(description='تخصیص به کاربر ویژه (VIP)')
 def assign_to_vip(modeladmin, request, queryset):
-    """تبدیل بلیط‌های انتخاب‌شده به تخصیص VIP"""
     count = 0
     for ticket in queryset:
         if ticket.user.user_type == 'vip':
@@ -19,13 +23,17 @@ def assign_to_vip(modeladmin, request, queryset):
             messages.warning(request, f'کاربر {ticket.user.username} ویژه نیست.')
     messages.success(request, f'{count} بلیط به کاربران ویژه تخصیص داده شد.')
 
-@admin.register(Ticket)  # ← فقط یک بار ثبت می‌شود
+
+# ============================================================
+#  ثبت مدل‌ها در ادمین
+# ============================================================
+
+@admin.register(Ticket)
 class TicketAdmin(admin.ModelAdmin):
     list_display = ('ticket_number', 'user', 'match', 'full_name', 'status', 'is_admin_assigned', 'is_used', 'used_at')
     list_filter = ('status', 'is_admin_assigned', 'is_used', 'match')
     search_fields = ('ticket_number', 'user__username', 'full_name', 'national_code')
     actions = [assign_to_vip]
-
     readonly_fields = ('ticket_number', 'qr_code', 'pdf_file', 'used_at')
     fieldsets = (
         ('اطلاعات اصلی', {
@@ -41,8 +49,6 @@ class TicketAdmin(admin.ModelAdmin):
     list_per_page = 20
     ordering = ('-purchase_date',)
 
-    def get_queryset(self, request):
-        return super().get_queryset(request)
 
 @admin.register(VIPQuota)
 class VIPQuotaAdmin(admin.ModelAdmin):
@@ -64,3 +70,202 @@ class DiscountCodeAdmin(admin.ModelAdmin):
             import random, string
             obj.code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
         super().save_model(request, obj, form, change)
+
+
+# ============================================================
+#  ثبت مدل Order (سفارش‌ها)
+# ============================================================
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    """
+    نمایش سفارش‌ها در پنل ادمین با اطلاعات کامل مالی
+    """
+    list_display = [
+        'order_number',
+        'user',
+        'match',
+        'ticket_count_display',
+        'total_amount_display',
+        'wallet_amount_display',
+        'discount_amount_display',
+        'payment_method',
+        'payment_status',
+        'created_at',
+    ]
+    list_filter = [
+        'payment_method',
+        'payment_status',
+        'created_at',
+        'match',
+    ]
+    search_fields = [
+        'order_number',
+        'user__username',
+        'user__phone_number',
+        'discount_code',
+        'full_name',
+        'phone_number',
+    ]
+    ordering = ['-created_at']
+    date_hierarchy = 'created_at'
+    readonly_fields = ['order_number', 'created_at', 'updated_at']
+    list_per_page = 25
+    raw_id_fields = ['user', 'match']
+
+    fieldsets = (
+        ('اطلاعات اصلی', {
+            'fields': ('order_number', 'user', 'match', 'full_name', 'phone_number')
+        }),
+        ('اطلاعات مالی', {
+            'fields': ('subtotal', 'discount_percent', 'discount_amount', 'total_amount')
+        }),
+        ('اطلاعات کیف پول', {
+            'fields': ('wallet_amount', 'wallet_balance_before', 'wallet_balance_after')
+        }),
+        ('پرداخت', {
+            'fields': ('payment_method', 'payment_status', 'track_id', 'paid_at')
+        }),
+        ('کد تخفیف', {
+            'fields': ('discount_code', 'discount_code_id')
+        }),
+        ('زمان‌ها', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',),
+        }),
+    )
+
+    def ticket_count_display(self, obj):
+        count = obj.tickets.count()
+        return f"{count} عدد"
+
+    ticket_count_display.short_description = 'تعداد بلیط'
+
+    def total_amount_display(self, obj):
+        """نمایش مبلغ نهایی با رنگ مناسب"""
+        color = '#28a745' if obj.payment_status == 'paid' else '#dc3545'
+        return format_html(
+            '<span style="color: {}; font-weight: 600;">{} تومان</span>',
+            color,
+            f"{obj.total_amount:,}"
+        )
+
+    total_amount_display.short_description = 'مبلغ نهایی'
+
+    def wallet_amount_display(self, obj):
+        """نمایش مبلغ پرداخت شده از کیف پول"""
+        if obj.wallet_amount > 0:
+            return format_html(
+                '<span style="color: #17a2b8; font-weight: 600;">{} تومان</span>',
+                f"{obj.wallet_amount:,}"
+            )
+        return "—"
+
+    wallet_amount_display.short_description = 'پرداخت از کیف پول'
+
+    def discount_amount_display(self, obj):
+        """نمایش مبلغ تخفیف"""
+        if obj.discount_amount > 0:
+            return format_html(
+                '<span style="color: #D4AF37; font-weight: 600;">{} تومان ({}%)</span>',
+                f"{obj.discount_amount:,}",
+                obj.discount_percent
+            )
+        return "—"
+
+    discount_amount_display.short_description = 'تخفیف'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'match').prefetch_related('tickets')
+
+
+# ============================================================
+#  ثبت Proxy Model Transaction
+# ============================================================
+
+@admin.register(Transaction)
+class TransactionAdmin(admin.ModelAdmin):
+    """
+    نمایش تراکنش‌ها در اپ tickets (با استفاده از Proxy Model)
+    """
+    list_display = [
+        'id',
+        'user',
+        'amount_display',
+        'transaction_type_display',
+        'is_wallet',
+        'description',
+        'reference_id',
+        'created_at',
+    ]
+    list_filter = [
+        'transaction_type',
+        'is_wallet',
+        'created_at',
+    ]
+    search_fields = [
+        'user__username',
+        'user__phone_number',
+        'description',
+        'reference_id',
+    ]
+    ordering = ['-created_at']
+    date_hierarchy = 'created_at'
+    readonly_fields = ['created_at', 'balance_after']
+    list_per_page = 25
+
+    fieldsets = (
+        ('اطلاعات تراکنش', {
+            'fields': ('user', 'amount', 'transaction_type', 'description', 'is_wallet', 'reference_id',
+                       'balance_after'),
+        }),
+        ('زمان', {
+            'fields': ('created_at',),
+            'classes': ('collapse',),
+        }),
+    )
+
+    def amount_display(self, obj):
+        return format_html(
+            '<span style="font-weight: 600;">{} تومان</span>',
+            f"{obj.amount:,}"
+        )
+
+    amount_display.short_description = 'مبلغ'
+
+    def transaction_type_display(self, obj):
+        """نمایش نوع تراکنش با رنگ‌بندی و آیکون"""
+        tx_type = getattr(obj, 'transaction_type', None)
+
+        if not tx_type:
+            return format_html('<span style="color: #6c757d;">نامشخص</span>')
+
+        type_display = obj.get_transaction_type_display() or tx_type
+
+        colors = {
+            'deposit': '#28a745',
+            'withdraw': '#fd7e14',
+            'ticket_purchase': '#007bff',
+            'refund': '#6f42c1',
+        }
+        icons = {
+            'deposit': '💰',
+            'withdraw': '💳',
+            'ticket_purchase': '🎟️',
+            'refund': '↩️',
+        }
+
+        color = colors.get(tx_type, '#6c757d')
+        icon = icons.get(tx_type, '📌')
+
+        return format_html(
+            '<span style="color: {}; font-weight: 600;">{} {}</span>',
+            color,
+            icon,
+            type_display
+        )
+
+    transaction_type_display.short_description = 'نوع تراکنش'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user')

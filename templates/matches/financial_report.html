@@ -1,0 +1,657 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block title %}گزارش مالی {{ match.home_team }} vs {{ match.away_team }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .financial-report {
+        padding: 20px 0;
+    }
+
+    .report-header {
+        background: linear-gradient(135deg, #1A1A2E 0%, #2D2D44 100%);
+        border-radius: 20px;
+        padding: 30px 35px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(212, 175, 55, 0.2);
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .report-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .report-header::after {
+        content: '';
+        position: absolute;
+        bottom: -40%;
+        left: -10%;
+        width: 250px;
+        height: 250px;
+        background: radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .report-header .header-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .report-header .header-title {
+        color: #D4AF37;
+        font-size: 24px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .report-header .header-title i {
+        font-size: 28px;
+    }
+
+    .report-header .header-title span {
+        color: #fff;
+        font-weight: 400;
+        font-size: 16px;
+        margin-right: 8px;
+    }
+
+    .report-header .header-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn-pdf {
+        background: linear-gradient(135deg, #dc3545, #b02a37);
+        color: #fff;
+        border: none;
+        padding: 12px 28px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 15px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        box-shadow: 0 4px 20px rgba(220, 53, 69, 0.3);
+    }
+
+    .btn-pdf:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 35px rgba(220, 53, 69, 0.4);
+        color: #fff;
+    }
+
+    .stat-card {
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+        height: 100%;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-card .stat-icon {
+        font-size: 28px;
+        margin-bottom: 8px;
+        display: block;
+        opacity: 0.8;
+    }
+
+    .stat-card .stat-number {
+        font-size: 28px;
+        font-weight: 700;
+        margin: 4px 0;
+    }
+
+    .stat-card .stat-label {
+        font-size: 14px;
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .stat-card .stat-sub {
+        font-size: 12px;
+        opacity: 0.7;
+        margin-top: 4px;
+        display: block;
+    }
+
+    .stat-card.bg-success-gradient {
+        background: linear-gradient(135deg, #28a745, #1e7e34);
+        color: #fff;
+    }
+
+    .stat-card.bg-warning-gradient {
+        background: linear-gradient(135deg, #ffc107, #d39e00);
+        color: #1A1A2E;
+    }
+
+    .stat-card.bg-info-gradient {
+        background: linear-gradient(135deg, #17a2b8, #0e7a8a);
+        color: #fff;
+    }
+
+    .stat-card.bg-primary-gradient {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: #fff;
+    }
+
+    .stat-card.bg-danger-gradient {
+        background: linear-gradient(135deg, #dc3545, #b02a37);
+        color: #fff;
+    }
+
+    .stat-card.bg-purple-gradient {
+        background: linear-gradient(135deg, #6f42c1, #4a2d7a);
+        color: #fff;
+    }
+
+    .stat-card.bg-gold-gradient {
+        background: linear-gradient(135deg, #D4AF37, #b8960f);
+        color: #1A1A2E;
+    }
+
+    .stat-card.bg-dark-gradient {
+        background: linear-gradient(135deg, #343a40, #1A1A2E);
+        color: #fff;
+    }
+
+    .profit-card {
+        border-radius: 20px;
+        padding: 24px;
+        text-align: center;
+        border: none;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+
+    .profit-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    .profit-card .profit-icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .profit-card .profit-number {
+        font-size: 36px;
+        font-weight: 700;
+    }
+
+    .profit-card .profit-label {
+        font-size: 16px;
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .profit-card.bg-profit {
+        background: linear-gradient(135deg, #d4edda, #b7e4c7);
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .profit-card.bg-loss {
+        background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .section-card {
+        border-radius: 16px;
+        border: 1px solid #e8eaed;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+        margin-bottom: 24px;
+    }
+
+    .section-card .section-header {
+        padding: 14px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        border-bottom: 1px solid #e8eaed;
+    }
+
+    .section-card .section-header h5 {
+        margin: 0;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .section-card .section-header .btn-add {
+        border-radius: 50px;
+        padding: 6px 18px;
+        font-size: 13px;
+        font-weight: 600;
+        border: none;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .section-card .section-header .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-card .section-body {
+        padding: 20px;
+    }
+
+    .table-custom {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+    .table-custom thead {
+        background: #f8f9fa;
+    }
+
+    .table-custom thead th {
+        padding: 12px 16px;
+        text-align: right;
+        font-weight: 600;
+        font-size: 13px;
+        color: #1A1A2E;
+        border-bottom: 2px solid #D4AF37;
+        white-space: nowrap;
+    }
+
+    .table-custom tbody td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f0f0f0;
+        vertical-align: middle;
+    }
+
+    .table-custom tbody tr:hover {
+        background: #faf8f3;
+    }
+
+    .table-custom tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .table-custom tfoot td {
+        padding: 12px 16px;
+        font-weight: 700;
+        border-top: 2px solid #D4AF37;
+    }
+
+    .btn-action {
+        border-radius: 50px;
+        padding: 4px 12px;
+        font-size: 13px;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        text-decoration: none;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-action.btn-edit {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .btn-action.btn-edit:hover {
+        background: #ffe69c;
+    }
+
+    .btn-action.btn-delete {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .btn-action.btn-delete:hover {
+        background: #f5c6cb;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        color: #e8eaed;
+        margin-bottom: 12px;
+        display: block;
+    }
+
+    .empty-state h5 {
+        color: #1A1A2E;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .empty-state p {
+        color: #6c757d;
+        font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+        .report-header .header-content {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .report-header .header-actions {
+            width: 100%;
+        }
+
+        .report-header .header-actions .btn-pdf {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .stat-card .stat-number {
+            font-size: 22px;
+        }
+
+        .profit-card .profit-number {
+            font-size: 28px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .report-header {
+            padding: 20px;
+        }
+
+        .report-header .header-title {
+            font-size: 18px;
+        }
+
+        .stat-card .stat-number {
+            font-size: 18px;
+        }
+
+        .profit-card .profit-number {
+            font-size: 24px;
+        }
+
+        .table-custom {
+            font-size: 13px;
+        }
+
+        .table-custom thead th,
+        .table-custom tbody td {
+            padding: 8px 12px;
+        }
+
+        .section-card .section-header {
+            padding: 12px 16px;
+        }
+
+        .section-card .section-body {
+            padding: 12px 16px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="financial-report">
+
+    <!-- ===== هدر ===== -->
+    <div class="report-header">
+        <div class="header-content">
+            <div class="header-title">
+                <i class="fas fa-chart-pie"></i>
+                <span>گزارش مالی</span>
+                <span style="color: #fff; font-weight: 700;">{{ match.home_team }} 🆚 {{ match.away_team }}</span>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'matches:export_financial_report_pdf' match.id %}" class="btn-pdf">
+                    <i class="fas fa-file-pdf"></i> خروجی PDF
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== خلاصه آمار ===== -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="stat-card bg-success-gradient">
+                <span class="stat-icon"><i class="fas fa-ticket-alt"></i></span>
+                <div class="stat-number">{{ report.total_ticket_sold }}</div>
+                <p class="stat-label">تعداد بلیط فروخته شده</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card bg-warning-gradient">
+                <span class="stat-icon"><i class="fas fa-crown"></i></span>
+                <div class="stat-number">{{ report.total_vip_tickets }}</div>
+                <p class="stat-label">بلیط VIP</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card bg-info-gradient">
+                <span class="stat-icon"><i class="fas fa-check-circle"></i></span>
+                <div class="stat-number">{{ report.total_used_tickets }}</div>
+                <p class="stat-label">بلیط استفاده شده</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card bg-primary-gradient">
+                <span class="stat-icon"><i class="fas fa-users"></i></span>
+                <div class="stat-number">{{ total_tickets }}</div>
+                <p class="stat-label">مجموع بلیط</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== خلاصه مالی ===== -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="stat-card bg-success-gradient">
+                <span class="stat-icon"><i class="fas fa-arrow-up"></i></span>
+                <div class="stat-number">{{ report.total_ticket_revenue|rial_display }}</div>
+                <p class="stat-label">درآمد فروش بلیط</p>
+                <small class="stat-sub">ریال</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card bg-purple-gradient">
+                <span class="stat-icon"><i class="fas fa-coins"></i></span>
+                <div class="stat-number">{{ report.total_revenues|rial_display }}</div>
+                <p class="stat-label">درآمدهای اضافی</p>
+                <small class="stat-sub">ریال</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card bg-gold-gradient">
+                <span class="stat-icon"><i class="fas fa-wallet"></i></span>
+                <div class="stat-number">{{ report.total_wallet_usage|rial_display }}</div>
+                <p class="stat-label">مصرف از کیف پول</p>
+                <small class="stat-sub">مبلغ کسر شده از کیف پول</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card bg-danger-gradient">
+                <span class="stat-icon"><i class="fas fa-money-bill-wave"></i></span>
+                <div class="stat-number">{{ report.total_costs|rial_display }}</div>
+                <p class="stat-label">مجموع هزینه‌ها</p>
+                <small class="stat-sub">ریال</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== سود خالص ===== -->
+    <div class="row mb-4">
+        <div class="col-md-6 offset-md-3">
+            <div class="profit-card {% if report.net_profit >= 0 %}bg-profit{% else %}bg-loss{% endif %}">
+                <span class="profit-icon"><i class="fas fa-chart-line"></i></span>
+                <div class="profit-number">{{ report.net_profit|rial_display }}</div>
+                <p class="profit-label">سود خالص</p>
+                <small class="d-block" style="opacity: 0.7;">درآمد کل - هزینه کل</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== هزینه‌ها ===== -->
+    <div class="section-card">
+        <div class="section-header" style="background: #f8d7da; border-bottom-color: #f5c6cb;">
+            <h5 style="color: #721c24;">
+                <i class="fas fa-money-bill-wave"></i> هزینه‌ها
+            </h5>
+            <a href="{% url 'matches:add_match_cost' match.id %}" class="btn-add" style="background: #dc3545; color: #fff;">
+                <i class="fas fa-plus"></i> افزودن هزینه
+            </a>
+        </div>
+        <div class="section-body">
+            {% if costs %}
+                <div class="table-responsive">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th>توضیح</th>
+                                <th>مبلغ (ریال)</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cost in costs %}
+                                <tr>
+                                    <td>{{ cost.description }}</td>
+                                    <td>{{ cost.amount|rial_display }}</td>
+                                    <td>
+                                        <a href="{% url 'matches:edit_match_cost' cost.id %}" class="btn-action btn-edit" title="ویرایش">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'matches:delete_match_cost' cost.id %}" class="btn-action btn-delete" title="حذف">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr style="background: #f8d7da;">
+                                <td>مجموع هزینه‌ها</td>
+                                <td>{{ report.total_costs|rial_display }}</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-receipt"></i>
+                    <h5>هیچ هزینه‌ای ثبت نشده است</h5>
+                    <p>برای ثبت هزینه، روی دکمه "افزودن هزینه" کلیک کنید.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ===== درآمدهای اضافی ===== -->
+    <div class="section-card">
+        <div class="section-header" style="background: #d4edda; border-bottom-color: #c3e6cb;">
+            <h5 style="color: #155724;">
+                <i class="fas fa-coins"></i> درآمدهای اضافی
+            </h5>
+            <a href="{% url 'matches:add_match_revenue' match.id %}" class="btn-add" style="background: #28a745; color: #fff;">
+                <i class="fas fa-plus"></i> افزودن درآمد
+            </a>
+        </div>
+        <div class="section-body">
+            {% if revenues %}
+                <div class="table-responsive">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th>توضیح</th>
+                                <th>مبلغ (ریال)</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for revenue in revenues %}
+                                <tr>
+                                    <td>{{ revenue.description }}</td>
+                                    <td>{{ revenue.amount|rial_display }}</td>
+                                    <td>
+                                        <a href="{% url 'matches:edit_match_revenue' revenue.id %}" class="btn-action btn-edit" title="ویرایش">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'matches:delete_match_revenue' revenue.id %}" class="btn-action btn-delete" title="حذف">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr style="background: #d4edda;">
+                                <td>مجموع درآمدهای اضافی</td>
+                                <td>{{ report.total_revenues|rial_display }}</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-coins"></i>
+                    <h5>هیچ درآمد اضافی ثبت نشده است</h5>
+                    <p>برای ثبت درآمد، روی دکمه "افزودن درآمد" کلیک کنید.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ===== دکمه‌های بازگشت ===== -->
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'matches:admin_match_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-right"></i> بازگشت
+        </a>
+        <a href="{% url 'matches:match_financial_list' %}" class="btn btn-info" style="color: #fff;">
+            <i class="fas fa-list"></i> لیست گزارش‌ها
+        </a>
+    </div>
+
+</div>
+{% endblock %}

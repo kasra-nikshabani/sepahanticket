@@ -1,0 +1,454 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block title %}لیست گزارش‌های مالی مسابقات{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-list-page {
+        padding: 20px 0;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #1A1A2E 0%, #2D2D44 100%);
+        border-radius: 20px;
+        padding: 30px 35px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(212, 175, 55, 0.2);
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .page-header::after {
+        content: '';
+        position: absolute;
+        bottom: -40%;
+        left: -10%;
+        width: 250px;
+        height: 250px;
+        background: radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .page-header .header-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .page-header .header-title {
+        color: #D4AF37;
+        font-size: 24px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .page-header .header-title i {
+        font-size: 28px;
+    }
+
+    .page-header .header-title span {
+        color: #fff;
+        font-weight: 400;
+        font-size: 16px;
+        margin-right: 8px;
+    }
+
+    .stats-mini {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .stats-mini .stat-item {
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+        padding: 8px 20px;
+        border: 1px solid rgba(212, 175, 55, 0.12);
+        text-align: center;
+    }
+
+    .stats-mini .stat-item .stat-number {
+        color: #D4AF37;
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    .stats-mini .stat-item .stat-label {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 12px;
+    }
+
+    .table-container {
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid #e8eaed;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .table-container .table-header {
+        padding: 16px 24px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e8eaed;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .table-container .table-header h5 {
+        margin: 0;
+        font-weight: 700;
+        color: #1A1A2E;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .table-container .table-header h5 i {
+        color: #D4AF37;
+    }
+
+    .table-container .table-header .badge-count {
+        background: #1A1A2E;
+        color: #fff;
+        padding: 2px 14px;
+        border-radius: 50px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .table-custom {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+    .table-custom thead {
+        background: #fafafa;
+    }
+
+    .table-custom thead th {
+        padding: 12px 16px;
+        text-align: right;
+        font-weight: 600;
+        font-size: 13px;
+        color: #1A1A2E;
+        border-bottom: 2px solid #D4AF37;
+        white-space: nowrap;
+    }
+
+    .table-custom thead th i {
+        margin-left: 4px;
+        color: #D4AF37;
+    }
+
+    .table-custom tbody td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f0f0f0;
+        vertical-align: middle;
+        color: #333;
+    }
+
+    .table-custom tbody tr:hover {
+        background: #faf8f3;
+    }
+
+    .table-custom tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .table-custom .match-name {
+        font-weight: 600;
+        color: #1A1A2E;
+    }
+
+    .table-custom .match-vs {
+        color: #999;
+        margin: 0 6px;
+    }
+
+    .table-custom .badge-profit {
+        background: #d4edda;
+        color: #155724;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 13px;
+        display: inline-block;
+    }
+
+    .table-custom .badge-loss {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 13px;
+        display: inline-block;
+    }
+
+    .table-custom .badge-neutral {
+        background: #fff3cd;
+        color: #856404;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 13px;
+        display: inline-block;
+    }
+
+    .btn-action {
+        border-radius: 50px;
+        padding: 4px 12px;
+        font-size: 13px;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        text-decoration: none;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-action.btn-view {
+        background: #cce5ff;
+        color: #004085;
+    }
+
+    .btn-action.btn-view:hover {
+        background: #99caff;
+    }
+
+    .btn-action.btn-pdf {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .btn-action.btn-pdf:hover {
+        background: #f5c6cb;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .empty-state i {
+        font-size: 56px;
+        color: #e8eaed;
+        margin-bottom: 16px;
+        display: block;
+    }
+
+    .empty-state h4 {
+        color: #1A1A2E;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .empty-state p {
+        color: #6c757d;
+        font-size: 16px;
+    }
+
+    .pagination-container {
+        padding: 16px 24px;
+        border-top: 1px solid #e8eaed;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .pagination-container .pagination-info {
+        color: #6c757d;
+        font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+        .page-header .header-content {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .stats-mini {
+            width: 100%;
+        }
+
+        .stats-mini .stat-item {
+            flex: 1;
+        }
+
+        .table-custom {
+            font-size: 13px;
+        }
+
+        .table-custom thead th,
+        .table-custom tbody td {
+            padding: 8px 12px;
+        }
+
+        .table-container .table-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .page-header {
+            padding: 20px;
+        }
+
+        .page-header .header-title {
+            font-size: 18px;
+        }
+
+        .stats-mini .stat-item .stat-number {
+            font-size: 16px;
+        }
+
+        .table-custom {
+            font-size: 12px;
+        }
+
+        .table-custom thead th,
+        .table-custom tbody td {
+            padding: 6px 8px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-list-page">
+
+    <!-- ===== هدر ===== -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <i class="fas fa-file-invoice"></i>
+                <span>گزارش‌های مالی مسابقات</span>
+            </div>
+            <div class="stats-mini">
+                <div class="stat-item">
+                    <div class="stat-number">{{ reports|length }}</div>
+                    <div class="stat-label">تعداد مسابقات</div>
+                </div>
+                {% if reports %}
+                    <div class="stat-item">
+                        <div class="stat-number">{{ reports|length }}</div>
+                        <div class="stat-label">گزارش موجود</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== جدول گزارش‌ها ===== -->
+    <div class="table-container">
+        <div class="table-header">
+            <h5>
+                <i class="fas fa-list"></i> لیست گزارش‌ها
+            </h5>
+            <span class="badge-count">{{ reports|length }} گزارش</span>
+        </div>
+
+        <div class="table-responsive">
+            {% if reports %}
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-hashtag"></i> ردیف</th>
+                            <th><i class="fas fa-futbol"></i> مسابقه</th>
+                            <th><i class="fas fa-calendar-day"></i> تاریخ</th>
+                            <th><i class="fas fa-ticket-alt"></i> بلیط فروخته شده</th>
+                            <th><i class="fas fa-arrow-up"></i> درآمد فروش بلیط</th>
+                            <th><i class="fas fa-wallet"></i> مصرف از کیف پول</th>
+                            <th><i class="fas fa-arrow-down"></i> هزینه‌ها</th>
+                            <th><i class="fas fa-chart-line"></i> سود خالص</th>
+                            <th><i class="fas fa-cogs"></i> عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in reports %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <span class="match-name">{{ item.match.home_team }}</span>
+                                    <span class="match-vs">🆚</span>
+                                    <span class="match-name">{{ item.match.away_team }}</span>
+                                </td>
+                                <td>{{ item.match.date_time|date:"Y/m/d H:i" }}</td>
+                                <td>{{ item.report.total_ticket_sold }}</td>
+                                <td>{{ item.report.total_ticket_revenue|rial_display }}</td>
+                                <td>{{ item.report.total_wallet_usage|rial_display }}</td>
+                                <td>{{ item.report.total_costs|rial_display }}</td>
+                                <td>
+                                    {% if item.report.net_profit > 0 %}
+                                        <span class="badge-profit">+ {{ item.report.net_profit|rial_display }}</span>
+                                    {% elif item.report.net_profit == 0 %}
+                                        <span class="badge-neutral">{{ item.report.net_profit|rial_display }}</span>
+                                    {% else %}
+                                        <span class="badge-loss">{{ item.report.net_profit|rial_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'matches:financial_report' item.match.id %}" class="btn-action btn-view" title="مشاهده جزئیات">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'matches:export_financial_report_pdf' item.match.id %}" class="btn-action btn-pdf" title="دانلود PDF">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-file-invoice"></i>
+                    <h4>هیچ گزارش مالی وجود ندارد</h4>
+                    <p>برای مشاهده گزارش، ابتدا یک مسابقه ایجاد کنید و بلیط‌ها را صادر کنید.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if reports %}
+            <div class="pagination-container">
+                <div class="pagination-info">
+                    نمایش {{ reports|length }} گزارش
+                </div>
+                <!-- در صورت نیاز به pagination، اینجا اضافه کنید -->
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

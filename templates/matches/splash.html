@@ -6,6 +6,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>سپاهان تیکت</title>
+    <!-- فونت وزیرمتن -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
     <style>
         /* ===== تنظیمات کلی ===== */
         * {
@@ -15,41 +17,30 @@
         }
 
         body {
-            font-family: 'Tahoma', 'Arial', sans-serif;
+            font-family: 'Vazirmatn', 'Tahoma', 'Arial', sans-serif;
             direction: rtl;
             height: 100vh;
             overflow: hidden;
-            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 40%, #0f0f23 100%);
+            background: url('https://static.footba11.net/images/contents/728882.jpg') no-repeat center center fixed;
+            background-size: cover;
             display: flex;
             justify-content: center;
             align-items: center;
             position: relative;
         }
 
-        /* ===== پس‌زمینه با ستاره‌ها ===== */
-        .stars {
+        /* ===== اوورلی تیره ===== */
+        body::before {
+            content: '';
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none;
-            overflow: hidden;
-        }
-
-        .star {
-            position: absolute;
-            width: 3px;
-            height: 3px;
-            background: #fff;
-            border-radius: 50%;
-            animation: twinkle 2s infinite alternate;
-            opacity: 0.3;
-        }
-
-        @keyframes twinkle {
-            0% { opacity: 0.2; transform: scale(0.8); }
-            100% { opacity: 1; transform: scale(1.2); }
+            background: rgba(10, 10, 30, 0.75);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 1;
         }
 
         /* ===== کانتینر اصلی ===== */
@@ -58,6 +49,7 @@
             z-index: 10;
             text-align: center;
             animation: fadeInUp 1.2s ease forwards;
+            padding: 20px;
         }
 
         @keyframes fadeInUp {
@@ -99,6 +91,7 @@
             letter-spacing: 2px;
             text-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
             margin-bottom: 8px;
+            font-family: 'Vazirmatn', sans-serif;
         }
 
         .splash-title span {
@@ -112,6 +105,7 @@
             letter-spacing: 4px;
             margin-bottom: 40px;
             font-weight: 300;
+            font-family: 'Vazirmatn', sans-serif;
         }
 
         /* ===== نوار لودینگ ===== */
@@ -146,6 +140,7 @@
             font-size: 12px;
             letter-spacing: 2px;
             font-weight: 300;
+            font-family: 'Vazirmatn', sans-serif;
         }
 
         /* ===== فوتر ===== */
@@ -159,16 +154,25 @@
             letter-spacing: 1px;
             z-index: 10;
             font-weight: 300;
+            font-family: 'Vazirmatn', sans-serif;
+            text-align: center;
+            padding: 0 20px;
         }
 
         /* ===== واکنش‌گرایی ===== */
         @media (max-width: 768px) {
+            body {
+                background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 40%, #0f0f23 100%);
+            }
+            body::before {
+                background: rgba(10, 10, 30, 0.85);
+            }
             .logo-wrapper img {
                 width: 90px;
                 height: 90px;
             }
             .splash-title {
-                font-size: 32px;
+                font-size: 28px;
             }
             .splash-subtitle {
                 font-size: 13px;
@@ -185,7 +189,7 @@
                 height: 70px;
             }
             .splash-title {
-                font-size: 26px;
+                font-size: 22px;
             }
             .splash-subtitle {
                 font-size: 11px;
@@ -193,13 +197,14 @@
             .loading-bar {
                 width: 140px;
             }
+            .splash-footer {
+                font-size: 10px;
+                bottom: 15px;
+            }
         }
     </style>
 </head>
 <body>
-
-    <!-- ===== ستاره‌های پس‌زمینه ===== -->
-    <div class="stars" id="stars"></div>
 
     <!-- ===== کانتینر اصلی ===== -->
     <div class="splash-container">
@@ -212,10 +217,10 @@
 
         <!-- عنوان -->
         <div class="splash-title">
-            سپاهان <span>تیکت</span>
+             <span>فولاد مبارکه سپاهان</span>
         </div>
         <div class="splash-subtitle">
-            ⚡ سیستم فروش بلیط الکترونیک ⚡
+           سامانه فروش بلیط آنلاین
         </div>
 
         <!-- نوار لودینگ -->
@@ -228,29 +233,11 @@
 
     <!-- ===== فوتر ===== -->
     <div class="splash-footer">
-        © ۱۴۰۴ باشگاه فرهنگی ورزشی فولاد مبارکه سپاهان
+        © ۱۴۰۵ باشگاه فرهنگی ورزشی فولاد مبارکه سپاهان
     </div>
 
     <!-- ===== اسکریپت‌ها ===== -->
     <script>
-        // ===== ایجاد ستاره‌ها =====
-        (function createStars() {
-            const container = document.getElementById('stars');
-            const count = 120;
-            for (let i = 0; i < count; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                const size = Math.random() * 3 + 1;
-                star.style.width = size + 'px';
-                star.style.height = size + 'px';
-                star.style.left = Math.random() * 100 + '%';
-                star.style.top = Math.random() * 100 + '%';
-                star.style.animationDelay = Math.random() * 3 + 's';
-                star.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
-                container.appendChild(star);
-            }
-        })();
-
         // ===== تایمر ۳ ثانیه =====
         setTimeout(function() {
             // تنظیم session برای عدم نمایش مجدد

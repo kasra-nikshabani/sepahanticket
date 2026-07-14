@@ -56,4 +56,14 @@ urlpatterns = [
     path('splash/', views.splash, name='splash'),
     path('api/set-splash-seen/', views.set_splash_seen, name='set_splash_seen'),
 
-]
+    # گزارش مالی
+    path('financial-report/<int:match_id>/', views.match_financial_report, name='financial_report'),
+    path('add-cost/<int:match_id>/', views.add_match_cost, name='add_match_cost'),
+    path('add-revenue/<int:match_id>/', views.add_match_revenue, name='add_match_revenue'),
+    path('delete-cost/<int:cost_id>/', views.delete_match_cost, name='delete_match_cost'),
+    path('delete-revenue/<int:revenue_id>/', views.delete_match_revenue, name='delete_match_revenue'),
+    path('financial-report-list/', views.match_financial_list, name='match_financial_list'),
+    path('export-financial-report/<int:match_id>/', views.export_financial_report_pdf,
+         name='export_financial_report_pdf'),
+    path('edit-cost/<int:cost_id>/', views.edit_match_cost, name='edit_match_cost'),
+    path('edit-revenue/<int:revenue_id>/', views.edit_match_revenue, name='edit_match_revenue'), ]

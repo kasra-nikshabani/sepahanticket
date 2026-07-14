@@ -1,154 +1,115 @@
+<!-- templates/admin/matches/match_report.html -->
 {% extends "admin/base_site.html" %}
-{% load currency_filters %}
-{% load i18n static %}
+{% load static %}
 
-{% block extrastyle %}
-  {{ block.super }}
-  <style>
-    .report-container {
-      margin: 20px;
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    .report-title {
-      font-size: 24px;
-      font-weight: bold;
-      margin-bottom: 20px;
-      color: #1A1A2E;
-    }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      margin: 20px 0;
-    }
-    .stat-card {
-      background: #f8f9fa;
-      padding: 15px;
-      border-radius: 8px;
-      border-right: 4px solid #D4AF37;
-    }
-    .stat-card .number {
-      font-size: 28px;
-      font-weight: 700;
-      color: #1A1A2E;
-    }
-    .stat-card .label {
-      color: #6c757d;
-      font-size: 14px;
-    }
-    .block-stats {
-      margin-top: 25px;
-    }
-    .block-stats table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    .block-stats th {
-      background: #f8f9fa;
-      padding: 10px;
-      text-align: right;
-      border-bottom: 2px solid #D4AF37;
-    }
-    .block-stats td {
-      padding: 8px 10px;
-      border-bottom: 1px solid #e8eaed;
-    }
-    .block-stats tr:hover { background: #f5f5f5; }
-    .back-link {
-      display: inline-block;
-      margin-bottom: 15px;
-      color: #007bff;
-      text-decoration: none;
-    }
-    .back-link:hover { text-decoration: underline; }
-    .btn { 
-      display: inline-block; 
-      padding: 6px 16px; 
-      border-radius: 4px; 
-      text-decoration: none; 
-      color: #fff; 
-      margin: 0 5px;
-    }
-    .btn-success { background: #28a745; }
-    .btn-warning { background: #ffc107; color: #212529; }
-  </style>
-{% endblock %}
+{% block title %}گزارش مسابقه {{ match.home_team }} vs {{ match.away_team }}{% endblock %}
 
 {% block content %}
-<div class="report-container">
-  <a href="{% url 'admin:matches_match_report' %}" class="back-link">← بازگشت به گزارش کلی</a>
-  <h1 class="report-title">📊 گزارش مسابقه: {{ match.home_team }} vs {{ match.away_team }}</h1>
-  <p><strong>ورزشگاه:</strong> {{ match.stadium.name }} | <strong>تاریخ:</strong> {{ match.date_time|date:"Y/m/d H:i" }}</p>
+<div class="container mt-4">
+    <h1>گزارش مسابقه: {{ match.home_team }} vs {{ match.away_team }}</h1>
+    <p>تاریخ: {{ match.date_time|date:"Y/m/d H:i" }}</p>
+    <p>ورزشگاه: {{ match.stadium.name }}</p>
 
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="number">{{ total_tickets }}</div>
-      <div class="label">جمع بلیط‌ها</div>
-    </div>
-    <div class="stat-card" style="border-color:#28a745;">
-      <div class="number">{{ total_sold }}</div>
-      <div class="label">بلیط فروخته‌شده</div>
-    </div>
-    <div class="stat-card" style="border-color:#ffc107;">
-      <div class="number">{{ total_vip }}</div>
-      <div class="label">بلیط VIP</div>
-    </div>
-    <div class="stat-card" style="border-color:#17a2b8;">
-      <div class="number">{{ total_revenue|floatformat:0|default:"0" }}</div>
-      <div class="label">درآمد کل (تومان)</div>
-    </div>
-    <div class="stat-card" style="border-color:#dc3545;">
-      <div class="number">{{ occupied }}</div>
-      <div class="label">صندلی‌های اشغال‌شده</div>
-    </div>
-    <div class="stat-card" style="border-color:#6c757d;">
-      <div class="number">{{ occupancy_percent }}%</div>
-      <div class="label">درصد اشغال صندلی‌ها</div>
-    </div>
-  </div>
-
-  {% if block_stats %}
-  <div class="block-stats">
-    <h3>جزئیات بلوک‌ها</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>نام بلوک</th>
-          <th>کل صندلی‌ها</th>
-          <th>اشغال‌شده</th>
-          <th>خالی</th>
-          <th>درصد اشغال</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for block in block_stats %}
-        <tr>
-          <td><strong>{{ block.block.name }}</strong></td>
-          <td>{{ block.total }}</td>
-          <td>{{ block.occupied }}</td>
-          <td>{{ block.available }}</td>
-          <td>
-            <div style="display:flex; align-items:center; gap:8px;">
-              <span>{{ block.occupancy }}%</span>
-              <div style="width:80px; height:6px; background:#e8eaed; border-radius:3px; overflow:hidden;">
-                <div style="width:{{ block.occupancy }}%; height:100%; background:linear-gradient(90deg, #D4AF37, #B8960F); border-radius:3px;"></div>
-              </div>
+    <!-- آمار کلی -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5>تعداد بلیط فروخته شده</h5>
+                    <h2>{{ total_sold }}</h2>
+                </div>
             </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% endif %}
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h5>بلیط VIP</h5>
+                    <h2>{{ total_vip }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5>مجموع بلیط</h5>
+                    <h2>{{ total_tickets }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5>درآمد کل</h5>
+                    <h2>{{ total_revenue|floatformat:0 }} تومان</h2>
+                </div>
+            </div>
+        </div>
+    </div>
 
-  <div style="margin-top: 30px;">
-    <h3>عملیات</h3>
-    <a href="{% url 'admin:export_tickets' match.id %}" class="btn btn-success">📥 دانلود اکسل فروش</a>
-    <a href="{% url 'admin:export_vip_tickets' match.id %}" class="btn btn-warning">📥 دانلود اکسل VIP</a>
-  </div>
+    <!-- آمار اشغال -->
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card bg-secondary text-white">
+                <div class="card-body">
+                    <h5>ظرفیت کل</h5>
+                    <h2>{{ total_match_seats }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5>صندلی‌های اشغال شده</h5>
+                    <h2>{{ occupied }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5>درصد اشغال</h5>
+                    <h2>{{ occupancy_percent }}%</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- آمار بلوک‌ها -->
+    <div class="mt-4">
+        <h3>آمار بلوک‌ها</h3>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>بلوک</th>
+                    <th>کل صندلی‌ها</th>
+                    <th>اشغال شده</th>
+                    <th>آزاد</th>
+                    <th>درصد اشغال</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for block in block_stats %}
+                <tr>
+                    <td>{{ block.block.name }}</td>
+                    <td>{{ block.total }}</td>
+                    <td>{{ block.occupied }}</td>
+                    <td>{{ block.available }}</td>
+                    <td>{{ block.occupancy }}%</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">هیچ بلوکی یافت نشد.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- دکمه بازگشت -->
+    <div class="mt-4">
+        <a href="{% url 'admin:matches_match_changelist' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-right"></i> بازگشت به لیست مسابقات
+        </a>
+    </div>
 </div>
 {% endblock %}

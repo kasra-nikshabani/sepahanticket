@@ -1,6 +1,7 @@
 from django import forms
 from .models import Block
 from .models import Match, Stadium
+from .models import MatchCost, MatchRevenue
 
 
 class BlockForm(forms.ModelForm):
@@ -55,4 +56,36 @@ class StadiumForm(forms.ModelForm):
         }
         labels = {
             'image': 'تصویر ورزشگاه',
+        }
+
+
+class MatchCostForm(forms.ModelForm):
+    class Meta:
+        model = MatchCost
+        fields = ['description', 'amount']
+        widgets = {
+            'description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'توضیح هزینه'
+            }),
+            'amount': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'مبلغ به ریال'
+            }),
+        }
+
+
+class MatchRevenueForm(forms.ModelForm):
+    class Meta:
+        model = MatchRevenue
+        fields = ['description', 'amount']
+        widgets = {
+            'description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'توضیح درآمد'
+            }),
+            'amount': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'مبلغ به ریال'
+            }),
         }

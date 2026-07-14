@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block title %}ویرایش هزینه - {{ match.home_team }} vs {{ match.away_team }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h4><i class="fas fa-edit"></i> ویرایش هزینه</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        <strong>مسابقه:</strong> {{ match.home_team }} 🆚 {{ match.away_team }}
+                    </p>
+                    <hr>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">توضیح هزینه</label>
+                            <input type="text" name="description" class="form-control" 
+                                   value="{{ cost.description }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">مبلغ (ریال)</label>
+                            <input type="number" name="amount" class="form-control" 
+                                   value="{{ cost.amount }}" min="1" required>
+                            <small class="text-muted">مبلغ را به ریال وارد کنید</small>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-save"></i> ذخیره تغییرات
+                            </button>
+                            <a href="{% url 'matches:financial_report' match.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i> بازگشت
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

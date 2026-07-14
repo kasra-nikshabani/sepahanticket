@@ -16,6 +16,20 @@ from tickets.reservation import SeatReservation
 from .forms import BlockForm, MatchForm, StadiumForm
 from .models import Match, Row, Seat, MatchSeat, Block, Stadium
 
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib import messages
+from django.db import models
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from weasyprint import HTML
+import tempfile
+import os
+from django.conf import settings
+from .models import Match, MatchCost, MatchRevenue, MatchFinancialReport
+from .forms import MatchCostForm, MatchRevenueForm
+from tickets.models import Ticket
+
 
 # ============================================================
 #  ویوهای عمومی (کاربران عادی)
@@ -1557,3 +1571,224 @@ def admin_stadium_configure(request, stadium_id=None):
         'blocks_data': blocks_data,
     }
     return render(request, 'matches/admin_stadium_configure.html', context)
+
+
+@staff_member_required
+def match_financial_report(request, match_id):
+    """گزارش مالی یک مسابقه"""
+    match = get_object_or_404(Match, id=match_id)
+
+    report, created = MatchFinancialReport.objects.get_or_create(match=match)
+    report.calculate()
+
+    costs = MatchCost.objects.filter(match=match).order_by('-created_at')
+    revenues = MatchRevenue.objects.filter(match=match).order_by('-created_at')
+
+    tickets = Ticket.objects.filter(match=match, status='paid')
+    vip_tickets = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued'])
+    used_tickets = Ticket.objects.filter(match=match, is_used=True)
+
+    context = {
+        'match': match,
+        'report': report,
+        'costs': costs,
+        'revenues': revenues,
+        'tickets': tickets,
+        'vip_tickets': vip_tickets,
+        'used_tickets': used_tickets,
+        'total_tickets': tickets.count() + vip_tickets.count(),
+    }
+    return render(request, 'matches/financial_report.html', context)
+
+
+@staff_member_required
+def match_financial_list(request):
+    """لیست گزارش‌های مالی همه مسابقات"""
+    matches = Match.objects.filter(is_active=True).order_by('-date_time')
+
+    reports = []
+    for match in matches:
+        report, created = MatchFinancialReport.objects.get_or_create(match=match)
+        report.calculate()
+        reports.append({
+            'match': match,
+            'report': report,
+        })
+
+    context = {
+        'reports': reports,
+        'total_matches': matches.count(),
+    }
+    return render(request, 'matches/financial_report_list.html', context)
+
+
+# ============================================================
+#  مدیریت هزینه‌ها
+# ============================================================
+
+@staff_member_required
+def add_match_cost(request, match_id):
+    """افزودن هزینه به مسابقه"""
+    match = get_object_or_404(Match, id=match_id)
+
+    if request.method == 'POST':
+        form = MatchCostForm(request.POST)
+        if form.is_valid():
+            cost = form.save(commit=False)
+            cost.match = match
+            cost.save()
+            messages.success(request, f'هزینه "{cost.description}" با موفقیت اضافه شد.')
+            return redirect('matches:financial_report', match_id=match.id)
+    else:
+        form = MatchCostForm()
+
+    return render(request, 'matches/add_cost.html', {
+        'form': form,
+        'match': match,
+        'type': 'cost'
+    })
+
+
+@staff_member_required
+def edit_match_cost(request, cost_id):
+    """ویرایش هزینه"""
+    cost = get_object_or_404(MatchCost, id=cost_id)
+    match = cost.match
+
+    if request.method == 'POST':
+        form = MatchCostForm(request.POST, instance=cost)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'هزینه با موفقیت ویرایش شد.')
+            return redirect('matches:financial_report', match_id=match.id)
+    else:
+        form = MatchCostForm(instance=cost)
+
+    return render(request, 'matches/edit_cost.html', {
+        'form': form,
+        'match': match,
+        'cost': cost
+    })
+
+
+@staff_member_required
+def delete_match_cost(request, cost_id):
+    """حذف هزینه"""
+    cost = get_object_or_404(MatchCost, id=cost_id)
+    match_id = cost.match.id
+
+    if request.method == 'POST':
+        cost.delete()
+        messages.success(request, 'هزینه با موفقیت حذف شد.')
+        return redirect('matches:financial_report', match_id=match_id)
+
+    return render(request, 'matches/delete_confirm.html', {
+        'object': cost,
+        'type': 'هزینه'
+    })
+
+
+# ============================================================
+#  مدیریت درآمدها
+# ============================================================
+
+@staff_member_required
+def add_match_revenue(request, match_id):
+    """افزودن درآمد به مسابقه"""
+    match = get_object_or_404(Match, id=match_id)
+
+    if request.method == 'POST':
+        form = MatchRevenueForm(request.POST)
+        if form.is_valid():
+            revenue = form.save(commit=False)
+            revenue.match = match
+            revenue.save()
+            messages.success(request, f'درآمد "{revenue.description}" با موفقیت اضافه شد.')
+            return redirect('matches:financial_report', match_id=match.id)
+    else:
+        form = MatchRevenueForm()
+
+    return render(request, 'matches/add_revenue.html', {
+        'form': form,
+        'match': match,
+        'type': 'revenue'
+    })
+
+
+@staff_member_required
+def edit_match_revenue(request, revenue_id):
+    """ویرایش درآمد"""
+    revenue = get_object_or_404(MatchRevenue, id=revenue_id)
+    match = revenue.match
+
+    if request.method == 'POST':
+        form = MatchRevenueForm(request.POST, instance=revenue)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'درآمد با موفقیت ویرایش شد.')
+            return redirect('matches:financial_report', match_id=match.id)
+    else:
+        form = MatchRevenueForm(instance=revenue)
+
+    return render(request, 'matches/edit_revenue.html', {
+        'form': form,
+        'match': match,
+        'revenue': revenue
+    })
+
+
+@staff_member_required
+def delete_match_revenue(request, revenue_id):
+    """حذف درآمد"""
+    revenue = get_object_or_404(MatchRevenue, id=revenue_id)
+    match_id = revenue.match.id
+
+    if request.method == 'POST':
+        revenue.delete()
+        messages.success(request, 'درآمد با موفقیت حذف شد.')
+        return redirect('matches:financial_report', match_id=match_id)
+
+    return render(request, 'matches/delete_confirm.html', {
+        'object': revenue,
+        'type': 'درآمد'
+    })
+
+
+# ============================================================
+#  خروجی PDF
+# ============================================================
+
+@staff_member_required
+def export_financial_report_pdf(request, match_id):
+    """خروجی PDF گزارش مالی مسابقه"""
+    match = get_object_or_404(Match, id=match_id)
+    report, created = MatchFinancialReport.objects.get_or_create(match=match)
+    report.calculate()
+
+    tickets = Ticket.objects.filter(match=match, status='paid')
+    vip_tickets = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued'])
+    used_tickets = Ticket.objects.filter(match=match, is_used=True)
+    costs = MatchCost.objects.filter(match=match)
+    revenues = MatchRevenue.objects.filter(match=match)
+
+    context = {
+        'match': match,
+        'report': report,
+        'tickets': tickets,
+        'vip_tickets': vip_tickets,
+        'used_tickets': used_tickets,
+        'costs': costs,
+        'revenues': revenues,
+        'total_tickets': tickets.count() + vip_tickets.count(),
+        'today': timezone.now(),
+    }
+
+    # ===== تنظیم base_url برای دسترسی به تصاویر =====
+    html_string = render_to_string('matches/financial_report_pdf.html', context)
+    html = HTML(string=html_string, base_url=settings.MEDIA_ROOT)  # ← تغییر به MEDIA_ROOT
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="گزارش_مالی_{match.home_team}_vs_{match.away_team}.pdf"'
+
+    html.write_pdf(target=response)
+    return response

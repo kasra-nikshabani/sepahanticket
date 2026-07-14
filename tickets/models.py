@@ -1,16 +1,23 @@
 # tickets/models.py
 import base64
 import qrcode
+import random  # ← اصلاح
+import string  # ← اصلاح
 from io import BytesIO
 from django.core.files import File
 from django.db import models
 from django.template.loader import render_to_string
+from django.utils import timezone
 from weasyprint import HTML
 import tempfile
 import os
 from django.conf import settings
 
+from accounts.models import User
+from wallet.models import Transaction as WalletTransaction
 
+
+# tickets/models.py
 class Ticket(models.Model):
     TICKET_STATUS = (
         ('pending', 'در انتظار پرداخت'),
@@ -19,6 +26,15 @@ class Ticket(models.Model):
         ('admin_assigned', 'تخصیص توسط ادمین'),
         ('vip_issued', 'صادرشده توسط کاربر ویژه'),
     )
+    order = models.ForeignKey(
+        'Order',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tickets',
+        help_text='سفارش مربوط به این بلیط'
+    )
+    price = models.BigIntegerField(default=0, verbose_name="قیمت (ریال)")
 
     # ===== فیلدهای ارتباطی =====
     user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, verbose_name="کاربر")
@@ -60,11 +76,15 @@ class Ticket(models.Model):
         return ''.join(random.choices(string.digits, k=12))
 
     def generate_qr_code(self):
+        import qrcode
+        from io import BytesIO
+        from django.core.files import File
+
         ticket_data = f"Ticket:{self.ticket_number}|Match:{self.match.id}|Seat:{self.seat.id}|User:{self.user.username}"
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=15,  # ← از ۱۰ به ۱۵ یا ۲۰ افزایش دهید
+            box_size=15,
             border=4,
         )
         qr.add_data(ticket_data)
@@ -77,11 +97,18 @@ class Ticket(models.Model):
         self.qr_code.save(f'ticket_{self.ticket_number}.png', File(buffer), save=False)
 
     def generate_pdf(self):
-        """تولید فایل PDF با QR Code جاسازی‌شده به صورت Base64"""
         import logging
+        import base64
+        import os
+        import tempfile
+        from django.template.loader import render_to_string
+        from django.conf import settings
+        from weasyprint import HTML
+        from django.core.files import File
+
         logger = logging.getLogger(__name__)
 
-        team_type = self.seat.row.zone_label
+        team_type = self.seat.row.zone_label if self.seat and self.seat.row else ""
 
         qr_image_base64 = None
         if self.qr_code:
@@ -103,7 +130,7 @@ class Ticket(models.Model):
             'ticket': self,
             'match': self.match,
             'seat': self.seat,
-            'team_type': team_type,  # ← اینجا
+            'team_type': team_type,
             'user': self.user,
             'qr_base64': qr_image_base64,
         }
@@ -118,15 +145,23 @@ class Ticket(models.Model):
             os.remove(tmp_file.name)
 
     def save(self, *args, **kwargs):
+        import random
+        import string
+
+        # ===== ۱. تولید شماره بلیط =====
         if not self.ticket_number:
             self.ticket_number = self.generate_ticket_number()
 
+        # ===== ۲. محاسبه قیمت از بلوک صندلی =====
+        if not self.price and self.seat and self.seat.row and self.seat.row.block:
+            self.price = self.seat.row.block.price or 0
+
         is_new = self.pk is None
 
-        # ذخیره اولیه برای دریافت id
+        # ===== ۳. ذخیره اولیه =====
         super().save(*args, **kwargs)
 
-        # تولید QR و PDF فقط در صورت نیاز
+        # ===== ۴. تولید QR و PDF =====
         if is_new or not self.qr_code:
             self.generate_qr_code()
             super().save(update_fields=['qr_code'])
@@ -143,7 +178,6 @@ class Ticket(models.Model):
 
     def __str__(self):
         return f"بلیط {self.ticket_number} - {self.user.username}"
-
 
 class VIPQuota(models.Model):
     """تخصیص ظرفیت صدور بلیط به کاربران ویژه برای هر مسابقه"""
@@ -165,15 +199,12 @@ class VIPQuota(models.Model):
         return f"{self.user.username} - {self.match} - باقی‌مانده: {self.remaining}"
 
 
-from matches.models import Match
-
-
 class DiscountCode(models.Model):
     code = models.CharField(max_length=20, unique=True, verbose_name="کد تخفیف")
     match = models.ForeignKey(
-        Match,
+        'matches.Match',
         on_delete=models.CASCADE,
-        null=True,  # ← اضافه شد
+        null=True,
         blank=True,
         verbose_name="مسابقه",
         help_text="این کد تخفیف فقط برای این مسابقه معتبر است."
@@ -208,3 +239,85 @@ class DiscountCode(models.Model):
         if self.block and block and self.block != block:
             return False, "این کد تخفیف برای این بلوک معتبر نیست"
         return True, "معتبر"
+
+
+class Transaction(WalletTransaction):
+    """
+    Proxy Model برای نمایش تراکنش‌ها در بخش tickets
+    """
+    class Meta:
+        proxy = True
+        verbose_name = 'تراکنش'
+        verbose_name_plural = 'تراکنش‌ها (Tickets)'
+
+
+class Order(models.Model):
+    """
+    مدل ثبت سفارش/فاکتور برای هر خرید بلیط
+    """
+    PAYMENT_METHODS = (
+        ('wallet', 'کیف پول'),
+        ('zibal', 'درگاه زیبال'),
+        ('mixed', 'ترکیبی (کیف پول + زیبال)'),
+        ('vip', 'صدور VIP'),
+        ('admin', 'تخصیص ادمین'),
+    )
+
+    ORDER_STATUS = (
+        ('pending', 'در انتظار پرداخت'),
+        ('paid', 'پرداخت شده'),
+        ('failed', 'ناموفق'),
+        ('cancelled', 'لغو شده'),
+    )
+
+    # اطلاعات اصلی
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    match = models.ForeignKey('matches.Match', on_delete=models.CASCADE, related_name='orders')
+    order_number = models.CharField(max_length=50, unique=True, editable=False)
+
+    # اطلاعات مالی
+    subtotal = models.BigIntegerField(default=0, help_text='مبلغ کل قبل از تخفیف (تومان)')
+    discount_percent = models.IntegerField(default=0, help_text='درصد تخفیف')
+    discount_amount = models.BigIntegerField(default=0, help_text='مبلغ تخفیف (تومان)')
+    total_amount = models.BigIntegerField(default=0, help_text='مبلغ نهایی (تومان)')
+
+    # اطلاعات کیف پول
+    wallet_amount = models.BigIntegerField(default=0, help_text='مبلغ پرداخت شده از کیف پول (تومان)')
+    wallet_balance_before = models.BigIntegerField(default=0, help_text='موجودی کیف پول قبل از خرید')
+    wallet_balance_after = models.BigIntegerField(default=0, help_text='موجودی کیف پول بعد از خرید')
+
+    # اطلاعات پرداخت
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default='wallet')
+    payment_status = models.CharField(max_length=20, choices=ORDER_STATUS, default='pending')
+    track_id = models.CharField(max_length=100, blank=True, null=True, help_text='شناسه تراکنش درگاه')
+
+    # اطلاعات تخفیف
+    discount_code = models.CharField(max_length=50, blank=True, null=True, help_text='کد تخفیف استفاده شده')
+    discount_code_id = models.IntegerField(blank=True, null=True, help_text='شناسه کد تخفیف')
+
+    # اطلاعات خریدار
+    full_name = models.CharField(max_length=200, blank=True, help_text='نام خریدار')
+    phone_number = models.CharField(max_length=11, blank=True, help_text='شماره تلفن خریدار')
+
+    # زمان‌ها
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    paid_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'سفارش'
+        verbose_name_plural = 'سفارش‌ها'
+
+    def save(self, *args, **kwargs):
+        if not self.order_number:
+            self.order_number = f"ORD-{timezone.now().strftime('%Y%m%d')}-{''.join(random.choices(string.ascii_uppercase + string.digits, k=6))}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.order_number} - {self.user.username} - {self.total_amount:,} تومان"
+
+    @property
+    def ticket_count(self):
+        """تعداد بلیط‌های این سفارش"""
+        return self.tickets.count()

@@ -1,15 +1,16 @@
+# wallet/views.py
 from django.db.models import Sum
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
 from decimal import Decimal
-
 from django.utils import timezone
+from django.views.decorators.cache import never_cache
 
 from .models import Wallet, Transaction
 
-
+@never_cache
 @login_required
 def wallet_dashboard(request):
     """نمایش کیف پول و تاریخچه تراکنش‌ها با آمار دقیق"""
@@ -18,7 +19,11 @@ def wallet_dashboard(request):
         return redirect('matches:home')
 
     wallet, created = Wallet.objects.get_or_create(user=request.user)
-    transactions = Transaction.objects.filter(user=request.user).order_by('-created_at')[:20]
+
+    # ===== دریافت تراکنش‌های اخیر (بدون کش) =====
+    transactions = Transaction.objects.filter(
+        user=request.user
+    ).select_related('user').order_by('-created_at')[:50]  # ← ۵۰ تراکنش اخیر
 
     # ===== محاسبه آمار دقیق =====
     total_deposits = Transaction.objects.filter(
@@ -31,6 +36,11 @@ def wallet_dashboard(request):
         transaction_type='withdraw'
     ).aggregate(total=Sum('amount'))['total'] or 0
 
+    total_ticket_purchases = Transaction.objects.filter(
+        user=request.user,
+        transaction_type='ticket_purchase'
+    ).aggregate(total=Sum('amount'))['total'] or 0
+
     total_refunds = Transaction.objects.filter(
         user=request.user,
         transaction_type='refund'
@@ -40,15 +50,15 @@ def wallet_dashboard(request):
 
     context = {
         'wallet': wallet,
+        'wallet_balance': wallet.balance,
         'transactions': transactions,
         'total_deposits': total_deposits,
         'total_withdrawals': total_withdrawals,
+        'total_ticket_purchases': total_ticket_purchases,
         'total_refunds': total_refunds,
         'total_transactions': total_transactions,
     }
     return render(request, 'wallet/dashboard.html', context)
-
-
 @login_required
 def wallet_charge(request):
     """شارژ کیف پول"""

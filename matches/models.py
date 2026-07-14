@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Sum
 from django.utils import timezone
 
 
@@ -9,6 +10,129 @@ from django.utils import timezone
 #         ('vip', 'VIP'),
 #         ('women', 'بانوان'),
 #     )
+class MatchCost(models.Model):
+    """هزینه‌های هر مسابقه"""
+    match = models.ForeignKey('Match', on_delete=models.CASCADE, related_name='costs')
+    description = models.CharField(max_length=255, verbose_name="توضیح هزینه")
+    amount = models.BigIntegerField(verbose_name="مبلغ (ریال)")  # ← به ریال
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "هزینه مسابقه"
+        verbose_name_plural = "هزینه‌های مسابقه"
+
+    def __str__(self):
+        return f"{self.match} - {self.description} - {self.amount:,} ریال"
+
+
+class MatchRevenue(models.Model):
+    """درآمدهای اضافی هر مسابقه (غیر از فروش بلیط)"""
+    match = models.ForeignKey('Match', on_delete=models.CASCADE, related_name='revenues')
+    description = models.CharField(max_length=255, verbose_name="توضیح درآمد")
+    amount = models.BigIntegerField(verbose_name="مبلغ (ریال)")  # ← به ریال
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "درآمد اضافی مسابقه"
+        verbose_name_plural = "درآمدهای اضافی مسابقه"
+
+    def __str__(self):
+        return f"{self.match} - {self.description} - {self.amount:,} ریال"
+
+
+class MatchFinancialReport(models.Model):
+    """گزارش مالی نهایی هر مسابقه"""
+    match = models.OneToOneField('Match', on_delete=models.CASCADE, related_name='financial_report')
+    total_ticket_revenue = models.BigIntegerField(default=0, verbose_name="درآمد فروش بلیط")
+    total_ticket_sold = models.IntegerField(default=0, verbose_name="تعداد بلیط فروخته شده")
+    total_vip_tickets = models.IntegerField(default=0, verbose_name="تعداد بلیط VIP")
+    total_used_tickets = models.IntegerField(default=0, verbose_name="تعداد بلیط استفاده شده")
+    total_wallet_usage = models.BigIntegerField(default=0, verbose_name="مبلغ استفاده شده از کیف پول")  # ← اضافه شد
+    total_costs = models.BigIntegerField(default=0, verbose_name="مجموع هزینه‌ها")
+    total_revenues = models.BigIntegerField(default=0, verbose_name="مجموع درآمدهای اضافی")
+    net_profit = models.BigIntegerField(default=0, verbose_name="سود خالص")
+    generated_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "گزارش مالی مسابقه"
+        verbose_name_plural = "گزارش‌های مالی مسابقات"
+
+    def __str__(self):
+        return f"گزارش مالی {self.match}"
+
+    # matches/models.py
+    def calculate(self):
+        """محاسبه گزارش مالی"""
+        from tickets.models import Ticket
+        from wallet.models import Transaction
+        from matches.models import MatchCost, MatchRevenue
+        from django.db.models import Sum
+
+        # ===== ۱. درآمد فروش بلیط =====
+        tickets = Ticket.objects.filter(match=self.match, status='paid')
+        total_ticket_revenue = sum(t.price for t in tickets if t.price) or 0
+
+        # ===== ۲. مصرف از کیف پول =====
+        # روش صحیح: فقط بلیط‌هایی که با کیف پول پرداخت شده‌اند
+        # یک بلیط با کیف پول پرداخت شده اگر تراکنش با reference_id برابر ticket_number داشته باشد
+        total_wallet_usage = 0
+        for ticket in tickets:
+            # بررسی وجود تراکنش کیف پول برای این بلیط
+            has_wallet_tx = Transaction.objects.filter(
+                transaction_type='ticket_purchase',
+                is_wallet=True,  # ← فقط تراکنش‌های کیف پول
+                user=ticket.user,
+                reference_id=ticket.ticket_number  # ← کلید اصلی: reference_id برابر ticket_number
+            ).exists()
+
+            if has_wallet_tx:
+                total_wallet_usage += ticket.price
+                print(f"  ✅ Ticket {ticket.ticket_number}: {ticket.price} ریال (کیف پول)")
+            else:
+                print(f"  ❌ Ticket {ticket.ticket_number}: {ticket.price} ریال (درگاه پرداخت)")
+
+        # ===== ۳. تعداد بلیط فروخته شده =====
+        total_ticket_sold = tickets.count()
+
+        # ===== ۴. بلیط‌های VIP =====
+        total_vip_tickets = Ticket.objects.filter(
+            match=self.match,
+            status__in=['admin_assigned', 'vip_issued']
+        ).count()
+
+        # ===== ۵. بلیط‌های استفاده شده =====
+        total_used_tickets = Ticket.objects.filter(
+            match=self.match,
+            is_used=True
+        ).count()
+
+        # ===== ۶. هزینه‌ها =====
+        total_costs = MatchCost.objects.filter(match=self.match).aggregate(total=Sum('amount'))['total'] or 0
+
+        # ===== ۷. درآمدهای اضافی =====
+        total_revenues = MatchRevenue.objects.filter(match=self.match).aggregate(total=Sum('amount'))['total'] or 0
+
+        # ===== ۸. سود خالص =====
+        net_profit = total_ticket_revenue + total_revenues - total_costs
+
+        # ذخیره در مدل
+        self.total_ticket_revenue = total_ticket_revenue
+        self.total_ticket_sold = total_ticket_sold
+        self.total_vip_tickets = total_vip_tickets
+        self.total_used_tickets = total_used_tickets
+        self.total_wallet_usage = total_wallet_usage
+        self.total_costs = total_costs
+        self.total_revenues = total_revenues
+        self.net_profit = net_profit
+        self.save()
+
+        return self
+
 
 class Stadium(models.Model):
     name = models.CharField(max_length=100, verbose_name="نام ورزشگاه")
@@ -19,6 +143,7 @@ class Stadium(models.Model):
         blank=True,
         verbose_name="تصویر ورزشگاه"
     )
+
     def __str__(self): return self.name
 
 
@@ -30,6 +155,7 @@ ZONE_CHOICES = (
     ('women', 'بانوان'),
     ('vip', 'VIP'),
 )
+
 
 # ============================================================
 #  مدل Block
@@ -69,6 +195,7 @@ class Block(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.get_zone_type_display()})"
+
 
 class Row(models.Model):
     block = models.ForeignKey(Block, on_delete=models.CASCADE, related_name='rows')
@@ -110,6 +237,7 @@ class Row(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class Seat(models.Model):
     row = models.ForeignKey(Row, on_delete=models.CASCADE, verbose_name="ردیف", related_name='seats')

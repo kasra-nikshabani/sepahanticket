@@ -1,0 +1,479 @@
+{% load currency_filters %}
+{% load jalali %}
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>گزارش مالی {{ match.home_team }} vs {{ match.away_team }}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Vazirmatn', 'IRANSans', 'Arial', sans-serif;
+            padding: 30px;
+            direction: rtl;
+            background: #ffffff;
+            color: #1A1A2E;
+            line-height: 1.6;
+        }
+
+        /* ===== هدر ===== */
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #D4AF37;
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+
+        .header .report-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1A1A2E;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .header .report-title .gold {
+            color: #D4AF37;
+        }
+
+        .header .match-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #D4AF37;
+            margin-bottom: 8px;
+        }
+
+        .header .match-info {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .header .match-info span {
+            margin: 0 8px;
+        }
+
+        .header .match-info .separator {
+            color: #ddd;
+        }
+
+        /* ===== نام تیم‌ها ===== */
+        .team-names {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 25px;
+            margin: 12px 0 8px 0;
+        }
+
+        .team-names .team {
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .team-names .team.home {
+            color: #28a745;
+        }
+
+        .team-names .team.away {
+            color: #dc3545;
+        }
+
+        .team-names .vs {
+            font-size: 20px;
+            font-weight: 700;
+            color: #999;
+        }
+
+        /* ===== خلاصه آماری ===== */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .summary-item {
+            background: #f8f9fa;
+            padding: 14px 10px;
+            text-align: center;
+            border-radius: 10px;
+            border: 1px solid #e8eaed;
+        }
+
+        .summary-item .label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .summary-item .value {
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .summary-item .value.gold {
+            color: #D4AF37;
+        }
+
+        .summary-item .value.green {
+            color: #28a745;
+        }
+
+        .summary-item .value.red {
+            color: #dc3545;
+        }
+
+        .summary-item .value.blue {
+            color: #007bff;
+        }
+
+        .summary-item .value.purple {
+            color: #6f42c1;
+        }
+
+        .summary-item .value.warning {
+            color: #856404;
+        }
+
+        .summary-item.bg-warning-light {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+
+        /* ===== سود خالص ===== */
+        .profit-box {
+            text-align: center;
+            padding: 18px 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 2px solid;
+        }
+
+        .profit-box.profit-positive {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .profit-box.profit-negative {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .profit-box.profit-neutral {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+
+        .profit-box .profit-label {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .profit-box .profit-value {
+            font-size: 28px;
+            font-weight: 800;
+            margin-top: 4px;
+        }
+
+        .profit-box .profit-sub {
+            font-size: 13px;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+
+        /* ===== بخش‌ها ===== */
+        .section-title {
+            background: #1A1A2E;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            margin: 20px 0 12px 0;
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title .icon {
+            color: #D4AF37;
+            font-size: 18px;
+        }
+
+        /* ===== جداول ===== */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        table th,
+        table td {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+
+        table th {
+            background: #f1f3f5;
+            font-weight: 700;
+            color: #1A1A2E;
+            border-bottom: 2px solid #D4AF37;
+        }
+
+        table tbody tr:nth-child(even) {
+            background: #fafbfc;
+        }
+
+        table tbody tr:hover {
+            background: #f0ece3;
+        }
+
+        table tfoot td {
+            font-weight: 700;
+            background: #f8f9fa;
+            border-top: 2px solid #D4AF37;
+        }
+
+        table tfoot .total-cost {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        table tfoot .total-revenue {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-muted {
+            color: #6c757d;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+            font-size: 14px;
+            background: #fafafa;
+            border-radius: 8px;
+            border: 1px dashed #ddd;
+        }
+
+        /* ===== فوتر ===== */
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            border-top: 1px solid #dee2e6;
+            padding-top: 15px;
+        }
+
+        .footer .footer-brand {
+            color: #D4AF37;
+            font-weight: 700;
+        }
+
+        /* ===== چاپ ===== */
+        @media print {
+            body {
+                padding: 15px;
+            }
+
+            .summary-grid {
+                page-break-inside: avoid;
+            }
+
+            .profit-box {
+                page-break-inside: avoid;
+            }
+
+            .section-title {
+                page-break-after: avoid;
+            }
+
+            table {
+                page-break-inside: auto;
+            }
+
+            table tbody tr {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== هدر ===== -->
+    <div class="header">
+        <div class="report-title">
+            📊 <span class="gold">گزارش مالی</span> مسابقه
+        </div>
+
+        <div class="match-title">
+            {{ match.home_team }} 🆚 {{ match.away_team }}
+        </div>
+
+{#        <div class="team-names">#}
+{#            <span class="team home">{{ match.home_team }}</span>#}
+{#            <span class="vs">⚽</span>#}
+{#            <span class="team away">{{ match.away_team }}</span>#}
+{#        </div>#}
+
+        <div class="match-info">
+            <span>📅 {{ match.date_time|to_jalali_full }}</span>
+            <span class="separator">|</span>
+            <span>🕐 {{ match.date_time|to_jalali_time }}</span>
+            <span class="separator">|</span>
+            <span>🏟 {{ match.stadium.name }}</span>
+        </div>
+
+        <div class="match-info" style="margin-top:4px; font-size:12px; color:#999;">
+            تاریخ چاپ: {{ today|to_jalali_full }}
+        </div>
+    </div>
+
+    <!-- ===== خلاصه آماری ===== -->
+    <div class="summary-grid">
+        <div class="summary-item">
+            <div class="label">تعداد بلیط فروخته شده</div>
+            <div class="value gold">{{ report.total_ticket_sold }}</div>
+        </div>
+        <div class="summary-item">
+            <div class="label">بلیط VIP</div>
+            <div class="value blue">{{ report.total_vip_tickets }}</div>
+        </div>
+        <div class="summary-item">
+            <div class="label">بلیط استفاده شده</div>
+            <div class="value purple">{{ report.total_used_tickets }}</div>
+        </div>
+        <div class="summary-item">
+            <div class="label">مجموع بلیط</div>
+            <div class="value">{{ total_tickets }}</div>
+        </div>
+    </div>
+
+    <!-- ===== خلاصه مالی ===== -->
+    <div class="summary-grid">
+        <div class="summary-item">
+            <div class="label">درآمد فروش بلیط</div>
+            <div class="value green">{{ report.total_ticket_revenue|rial_display }} ریال</div>
+        </div>
+        <div class="summary-item">
+            <div class="label">درآمدهای اضافی</div>
+            <div class="value green">{{ report.total_revenues|rial_display }} ریال</div>
+        </div>
+        <div class="summary-item bg-warning-light">
+            <div class="label">مصرف از کیف پول</div>
+            <div class="value warning">{{ report.total_wallet_usage|rial_display }} ریال</div>
+        </div>
+        <div class="summary-item">
+            <div class="label">مجموع هزینه‌ها</div>
+            <div class="value red">{{ report.total_costs|rial_display }} ریال</div>
+        </div>
+    </div>
+
+    <!-- ===== سود خالص ===== -->
+    <div class="profit-box {% if report.net_profit > 0 %}profit-positive{% elif report.net_profit < 0 %}profit-negative{% else %}profit-neutral{% endif %}">
+        <div class="profit-label">
+            📈 سود خالص
+        </div>
+        <div class="profit-value">{{ report.net_profit|rial_display }} ریال</div>
+        <div class="profit-sub">درآمد کل - هزینه کل</div>
+    </div>
+
+    <!-- ===== هزینه‌ها ===== -->
+    <div class="section-title">
+        <span class="icon">💰</span> هزینه‌ها
+    </div>
+    {% if costs %}
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:10%;">ردیف</th>
+                    <th style="width:55%;">توضیح</th>
+                    <th style="width:35%;">مبلغ (ریال)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cost in costs %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td style="text-align:right;">{{ cost.description }}</td>
+                        <td>{{ cost.amount|rial_display }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2" style="text-align:left;">مجموع هزینه‌ها</td>
+                    <td class="total-cost">{{ report.total_costs|rial_display }} ریال</td>
+                </tr>
+            </tfoot>
+        </table>
+    {% else %}
+        <div class="no-data">هیچ هزینه‌ای ثبت نشده است.</div>
+    {% endif %}
+
+    <!-- ===== درآمدهای اضافی ===== -->
+    <div class="section-title">
+        <span class="icon">📈</span> درآمدهای اضافی
+    </div>
+    {% if revenues %}
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:10%;">ردیف</th>
+                    <th style="width:55%;">توضیح</th>
+                    <th style="width:35%;">مبلغ (ریال)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for revenue in revenues %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td style="text-align:right;">{{ revenue.description }}</td>
+                        <td>{{ revenue.amount|rial_display }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2" style="text-align:left;">مجموع درآمدهای اضافی</td>
+                    <td class="total-revenue">{{ report.total_revenues|rial_display }} ریال</td>
+                </tr>
+            </tfoot>
+        </table>
+    {% else %}
+        <div class="no-data">هیچ درآمد اضافی ثبت نشده است.</div>
+    {% endif %}
+
+    <!-- ===== فوتر ===== -->
+    <div class="footer">
+        <p>
+            گزارش مالی مسابقه <span class="footer-brand">{{ match.home_team }}</span> 🆚 <span class="footer-brand">{{ match.away_team }}</span>
+        </p>
+        <p style="margin-top:4px;">
+            سیستم فروش بلیط سپاهان &copy; {{ today|date:"Y" }}
+        </p>
+    </div>
+
+</body>
+</html>

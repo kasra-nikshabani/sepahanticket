@@ -2,6 +2,7 @@
 {% load static %}
 {% load currency_filters %}
 {% block title %}کیف پول من{% endblock %}
+{% load wallet_filters %}
 
 {% block extra_css %}
     <style>
@@ -160,6 +161,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            flex-wrap: wrap;
         }
 
         .balance-card .balance-amount .currency {
@@ -341,6 +343,11 @@
             color: #721c24;
         }
 
+        .transaction-type.ticket_purchase {
+            background: #cce5ff;
+            color: #004085;
+        }
+
         .transaction-type.refund {
             background: #fff3cd;
             color: #856404;
@@ -356,6 +363,10 @@
 
         .transaction-amount.negative {
             color: #dc3545;
+        }
+
+        .transaction-amount.neutral {
+            color: #6c757d;
         }
 
         .empty-state {
@@ -381,6 +392,20 @@
             font-size: 16px;
         }
 
+        /* ===== مودال ===== */
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+        }
+
+        .modal-header {
+            border-radius: 20px 20px 0 0;
+        }
+
+        .modal-footer {
+            border-radius: 0 0 20px 20px;
+        }
+
         /* ===== واکنش‌گرایی ===== */
         @media (max-width: 768px) {
             .wallet-header .header-content {
@@ -399,7 +424,11 @@
             }
 
             .balance-card .balance-amount {
-                font-size: 36px;
+                font-size: 32px;
+            }
+
+            .balance-card .balance-amount .currency {
+                font-size: 16px;
             }
 
             .stats-grid {
@@ -427,7 +456,7 @@
             }
 
             .balance-card .balance-amount {
-                font-size: 28px;
+                font-size: 24px;
             }
 
             .balance-card {
@@ -436,6 +465,10 @@
 
             .wallet-header {
                 padding: 20px;
+            }
+
+            .modal-body .row.g-2 .col-6 {
+                padding: 4px;
             }
         }
     </style>
@@ -452,7 +485,6 @@
                     <span>کیف پول من</span>
                 </div>
                 <div class="header-actions">
-                    <!-- دکمه شارژ با زیبال -->
                     <a href="#" class="btn-charge" data-bs-toggle="modal" data-bs-target="#chargeModal">
                         <i class="fas fa-plus-circle"></i> شارژ کیف پول
                     </a>
@@ -467,8 +499,8 @@
         <div class="balance-card">
             <div class="balance-label"><i class="fas fa-coins"></i> موجودی کیف پول</div>
             <div class="balance-amount">
-                {% load currency_filters %}
-                {{ wallet.balance|to_rial }} ریال
+                {{ wallet.balance|rial_display }}
+                <span class="currency">ریال</span>
             </div>
             <div class="balance-updated">
                 <i class="fas fa-clock"></i>
@@ -480,18 +512,18 @@
         <div class="stats-grid">
             <div class="stat-card gold">
                 <span class="stat-icon"><i class="fas fa-wallet"></i></span>
-                <div class="stat-number">{{ wallet.balance|floatformat:0|default:"۰" }}</div>
-                <div class="stat-label">موجودی فعلی (تومان)</div>
+                <div class="stat-number">{{ wallet.balance|rial_display }}</div>
+                <div class="stat-label">موجودی فعلی (ریال)</div>
             </div>
             <div class="stat-card green">
                 <span class="stat-icon"><i class="fas fa-arrow-up"></i></span>
-                <div class="stat-number">{{ total_deposits|floatformat:0|default:"۰" }}</div>
-                <div class="stat-label">کل شارژها (تومان)</div>
+                <div class="stat-number">{{ total_deposits|rial_display }}</div>
+                <div class="stat-label">کل شارژها (ریال)</div>
             </div>
             <div class="stat-card red">
                 <span class="stat-icon"><i class="fas fa-arrow-down"></i></span>
-                <div class="stat-number">{{ total_withdrawals|floatformat:0|default:"۰" }}</div>
-                <div class="stat-label">کل برداشت‌ها (تومان)</div>
+                <div class="stat-number">{{ total_withdrawals|rial_display }}</div>
+                <div class="stat-label">کل برداشت‌ها (ریال)</div>
             </div>
             <div class="stat-card blue">
                 <span class="stat-icon"><i class="fas fa-exchange-alt"></i></span>
@@ -513,9 +545,9 @@
                         <tr>
                             <th><i class="fas fa-calendar-day"></i> تاریخ</th>
                             <th><i class="fas fa-tag"></i> نوع</th>
-                            <th><i class="fas fa-money-bill"></i> مبلغ</th>
+                            <th><i class="fas fa-money-bill"></i> مبلغ (ریال)</th>
                             <th><i class="fas fa-info-circle"></i> توضیحات</th>
-                            <th><i class="fas fa-wallet"></i> موجودی بعد</th>
+                            <th><i class="fas fa-wallet"></i> موجودی بعد (ریال)</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -531,6 +563,7 @@
                                         <i class="fas
                                             {% if tx.transaction_type == 'deposit' %}fa-arrow-up
                                             {% elif tx.transaction_type == 'withdraw' %}fa-arrow-down
+                                            {% elif tx.transaction_type == 'ticket_purchase' %}fa-ticket-alt
                                             {% else %}fa-undo{% endif %}">
                                         </i>
                                         {{ tx.get_transaction_type_display }}
@@ -539,13 +572,14 @@
                                 <td>
                                     <span class="transaction-amount
                                         {% if tx.transaction_type == 'deposit' %}positive
-                                        {% else %}negative{% endif %}">
-                                        {% if tx.transaction_type == 'deposit' %}+{% else %}-{% endif %}
-                                        {{ tx.amount|floatformat:0 }}
+                                        {% elif tx.transaction_type == 'withdraw' or tx.transaction_type == 'ticket_purchase' %}negative
+                                        {% else %}neutral{% endif %}">
+                                        {% if tx.transaction_type == 'deposit' %}+{% elif tx.transaction_type == 'withdraw' or tx.transaction_type == 'ticket_purchase' %}-{% endif %}
+                                        {{ tx.amount|rial_display }}
                                     </span>
                                 </td>
                                 <td>{{ tx.description|truncatechars:30 }}</td>
-                                <td>{{ tx.balance_after|floatformat:0 }}</td>
+                                <td>{{ tx.balance_after|rial_display }}</td>
                             </tr>
                         {% endfor %}
                         </tbody>
@@ -555,7 +589,7 @@
                         <i class="fas fa-receipt"></i>
                         <h4>هیچ تراکنشی انجام نشده است</h4>
                         <p>کیف پول شما خالی است. برای شروع، کیف پول خود را شارژ کنید.</p>
-                        <a href="{% url 'wallet:charge' %}" class="btn-charge"
+                        <a href="#" class="btn-charge" data-bs-toggle="modal" data-bs-target="#chargeModal"
                            style="display:inline-flex; margin-top:12px;">
                             <i class="fas fa-plus-circle"></i> شارژ کیف پول
                         </a>
@@ -565,6 +599,7 @@
         </div>
 
     </div>
+
     <!-- ===== مودال شارژ کیف پول ===== -->
     <div class="modal fade" id="chargeModal" tabindex="-1" aria-labelledby="chargeModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -578,13 +613,14 @@
                 <div class="modal-body">
                     <p class="text-muted">مبلغ مورد نظر را برای شارژ انتخاب کنید:</p>
                     <div class="row g-2">
-                        <!-- گزینه‌های شارژ سریع -->
+                        <!-- گزینه‌های شارژ سریع (مبالغ به ریال) -->
                         <div class="col-6">
                             <form method="post" action="{% url 'payments:payment_request' %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="amount" value="50000">
                                 <button type="submit" class="btn btn-outline-success w-100 py-3">
-                                    <strong>۵,۰۰۰</strong> تومان
+                                    <strong>۵۰,۰۰۰</strong> ریال
+                                    <br><small>۵,۰۰۰ تومان</small>
                                 </button>
                             </form>
                         </div>
@@ -593,7 +629,8 @@
                                 {% csrf_token %}
                                 <input type="hidden" name="amount" value="100000">
                                 <button type="submit" class="btn btn-outline-success w-100 py-3">
-                                    <strong>۱۰,۰۰۰</strong> تومان
+                                    <strong>۱۰۰,۰۰۰</strong> ریال
+                                    <br><small>۱۰,۰۰۰ تومان</small>
                                 </button>
                             </form>
                         </div>
@@ -602,7 +639,8 @@
                                 {% csrf_token %}
                                 <input type="hidden" name="amount" value="200000">
                                 <button type="submit" class="btn btn-outline-success w-100 py-3">
-                                    <strong>۲۰,۰۰۰</strong> تومان
+                                    <strong>۲۰۰,۰۰۰</strong> ریال
+                                    <br><small>۲۰,۰۰۰ تومان</small>
                                 </button>
                             </form>
                         </div>
@@ -611,7 +649,8 @@
                                 {% csrf_token %}
                                 <input type="hidden" name="amount" value="500000">
                                 <button type="submit" class="btn btn-outline-success w-100 py-3">
-                                    <strong>۵۰,۰۰۰</strong> تومان
+                                    <strong>۵۰۰,۰۰۰</strong> ریال
+                                    <br><small>۵۰,۰۰۰ تومان</small>
                                 </button>
                             </form>
                         </div>
@@ -631,4 +670,12 @@
             </div>
         </div>
     </div>
+
+    <!-- ===== اسکریپت رفرش خودکار ===== -->
+    <script>
+        // ===== رفرش خودکار صفحه هر ۳۰ ثانیه =====
+        setTimeout(function() {
+            location.reload();
+        }, 30000);
+    </script>
 {% endblock %}

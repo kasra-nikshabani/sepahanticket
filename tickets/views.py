@@ -1,3 +1,4 @@
+# tickets/views.py
 import json
 import zipfile
 from io import BytesIO
@@ -20,12 +21,12 @@ from openpyxl.styles import Font, PatternFill, Alignment
 import pytz
 
 import matches
-from .models import Ticket, VIPQuota, DiscountCode
+from .models import Ticket, VIPQuota, DiscountCode, Order  # ← اضافه کنید
 from .forms import BulkTicketForm, VIPQuotaForm, DiscountCodeForm
 from .reservation import SeatReservation
 from matches.models import Match, Seat, Row, MatchSeat, Block
 from accounts.models import User
-from wallet.models import Wallet  # اضافه شد
+from wallet.models import Wallet
 
 logger = logging.getLogger(__name__)
 
@@ -652,13 +653,6 @@ def ticket_info(request, match_id):
         logger.info(f"👤 User: {request.user.username}")
         logger.info("=" * 60)
 
-        # ===== دریافت اطلاعات کیف پول =====
-        use_wallet = request.POST.get('use_wallet') == 'true'
-        try:
-            wallet_amount = int(request.POST.get('wallet_amount', 0))
-        except ValueError:
-            wallet_amount = 0
-
         # ===== دریافت کد تخفیف =====
         discount_code = request.POST.get('discount_code', '').strip()
         discount_obj = None
@@ -691,8 +685,139 @@ def ticket_info(request, match_id):
         # ===== محاسبه مبلغ نهایی با تخفیف =====
         discounted_total = total_price - int(total_price * discount_percent / 100)
 
-        # ===== اعتبارسنجی کیف پول با مبلغ تخفیف‌خورده =====
-        if use_wallet and wallet_amount > 0:
+        # ===== دریافت اطلاعات کیف پول =====
+        use_wallet = request.POST.get('use_wallet') == 'true'
+        try:
+            wallet_amount = int(request.POST.get('wallet_amount', 0))
+        except (ValueError, TypeError):
+            wallet_amount = 0
+
+        # ================================================================
+        # ===== اگر مبلغ نهایی صفر است، بلیط رایگان صادر شود =====
+        # ================================================================
+        if discounted_total == 0:
+            messages.info(request, 'مبلغ نهایی خرید صفر است. بلیط‌ها به صورت رایگان صادر می‌شوند.')
+
+            try:
+                with transaction.atomic():
+                    from .models import Order
+
+                    order = Order.objects.create(
+                        user=request.user,
+                        match=match,
+                        subtotal=total_price,
+                        discount_percent=discount_percent,
+                        discount_amount=total_price,
+                        total_amount=0,
+                        wallet_balance_before=wallet.balance,
+                        wallet_amount=0,
+                        wallet_balance_after=wallet.balance,
+                        payment_method='free',
+                        payment_status='paid',
+                        discount_code=discount_obj.code if discount_obj else '',
+                        discount_code_id=discount_obj.id if discount_obj else None,
+                        full_name=request.user.get_full_name() or request.user.username,
+                        phone_number=getattr(request.user, 'phone_number', ''),
+                        paid_at=timezone.now(),
+                    )
+
+                    tickets = []
+                    for seat_data in seats_data:
+                        match_seat_id = seat_data['id']
+                        full_name = request.POST.get(f'full_name_{match_seat_id}')
+                        national_code = request.POST.get(f'national_code_{match_seat_id}')
+
+                        if not full_name or not national_code:
+                            messages.error(request, 'لطفاً تمام اطلاعات را وارد کنید.')
+                            return render(request, 'tickets/ticket_info.html', {
+                                'match': match,
+                                'seats_data': seats_data,
+                                'total_price': total_price,
+                                'remaining_time': remaining_time,
+                                'wallet_balance': wallet.balance,
+                            })
+
+                        if len(national_code) != 10 or not national_code.isdigit():
+                            messages.error(request, 'کد ملی باید ۱۰ رقم باشد.')
+                            return render(request, 'tickets/ticket_info.html', {
+                                'match': match,
+                                'seats_data': seats_data,
+                                'total_price': total_price,
+                                'remaining_time': remaining_time,
+                                'wallet_balance': wallet.balance,
+                            })
+
+                        try:
+                            match_seat = MatchSeat.objects.get(id=match_seat_id, match=match)
+                        except MatchSeat.DoesNotExist:
+                            messages.error(request, 'صندلی مورد نظر معتبر نیست یا قبلاً فروخته شده است.')
+                            return redirect('matches:block_map', match_id=match_id)
+
+                        if match_seat.reserved_until and match_seat.reserved_until < timezone.now():
+                            match_seat.is_available = True
+                            match_seat.reserved_until = None
+                            match_seat.save()
+                            SeatReservation.release(match_seat_id)
+                            messages.error(request, f'مدت زمان رزرو صندلی {match_seat.seat.number} به پایان رسیده است.')
+                            return redirect('matches:block_map', match_id=match_id)
+
+                        ticket = Ticket.objects.create(
+                            user=request.user,
+                            match=match,
+                            seat=match_seat.seat,
+                            match_seat=match_seat,
+                            full_name=full_name,
+                            national_code=national_code,
+                            status='paid',
+                            is_admin_assigned=False,
+                            order=order,
+                            price=seat_data['price'],  # اضافه شد
+                        )
+                        tickets.append(ticket)
+
+                        match_seat.is_available = False
+                        match_seat.reserved_until = None
+                        match_seat.save()
+                        SeatReservation.release(match_seat_id)
+
+                    if discount_obj:
+                        discount_obj.used_count += 1
+                        discount_obj.save()
+
+                    request.session.pop('selected_seats', None)
+                    request.session.pop('match_id', None)
+                    request.session.pop('section_id', None)
+                    request.session.pop('reserved_at', None)
+
+                    messages.success(request, f'✅ {len(tickets)} بلیط به صورت رایگان صادر شد.')
+                    return redirect('tickets:user_tickets')
+
+            except Exception as e:
+                logger.error(f"❌ خطا در صدور بلیط رایگان: {str(e)}")
+                messages.error(request, f'خطا در صدور بلیط: {str(e)}')
+                return render(request, 'tickets/ticket_info.html', {
+                    'match': match,
+                    'seats_data': seats_data,
+                    'total_price': total_price,
+                    'remaining_time': remaining_time,
+                    'wallet_balance': wallet.balance,
+                })
+
+        # ================================================================
+        # ===== اگر مبلغ نهایی بیشتر از صفر است =====
+        # ================================================================
+
+        # ===== اعتبارسنجی کیف پول =====
+        if use_wallet:
+            if wallet_amount <= 0:
+                messages.error(request, 'مبلغ قابل پرداخت از کیف پول باید بزرگتر از صفر باشد.')
+                return render(request, 'tickets/ticket_info.html', {
+                    'match': match,
+                    'seats_data': seats_data,
+                    'total_price': total_price,
+                    'remaining_time': remaining_time,
+                    'wallet_balance': wallet.balance,
+                })
             if wallet_amount > wallet.balance:
                 messages.error(request, f'موجودی کیف پول شما ({wallet.balance:,} تومان) کافی نیست.')
                 return render(request, 'tickets/ticket_info.html', {
@@ -713,9 +838,28 @@ def ticket_info(request, match_id):
                     'wallet_balance': wallet.balance,
                 })
 
-        # ===== پردازش خرید =====
+        # ===== پردازش خرید با پرداخت =====
         try:
             with transaction.atomic():
+                from .models import Order
+
+                order = Order.objects.create(
+                    user=request.user,
+                    match=match,
+                    subtotal=total_price,
+                    discount_percent=discount_percent,
+                    discount_amount=int(total_price * discount_percent / 100),
+                    total_amount=discounted_total,
+                    wallet_balance_before=wallet.balance,
+                    payment_method='wallet' if use_wallet else 'zibal',
+                    payment_status='paid',
+                    discount_code=discount_obj.code if discount_obj else '',
+                    discount_code_id=discount_obj.id if discount_obj else None,
+                    full_name=request.user.get_full_name() or request.user.username,
+                    phone_number=getattr(request.user, 'phone_number', ''),
+                    paid_at=timezone.now(),
+                )
+
                 tickets = []
                 for seat_data in seats_data:
                     match_seat_id = seat_data['id']
@@ -731,7 +875,8 @@ def ticket_info(request, match_id):
                             'remaining_time': remaining_time,
                             'wallet_balance': wallet.balance,
                         })
-                    if len(national_code) != 10:
+
+                    if len(national_code) != 10 or not national_code.isdigit():
                         messages.error(request, 'کد ملی باید ۱۰ رقم باشد.')
                         return render(request, 'tickets/ticket_info.html', {
                             'match': match,
@@ -764,8 +909,9 @@ def ticket_info(request, match_id):
                         national_code=national_code,
                         status='paid',
                         is_admin_assigned=False,
+                        order=order,
+                        price=seat_data['price'],  # اضافه شد
                     )
-                    ticket.save()
                     tickets.append(ticket)
 
                     match_seat.is_available = False
@@ -773,29 +919,59 @@ def ticket_info(request, match_id):
                     match_seat.save()
                     SeatReservation.release(match_seat_id)
 
-                # ===== کسر از کیف پول (با مبلغ تخفیف‌خورده) =====
-                if use_wallet and wallet_amount > 0:
-                    success = wallet.deduct_balance(
-                        amount=wallet_amount,
-                        description=f"پرداخت {wallet_amount:,} تومان از کل {discounted_total:,} تومان (با تخفیف {discount_percent}%) برای خرید {len(tickets)} بلیط - مسابقه {match.home_team} vs {match.away_team}",
-                        reference_id=f"TICKET-{tickets[0].ticket_number}" if tickets else None,
-                        tx_type='ticket_purchase'  # ← اضافه کنید
-                    )
-                    if not success:
-                        raise Exception("خطا در کسر از کیف پول")
-                    if wallet_amount == discounted_total:
-                        messages.success(request, f'{len(tickets)} بلیط با موفقیت صادر شد. کل مبلغ از کیف پول کسر شد.')
-                    else:
-                        messages.warning(request,
-                                         f'{len(tickets)} بلیط صادر شد. مبلغ {wallet_amount:,} تومان از کیف پول کسر شد. مبلغ باقی‌مانده ({discounted_total - wallet_amount:,} تومان) باید به‌صورت نقدی پرداخت شود.')
-                else:
-                    messages.info(request,
-                                  f'{len(tickets)} بلیط صادر شد. مبلغ کل ({discounted_total:,} تومان) باید به‌صورت نقدی پرداخت شود.')
+                # ===== کسر از کیف پول =====
+                wallet_amount_used = 0
+
+                if use_wallet and wallet_amount > 0 and discounted_total > 0:
+                    try:
+                        # ===== تبدیل مبلغ به ریال =====
+                        wallet_amount_rial = wallet_amount * 10  # تبدیل تومان به ریال
+
+                        # ===== ایجاد تراکنش برای هر بلیط به صورت جداگانه =====
+                        for ticket in tickets:
+                            success = wallet.deduct_balance(
+                                amount=ticket.price,  # قیمت هر بلیط به ریال
+                                description=f"پرداخت بلیط {ticket.ticket_number} - مسابقه {match.home_team} vs {match.away_team}",
+                                reference_id=ticket.ticket_number,  # استفاده از ticket_number به عنوان reference
+                                tx_type='ticket_purchase'
+                            )
+                            if not success:
+                                raise Exception("کسر از کیف پول ناموفق بود")
+                            wallet.refresh_from_db()
+                            wallet_amount_used += ticket.price
+                            print(f"✅ {ticket.price} ریال از کیف پول برای بلیط {ticket.ticket_number} کسر شد")
+
+                    except ValueError as e:
+                        print(f"❌ خطا در کسر از کیف پول: {str(e)}")
+                        messages.error(request, f'خطا در کسر از کیف پول: {str(e)}')
+                        return render(request, 'tickets/ticket_info.html', {
+                            'match': match,
+                            'seats_data': seats_data,
+                            'total_price': total_price,
+                            'remaining_time': remaining_time,
+                            'wallet_balance': wallet.balance,
+                        })
+
+                # ===== به‌روزرسانی سفارش =====
+                order.wallet_amount = wallet_amount_used
+                order.wallet_balance_after = wallet.balance
+                order.payment_method = 'wallet' if wallet_amount_used >= discounted_total else (
+                    'mixed' if wallet_amount_used > 0 else 'zibal')
+                order.save()
 
                 # ===== افزایش تعداد استفاده از کد تخفیف =====
                 if discount_obj:
                     discount_obj.used_count += 1
                     discount_obj.save()
+
+                # ===== پیام موفقیت =====
+                if wallet_amount_used > 0 and wallet_amount_used >= discounted_total:
+                    messages.success(request, f'✅ {len(tickets)} بلیط با موفقیت صادر شد. کل مبلغ از کیف پول کسر شد.')
+                elif wallet_amount_used > 0:
+                    messages.success(request,
+                                     f'✅ {len(tickets)} بلیط صادر شد. مبلغ {wallet_amount_used:,} ریال از کیف پول کسر شد. مبلغ باقی‌مانده ({discounted_total - wallet_amount_used:,} ریال) باید به‌صورت نقدی پرداخت شود.')
+                else:
+                    messages.success(request, f'✅ {len(tickets)} بلیط با موفقیت صادر شد.')
 
                 # ===== پاک کردن سشن =====
                 request.session.pop('selected_seats', None)
@@ -803,7 +979,7 @@ def ticket_info(request, match_id):
                 request.session.pop('section_id', None)
                 request.session.pop('reserved_at', None)
 
-                logger.info("✅ خرید با موفقیت انجام شد، redirecting to user_tickets")
+                logger.info(f"✅ خرید با موفقیت انجام شد، {len(tickets)} بلیط صادر شد")
                 return redirect('tickets:user_tickets')
 
         except Exception as e:
@@ -825,7 +1001,6 @@ def ticket_info(request, match_id):
         'remaining_time': remaining_time,
         'wallet_balance': wallet.balance,
     })
-
 
 # ============================================================
 #  لغو خرید و آزادسازی رزرو
@@ -1043,6 +1218,8 @@ def bulk_issue_tickets(request):
                             national_code=user.national_code,
                             status='admin_assigned',
                             is_admin_assigned=True,
+                            price=match_seat.seat.row.block.price or 0,  # ← اضافه کنید
+
                         )
                         ticket.save()
 
