@@ -43,27 +43,35 @@ class Wallet(models.Model):
         print(f"✅ Transaction created: {tx.id} - {tx.transaction_type} - Amount: {amount} ریال")
         return True
 
+    # wallet/models.py
     def deduct_balance(self, amount, description="", reference_id=None, tx_type='withdraw'):
         """
         کسر از موجودی و ثبت تراکنش
         amount: مبلغ به ریال
         """
+        print(f"🔍 deduct_balance called")
+        print(f"🔍 amount: {amount} ریال")
+        print(f"🔍 current balance: {self.balance} ریال")
+
         # ===== بررسی مقدار =====
         if amount <= 0:
+            print(f"❌ amount <= 0")
             raise ValueError("مبلغ باید بزرگتر از صفر باشد")
 
-        # ===== بررسی موجودی کافی =====
         if self.balance < amount:
-            raise ValueError("موجودی کیف پول کافی نیست")
+            print(f"❌ balance insufficient: {self.balance} < {amount}")
+            raise ValueError(f"موجودی کیف پول ({self.balance:,} ریال) کافی نیست")
 
-        # ===== کسر از موجودی (به ریال) =====
+        # ===== کسر از موجودی =====
         self.balance -= amount
         self.save()
+
+        print(f"✅ balance after deduction: {self.balance}")
 
         # ===== ثبت تراکنش =====
         tx = Transaction.objects.create(
             user=self.user,
-            amount=amount,  # به ریال
+            amount=amount,
             transaction_type=tx_type,
             description=description or f"برداشت از کیف پول به مبلغ {amount:,} ریال",
             reference_id=reference_id,
@@ -71,7 +79,10 @@ class Wallet(models.Model):
             is_wallet=True,
         )
 
-        print(f"✅ Transaction created: {tx.id} - {tx.transaction_type} - Amount: {amount} ریال")
+        print(f"✅ Transaction created: {tx.id}")
+        print(f"✅ Transaction type: {tx.transaction_type}")
+        print(f"✅ Amount: {tx.amount}")
+
         return True
 
 

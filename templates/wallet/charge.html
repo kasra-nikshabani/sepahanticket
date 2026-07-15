@@ -4,33 +4,44 @@
 {% block title %}شارژ کیف پول{% endblock %}
 
 {% block content %}
-    <div class="container mt-4">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card shadow-lg">
-                    <div class="card-header bg-success text-white">
-                        <h4 class="mb-0"><i class="fas fa-plus-circle"></i> شارژ کیف پول</h4>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-header bg-success text-white text-center rounded-top-4" style="border-bottom: none; background: linear-gradient(135deg, #28a745, #1e7e34);">
+                    <h4 class="mb-0"><i class="fas fa-plus-circle"></i> شارژ کیف پول</h4>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <div class="bg-light rounded-3 p-3 d-inline-block">
+                            <span class="text-muted">موجودی فعلی</span>
+                            <h3 class="mb-0 text-success">{{ wallet.balance|rial_display }} <small style="font-size:14px; color:#6c757d;">ریال</small></h3>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <p class="text-muted">موجودی فعلی: <strong>{{ wallet.balance|floatformat:0 }} تومان</strong></p>
-                        <form method="post">
-                            {% csrf_token %}
-                            <div class="mb-3">
-                                <label for="amount" class="form-label">مبلغ شارژ (تومان)</label>
-                                <input type="number" name="amount" id="amount" class="form-control form-control-lg"
-                                       placeholder="مثال: 50000" min="1000" max="10000000" required>
-                                <small class="text-muted">حداقل ۱,۰۰۰ و حداکثر ۱۰,۰۰۰,۰۰۰ تومان</small>
-                            </div>
-                            <button type="submit" class="btn btn-success btn-lg w-100">
-                                <i class="fas fa-check-circle"></i> شارژ کیف پول
-                            </button>
-                            <a href="{% url 'wallet:dashboard' %}" class="btn btn-secondary w-100 mt-2">
-                                <i class="fas fa-arrow-right"></i> بازگشت
-                            </a>
-                        </form>
-                    </div>
+
+                    <form method="post" action="{% url 'payments:payment_request' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="amount" class="form-label fw-bold">مبلغ شارژ (ریال)</label>
+                            <input type="number" name="amount" id="amount" class="form-control form-control-lg"
+                                   placeholder="مثال: ۵۰,۰۰۰" min="10000" max="100000000" required
+                                   style="direction: ltr; font-feature-settings: 'tnum';">
+                            <small class="text-muted">حداقل ۱۰,۰۰۰ و حداکثر ۱۰۰,۰۰۰,۰۰۰ ریال</small>
+                        </div>
+
+                        <!-- فیلدهای مخفی برای ارسال به payment_request -->
+                        <input type="hidden" name="next_url" value="{% url 'wallet:dashboard' %}">
+
+                        <button type="submit" class="btn btn-success btn-lg w-100" style="background: linear-gradient(135deg, #28a745, #1e7e34); border: none;">
+                            <i class="fas fa-credit-card"></i> پرداخت و شارژ
+                        </button>
+                        <a href="{% url 'wallet:dashboard' %}" class="btn btn-outline-secondary w-100 mt-2">
+                            <i class="fas fa-arrow-right"></i> بازگشت
+                        </a>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
+</div>
 {% endblock %}

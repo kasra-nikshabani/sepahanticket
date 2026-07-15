@@ -633,10 +633,10 @@ def ticket_info(request, match_id):
                 'number': match_seat.seat.number,
                 'row_name': match_seat.seat.row.name,
                 'is_home': match_seat.seat.row.is_home,
-                'price': price,
+                'price': price,  # قیمت به ریال
                 'zone_label': match_seat.seat.row.zone_label,
             })
-            total_price += price
+            total_price += price  # مجموع به ریال
         except MatchSeat.DoesNotExist:
             messages.error(request, 'یکی از صندلی‌های انتخاب‌شده معتبر نیست.')
             return redirect('matches:block_map', match_id=match_id)
@@ -682,15 +682,22 @@ def ticket_info(request, match_id):
                     'wallet_balance': wallet.balance,
                 })
 
-        # ===== محاسبه مبلغ نهایی با تخفیف =====
+        # ===== محاسبه مبلغ نهایی با تخفیف (به ریال) =====
         discounted_total = total_price - int(total_price * discount_percent / 100)
 
         # ===== دریافت اطلاعات کیف پول =====
         use_wallet = request.POST.get('use_wallet') == 'true'
         try:
-            wallet_amount = int(request.POST.get('wallet_amount', 0))
+            wallet_amount = int(request.POST.get('wallet_amount', 0))  # به تومان از فرم می‌آید
         except (ValueError, TypeError):
             wallet_amount = 0
+
+        # ===== لاگ برای دیباگ =====
+        print(f"🔍 total_price: {total_price} ریال")
+        print(f"🔍 discounted_total: {discounted_total} ریال")
+        print(f"🔍 use_wallet: {use_wallet}")
+        print(f"🔍 wallet_amount (تومان): {wallet_amount}")
+        print(f"🔍 wallet.balance (ریال): {wallet.balance}")
 
         # ================================================================
         # ===== اگر مبلغ نهایی صفر است، بلیط رایگان صادر شود =====
@@ -771,7 +778,7 @@ def ticket_info(request, match_id):
                             status='paid',
                             is_admin_assigned=False,
                             order=order,
-                            price=seat_data['price'],  # اضافه شد
+                            price=seat_data['price'],
                         )
                         tickets.append(ticket)
 
@@ -809,7 +816,10 @@ def ticket_info(request, match_id):
 
         # ===== اعتبارسنجی کیف پول =====
         if use_wallet:
-            if wallet_amount <= 0:
+            # تبدیل مبلغ قابل پرداخت از کیف پول به ریال برای مقایسه
+            wallet_amount_rial = wallet_amount * 10  # تبدیل تومان به ریال
+
+            if wallet_amount_rial <= 0:
                 messages.error(request, 'مبلغ قابل پرداخت از کیف پول باید بزرگتر از صفر باشد.')
                 return render(request, 'tickets/ticket_info.html', {
                     'match': match,
@@ -818,8 +828,9 @@ def ticket_info(request, match_id):
                     'remaining_time': remaining_time,
                     'wallet_balance': wallet.balance,
                 })
-            if wallet_amount > wallet.balance:
-                messages.error(request, f'موجودی کیف پول شما ({wallet.balance:,} تومان) کافی نیست.')
+
+            if wallet_amount_rial > wallet.balance:
+                messages.error(request, f'موجودی کیف پول شما ({wallet.balance:,} ریال) کافی نیست.')
                 return render(request, 'tickets/ticket_info.html', {
                     'match': match,
                     'seats_data': seats_data,
@@ -827,9 +838,10 @@ def ticket_info(request, match_id):
                     'remaining_time': remaining_time,
                     'wallet_balance': wallet.balance,
                 })
-            if wallet_amount > discounted_total:
+
+            if wallet_amount_rial > discounted_total:
                 messages.error(request,
-                               f'مبلغ قابل پرداخت از کیف پول نمی‌تواند از مبلغ نهایی ({discounted_total:,} تومان) بیشتر باشد.')
+                               f'مبلغ قابل پرداخت از کیف پول نمی‌تواند از مبلغ نهایی ({discounted_total:,} ریال) بیشتر باشد.')
                 return render(request, 'tickets/ticket_info.html', {
                     'match': match,
                     'seats_data': seats_data,
@@ -910,7 +922,7 @@ def ticket_info(request, match_id):
                         status='paid',
                         is_admin_assigned=False,
                         order=order,
-                        price=seat_data['price'],  # اضافه شد
+                        price=seat_data['price'],
                     )
                     tickets.append(ticket)
 
@@ -919,27 +931,41 @@ def ticket_info(request, match_id):
                     match_seat.save()
                     SeatReservation.release(match_seat_id)
 
-                # ===== کسر از کیف پول =====
+                # tickets/views.py - بخش ticket_info (POST) - کسر از کیف پول
+
+                # ============================================================
+                # ===== کسر از کیف پول (اصلاح شده) =====
+                # ============================================================
                 wallet_amount_used = 0
+
+                print(f"🔍 use_wallet: {use_wallet}")
+                print(f"🔍 wallet_amount (تومان از فرم): {wallet_amount}")
+                print(f"🔍 discounted_total (ریال): {discounted_total}")
+                print(f"🔍 wallet.balance قبل: {wallet.balance}")
 
                 if use_wallet and wallet_amount > 0 and discounted_total > 0:
                     try:
                         # ===== تبدیل مبلغ به ریال =====
                         wallet_amount_rial = wallet_amount * 10  # تبدیل تومان به ریال
 
-                        # ===== ایجاد تراکنش برای هر بلیط به صورت جداگانه =====
-                        for ticket in tickets:
-                            success = wallet.deduct_balance(
-                                amount=ticket.price,  # قیمت هر بلیط به ریال
-                                description=f"پرداخت بلیط {ticket.ticket_number} - مسابقه {match.home_team} vs {match.away_team}",
-                                reference_id=ticket.ticket_number,  # استفاده از ticket_number به عنوان reference
-                                tx_type='ticket_purchase'
-                            )
-                            if not success:
-                                raise Exception("کسر از کیف پول ناموفق بود")
+                        print(f"🔍 wallet_amount_rial: {wallet_amount_rial} ریال")
+                        print(f"🔍 موجودی کیف پول قبل: {wallet.balance} ریال")
+
+                        # ===== کسر از کیف پول =====
+                        success = wallet.deduct_balance(
+                            amount=wallet_amount_rial,  # به ریال
+                            description=f"پرداخت {wallet_amount:,} تومان (معادل {wallet_amount_rial:,} ریال) برای خرید {len(tickets)} بلیط - مسابقه {match.home_team} vs {match.away_team}",
+                            reference_id=order.order_number,
+                            tx_type='ticket_purchase'
+                        )
+
+                        if success:
+                            wallet_amount_used = wallet_amount_rial
                             wallet.refresh_from_db()
-                            wallet_amount_used += ticket.price
-                            print(f"✅ {ticket.price} ریال از کیف پول برای بلیط {ticket.ticket_number} کسر شد")
+                            print(f"✅ {wallet_amount_rial} ریال از کیف پول کسر شد")
+                            print(f"🔍 موجودی کیف پول بعد: {wallet.balance} ریال")
+                        else:
+                            raise Exception("کسر از کیف پول ناموفق بود")
 
                     except ValueError as e:
                         print(f"❌ خطا در کسر از کیف پول: {str(e)}")
@@ -951,6 +977,21 @@ def ticket_info(request, match_id):
                             'remaining_time': remaining_time,
                             'wallet_balance': wallet.balance,
                         })
+                    except Exception as e:
+                        print(f"❌ خطای غیرمنتظره: {str(e)}")
+                        messages.error(request, f'خطا در کسر از کیف پول: {str(e)}')
+                        return render(request, 'tickets/ticket_info.html', {
+                            'match': match,
+                            'seats_data': seats_data,
+                            'total_price': total_price,
+                            'remaining_time': remaining_time,
+                            'wallet_balance': wallet.balance,
+                        })
+                else:
+                    print(f"⚠️ شرط کسر از کیف پول برقرار نیست:")
+                    print(f"   use_wallet: {use_wallet}")
+                    print(f"   wallet_amount: {wallet_amount}")
+                    print(f"   discounted_total: {discounted_total}")
 
                 # ===== به‌روزرسانی سفارش =====
                 order.wallet_amount = wallet_amount_used
@@ -1001,6 +1042,7 @@ def ticket_info(request, match_id):
         'remaining_time': remaining_time,
         'wallet_balance': wallet.balance,
     })
+
 
 # ============================================================
 #  لغو خرید و آزادسازی رزرو

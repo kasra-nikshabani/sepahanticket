@@ -1,4 +1,5 @@
 # wallet/views.py
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Sum
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -10,42 +11,61 @@ from django.views.decorators.cache import never_cache
 
 from .models import Wallet, Transaction
 
-@never_cache
+
 @login_required
 def wallet_dashboard(request):
-    """نمایش کیف پول و تاریخچه تراکنش‌ها با آمار دقیق"""
+    """نمایش کیف پول و تاریخچه تراکنش‌ها با صفحه‌بندی"""
     if request.user.user_type == 'vip':
         messages.error(request, 'کاربران ویژه به این بخش دسترسی ندارند.')
         return redirect('matches:home')
 
     wallet, created = Wallet.objects.get_or_create(user=request.user)
 
-    # ===== دریافت تراکنش‌های اخیر (بدون کش) =====
-    transactions = Transaction.objects.filter(
+    # ===== دریافت تراکنش‌ها =====
+    transactions_list = Transaction.objects.filter(
         user=request.user
-    ).select_related('user').order_by('-created_at')[:50]  # ← ۵۰ تراکنش اخیر
+    ).order_by('-created_at')
 
+    # ===== صفحه‌بندی =====
+    paginator = Paginator(transactions_list, 5)
+    page = request.GET.get('page', 1)
+
+    try:
+        transactions = paginator.page(page)
+    except PageNotAnInteger:
+        transactions = paginator.page(1)
+    except EmptyPage:
+        transactions = paginator.page(paginator.num_pages)
+
+    # ============================================================
     # ===== محاسبه آمار دقیق =====
+    # ============================================================
+
+    # ===== کل شارژها (واریز) =====
     total_deposits = Transaction.objects.filter(
         user=request.user,
         transaction_type='deposit'
     ).aggregate(total=Sum('amount'))['total'] or 0
 
+    # ===== کل برداشت‌ها (فقط withdraw و ticket_purchase) =====
     total_withdrawals = Transaction.objects.filter(
         user=request.user,
-        transaction_type='withdraw'
+        transaction_type__in=['withdraw', 'ticket_purchase']
     ).aggregate(total=Sum('amount'))['total'] or 0
 
+    # ===== خرید بلیط (برای نمایش جداگانه) =====
     total_ticket_purchases = Transaction.objects.filter(
         user=request.user,
         transaction_type='ticket_purchase'
     ).aggregate(total=Sum('amount'))['total'] or 0
 
+    # ===== بازگشت وجه =====
     total_refunds = Transaction.objects.filter(
         user=request.user,
         transaction_type='refund'
     ).aggregate(total=Sum('amount'))['total'] or 0
 
+    # ===== تعداد کل تراکنش‌ها =====
     total_transactions = Transaction.objects.filter(user=request.user).count()
 
     context = {
@@ -59,6 +79,8 @@ def wallet_dashboard(request):
         'total_transactions': total_transactions,
     }
     return render(request, 'wallet/dashboard.html', context)
+
+
 @login_required
 def wallet_charge(request):
     """شارژ کیف پول"""

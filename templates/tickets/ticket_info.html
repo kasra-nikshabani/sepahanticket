@@ -2,6 +2,7 @@
 {% load static %}
 {% load currency_filters %}
 
+
 {% block title %}اطلاعات خریدار{% endblock %}
 
 {% block content %}
@@ -143,6 +144,8 @@
             </div>
 
             <!-- ===== بخش کیف پول ===== -->
+            <input type="hidden" name="use_wallet" id="useWalletInput" value="false">
+            <input type="hidden" name="wallet_amount" id="walletAmountInput" value="0">
             <div class="card mb-4">
                 <div class="card-header bg-info text-white">
                     <h5 class="mb-0"><i class="fas fa-wallet"></i> استفاده از کیف پول</h5>
@@ -199,7 +202,6 @@
 
     </div>
 
-    <!-- ===== اسکریپت‌ها ===== -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // ===== تابع تبدیل به ریال با جداکننده (برای نمایش) =====
@@ -368,6 +370,7 @@
                 }
             }
 
+            // ===== تابع اصلی مدیریت کیف پول =====
             window.toggleWallet = function (checked) {
                 // ۱. ذخیره وضعیت سوئیچ
                 useWalletInput.value = checked ? 'true' : 'false';
@@ -376,14 +379,13 @@
                 const discount = (window.discountPercent || 0) / 100;
                 const totalWithDiscount = Math.round(totalPrice * (1 - discount));
 
-                let walletPay = 0;
-                let finalAmount = totalWithDiscount;
+                let walletPay = 0;      // مبلغی که از کیف پول کسر می‌شود (به ریال)
+                let finalAmount = totalWithDiscount;  // مبلغ نهایی پرداختی (به ریال)
 
                 // ۳. محاسبه مبلغ قابل پرداخت از کیف پول
                 if (checked) {
                     // اگر موجودی کیف پول صفر یا کمتر از صفر است
                     if (walletBalance <= 0) {
-                        // غیرفعال کردن سوئیچ و نمایش پیام
                         useWalletSwitch.checked = false;
                         useWalletInput.value = 'false';
                         walletInfo.innerHTML = `
@@ -392,9 +394,7 @@
                             موجودی کیف پول شما صفر است. لطفاً ابتدا کیف پول خود را شارژ کنید.
                         </div>
                     `;
-                        // به‌روزرسانی دکمه با مبلغ کامل
                         updateSubmitButton(totalWithDiscount);
-                        // به‌روزرسانی نمایش مبالغ
                         walletPayAmount.textContent = '۰';
                         finalAmountDisplay.textContent = toRial(totalWithDiscount) + ' ریال';
                         walletAmountInput.value = 0;
@@ -405,19 +405,28 @@
                     // محاسبه مبلغ قابل پرداخت از کیف پول (حداکثر موجودی یا مبلغ کل)
                     walletPay = Math.min(walletBalance, totalWithDiscount);
                     finalAmount = totalWithDiscount - walletPay;
+
+                    console.log('🔍 walletPay (ریال):', walletPay);
+                    console.log('🔍 finalAmount (ریال):', finalAmount);
                 }
 
                 // ۴. نمایش مقادیر (به ریال)
                 walletPayAmount.textContent = toRial(walletPay);
                 finalAmountDisplay.textContent = toRial(finalAmount) + ' ریال';
 
-                // ذخیره در فیلدهای مخفی برای ارسال به سرور (به ریال)
+                // ===== ذخیره در فیلدهای مخفی برای ارسال به سرور =====
+                // **مهم**: walletAmountInput.value باید به تومان باشد (چون سرور به تومان دریافت می‌کند)
                 if (checked) {
-                    walletAmountInput.value = walletPay;
+                    // تبدیل ریال به تومان برای ارسال به سرور (تقسیم بر ۱۰)
+                    const walletPayToman = Math.round(walletPay / 10);
+                    walletAmountInput.value = walletPayToman;
+                    console.log('🔍 walletAmountInput (تومان):', walletPayToman);
                 } else {
                     walletAmountInput.value = 0;
                 }
-                finalAmountInput.value = finalAmount; // تبدیل به ریال برای درگاه
+                finalAmountInput.value = finalAmount; // به ریال برای درگاه
+
+                console.log('🔍 finalAmountInput (ریال):', finalAmountInput.value);
 
                 // ۵. به‌روزرسانی دکمه اصلی
                 updateSubmitButton(finalAmount);
@@ -473,8 +482,12 @@
             // ===== اعتبارسنجی و مسیریابی قبل از ارسال فرم =====
             document.getElementById('ticketForm').addEventListener('submit', function (e) {
                 const useWallet = document.getElementById('useWalletSwitch').checked;
-                const walletAmount = parseInt(document.getElementById('walletAmountInput').value) || 0;  // به ریال
+                const walletAmount = parseInt(document.getElementById('walletAmountInput').value) || 0;  // به تومان
                 const finalAmount = parseInt(document.getElementById('finalAmountInput').value) || 0;  // به ریال
+
+                console.log('🔍 Submit - useWallet:', useWallet);
+                console.log('🔍 Submit - walletAmount (تومان):', walletAmount);
+                console.log('🔍 Submit - finalAmount (ریال):', finalAmount);
 
                 // اگر کاربر کیف پول را فعال کرده ولی موجودی کافی نیست
                 if (useWallet && walletAmount <= 0 && finalAmount > 0) {
@@ -486,8 +499,10 @@
                 // ===== اگر مبلغ نهایی صفر شد =====
                 if (finalAmount === 0) {
                     this.action = this.dataset.freeCheckoutUrl;
+                    console.log('🔍 مسیر تغییر به: رایگان');
                 } else {
                     this.action = this.dataset.paymentUrl;
+                    console.log('🔍 مسیر تغییر به: درگاه پرداخت');
                 }
             });
 

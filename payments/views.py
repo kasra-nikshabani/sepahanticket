@@ -28,6 +28,22 @@ def payment_request(request):
         messages.error(request, "مبلغ باید بزرگتر از صفر باشد")
         return redirect('wallet:dashboard')
 
+    # ===== دریافت اطلاعات کیف پول =====
+    use_wallet = request.POST.get('use_wallet', 'false') == 'true'
+    try:
+        wallet_amount = int(request.POST.get('wallet_amount', 0))
+    except (ValueError, TypeError):
+        wallet_amount = 0
+
+    # ===== لاگ =====
+    print(f"🔍 payment_request - use_wallet: {use_wallet}")
+    print(f"🔍 payment_request - wallet_amount: {wallet_amount}")
+    print(f"🔍 payment_request - amount (ریال): {amount}")
+
+    # ===== ذخیره اطلاعات کیف پول در سشن =====
+    request.session['pending_use_wallet'] = use_wallet
+    request.session['pending_wallet_amount'] = wallet_amount
+
     # ===== ذخیره اطلاعات در سشن =====
     match_id = request.POST.get('match_id')
     if match_id:
@@ -62,7 +78,7 @@ def payment_request(request):
         response = client.payment_request(
             amount=amount,  # مقدار به ریال
             callback_url=settings.ZIBAL_CALLBACK_URL,
-            description="پرداخت بلیط"  # ← تغییر توضیح
+            description="پرداخت بلیط"
         )
 
         track_id = response.get('trackId')
@@ -113,15 +129,43 @@ def payment_verify(request):
             amount = result.get('amount', 0)  # مبلغ به ریال از زیبال برمی‌گردد
 
             # ================================================================
-            # ===== ❌ بخش شارژ کیف پول حذف شد =====
-            # ===== مبلغ فقط برای خرید بلیط استفاده می‌شود =====
+            # ===== ۱. شارژ کیف پول =====
             # ================================================================
+            if request.user.is_authenticated:
+                from wallet.models import Wallet, Transaction
 
-            # ===== ۱. صدور بلیط =====
+                wallet, created = Wallet.objects.get_or_create(user=request.user)
+                old_balance = wallet.balance
+
+                # ===== اضافه کردن مبلغ به کیف پول =====
+                wallet.balance += amount  # amount به ریال است
+                wallet.save()
+
+                # ===== ثبت تراکنش شارژ =====
+                transaction = Transaction.objects.create(
+                    user=request.user,
+                    amount=amount,
+                    transaction_type='deposit',
+                    description=f'شارژ کیف پول از طریق زیبال - تراکنش {track_id}',
+                    reference_id=track_id,
+                    balance_after=wallet.balance,
+                    is_wallet=True,
+                )
+                print(f"✅ Wallet charged: {amount:,} ریال - Transaction ID: {transaction.id}")
+                print(f"   Balance before: {old_balance:,} -> after: {wallet.balance:,}")
+
+            # ================================================================
+            # ===== ۲. صدور بلیط (اگر درخواست از صفحه ticket-info باشد) =====
+            # ================================================================
             match_id = request.session.get('pending_match_id')
             buyer_info = request.session.get('pending_buyer_info', {})
             discount_code = request.session.get('pending_discount_code', '')
             discount_percent = request.session.get('pending_discount_percent', 0)
+            wallet_amount = request.session.get('pending_wallet_amount', 0)  # مبلغ از کیف پول (تومان)
+            use_wallet = request.session.get('pending_use_wallet', False)
+
+            print(f"🔍 use_wallet from session: {use_wallet}")
+            print(f"🔍 wallet_amount from session: {wallet_amount}")
 
             tickets_created = []
             order = None
@@ -131,8 +175,12 @@ def payment_verify(request):
                     from tickets.models import Ticket, Order, DiscountCode
                     from matches.models import Match, MatchSeat
                     from tickets.reservation import SeatReservation
+                    from wallet.models import Wallet
 
                     match = Match.objects.get(id=match_id)
+                    wallet = Wallet.objects.get(user=request.user)
+
+                    print(f"🔍 wallet.balance before: {wallet.balance}")
 
                     # ===== محاسبه قیمت کل (به ریال) =====
                     total_price = 0
@@ -159,18 +207,68 @@ def payment_verify(request):
 
                     discounted_total = total_price - int(total_price * discount_percent / 100)
 
+                    print(f"🔍 total_price: {total_price}")
+                    print(f"🔍 discounted_total: {discounted_total}")
+
+                    # ============================================================
+                    # ===== کسر از کیف پول =====
+                    # ============================================================
+                    wallet_amount_used = 0
+
+                    # اگر کاربر استفاده از کیف پول را فعال کرده باشد
+                    if use_wallet and wallet_amount > 0:
+                        try:
+                            # تبدیل تومان به ریال
+                            wallet_amount_rial = wallet_amount * 10
+
+                            print(f"🔍 Trying to deduct from wallet: {wallet_amount_rial} ریال")
+
+                            # بررسی موجودی کافی
+                            if wallet.balance >= wallet_amount_rial:
+                                success = wallet.deduct_balance(
+                                    amount=wallet_amount_rial,
+                                    description=f"پرداخت {wallet_amount:,} تومان (معادل {wallet_amount_rial:,} ریال) برای خرید بلیط - مسابقه {match.home_team} vs {match.away_team}",
+                                    reference_id=f"ORDER-{match.id}-{track_id}",
+                                    tx_type='ticket_purchase'
+                                )
+                                if success:
+                                    wallet_amount_used = wallet_amount_rial
+                                    wallet.refresh_from_db()
+                                    print(f"✅ {wallet_amount_rial:,} ریال از کیف پول کسر شد")
+                                    print(f"   موجودی جدید: {wallet.balance:,} ریال")
+                                else:
+                                    print("❌ deduct_balance returned False")
+                            else:
+                                print(f"⚠️ موجودی کیف پول کافی نیست: {wallet.balance} < {wallet_amount_rial}")
+                                messages.warning(request,
+                                                 f"موجودی کیف پول شما ({wallet.balance:,} ریال) کافی نیست. مبلغ کامل از درگاه پرداخت شد.")
+                                wallet_amount_used = 0
+
+                        except Exception as e:
+                            print(f"❌ خطا در کسر از کیف پول: {e}")
+                            import traceback
+                            traceback.print_exc()
+                            wallet_amount_used = 0
+                    else:
+                        print("⚠️ شرط کسر از کیف پول برقرار نیست:")
+                        print(f"   use_wallet: {use_wallet}")
+                        print(f"   wallet_amount: {wallet_amount}")
+
                     # ===== ایجاد سفارش =====
+                    final_amount = discounted_total - wallet_amount_used
+
                     order = Order.objects.create(
                         user=request.user,
                         match=match,
                         subtotal=total_price,
                         discount_percent=discount_percent,
                         discount_amount=int(total_price * discount_percent / 100),
-                        total_amount=discounted_total,
-                        wallet_balance_before=0,  # چون از کیف پول استفاده نشده
-                        wallet_amount=0,
-                        wallet_balance_after=0,
-                        payment_method='zibal',
+                        total_amount=final_amount,
+                        wallet_balance_before=wallet.balance + wallet_amount_used,
+                        wallet_amount=wallet_amount_used,
+                        wallet_balance_after=wallet.balance,
+                        payment_method='mixed' if wallet_amount_used > 0 and final_amount > 0 else (
+                            'wallet' if wallet_amount_used >= discounted_total else 'zibal'),
                         payment_status='paid',
                         discount_code=discount_obj.code if discount_obj else '',
                         discount_code_id=discount_obj.id if discount_obj else None,
@@ -180,8 +278,10 @@ def payment_verify(request):
                         paid_at=timezone.now(),
                     )
                     print(f"✅ Order created: {order.order_number}")
+                    print(f"   total_amount: {order.total_amount}")
+                    print(f"   wallet_amount: {order.wallet_amount}")
 
-                    # ===== پردازش اطلاعات خریدار =====
+                    # ===== پردازش اطلاعات خریدار (صدور بلیط) =====
                     for key, full_name in buyer_info.items():
                         if key.startswith('full_name_'):
                             match_seat_pk = key.replace('full_name_', '')
@@ -203,6 +303,7 @@ def payment_verify(request):
                                     status='paid',
                                     is_admin_assigned=False,
                                     order=order,
+                                    price=match_seat.seat.row.block.price if match_seat.seat.row.block else 0,
                                 )
                                 tickets_created.append(ticket)
 
@@ -239,6 +340,8 @@ def payment_verify(request):
                     request.session.pop('pending_buyer_info', None)
                     request.session.pop('pending_discount_code', None)
                     request.session.pop('pending_discount_percent', None)
+                    request.session.pop('pending_wallet_amount', None)
+                    request.session.pop('pending_use_wallet', None)
                     request.session.pop('payment_next_url', None)
                     request.session.pop('track_id', None)
 
@@ -246,28 +349,40 @@ def payment_verify(request):
                     print(f"❌ Match {match_id} not found")
                     messages.error(request, "مسابقه مورد نظر یافت نشد.")
 
+                except Wallet.DoesNotExist:
+                    print(f"❌ Wallet not found for user {request.user}")
+                    messages.error(request, "کیف پول کاربر یافت نشد.")
+
                 except Exception as e:
                     print(f"❌ Error in ticket issuance: {e}")
+                    import traceback
+                    traceback.print_exc()
                     messages.error(request, f"خطا در صدور بلیط: {str(e)}")
 
             # ===== نمایش پیام نهایی =====
             if tickets_created:
-                messages.success(
-                    request,
-                    f"✅ پرداخت مبلغ {amount:,} ریال با موفقیت انجام شد. "
-                    f"{len(tickets_created)} بلیط صادر شد."
-                )
-            else:
-                if match_id and buyer_info:
-                    messages.warning(
+                wallet_msg = ""
+                if wallet_amount_used > 0:
+                    wallet_msg = f" مبلغ {wallet_amount_used:,} ریال از کیف پول کسر شد."
+
+                if order and order.total_amount > 0:
+                    messages.success(
                         request,
-                        "پرداخت موفق بود اما هیچ بلیطی صادر نشد. لطفاً دوباره تلاش کنید."
+                        f"✅ پرداخت مبلغ {order.total_amount:,} ریال با موفقیت انجام شد. "
+                        f"{len(tickets_created)} بلیط صادر شد.{wallet_msg}"
                     )
                 else:
                     messages.success(
                         request,
-                        f"✅ پرداخت مبلغ {amount:,} ریال با موفقیت انجام شد."
+                        f"✅ پرداخت با موفقیت انجام شد. "
+                        f"{len(tickets_created)} بلیط صادر شد.{wallet_msg}"
                     )
+            else:
+                # ===== اگر بلیطی صادر نشد، پیام شارژ موفق را نمایش بده =====
+                messages.success(
+                    request,
+                    f"✅ کیف پول شما با موفقیت به مبلغ {amount:,} ریال شارژ شد."
+                )
 
             return redirect(next_url)
 
@@ -288,6 +403,8 @@ def payment_verify(request):
             request.session.pop('pending_buyer_info', None)
             request.session.pop('payment_next_url', None)
             request.session.pop('track_id', None)
+            request.session.pop('pending_wallet_amount', None)
+            request.session.pop('pending_use_wallet', None)
 
             return redirect(next_url)
 
@@ -300,7 +417,7 @@ def payment_verify(request):
         request.session.pop('pending_buyer_info', None)
         request.session.pop('payment_next_url', None)
         request.session.pop('track_id', None)
+        request.session.pop('pending_wallet_amount', None)
+        request.session.pop('pending_use_wallet', None)
 
         return redirect(next_url)
-
-

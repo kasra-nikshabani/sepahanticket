@@ -2,16 +2,13 @@
 {% load static %}
 {% load currency_filters %}
 {% block title %}کیف پول من{% endblock %}
-{% load wallet_filters %}
 
 {% block extra_css %}
     <style>
-        /* ===== استایل‌های کلی ===== */
         .wallet-page {
             padding: 20px 0;
         }
 
-        /* ===== هدر ===== */
         .wallet-header {
             background: linear-gradient(135deg, #1A1A2E 0%, #2D2D44 100%);
             border-radius: 20px;
@@ -124,7 +121,6 @@
             transform: translateY(-3px);
         }
 
-        /* ===== کارت موجودی ===== */
         .balance-card {
             background: linear-gradient(135deg, #0f0f1f 0%, #1a1a2e 100%);
             border-radius: 20px;
@@ -179,7 +175,6 @@
             gap: 6px;
         }
 
-        /* ===== کارت‌های آمار ===== */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -236,7 +231,6 @@
             color: #17a2b8;
         }
 
-        /* ===== لیست تراکنش‌ها ===== */
         .transactions-section {
             background: #fff;
             border-radius: 16px;
@@ -392,21 +386,67 @@
             font-size: 16px;
         }
 
-        /* ===== مودال ===== */
-        .modal-content {
-            border-radius: 20px;
-            border: none;
+        .table-pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 12px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e8eaed;
+            gap: 10px;
         }
 
-        .modal-header {
-            border-radius: 20px 20px 0 0;
+        .table-pagination .info {
+            font-size: 13px;
+            color: #6c757d;
         }
 
-        .modal-footer {
-            border-radius: 0 0 20px 20px;
+        .table-pagination .info strong {
+            color: #1A1A2E;
         }
 
-        /* ===== واکنش‌گرایی ===== */
+        .pagination-custom {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .pagination-custom a,
+        .pagination-custom .current {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 34px;
+            height: 34px;
+            padding: 0 10px;
+            border-radius: 6px;
+            border: 1px solid #e8eaed;
+            text-decoration: none;
+            color: #1A1A2E;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        .pagination-custom a:hover {
+            border-color: #D4AF37;
+            color: #D4AF37;
+        }
+
+        .pagination-custom .current {
+            background: linear-gradient(135deg, #D4AF37, #B8960F);
+            border-color: #D4AF37;
+            color: #1A1A2E;
+            font-weight: 700;
+        }
+
+        .pagination-custom .disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
         @media (max-width: 768px) {
             .wallet-header .header-content {
                 flex-direction: column;
@@ -448,6 +488,12 @@
                 font-size: 11px;
                 padding: 2px 10px;
             }
+
+            .table-pagination {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
         }
 
         @media (max-width: 480px) {
@@ -466,10 +512,6 @@
             .wallet-header {
                 padding: 20px;
             }
-
-            .modal-body .row.g-2 .col-6 {
-                padding: 4px;
-            }
         }
     </style>
 {% endblock %}
@@ -485,7 +527,7 @@
                     <span>کیف پول من</span>
                 </div>
                 <div class="header-actions">
-                    <a href="#" class="btn-charge" data-bs-toggle="modal" data-bs-target="#chargeModal">
+                    <a href="{% url 'wallet:charge' %}" class="btn-charge">
                         <i class="fas fa-plus-circle"></i> شارژ کیف پول
                     </a>
                     <a href="{% url 'matches:home' %}" class="btn-back">
@@ -559,24 +601,26 @@
                                     <small style="color:#999;">{{ tx.created_at|date:"H:i" }}</small>
                                 </td>
                                 <td>
-                                    <span class="transaction-type {{ tx.transaction_type }}">
-                                        <i class="fas
-                                            {% if tx.transaction_type == 'deposit' %}fa-arrow-up
-                                            {% elif tx.transaction_type == 'withdraw' %}fa-arrow-down
-                                            {% elif tx.transaction_type == 'ticket_purchase' %}fa-ticket-alt
-                                            {% else %}fa-undo{% endif %}">
-                                        </i>
-                                        {{ tx.get_transaction_type_display }}
-                                    </span>
+                            <span class="transaction-type {{ tx.transaction_type }}">
+                                <i class="fas
+                                    {% if tx.transaction_type == 'deposit' %}fa-arrow-up
+                                    {% elif tx.transaction_type == 'withdraw' %}fa-arrow-down
+                                    {% elif tx.transaction_type == 'ticket_purchase' %}fa-ticket-alt
+                                    {% else %}fa-undo{% endif %}">
+                                </i>
+                                {{ tx.get_transaction_type_display }}
+                            </span>
                                 </td>
                                 <td>
-                                    <span class="transaction-amount
-                                        {% if tx.transaction_type == 'deposit' %}positive
-                                        {% elif tx.transaction_type == 'withdraw' or tx.transaction_type == 'ticket_purchase' %}negative
-                                        {% else %}neutral{% endif %}">
-                                        {% if tx.transaction_type == 'deposit' %}+{% elif tx.transaction_type == 'withdraw' or tx.transaction_type == 'ticket_purchase' %}-{% endif %}
-                                        {{ tx.amount|rial_display }}
-                                    </span>
+                            <span class="transaction-amount
+                                {% if tx.transaction_type == 'deposit' %}positive
+                                {% elif tx.transaction_type == 'withdraw' or tx.transaction_type == 'ticket_purchase' %}negative
+                                {% else %}neutral{% endif %}">
+                                {% if tx.transaction_type == 'deposit' %}
+                                    +{% elif tx.transaction_type == 'withdraw' or tx.transaction_type == 'ticket_purchase' %}
+                                    -{% endif %}
+                                {{ tx.amount|rial_display }}
+                            </span>
                                 </td>
                                 <td>{{ tx.description|truncatechars:30 }}</td>
                                 <td>{{ tx.balance_after|rial_display }}</td>
@@ -584,13 +628,53 @@
                         {% endfor %}
                         </tbody>
                     </table>
+
+                    <!-- ===== صفحه‌بندی ===== -->
+                    {% if transactions.has_other_pages %}
+                        <div class="table-pagination">
+                            <div class="info">
+                                نمایش <strong>{{ transactions.start_index }}</strong> تا
+                                <strong>{{ transactions.end_index }}</strong>
+                                از <strong>{{ transactions.paginator.count }}</strong> تراکنش
+                            </div>
+                            <div class="pagination-custom">
+                                {% if transactions.has_previous %}
+                                    <a href="?page=1"><i class="fas fa-angle-double-right"></i></a>
+                                    <a href="?page={{ transactions.previous_page_number }}"><i
+                                            class="fas fa-angle-right"></i></a>
+                                {% else %}
+                                    <span class="disabled"><i class="fas fa-angle-double-right"></i></span>
+                                    <span class="disabled"><i class="fas fa-angle-right"></i></span>
+                                {% endif %}
+
+                                {% for num in transactions.paginator.page_range %}
+                                    {% if num == transactions.number %}
+                                        <span class="current">{{ num }}</span>
+                                    {% elif num > transactions.number|add:'-3' and num < transactions.number|add:'3' %}
+                                        <a href="?page={{ num }}">{{ num }}</a>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if transactions.has_next %}
+                                    <a href="?page={{ transactions.next_page_number }}"><i
+                                            class="fas fa-angle-left"></i></a>
+                                    <a href="?page={{ transactions.paginator.num_pages }}"><i
+                                            class="fas fa-angle-double-left"></i></a>
+                                {% else %}
+                                    <span class="disabled"><i class="fas fa-angle-left"></i></span>
+                                    <span class="disabled"><i class="fas fa-angle-double-left"></i></span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+
                 {% else %}
                     <div class="empty-state">
                         <i class="fas fa-receipt"></i>
                         <h4>هیچ تراکنشی انجام نشده است</h4>
                         <p>کیف پول شما خالی است. برای شروع، کیف پول خود را شارژ کنید.</p>
-                        <a href="#" class="btn-charge" data-bs-toggle="modal" data-bs-target="#chargeModal"
-                           style="display:inline-flex; margin-top:12px;">
+                        <a href="{% url 'wallet:charge' %}" class="btn-charge"
+                           style="display:inline-flex; margin-top:12px; border:none;">
                             <i class="fas fa-plus-circle"></i> شارژ کیف پول
                         </a>
                     </div>
@@ -600,82 +684,11 @@
 
     </div>
 
-    <!-- ===== مودال شارژ کیف پول ===== -->
-    <div class="modal fade" id="chargeModal" tabindex="-1" aria-labelledby="chargeModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header" style="background: linear-gradient(135deg, #1A1A2E, #2D2D44); border: none;">
-                    <h5 class="modal-title text-white" id="chargeModalLabel">
-                        <i class="fas fa-wallet text-warning"></i> شارژ کیف پول
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="text-muted">مبلغ مورد نظر را برای شارژ انتخاب کنید:</p>
-                    <div class="row g-2">
-                        <!-- گزینه‌های شارژ سریع (مبالغ به ریال) -->
-                        <div class="col-6">
-                            <form method="post" action="{% url 'payments:payment_request' %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="amount" value="50000">
-                                <button type="submit" class="btn btn-outline-success w-100 py-3">
-                                    <strong>۵۰,۰۰۰</strong> ریال
-                                    <br><small>۵,۰۰۰ تومان</small>
-                                </button>
-                            </form>
-                        </div>
-                        <div class="col-6">
-                            <form method="post" action="{% url 'payments:payment_request' %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="amount" value="100000">
-                                <button type="submit" class="btn btn-outline-success w-100 py-3">
-                                    <strong>۱۰۰,۰۰۰</strong> ریال
-                                    <br><small>۱۰,۰۰۰ تومان</small>
-                                </button>
-                            </form>
-                        </div>
-                        <div class="col-6">
-                            <form method="post" action="{% url 'payments:payment_request' %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="amount" value="200000">
-                                <button type="submit" class="btn btn-outline-success w-100 py-3">
-                                    <strong>۲۰۰,۰۰۰</strong> ریال
-                                    <br><small>۲۰,۰۰۰ تومان</small>
-                                </button>
-                            </form>
-                        </div>
-                        <div class="col-6">
-                            <form method="post" action="{% url 'payments:payment_request' %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="amount" value="500000">
-                                <button type="submit" class="btn btn-outline-success w-100 py-3">
-                                    <strong>۵۰۰,۰۰۰</strong> ریال
-                                    <br><small>۵۰,۰۰۰ تومان</small>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                    <hr>
-                    <p class="text-muted small">یا مبلغ دلخواه را وارد کنید:</p>
-                    <form method="post" action="{% url 'payments:payment_request' %}" id="customChargeForm">
-                        {% csrf_token %}
-                        <div class="input-group">
-                            <input type="number" name="amount" class="form-control"
-                                   placeholder="مبلغ به ریال" min="10000" required>
-                            <button type="submit" class="btn btn-success">شارژ</button>
-                        </div>
-                        <small class="text-muted">* مبلغ را به **ریال** وارد کنید (۱۰۰۰ تومان = ۱۰۰۰۰ ریال)</small>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+{#    <script>#}
+{#        // ===== رفرش خودکار صفحه هر ۳۰ ثانیه =====#}
+{#        setTimeout(function () {#}
+{#            location.reload();#}
+{#        }, 30000);#}
+{#    </script>#}
 
-    <!-- ===== اسکریپت رفرش خودکار ===== -->
-    <script>
-        // ===== رفرش خودکار صفحه هر ۳۰ ثانیه =====
-        setTimeout(function() {
-            location.reload();
-        }, 30000);
-    </script>
 {% endblock %}
