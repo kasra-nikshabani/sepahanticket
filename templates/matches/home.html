@@ -189,6 +189,34 @@
         color: #721c24;
     }
 
+    /* ===== استایل جدید برای اطلاعات مسابقه در هدر ===== */
+    .match-info-header {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 16px 24px;
+    }
+
+    .match-info-header .info-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        color: #495057;
+    }
+
+    .match-info-header .info-item i {
+        color: #D4AF37;
+        width: 18px;
+        text-align: center;
+    }
+
+    .match-info-header .info-item .value {
+        font-weight: 600;
+        color: #1A1A2E;
+    }
+
     /* ===== واکنش‌گرایی ===== */
     @media (max-width: 992px) {
         .match-card .card-header .row {
@@ -251,6 +279,14 @@
 
         .page-title {
             font-size: 24px;
+        }
+
+        .match-info-header {
+            gap: 10px 16px;
+        }
+
+        .match-info-header .info-item {
+            font-size: 13px;
         }
     }
 
@@ -382,6 +418,16 @@
             font-size: 10px;
             padding: 2px 10px;
         }
+
+        .match-info-header {
+            gap: 6px 12px;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .match-info-header .info-item {
+            font-size: 12px;
+        }
     }
 
     @media (max-width: 400px) {
@@ -426,146 +472,71 @@
         <h1 class="page-title">
             <i class="fas fa-trophy"></i> مسابقات سپاهان
         </h1>
-        <p class="text-muted">ورزشگاه نقش جهان - اصفهان</p>
+
     </div>
 
     {% for match in matches %}
         <div class="card mb-3 mb-md-4 fade-in shadow-sm match-card">
+            <!-- ===== هدر: اطلاعات مسابقه ===== -->
             <div class="card-header bg-white">
-                <div class="row align-items-center">
-                    <div class="col-12 col-md-8">
-{#                        <h5 class="mb-0 match-title text-center text-md-start">#}
-{#                            {{ match.home_team }} <span class="vs">🆚</span> {{ match.away_team }}#}
-{#                        </h5>#}
-                    </div>
-                    <div class="col-12 col-md-4 text-center text-md-end">
-                        <span class="badge bg-primary match-time">{{ match.date_time|to_jalali_date }}</span>
-                    </div>
+                <div class="match-info-header">
+                    <span class="sport-badge {{ match.sport_type }}">
+                        <i class="fas
+                            {% if match.sport_type == 'football' %}fa-futbol
+                            {% elif match.sport_type == 'futsal' %}fa-futsal
+                            {% elif match.sport_type == 'basketball' %}fa-basketball-ball
+                            {% elif match.sport_type == 'volleyball' %}fa-volleyball-ball
+                            {% else %}fa-sports-ball{% endif %}
+                        "></i>
+                        {{ match.get_sport_type_display }}
+                    </span>
+                    <span class="info-item">
+                        <i class="far fa-calendar-alt"></i>
+                        <span class="value">{{ match.date_time|to_jalali_date }}</span>
+                    </span>
+                    <span class="info-item">
+                        <i class="far fa-clock"></i>
+                        <span class="value">{{ match.date_time|date:"H:i" }}</span>
+                    </span>
+                    <span class="info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span class="value">{{ match.stadium.name }}</span>
+                    </span>
                 </div>
             </div>
+
             <div class="card-body">
                 <div class="row align-items-center">
-                    <!-- لوگوها -->
-                    <div class="col-12 col-md-5 text-center mb-3 mb-md-0">
-                        <!-- دسکتاپ -->
-                        <div class="d-none d-md-flex justify-content-around align-items-center">
-                            <div>
-                                {% if match.home_team_logo %}
-                                    <img src="{{ match.home_team_logo.url }}" alt="{{ match.home_team }}" class="team-logo-img">
-                                {% else %}
-                                    <div style="width:65px; height:65px; background:#f0f0f0; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; color:#999; font-size:16px; margin:0 auto;">{{ match.home_team|slice:":2" }}</div>
-                                {% endif %}
-                                <div class="team-name">{{ match.home_team }}</div>
-                                <span class="team-badge-home">میزبان</span>
-                            </div>
-                            <span class="text-muted" style="font-size: 1.8rem;">🆚</span>
-                            <div>
-                                {% if match.away_team_logo %}
-                                    <img src="{{ match.away_team_logo.url }}" alt="{{ match.away_team }}" class="team-logo-img">
-                                {% else %}
-                                    <div style="width:65px; height:65px; background:#f0f0f0; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; color:#999; font-size:16px; margin:0 auto;">{{ match.away_team|slice:":2" }}</div>
-                                {% endif %}
-                                <div class="team-name">{{ match.away_team }}</div>
-                                <span class="team-badge-away">میهمان</span>
-                            </div>
-                        </div>
-
-                        <!-- موبایل: میزبان راست، میهمان چپ -->
-                        <div class="d-md-none teams-row">
-                            <div class="team-box">
-                                {% if match.home_team_logo %}
-                                    <img src="{{ match.home_team_logo.url }}" alt="{{ match.home_team }}" class="team-logo-img">
-                                {% else %}
-                                    <div style="width:75px; height:75px; background:#f0f0f0; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; color:#999; font-size:18px; margin:0 auto;">{{ match.home_team|slice:":2" }}</div>
-                                {% endif %}
-                                <div class="team-name">{{ match.home_team }}</div>
-                                <span class="team-badge-home">میزبان</span>
-                            </div>
-
-                            <span class="vs-icon">🆚</span>
-
-                            <div class="team-box">
-                                {% if match.away_team_logo %}
-                                    <img src="{{ match.away_team_logo.url }}" alt="{{ match.away_team }}" class="team-logo-img">
-                                {% else %}
-                                    <div style="width:75px; height:75px; background:#f0f0f0; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; color:#999; font-size:18px; margin:0 auto;">{{ match.away_team|slice:":2" }}</div>
-                                {% endif %}
-                                <div class="team-name">{{ match.away_team }}</div>
-                                <span class="team-badge-away">میهمان</span>
-                            </div>
-                        </div>
+                    <!-- ===== لوگو میزبان (چپ) ===== -->
+                    <div class="col-5 text-center">
+                        {% if match.home_team_logo %}
+                            <img src="{{ match.home_team_logo.url }}" alt="{{ match.home_team }}" class="team-logo-img">
+                        {% else %}
+                            <div style="width:80px; height:80px; background:#f0f0f0; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; color:#999; font-size:20px; margin:0 auto;">{{ match.home_team|slice:":2" }}</div>
+                        {% endif %}
+                        <div class="team-name">{{ match.home_team }}</div>
+                        <span class="team-badge-home">میزبان</span>
                     </div>
 
-                    <!-- اطلاعات مسابقه + ظرفیت‌ها -->
-                    <div class="col-12 col-md-7">
-                        <div class="row">
-                            <!-- رشته ورزشی -->
-                            <div class="col-12 mb-1">
-                                <span class="sport-badge {{ match.sport_type }}">
-                                    <i class="fas
-                                        {% if match.sport_type == 'football' %}fa-futbol
-                                        {% elif match.sport_type == 'futsal' %}fa-futbol
-                                        {% elif match.sport_type == 'basketball' %}fa-basketball-ball
-                                        {% elif match.sport_type == 'volleyball' %}fa-volleyball-ball
-                                        {% else %}fa-sports-ball{% endif %}
-                                    "></i>
-                                    {{ match.get_sport_type_display }}
-                                </span>
-                            </div>
-                            <div class="col-6">
-                                <div class="match-info-item">
-                                    <div class="label">تاریخ</div>
-                                    <p class="value">{{ match.date_time|to_jalali_date }}</p>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="match-info-item">
-                                    <div class="label">ساعت</div>
-                                    <p class="value">{{ match.date_time|date:"H:i" }}</p>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <div class="match-info-item">
-                                    <div class="label">ورزشگاه</div>
-                                    <p class="value">{{ match.stadium.name }}</p>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- ===== جداکننده ===== -->
+                    <div class="col-2 text-center">
+                        <span style="font-size: 28px; font-weight: 700; color: #999;">🆚</span>
+                    </div>
 
-                        <!-- نمایش ظرفیت‌ها -->
-                        <div class="row mt-2 mt-md-3">
-                            <div class="col-12">
-                                <div class="card bg-light border-0 p-2">
-                                    <div class="stats-container">
-                                        <div class="stat-item">
-                                            <span class="badge bg-secondary">ظرفیت کل</span>
-                                            <span class="fw-bold fs-5">{{ match.total_capacity|default:0 }}</span>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span class="badge bg-danger">فروخته‌شده</span>
-                                            <span class="fw-bold fs-5">{{ match.sold_tickets|default:0 }}</span>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span class="badge bg-success">باقی‌مانده</span>
-                                            <span class="fw-bold fs-5">{{ match.available_seats|default:0 }}</span>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span class="badge bg-info text-dark">درصد اشغال</span>
-                                            <span class="fw-bold fs-5">{{ match.occupancy|default:0 }}%</span>
-                                        </div>
-                                    </div>
-                                    <!-- نوار پیشرفت -->
-                                    <div class="progress mt-2" style="height: 6px;">
-                                        <div class="progress-bar bg-success" style="width: {{ match.occupancy|default:0 }}%;"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- ===== لوگو میهمان (راست) ===== -->
+                    <div class="col-5 text-center">
+                        {% if match.away_team_logo %}
+                            <img src="{{ match.away_team_logo.url }}" alt="{{ match.away_team }}" class="team-logo-img">
+                        {% else %}
+                            <div style="width:80px; height:80px; background:#f0f0f0; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; color:#999; font-size:20px; margin:0 auto;">{{ match.away_team|slice:":2" }}</div>
+                        {% endif %}
+                        <div class="team-name">{{ match.away_team }}</div>
+                        <span class="team-badge-away">میهمان</span>
                     </div>
                 </div>
 
-                <!-- ===== دکمه خرید بزرگتر ===== -->
-                <div class="text-center mt-3 mt-md-4">
+                <!-- ===== دکمه خرید ===== -->
+                <div class="text-center mt-4">
                     {% if user.user_type != 'vip' %}
                         <a href="{% url 'matches:select_floor' match.id %}" class="btn-buy">
                             <i class="fas fa-ticket-alt"></i> خرید بلیط
