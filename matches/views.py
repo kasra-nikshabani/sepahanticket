@@ -29,8 +29,9 @@ from django.conf import settings
 from .models import Match, MatchCost, MatchRevenue, MatchFinancialReport
 from .forms import MatchCostForm, MatchRevenueForm
 from tickets.models import Ticket
+from django.views.decorators.cache import cache_page
 
-
+@cache_page(60)
 # ============================================================
 #  ویوهای عمومی (کاربران عادی)
 # ============================================================

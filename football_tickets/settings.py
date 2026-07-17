@@ -116,8 +116,8 @@ MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
 
-SMS_IR_SANDBOX = os.getenv('SMS_IR_SANDBOX', 'True') == 'True'
-SMS_IR_API_KEY = os.getenv('SMS_IR_API_KEY', '')
+SMS_IR_SANDBOX = False
+SMS_IR_API_KEY = os.getenv('GvuGJ87XBIrAghd7OfA28vhxof9rlYBfvULTPBBhzb8TbXkw')
 SMS_IR_SEND_URL = 'https://api.sms.ir/v1/send/verify'
 SMS_IR_TEMPLATE_ID = int(os.getenv('SMS_IR_TEMPLATE_ID', 123456))
 SMS_IR_LINE_NUMBER = os.getenv('SMS_IR_LINE_NUMBER', '1000xxxx')
