@@ -9,14 +9,14 @@ class TransactionAdmin(admin.ModelAdmin):
         'user',
         'amount_display',
         'transaction_type',
-        'is_wallet',          # ← ستون جدید
+        'is_wallet',
         'description',
         'created_at',
         'reference_id',
     ]
     list_filter = [
         'transaction_type',
-        'is_wallet',          # ← فیلتر بر اساس کیف پول
+        'is_wallet',
         'created_at',
     ]
     search_fields = [
@@ -56,8 +56,10 @@ class TransactionAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user')
 
+
+# ===== تغییر نام کلاس ادمین از WalletAdmin به WalletModelAdmin =====
 @admin.register(Wallet)
-class WalletAdmin(admin.ModelAdmin):
+class WalletModelAdmin(admin.ModelAdmin):  # ← نام را تغییر دادیم
     list_display = ['user', 'balance_display', 'created_at', 'updated_at']
     search_fields = ['user__username', 'user__phone_number']
     readonly_fields = ['created_at', 'updated_at']
