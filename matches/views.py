@@ -30,12 +30,12 @@ from .models import Match, MatchCost, MatchRevenue, MatchFinancialReport
 from .forms import MatchCostForm, MatchRevenueForm
 from tickets.models import Ticket
 from django.views.decorators.cache import cache_page
+from django.views.decorators.cache import never_cache
 
-@cache_page(60)
 # ============================================================
 #  ویوهای عمومی (کاربران عادی)
 # ============================================================
-
+@never_cache
 def home(request):
     """صفحه اصلی - نمایش مسابقات با ظرفیت‌های دقیق"""
     # ===== بررسی نمایش صفحه لودینگ =====
@@ -82,7 +82,6 @@ def home(request):
         occupancy = round((sold_seats / total_seats * 100) if total_seats > 0 else 0, 1)
 
         # ===== ۵. اختصاص به آبجکت match =====
-        match.total_capacity = total_seats
         match.sold_tickets = sold_seats
         match.available_seats = available_seats
         match.occupancy = occupancy
@@ -123,8 +122,8 @@ def match_detail(request, match_id):
 # ============================================================
 #  مراحل خرید بلیط (کاربران عادی)
 # ============================================================
-
 @login_required
+
 def select_floor(request, match_id):
     """انتخاب طبقه (پایین یا بالا) قبل از نمایش بلوک‌ها"""
     match = get_object_or_404(Match, id=match_id, is_active=True)

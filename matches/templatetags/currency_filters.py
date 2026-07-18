@@ -70,3 +70,16 @@ def rial_value(value):
         return int(float(value) * 10)
     except (ValueError, TypeError):
         return '0'
+
+@register.filter(name='separator')
+def separator(value):
+    """
+    نمایش اعداد با جداکننده هزارگان
+    مثال: 1500000 → ۱,۵۰۰,۰۰۰
+    """
+    if value is None:
+        return '۰'
+    try:
+        return f"{int(float(value)):,}".replace(',', '٬')
+    except (ValueError, TypeError):
+        return str(value)

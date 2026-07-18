@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.db import models
 from django.db.models import Sum
 from django.utils import timezone
@@ -291,6 +293,35 @@ class Match(models.Model):
         if self.total_capacity == 0:
             return 0
         return round((self.sold_tickets / self.total_capacity) * 100, 1)
+
+    @property
+    def status(self):
+        """وضعیت مسابقه"""
+        now = timezone.now()
+        if self.date_time > now:
+            return 'upcoming'
+        elif self.date_time <= now and self.date_time + timedelta(hours=2) > now:
+            return 'live'
+        else:
+            return 'finished'
+
+    @property
+    def min_ticket_price(self):
+        """حداقل قیمت بلیط"""
+        # منطق محاسبه قیمت
+        pass
+
+    @property
+    def remaining_tickets(self):
+        """تعداد بلیط باقی‌مانده"""
+        # منطق محاسبه
+        pass
+
+    @property
+    def total_capacity(self):
+        """ظرفیت کل ورزشگاه"""
+        # منطق محاسبه
+        pass
 
     def __str__(self):
         return f"{self.home_team} vs {self.away_team} - {self.date_time}"
