@@ -10,7 +10,7 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = os.getenv('SECRET_KEY', 'change-me')
 # DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-DEBUG = True
+DEBUG = False
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 INSTALLED_APPS = [
@@ -116,12 +116,13 @@ MESSAGE_TAGS = {
     messages.WARNING: 'warning',
     messages.ERROR: 'danger',
 }
-
-SMS_IR_SANDBOX = False
-SMS_IR_API_KEY = os.getenv('GvuGJ87XBIrAghd7OfA28vhxof9rlYBfvULTPBBhzb8TbXkw')
+SMS_IR_SANDBOX = os.getenv('SMS_IR_SANDBOX', 'False') == 'True'
+SMS_IR_API_KEY = os.getenv('SMS_IR_API_KEY')
 SMS_IR_SEND_URL = 'https://api.sms.ir/v1/send/verify'
-SMS_IR_TEMPLATE_ID = int(os.getenv('SMS_IR_TEMPLATE_ID', 123456))
+SMS_IR_TEMPLATE_ID = 240573
 SMS_IR_LINE_NUMBER = os.getenv('SMS_IR_LINE_NUMBER', '1000xxxx')
+if not SMS_IR_API_KEY:
+    raise ValueError("❌ SMS_IR_API_KEY not found in environment variables!")
 
 ZIBAL_MERCHANT_ID = os.getenv('ZIBAL_MERCHANT_ID', 'zibal')
 ZIBAL_SANDBOX = os.getenv('ZIBAL_SANDBOX', 'True') == 'True'
