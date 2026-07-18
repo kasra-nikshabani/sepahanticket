@@ -1,5 +1,5 @@
 # accounts/views.py
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.views.decorators.cache import never_cache
 
 from .forms import RegisterForm, LoginForm, PhoneLoginForm, OTPVerifyForm, PhoneRegisterForm
 from .models import OTP
@@ -72,6 +73,7 @@ def phone_login(request):
     return render(request, 'accounts/phone_login.html', {'form': form})
 
 
+@never_cache
 def otp_verify(request):
     """تأیید کد OTP برای ورود/ثبت‌نام"""
     if not getattr(settings, 'OTP_ENABLED', False):
@@ -86,7 +88,7 @@ def otp_verify(request):
         messages.error(request, 'لطفاً ابتدا شماره تلفن را وارد کنید.')
         return redirect('accounts:phone_login')
 
-    form = OTPVerifyForm()  # مقداردهی اولیه برای نمایش در صورت GET
+    form = OTPVerifyForm()
 
     if request.method == 'POST':
         form = OTPVerifyForm(request.POST)
@@ -102,33 +104,37 @@ def otp_verify(request):
                     user.is_phone_verified = True
                     user.save()
 
-                    # تنظیم backend قبل از login
                     user.backend = 'accounts.backends.PhoneBackend'
                     login(request, user)
 
+                    # ===== به‌روزرسانی سشن =====
+                    request.session['user_type'] = user.user_type
+
                     request.session.pop('otp_phone', None)
                     messages.success(request, f'خوش آمدید {user.get_full_name() or user.phone_number}!')
-                    return redirect(request.GET.get('next', 'matches:home'))
+
+                    # ===== جلوگیری از کش =====
+                    response = redirect(request.GET.get('next', 'matches:home'))
+                    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                    return response
+
                 except User.DoesNotExist:
                     messages.error(request, 'کاربری با این شماره وجود ندارد.')
             else:
-                # کد نامعتبر یا منقضی
                 try:
                     latest_otp = OTP.objects.filter(phone_number=phone_number, is_used=False).latest('created_at')
                     latest_otp.increment_attempts()
                     if latest_otp.attempts >= 3:
-                        messages.error(request, '❌ تعداد تلاش‌های ناموفق بیش از حد مجاز. کد جدید دریافت کنید.')
+                        messages.error(request, '❌ تعداد تلاش‌های ناموفق بیش از حد مجاز.')
                     else:
                         messages.error(request, '❌ کد وارد شده صحیح نیست یا منقضی شده است.')
                 except OTP.DoesNotExist:
                     messages.error(request, '❌ کد وارد شده صحیح نیست یا منقضی شده است.')
         else:
-            # خطاهای فرم
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f'{field}: {error}')
 
-    # محاسبه زمان باقی‌مانده
     try:
         latest_otp = OTP.objects.filter(phone_number=phone_number, is_used=False).latest('created_at')
         remaining_time = max(0, int((latest_otp.expires_at - timezone.now()).total_seconds()))
@@ -240,6 +246,7 @@ def register_view(request):
     return redirect('accounts:login_password')
 
 
+@never_cache
 def login_view(request):
     """ورود با نام کاربری و رمز عبور (ادمین و VIP)"""
     if request.user.is_authenticated:
@@ -252,14 +259,21 @@ def login_view(request):
             password = form.cleaned_data.get('password')
             user = authenticate(request, username=username, password=password)
             if user is not None:
-                # فقط ادمین و VIP اجازه ورود با رمز دارند
                 if user.user_type in ['admin', 'vip']:
                     login(request, user)
+
+                    # ===== به‌روزرسانی سشن =====
+                    request.session['user_type'] = user.user_type
+
                     messages.success(request, f'خوش آمدید {user.get_full_name() or user.username}!')
-                    return redirect(request.GET.get('next', 'matches:home'))
+
+                    # ===== بازگشت به صفحه قبلی =====
+                    next_url = request.GET.get('next')
+                    if next_url:
+                        return redirect(next_url)
+                    return redirect('matches:home')
                 else:
-                    messages.error(request,
-                                   'این روش ورود فقط برای مدیران و کاربران ویژه است. لطفاً از ورود با شماره تلفن استفاده کنید.')
+                    messages.error(request, 'این روش ورود فقط برای مدیران و کاربران ویژه است.')
                     return redirect('accounts:phone_login')
             else:
                 messages.error(request, 'نام کاربری یا رمز عبور اشتباه است.')
@@ -271,10 +285,19 @@ def login_view(request):
     return render(request, 'accounts/login_password.html', {'form': form})
 
 
+@never_cache
 def logout_view(request):
+    """خروج از حساب کاربری"""
+    # ===== خروج =====
     logout(request)
+
+    # ===== پاک کردن کامل سشن =====
+    request.session.flush()
+
     messages.info(request, 'شما از حساب خود خارج شدید.')
-    return redirect('matches:home')
+
+    # ===== هدایت با پارامتر زمان برای جلوگیری از کش =====
+    return redirect(f'/')
 
 
 @login_required

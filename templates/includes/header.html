@@ -6,21 +6,21 @@
         <div class="container-fluid">
             <!-- لوگو و برند -->
             <a class="navbar-brand" href="{% url 'matches:home' %}">
-                <img src="{% static 'img/sepahan-logo.png' %}" alt="لوگوی سپاهان" height="45" class="d-inline-block align-top" onerror="this.style.display='none'">
+                <img src="{% static 'img/sepahan-logo.png' %}" alt="لوگوی سپاهان" height="45"
+                     class="d-inline-block align-top" onerror="this.style.display='none'">
                 <span class="brand-text">فولاد مبارکه سپاهان</span>
             </a>
 
-            <!-- ===== منوی دسکتاپ (فقط در اندازه‌های بزرگتر از موبایل) ===== -->
+            <!-- ===== منوی دسکتاپ ===== -->
             <div class="d-none d-md-flex align-items-center">
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center gap-1">
 
-                    <!-- لینک‌های عمومی (فقط دسکتاپ) -->
+                    <!-- لینک‌های عمومی -->
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'matches:home' %}">
                             <i class="fas fa-home"></i> خانه
                         </a>
                     </li>
-                    <!-- ===== لینک مسابقات در دسکتاپ حذف شد ===== -->
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'tutorial' %}">
                             <i class="fas fa-question-circle"></i> راهنما
@@ -81,9 +81,9 @@
                             </li>
                         {% endif %}
 
-                        <!-- خروج -->
+                        <!-- دکمه خروج -->
                         <li class="nav-item">
-                            <a class="nav-link btn-logout" href="{% url 'accounts:logout' %}">
+                            <a class="nav-link btn-logout" href="{% url 'accounts:logout' %}" id="logoutBtn">
                                 <i class="fas fa-sign-out-alt"></i> خروج
                             </a>
                         </li>
@@ -109,7 +109,6 @@
 </header>
 
 <style>
-    /* ===== استایل هدر ===== */
     .custom-header {
         background: linear-gradient(135deg, #1A1A2E 0%, #2D2D44 100%);
         border-bottom: 2px solid rgba(212, 175, 55, 0.20);
@@ -193,11 +192,11 @@
         background: rgba(212, 175, 55, 0.14);
         color: #D4AF37;
     }
+
     .custom-header .navbar-nav .nav-link.active i {
         color: #D4AF37;
     }
 
-    /* دکمه‌های ورود/خروج */
     .custom-header .btn-login {
         background: linear-gradient(135deg, #D4AF37, #B8960F);
         color: #1A1A2E !important;
@@ -207,9 +206,11 @@
         box-shadow: 0 4px 16px rgba(212, 175, 55, 0.25);
         transition: all 0.3s ease;
     }
+
     .custom-header .btn-login i {
         color: #1A1A2E !important;
     }
+
     .custom-header .btn-login:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 30px rgba(212, 175, 55, 0.35);
@@ -225,9 +226,11 @@
         transition: all 0.3s ease;
         background: transparent;
     }
+
     .custom-header .btn-register i {
         color: #D4AF37 !important;
     }
+
     .custom-header .btn-register:hover {
         background: rgba(212, 175, 55, 0.10);
         border-color: #D4AF37;
@@ -241,18 +244,20 @@
         padding: 5px 18px !important;
         transition: all 0.3s ease;
     }
+
     .custom-header .btn-logout i {
         color: #f8a7a7 !important;
     }
+
     .custom-header .btn-logout:hover {
         background: rgba(220, 53, 69, 0.22);
         color: #ffffff !important;
     }
+
     .custom-header .btn-logout:hover i {
         color: #ffffff !important;
     }
 
-    /* ===== واکنش‌گرایی ===== */
     @media (max-width: 991.98px) {
         .custom-header .navbar-nav .nav-link {
             font-size: 13px;
@@ -299,3 +304,61 @@
         }
     }
 </style>
+
+<script>
+// ===== مدیریت خروج =====
+(function() {
+    'use strict';
+
+    function forceReload() {
+        window.location.href = '/?t=' + Date.now();
+    }
+
+    function handleLogout(e) {
+        e.preventDefault();
+        const url = this.href;
+
+        sessionStorage.setItem('logout_pending', 'true');
+
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(function(response) {
+            if (response.ok) {
+                forceReload();
+            } else {
+                window.location.href = url;
+            }
+        })
+        .catch(function() {
+            window.location.href = url;
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', handleLogout);
+        }
+
+        if (sessionStorage.getItem('logout_pending') === 'true') {
+            sessionStorage.removeItem('logout_pending');
+
+            fetch('/accounts/check-login-status/')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.is_authenticated === true) {
+                        forceReload();
+                    }
+                })
+                .catch(function() {
+                    forceReload();
+                });
+        }
+    });
+
+})();
+</script>
