@@ -28,6 +28,8 @@ def generate_otp_code():
 
 # accounts/services/sms.py
 
+# accounts/services/sms.py
+
 def send_sms_via_smsir(phone_number, code):
     """
     ارسال پیامک از طریق sms.ir (با پشتیبانی از Sandbox)

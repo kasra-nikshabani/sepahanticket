@@ -118,10 +118,9 @@ MESSAGE_TAGS = {
 }
 
 SMS_IR_SANDBOX = False
-SMS_IR_API_KEY = os.getenv('GvuGJ87XBIrAghd7OfA28vhxof9rlYBfvULTPBBhzb8TbXkw')
+SMS_IR_API_KEY = os.getenv('SMS_IR_API_KEY')
 SMS_IR_SEND_URL = 'https://api.sms.ir/v1/send/verify'
-SMS_IR_TEMPLATE_ID = int(os.getenv('SMS_IR_TEMPLATE_ID', 123456))
-SMS_IR_LINE_NUMBER = os.getenv('SMS_IR_LINE_NUMBER', '1000xxxx')
+SMS_IR_TEMPLATE_ID = int(os.getenv('SMS_IR_TEMPLATE_ID', 0))
 
 ZIBAL_MERCHANT_ID = os.getenv('ZIBAL_MERCHANT_ID', 'zibal')
 ZIBAL_SANDBOX = os.getenv('ZIBAL_SANDBOX', 'True') == 'True'
