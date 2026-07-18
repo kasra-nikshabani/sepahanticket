@@ -4,491 +4,798 @@
 {% load jalali %}
 
 {% block extra_css %}
-    <style>
-        /* ===== کارت مسابقه ===== */
-        .match-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border-radius: 16px;
-            overflow: hidden;
-            background: #ffffff;
-            border: 1px solid #e8eaed;
+<style>
+    /* ============================================================ */
+    /* ===== کارت مسابقه با گرادیانت، شیر و تایمر ===== */
+    /* ============================================================ */
+
+    .match-card {
+        background: linear-gradient(145deg, #1A1A2E 0%, #2D2D44 50%, #1A1A2E 100%);
+        border-radius: 28px;
+        overflow: hidden;
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.30);
+        transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+        position: relative;
+        border: 1px solid rgba(212, 175, 55, 0.15);
+        margin-bottom: 32px;
+    }
+
+    .match-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #D4AF37, #F5E56B, #D4AF37);
+        background-size: 200% 100%;
+        animation: shimmer 3s ease-in-out infinite;
+        z-index: 10;
+    }
+
+    @keyframes shimmer {
+        0%, 100% { background-position: -200% 0; }
+        50% { background-position: 200% 0; }
+    }
+
+    /* ===== شیر با عکس (سمت راست) ===== */
+    .match-card .lion-image {
+        position: absolute;
+        right: -30px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 220px;
+        height: auto;
+        opacity: 0.06;
+        z-index: 1;
+        pointer-events: none;
+        transition: all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+        user-select: none;
+        filter: drop-shadow(0 0 30px rgba(212, 175, 55, 0.05));
+        border-radius: 20px;
+    }
+
+    .match-card:hover .lion-image {
+        opacity: 0.15;
+        transform: translateY(-50%) scale(1.08) rotate(-2deg);
+        filter: drop-shadow(0 0 50px rgba(212, 175, 55, 0.15));
+    }
+
+    /* ===== افکت نور پس‌زمینه ===== */
+    .match-card::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(212, 175, 55, 0.06) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .match-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+        border-color: rgba(212, 175, 55, 0.35);
+    }
+
+    /* ===== هدر ===== */
+    .match-card-header {
+        padding: 18px 28px 14px;
+        background: rgba(255, 255, 255, 0.03);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px 20px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .match-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px 18px;
+    }
+
+    .match-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .match-meta-item i {
+        color: #D4AF37;
+        font-size: 14px;
+    }
+
+    .match-meta-item .value {
+        font-weight: 600;
+        color: #ffffff;
+    }
+
+    .sport-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 16px;
+        border-radius: 50px;
+        font-size: 12px;
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .sport-tag i { color: #D4AF37; }
+    .sport-tag.football { background: rgba(40, 167, 69, 0.15); color: #8fdf9f; }
+    .sport-tag.futsal { background: rgba(0, 123, 255, 0.15); color: #8fcbff; }
+    .sport-tag.basketball { background: rgba(255, 193, 7, 0.15); color: #ffd966; }
+    .sport-tag.volleyball { background: rgba(220, 53, 69, 0.15); color: #f8a7a7; }
+
+    /* ===== تایمر ===== */
+    .match-timer {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(0, 0, 0, 0.30);
+        padding: 8px 22px 8px 18px;
+        border-radius: 50px;
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 15px;
+        border: 1px solid rgba(212, 175, 55, 0.15);
+        backdrop-filter: blur(4px);
+    }
+
+    .match-timer .timer-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.8);
+        white-space: nowrap;
+    }
+
+    .match-timer .timer-numbers {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        direction: ltr;
+    }
+
+    .match-timer .timer-unit {
+        font-size: 11px;
+        font-weight: 400;
+        color: rgba(255, 255, 255, 0.5);
+        margin: 0 2px;
+    }
+
+    .match-timer .time-block {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.07);
+        padding: 2px 10px;
+        border-radius: 6px;
+        min-width: 32px;
+        font-size: 17px;
+        font-weight: 800;
+        color: #D4AF37;
+        letter-spacing: 1px;
+    }
+
+    /* ===== دسکتاپ: برچسب سمت راست ===== */
+    @media (min-width: 769px) {
+        .match-timer {
+            flex-direction: row;
         }
 
-        .match-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08) !important;
+        .match-timer .timer-label {
+            order: 2;
+            margin-right: 4px;
         }
 
-        .match-card .card-header {
-            border-bottom: 2px solid rgba(212, 175, 55, 0.15);
-            padding: 12px 16px;
-            background: #fafafa;
+        .match-timer .timer-numbers {
+            order: 1;
         }
+    }
 
-        /* ===== اطلاعات مسابقه در هدر با خط افقی ===== */
-        .match-info-header {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: center;
-            gap: 16px 24px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e8eaed;
-            margin-bottom: 4px;
-        }
-
-        .match-info-header .info-item {
-            display: flex;
+    /* ===== موبایل: برچسب بالای تایمر ===== */
+    @media (max-width: 768px) {
+        .match-timer {
+            flex-direction: column;
             align-items: center;
             gap: 6px;
-            font-size: 14px;
-            color: #495057;
+            padding: 10px 16px;
+            border-radius: 16px;
+            width: 100%;
         }
 
-        .match-info-header .info-item i {
-            color: #D4AF37;
-            width: 18px;
+        .match-timer .timer-label {
+            font-size: 13px;
+            order: 0;
+            width: 100%;
             text-align: center;
+            color: rgba(255, 255, 255, 0.7);
         }
 
-        .match-info-header .info-item .value {
-            font-weight: 600;
-            color: #1A1A2E;
+        .match-timer .timer-numbers {
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2px 4px;
         }
 
-        /* ===== لوگوها ===== */
-        .team-logo-img {
-            height: 80px;
-            width: auto;
-            object-fit: contain;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.04);
-            padding: 6px;
-            transition: transform 0.3s ease;
+        .match-timer .time-block {
+            font-size: 15px;
+            min-width: 28px;
+            padding: 2px 8px;
         }
 
-        .team-logo-img:hover {
-            transform: scale(1.05);
+        .match-timer .timer-unit {
+            font-size: 10px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .match-timer {
+            padding: 8px 12px;
+            border-radius: 14px;
         }
 
-        .team-logo-placeholder {
+        .match-timer .timer-label {
+            font-size: 12px;
+        }
+
+        .match-timer .time-block {
+            font-size: 13px;
+            min-width: 22px;
+            padding: 1px 6px;
+        }
+
+        .match-timer .timer-unit {
+            font-size: 9px;
+        }
+    }
+
+    /* ===== بدنه ===== */
+    .match-card-body {
+        padding: 32px 24px 28px;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* ===== تیم‌ها ===== */
+    .teams-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 28px 50px;
+        flex-wrap: wrap;
+    }
+
+    .team-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+        max-width: 240px;
+    }
+
+    .team-box .team-logo {
+        width: 160px;
+        height: 160px;
+        object-fit: contain;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 20px;
+        border: 3px solid rgba(212, 175, 55, 0.15);
+        transition: all 0.5s ease;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.20);
+        filter: drop-shadow(0 4px 12px rgba(212, 175, 55, 0.10));
+    }
+
+    .match-card:hover .team-box .team-logo {
+        border-color: #D4AF37;
+        transform: scale(1.06) rotate(-2deg);
+        box-shadow: 0 12px 48px rgba(212, 175, 55, 0.15);
+        filter: drop-shadow(0 4px 20px rgba(212, 175, 55, 0.15));
+    }
+
+    .team-box .team-logo-placeholder {
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 56px;
+        font-weight: 900;
+        color: rgba(255, 255, 255, 0.15);
+        border: 3px solid rgba(212, 175, 55, 0.10);
+        transition: all 0.5s ease;
+    }
+
+    .match-card:hover .team-box .team-logo-placeholder {
+        border-color: #D4AF37;
+        transform: scale(1.06);
+        color: rgba(212, 175, 55, 0.25);
+    }
+
+    .team-box .team-name {
+        font-weight: 800;
+        font-size: 22px;
+        color: #ffffff;
+        margin-top: 16px;
+        text-align: center;
+        transition: color 0.3s ease;
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.20);
+    }
+
+    .match-card:hover .team-box .team-name {
+        color: #D4AF37;
+    }
+
+    .team-box .team-role {
+        font-size: 13px;
+        padding: 4px 20px;
+        border-radius: 50px;
+        font-weight: 600;
+        margin-top: 6px;
+        letter-spacing: 0.5px;
+    }
+
+    .team-role.home {
+        background: rgba(40, 167, 69, 0.12);
+        color: #8fdf9f;
+        border: 1px solid rgba(40, 167, 69, 0.10);
+    }
+
+    .team-role.away {
+        background: rgba(255, 193, 7, 0.12);
+        color: #ffd966;
+        border: 1px solid rgba(255, 193, 7, 0.10);
+    }
+
+    .vs-divider {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 0 16px;
+    }
+
+    .vs-divider .vs-text {
+        font-size: 40px;
+        font-weight: 900;
+        background: linear-gradient(135deg, #D4AF37, #F5E56B);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 2px 40px rgba(212, 175, 55, 0.20);
+        letter-spacing: -1px;
+    }
+
+    .vs-divider .vs-line {
+        width: 48px;
+        height: 3px;
+        background: linear-gradient(90deg, #D4AF37, transparent);
+        border-radius: 3px;
+    }
+
+    /* ===== دکمه‌ها ===== */
+    .btn-buy-match {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        padding: 18px 56px;
+        background: linear-gradient(135deg, #D4AF37, #B8960F);
+        color: #1A1A2E !important;
+        font-weight: 800;
+        font-size: 20px;
+        border-radius: 60px;
+        border: none;
+        transition: all 0.4s ease;
+        box-shadow: 0 4px 32px rgba(212, 175, 55, 0.25);
+        text-decoration: none;
+        min-width: 240px;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-buy-match:hover {
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 8px 48px rgba(212, 175, 55, 0.40);
+        color: #1A1A2E !important;
+        background: linear-gradient(135deg, #e8c840, #c8a81a);
+    }
+
+    .btn-buy-match:active { transform: scale(0.96); }
+    .btn-buy-match i {
+        font-size: 22px;
+        transition: transform 0.3s ease;
+    }
+    .btn-buy-match:hover i { transform: translateX(-4px); }
+
+    .btn-vip-match {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        padding: 18px 56px;
+        background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+        color: #fff !important;
+        font-weight: 800;
+        font-size: 20px;
+        border-radius: 60px;
+        border: none;
+        transition: all 0.4s ease;
+        box-shadow: 0 4px 32px rgba(108, 92, 231, 0.25);
+        text-decoration: none;
+        min-width: 240px;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-vip-match:hover {
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 8px 48px rgba(108, 92, 231, 0.40);
+        color: #fff !important;
+    }
+
+    /* ===== فوتر ===== */
+    .match-card-footer {
+        padding: 16px 28px 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 24px 40px;
+        flex-wrap: wrap;
+        background: rgba(0, 0, 0, 0.15);
+        position: relative;
+        z-index: 2;
+    }
+
+    .match-card-footer .info-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .match-card-footer .info-item i {
+        color: #D4AF37;
+        font-size: 15px;
+    }
+
+    .match-card-footer .info-item .count {
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    .match-card-footer .info-item .count.low {
+        color: #ff6b6b;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: rgba(255,255,255,0.03);
+        border-radius: 24px;
+        border: 2px dashed rgba(212, 175, 55, 0.15);
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        color: #D4AF37;
+        margin-bottom: 16px;
+    }
+
+    .empty-state h4 {
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    .empty-state p { color: rgba(255, 255, 255, 0.5); }
+
+    /* ===== واکنش‌گرایی ===== */
+    @media (max-width: 992px) {
+        .team-box .team-logo,
+        .team-box .team-logo-placeholder {
+            width: 130px;
+            height: 130px;
+            padding: 16px;
+        }
+        .team-box .team-name { font-size: 19px; }
+        .team-box { max-width: 190px; }
+        .vs-divider .vs-text { font-size: 34px; }
+        .btn-buy-match, .btn-vip-match {
+            padding: 16px 40px;
+            font-size: 18px;
+            min-width: 200px;
+        }
+        .match-card .lion-image {
+            width: 160px;
+            right: -20px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .match-card-header {
+            padding: 14px 16px 10px;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+        }
+        .match-meta {
+            gap: 6px 12px;
+            justify-content: center;
+        }
+        .match-meta-item { font-size: 12px; }
+        .match-card-body { padding: 20px 14px 16px; }
+        .team-box .team-logo,
+        .team-box .team-logo-placeholder {
+            width: 100px;
+            height: 100px;
+            padding: 12px;
+        }
+        .team-box .team-name { font-size: 16px; margin-top: 10px; }
+        .team-box { max-width: 150px; }
+        .teams-wrapper { gap: 16px 28px; }
+        .vs-divider .vs-text { font-size: 28px; }
+        .vs-divider .vs-line { width: 32px; }
+        .btn-buy-match, .btn-vip-match {
+            padding: 14px 28px;
+            font-size: 16px;
+            min-width: 180px;
+            border-radius: 50px;
+        }
+        .match-card-footer {
+            padding: 12px 16px 16px;
+            gap: 12px 24px;
+        }
+        .match-card-footer .info-item { font-size: 12px; }
+        .match-card .lion-image {
+            width: 120px;
+            right: -10px;
+            opacity: 0.05;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .match-card { border-radius: 20px; }
+        .match-card-header { padding: 10px 12px 8px; }
+        .match-meta-item { font-size: 10px; gap: 4px; }
+        .match-meta-item i { font-size: 11px; }
+        .sport-tag { font-size: 10px; padding: 3px 10px; }
+        .match-card-body { padding: 16px 10px 12px; }
+        .teams-wrapper { gap: 10px 16px; }
+        .team-box { max-width: 110px; flex: 0 0 auto; }
+        .team-box .team-logo,
+        .team-box .team-logo-placeholder {
             width: 80px;
             height: 80px;
-            background: #f0f0f0;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            color: #999;
-            font-size: 20px;
-            margin: 0 auto;
+            padding: 10px;
         }
-
-        .team-name {
-            font-size: 16px;
-            font-weight: 700;
-            margin-top: 6px;
-            color: #1A1A2E;
-        }
-
-        .team-badge-home {
-            background: #28a745;
-            color: #fff;
-            font-size: 12px;
-            padding: 3px 14px;
-            border-radius: 50px;
-            display: inline-block;
-        }
-
-        .team-badge-away {
-            background: #ffc107;
-            color: #1A1A2E;
-            font-size: 12px;
-            padding: 3px 14px;
-            border-radius: 50px;
-            display: inline-block;
-        }
-
-        .vs-icon {
-            font-size: 28px;
-            font-weight: 700;
-            color: #999;
-        }
-
-        /* ===== دکمه خرید ===== */
-        .btn-buy {
-            background: linear-gradient(135deg, #28a745, #1e7e34);
-            color: #fff;
-            border: none;
-            padding: 14px 40px;
-            border-radius: 50px;
-            font-weight: 700;
-            font-size: 18px;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3);
-        }
-
-        .btn-buy:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 35px rgba(40, 167, 69, 0.4);
-            color: #fff;
-        }
-
-        .btn-vip-badge {
-            background: #ffc107;
-            color: #1A1A2E;
-            font-size: 1.1rem;
-            padding: 10px 20px;
-            border-radius: 50px;
-            display: inline-flex;
-            align-items: center;
+        .team-box .team-name { font-size: 13px; margin-top: 6px; }
+        .team-box .team-role { font-size: 10px; padding: 2px 12px; }
+        .vs-divider .vs-text { font-size: 20px; }
+        .vs-divider .vs-line { width: 20px; height: 2px; }
+        .btn-buy-match, .btn-vip-match {
+            padding: 12px 20px;
+            font-size: 14px;
+            min-width: 140px;
+            border-radius: 14px;
             gap: 8px;
-            font-weight: 700;
         }
-
-        .page-title {
-            color: #D4AF37;
-            font-weight: 700;
-            font-size: 32px;
+        .btn-buy-match i, .btn-vip-match i { font-size: 16px; }
+        .match-card-footer {
+            padding: 8px 12px 12px;
+            gap: 8px 16px;
         }
+        .match-card-footer .info-item {
+            font-size: 10px;
+            gap: 4px;
+        }
+        .match-card-footer .info-item i { font-size: 11px; }
+        .match-card .lion-image { display: none; }
+    }
 
-        .sport-badge {
-            display: inline-block;
-            padding: 4px 14px;
-            border-radius: 50px;
+    @media (max-width: 400px) {
+        .team-box .team-logo,
+        .team-box .team-logo-placeholder {
+            width: 64px;
+            height: 64px;
+            padding: 6px;
+        }
+        .team-box .team-name { font-size: 11px; }
+        .team-box { max-width: 85px; }
+        .vs-divider .vs-text { font-size: 16px; }
+        .vs-divider .vs-line { width: 14px; }
+        .btn-buy-match, .btn-vip-match {
             font-size: 12px;
-            font-weight: 600;
-            background: #e9ecef;
-            color: #495057;
+            padding: 10px 14px;
+            min-width: 100px;
         }
-
-        .sport-badge.football {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .sport-badge.futsal {
-            background: #cce5ff;
-            color: #004085;
-        }
-
-        .sport-badge.basketball {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .sport-badge.volleyball {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        /* ===== واکنش‌گرایی ===== */
-
-        /* تبلت */
-        @media (max-width: 768px) {
-            .match-card .card-header {
-                padding: 10px 14px;
-            }
-
-            .match-info-header {
-                gap: 10px 16px;
-                padding-bottom: 8px;
-            }
-
-            .match-info-header .info-item {
-                font-size: 13px;
-            }
-
-            .team-logo-img {
-                height: 60px;
-            }
-
-            .team-logo-placeholder {
-                width: 60px;
-                height: 60px;
-                font-size: 16px;
-            }
-
-            .team-name {
-                font-size: 14px;
-            }
-
-            .vs-icon {
-                font-size: 22px;
-            }
-
-            .btn-buy {
-                padding: 12px 30px;
-                font-size: 16px;
-            }
-
-            .page-title {
-                font-size: 24px;
-            }
-        }
-
-        /* موبایل */
-        @media (max-width: 576px) {
-            .match-card {
-                border-radius: 12px;
-            }
-
-            .match-card .card-header {
-                padding: 10px 12px;
-            }
-
-            .match-card .card-body {
-                padding: 12px;
-            }
-
-            /* ===== اطلاعات مسابقه در موبایل (همه در یک خط) ===== */
-            .match-info-header {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                align-items: center;
-                gap: 8px 16px;
-                padding-bottom: 8px;
-                border-bottom: 2px solid #e8eaed;
-                margin-bottom: 4px;
-                flex-direction: row !important;
-            }
-
-            .match-info-header .info-item {
-                font-size: 12px;
-                gap: 4px;
-            }
-
-            .match-info-header .info-item i {
-                width: 14px;
-                font-size: 12px;
-            }
-
-            .sport-badge {
-                font-size: 10px;
-                padding: 2px 10px;
-            }
-
-            /* ===== لوگوها کنار هم (میزبان چپ، میهمان راست) ===== */
-            .match-card .card-body .row.align-items-center {
-                display: flex;
-                flex-direction: row !important;
-                flex-wrap: nowrap !important;
-                justify-content: center;
-                align-items: center;
-                gap: 4px;
-            }
-
-            /* میزبان (چپ) */
-            .match-card .card-body .row.align-items-center .col-5:first-child {
-                order: 0;
-                flex: 0 0 38%;
-                max-width: 38%;
-                padding: 0 4px;
-            }
-
-            /* VS (وسط) */
-            .match-card .card-body .row.align-items-center .col-2 {
-                order: 1;
-                flex: 0 0 20%;
-                max-width: 20%;
-                padding: 0 4px;
-            }
-
-            /* میهمان (راست) */
-            .match-card .card-body .row.align-items-center .col-5:last-child {
-                order: 2;
-                flex: 0 0 38%;
-                max-width: 38%;
-                padding: 0 4px;
-            }
-
-            .team-logo-img {
-                height: 55px;
-            }
-
-            .team-logo-placeholder {
-                width: 55px;
-                height: 55px;
-                font-size: 14px;
-            }
-
-            .team-name {
-                font-size: 11px;
-                margin-top: 4px;
-            }
-
-            .team-badge-home,
-            .team-badge-away {
-                font-size: 9px;
-                padding: 2px 8px;
-            }
-
-            .vs-icon {
-                font-size: 18px;
-            }
-
-            /* ===== دکمه خرید ===== */
-            .btn-buy {
-                padding: 14px 28px;
-                font-size: 16px;
-                width: 100%;
-                justify-content: center;
-                border-radius: 14px;
-            }
-
-            .btn-vip-badge {
-                font-size: 1rem;
-                padding: 12px 16px;
-                width: 100%;
-                justify-content: center;
-                border-radius: 14px;
-            }
-
-            .page-title {
-                font-size: 20px;
-            }
-        }
-
-        /* موبایل خیلی کوچک */
-        @media (max-width: 400px) {
-            .match-info-header {
-                gap: 4px 10px;
-            }
-
-            .match-info-header .info-item {
-                font-size: 10px;
-            }
-
-            .match-info-header .info-item i {
-                width: 12px;
-                font-size: 10px;
-            }
-
-            .sport-badge {
-                font-size: 9px;
-                padding: 2px 8px;
-            }
-
-            .team-logo-img {
-                height: 45px;
-            }
-
-            .team-logo-placeholder {
-                width: 45px;
-                height: 45px;
-                font-size: 12px;
-            }
-
-            .team-name {
-                font-size: 10px;
-            }
-
-            .vs-icon {
-                font-size: 14px;
-            }
-
-            .btn-buy {
-                padding: 12px 20px;
-                font-size: 14px;
-            }
-        }
-    </style>
+        .match-meta-item { font-size: 9px; }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-    <div class="container mt-3 mt-md-4">
-        <div class="text-center mb-4 fade-in">
-            <h1 class="page-title">
-                <i class="fas fa-trophy"></i> مسابقات سپاهان
-            </h1>
+<div class="container mt-3 mt-md-4">
+    <!-- ===== عنوان ===== -->
+    <div class="text-center mb-4">
+        <h2 class="fw-bold" style="color: #ffffff; text-shadow: 0 2px 20px rgba(0,0,0,0.20);">
+            <i class="fas fa-trophy" style="color: #D4AF37;"></i>
+            مسابقات سپاهان
+        </h2>
+        <p style="color: rgba(255, 255, 255, 0.5);">
+            <i class="fas fa-ticket-alt" style="color: #D4AF37;"></i>
+            برای خرید بلیط، روی دکمه زیر کلیک کنید
+        </p>
+    </div>
+
+    <!-- ===== لیست مسابقات ===== -->
+    {% for match in matches %}
+    <div class="match-card" data-match-time="{{ match.date_time.isoformat }}">
+        <!-- ===== شیر با عکس (سمت راست) ===== -->
+        <img src="{% static 'img/lion-roar.png' %}"
+             alt="شیر غرش‌کننده"
+             class="lion-image"
+             loading="lazy">
+
+        <!-- ===== هدر ===== -->
+        <div class="match-card-header">
+            <div class="match-meta">
+                <span class="sport-tag {{ match.sport_type }}">
+                    <i class="fas
+                        {% if match.sport_type == 'football' %}fa-futbol
+                        {% elif match.sport_type == 'futsal' %}fa-futsal
+                        {% elif match.sport_type == 'basketball' %}fa-basketball-ball
+                        {% elif match.sport_type == 'volleyball' %}fa-volleyball-ball
+                        {% else %}fa-sports-ball{% endif %}
+                    "></i>
+                    {{ match.get_sport_type_display }}
+                </span>
+
+                <span class="match-meta-item">
+                    <i class="far fa-calendar-alt"></i>
+                    <span class="value">{{ match.date_time|to_jalali_date }}</span>
+                </span>
+
+                <span class="match-meta-item">
+                    <i class="far fa-clock"></i>
+                    <span class="value">{{ match.date_time|date:"H:i" }}</span>
+                </span>
+
+                <span class="match-meta-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span class="value">{{ match.stadium.name }}</span>
+                </span>
+            </div>
+
+            <!-- ===== تایمر ===== -->
+            <div class="match-timer" id="timer-{{ forloop.counter }}">
+                <span class="timer-label">تا آغاز مسابقه</span>
+                <div class="timer-numbers">
+                    <span class="time-block" id="days-{{ forloop.counter }}">۰۰</span>
+                    <span class="timer-unit">روز</span>
+                    <span class="time-block" id="hours-{{ forloop.counter }}">۰۰</span>
+                    <span class="timer-unit">ساعت</span>
+                    <span class="time-block" id="minutes-{{ forloop.counter }}">۰۰</span>
+                    <span class="timer-unit">دقیقه</span>
+                    <span class="time-block" id="seconds-{{ forloop.counter }}">۰۰</span>
+                    <span class="timer-unit">ثانیه</span>
+                </div>
+            </div>
         </div>
 
-        {% for match in matches %}
-            <div class="card mb-3 mb-md-4 fade-in shadow-sm match-card">
-                <!-- ===== هدر: اطلاعات مسابقه با خط افقی ===== -->
-                <div class="card-header bg-white">
-                    <div class="match-info-header">
-                        <span class="sport-badge {{ match.sport_type }}">
-                            <i class="fas
-                                {% if match.sport_type == 'football' %}fa-futbol
-                                {% elif match.sport_type == 'futsal' %}fa-futsal
-                                {% elif match.sport_type == 'basketball' %}fa-basketball-ball
-                                {% elif match.sport_type == 'volleyball' %}fa-volleyball-ball
-                                {% else %}fa-sports-ball{% endif %}
-                            "></i>
-                            {{ match.get_sport_type_display }}
-                        </span>
-                        <span class="info-item">
-                            <i class="far fa-calendar-alt"></i>
-                            <span class="value">{{ match.date_time|to_jalali_date }}</span>
-                        </span>
-                        <span class="info-item">
-                            <i class="far fa-clock"></i>
-                            <span class="value">{{ match.date_time|date:"H:i" }}</span>
-                        </span>
-                        <span class="info-item">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span class="value">{{ match.stadium.name }}</span>
-                        </span>
-                    </div>
+        <!-- ===== بدنه ===== -->
+        <div class="match-card-body">
+            <div class="teams-wrapper">
+                <!-- ===== میزبان ===== -->
+                <div class="team-box">
+                    {% if match.home_team_logo %}
+                        <img src="{{ match.home_team_logo.url }}" alt="{{ match.home_team }}" class="team-logo">
+                    {% else %}
+                        <div class="team-logo-placeholder">{{ match.home_team|slice:":2" }}</div>
+                    {% endif %}
+                    <span class="team-name">{{ match.home_team }}</span>
+                    <span class="team-role home">🏠 میزبان</span>
                 </div>
 
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <!-- ===== لوگوی میزبان (چپ) ===== -->
-                        <div class="col-5 text-center">
-                            {% if match.home_team_logo %}
-                                <img src="{{ match.home_team_logo.url }}" alt="{{ match.home_team }}"
-                                     class="team-logo-img">
-                            {% else %}
-                                <div class="team-logo-placeholder">{{ match.home_team|slice:":2" }}</div>
-                            {% endif %}
-                            <div class="team-name">{{ match.home_team }}</div>
-                            <span class="team-badge-home">میزبان</span>
-                        </div>
+                <!-- ===== VS ===== -->
+                <div class="vs-divider">
+                    <span class="vs-text">VS</span>
+                    <span class="vs-line"></span>
+                </div>
 
-                        <!-- ===== جداکننده VS ===== -->
-                        <div class="col-2 text-center">
-                            <span class="vs-icon">🆚</span>
-                        </div>
-
-                        <!-- ===== لوگوی میهمان (راست) ===== -->
-                        <div class="col-5 text-center">
-                            {% if match.away_team_logo %}
-                                <img src="{{ match.away_team_logo.url }}" alt="{{ match.away_team }}"
-                                     class="team-logo-img">
-                            {% else %}
-                                <div class="team-logo-placeholder">{{ match.away_team|slice:":2" }}</div>
-                            {% endif %}
-                            <div class="team-name">{{ match.away_team }}</div>
-                            <span class="team-badge-away">میهمان</span>
-                        </div>
-                    </div>
-
-                    <!-- ===== دکمه خرید ===== -->
-                    <div class="text-center mt-4">
-                        {% if user.user_type != 'vip' %}
-                            <a href="{% url 'matches:select_floor' match.id %}" class="btn-buy">
-                                <i class="fas fa-ticket-alt"></i> خرید بلیط
-                            </a>
-                        {% else %}
-                            <span class="btn-vip-badge">
-                                <i class="fas fa-crown"></i> صدور از طریق پنل
-                            </span>
-                        {% endif %}
-                    </div>
+                <!-- ===== میهمان ===== -->
+                <div class="team-box">
+                    {% if match.away_team_logo %}
+                        <img src="{{ match.away_team_logo.url }}" alt="{{ match.away_team }}" class="team-logo">
+                    {% else %}
+                        <div class="team-logo-placeholder">{{ match.away_team|slice:":2" }}</div>
+                    {% endif %}
+                    <span class="team-name">{{ match.away_team }}</span>
+                    <span class="team-role away">✈️ میهمان</span>
                 </div>
             </div>
-        {% empty %}
-            <div class="alert alert-info text-center fade-in">
-                <i class="fas fa-info-circle"></i> هیچ مسابقه فعالی وجود ندارد.
+
+            <!-- ===== دکمه ===== -->
+            <div class="text-center mt-4">
+                {% if user.user_type != 'vip' %}
+                    <a href="{% url 'matches:select_floor' match.id %}" class="btn-buy-match">
+                        <i class="fas fa-ticket-alt"></i>
+                        خرید بلیط
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                {% else %}
+                    <span class="btn-vip-match">
+                        <i class="fas fa-crown"></i>
+                        صدور از پنل ویژه
+                    </span>
+                {% endif %}
             </div>
-        {% endfor %}
+        </div>
+
+
     </div>
+    {% empty %}
+    <div class="empty-state">
+        <i class="fas fa-calendar-times"></i>
+        <h4>هیچ مسابقه فعالی وجود ندارد</h4>
+        <p>به زودی مسابقات جدید برگزار خواهد شد.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    // ===== تایمر شمارش معکوس =====
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.match-card');
+
+        cards.forEach(function(card, index) {
+            const matchTime = card.dataset.matchTime;
+            if (!matchTime) return;
+
+            const targetTime = new Date(matchTime).getTime();
+            const daysEl = document.getElementById('days-' + (index + 1));
+            const hoursEl = document.getElementById('hours-' + (index + 1));
+            const minutesEl = document.getElementById('minutes-' + (index + 1));
+            const secondsEl = document.getElementById('seconds-' + (index + 1));
+
+            function updateTimer() {
+                const now = new Date().getTime();
+                let diff = targetTime - now;
+
+                if (diff <= 0) {
+                    daysEl.textContent = '۰۰';
+                    hoursEl.textContent = '۰۰';
+                    minutesEl.textContent = '۰۰';
+                    secondsEl.textContent = '۰۰';
+                    return;
+                }
+
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                daysEl.textContent = String(days).padStart(2, '0');
+                hoursEl.textContent = String(hours).padStart(2, '0');
+                minutesEl.textContent = String(minutes).padStart(2, '0');
+                secondsEl.textContent = String(seconds).padStart(2, '0');
+            }
+
+            updateTimer();
+            setInterval(updateTimer, 1000);
+        });
+    });
+</script>
 {% endblock %}

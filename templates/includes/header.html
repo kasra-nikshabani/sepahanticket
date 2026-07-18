@@ -2,25 +2,29 @@
 {% load currency_filters %}
 
 <header class="custom-header">
-    <nav class="navbar navbar-expand-md">
-        <div class="container-fluid">
-            <!-- لوگو و برند -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <!-- لوگو -->
             <a class="navbar-brand" href="{% url 'matches:home' %}">
-                <img src="{% static 'img/sepahan-logo.png' %}" alt="لوگوی سپاهان" height="45"
-                     class="d-inline-block align-top" onerror="this.style.display='none'">
-                <span class="brand-text">فولاد مبارکه سپاهان</span>
+                <img src="{% static 'img/sepahan-logo.png' %}" alt="لوگوی سپاهان" height="70"
+                     onerror="this.style.display='none'">
+                <div class="brand-text-wrapper">
+                    <span class="brand-text">باشگاه فرهنگی ورزشی فولاد مبارکه سپاهان</span>
+                    <span class="brand-sub">⚽ تنها باشگاه ورزشی با ۵ رشته حرفه‌ای</span>
+                </div>
             </a>
 
-            <!-- ===== منوی دسکتاپ ===== -->
-            <div class="d-none d-md-flex align-items-center">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center gap-1">
-
-                    <!-- لینک‌های عمومی -->
+            <!-- ===== منوی دسکتاپ فقط ===== -->
+            <div class="d-none d-lg-flex align-items-center">
+                <ul class="navbar-nav ms-auto gap-2 align-items-center">
+                    <!-- خانه -->
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'matches:home' %}">
                             <i class="fas fa-home"></i> خانه
                         </a>
                     </li>
+
+                    <!-- راهنما -->
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'tutorial' %}">
                             <i class="fas fa-question-circle"></i> راهنما
@@ -32,7 +36,7 @@
                         {% if user.user_type == 'normal' %}
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'tickets:user_tickets' %}">
-                                    <i class="fas fa-ticket-alt"></i> بلیط‌ها
+                                    <i class="fas fa-ticket-alt"></i> بلیط‌های من
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -42,7 +46,7 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'accounts:profile' %}">
-                                    <i class="fas fa-user"></i> پروفایل
+                                    <i class="fas fa-user"></i> حساب کاربری
                                 </a>
                             </li>
 
@@ -54,12 +58,12 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'tickets:vip_tickets' %}">
-                                    <i class="fas fa-ticket-alt"></i> بلیط‌ها
+                                    <i class="fas fa-ticket-alt"></i> بلیط‌های من
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'accounts:profile' %}">
-                                    <i class="fas fa-user"></i> پروفایل
+                                    <i class="fas fa-user"></i> حساب کاربری
                                 </a>
                             </li>
 
@@ -76,14 +80,14 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'accounts:profile' %}">
-                                    <i class="fas fa-user"></i> پروفایل
+                                    <i class="fas fa-user"></i> حساب کاربری
                                 </a>
                             </li>
                         {% endif %}
 
-                        <!-- دکمه خروج -->
+                        <!-- ===== دکمه خروج ===== -->
                         <li class="nav-item">
-                            <a class="nav-link btn-logout" href="{% url 'accounts:logout' %}" id="logoutBtn">
+                            <a href="{% url 'accounts:logout' %}" class="btn btn-outline-light btn-sm" id="logoutBtn">
                                 <i class="fas fa-sign-out-alt"></i> خروج
                             </a>
                         </li>
@@ -91,17 +95,16 @@
                     {% else %}
                         <!-- ===== کاربر مهمان ===== -->
                         <li class="nav-item">
-                            <a class="nav-link btn-login" href="{% url 'accounts:phone_login' %}">
+                            <a href="{% url 'accounts:phone_login' %}" class="btn btn-light btn-sm">
                                 <i class="fas fa-arrow-left"></i> ورود
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link btn-register" href="{% url 'accounts:phone_register' %}">
+                            <a href="{% url 'accounts:phone_register' %}" class="btn btn-outline-light btn-sm">
                                 <i class="fas fa-user-plus"></i> ثبت‌نام
                             </a>
                         </li>
                     {% endif %}
-
                 </ul>
             </div>
         </div>
@@ -109,213 +112,301 @@
 </header>
 
 <style>
+    /* ============================================================ */
+    /* ===== هدر فقط برای دسکتاپ - موبایل و تبلت کاملاً خالی ===== */
+    /* ============================================================ */
+
     .custom-header {
-        background: linear-gradient(135deg, #1A1A2E 0%, #2D2D44 100%);
-        border-bottom: 2px solid rgba(212, 175, 55, 0.20);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-        padding: 6px 0;
+        background: #1A1A2E;
+        border-bottom: 2px solid rgba(212, 175, 55, 0.15);
+        padding: 10px 0;
         position: sticky;
         top: 0;
         z-index: 1040;
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.20);
     }
 
-    .custom-header .navbar {
-        padding: 0;
-    }
-
+    /* ===== لوگو ===== */
     .custom-header .navbar-brand {
         display: flex;
         align-items: center;
-        gap: 10px;
-        color: #ffffff;
-        font-weight: 700;
-        font-size: 1.2rem;
+        gap: 16px;
+        padding: 0;
         text-decoration: none;
-        padding: 4px 0;
+        flex-shrink: 0;
     }
 
-    .custom-header .navbar-brand .brand-text {
+    .custom-header .navbar-brand img {
+        height: 72px;
+        width: auto;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.04);
+        padding: 6px;
+        transition: transform 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .custom-header .navbar-brand img:hover {
+        transform: scale(1.04);
+    }
+
+    .custom-header .brand-text-wrapper {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.3;
+    }
+
+    .custom-header .brand-text {
         color: #D4AF37;
-        font-weight: 700;
-        font-size: 1.15rem;
+        font-weight: 800;
+        font-size: 1.4rem;
         letter-spacing: 0.3px;
         white-space: nowrap;
     }
 
-    .custom-header .navbar-brand img {
-        height: 40px;
-        width: auto;
-        border-radius: 6px;
-        background: rgba(255, 255, 255, 0.04);
-        padding: 2px;
-        object-fit: contain;
+    .custom-header .brand-sub {
+        color: rgba(255, 255, 255, 0.40);
+        font-size: 0.75rem;
+        font-weight: 400;
+        letter-spacing: 0.5px;
     }
 
-    .custom-header .navbar-nav {
-        gap: 2px;
+    /* ===== دکمه‌ها ===== */
+    .custom-header .btn-light {
+        background: #D4AF37;
+        color: #1A1A2E !important;
+        font-weight: 700;
+        font-size: 14px;
+        padding: 8px 22px;
+        border-radius: 50px;
+        border: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 12px rgba(212, 175, 55, 0.20);
     }
 
+    .custom-header .btn-light:hover {
+        background: #e8c840;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(212, 175, 55, 0.35);
+        color: #1A1A2E !important;
+    }
+
+    .custom-header .btn-light i {
+        color: #1A1A2E !important;
+    }
+
+    .custom-header .btn-outline-light {
+        border: 2px solid rgba(255, 255, 255, 0.15);
+        color: rgba(255, 255, 255, 0.70);
+        font-weight: 600;
+        font-size: 14px;
+        padding: 8px 22px;
+        border-radius: 50px;
+        transition: all 0.3s ease;
+        background: transparent;
+    }
+
+    .custom-header .btn-outline-light:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.30);
+        color: #ffffff;
+        transform: translateY(-2px);
+    }
+
+    .custom-header .btn-outline-light i {
+        color: #D4AF37 !important;
+    }
+
+    /* ===== دکمه خروج ===== */
+    .custom-header .btn-outline-light#logoutBtn {
+        border-color: rgba(220, 53, 69, 0.25);
+        color: #f8a7a7;
+    }
+
+    .custom-header .btn-outline-light#logoutBtn:hover {
+        background: rgba(220, 53, 69, 0.15);
+        border-color: rgba(220, 53, 69, 0.50);
+        color: #ffffff;
+    }
+
+    .custom-header .btn-outline-light#logoutBtn i {
+        color: #f8a7a7 !important;
+    }
+
+    .custom-header .btn-outline-light#logoutBtn:hover i {
+        color: #ffffff !important;
+    }
+
+    /* ===== لینک‌های منو ===== */
     .custom-header .navbar-nav .nav-link {
-        color: rgba(255, 255, 255, 0.75);
+        color: rgba(255, 255, 255, 0.70);
         font-weight: 500;
         font-size: 14px;
-        padding: 6px 14px;
-        border-radius: 10px;
+        padding: 8px 16px;
+        border-radius: 8px;
         transition: all 0.25s ease;
         display: flex;
         align-items: center;
-        gap: 6px;
-        white-space: nowrap;
+        gap: 8px;
     }
 
     .custom-header .navbar-nav .nav-link i {
-        font-size: 15px;
         color: #D4AF37;
+        font-size: 15px;
         width: 18px;
         text-align: center;
         transition: all 0.25s ease;
     }
 
     .custom-header .navbar-nav .nav-link:hover {
-        background: rgba(212, 175, 55, 0.10);
         color: #ffffff;
-        transform: translateY(-1px);
+        background: rgba(212, 175, 55, 0.08);
     }
 
     .custom-header .navbar-nav .nav-link:hover i {
         color: #D4AF37;
+        transform: scale(1.05);
     }
 
     .custom-header .navbar-nav .nav-link.active {
-        background: rgba(212, 175, 55, 0.14);
         color: #D4AF37;
+        background: rgba(212, 175, 55, 0.10);
     }
 
     .custom-header .navbar-nav .nav-link.active i {
         color: #D4AF37;
     }
 
-    .custom-header .btn-login {
-        background: linear-gradient(135deg, #D4AF37, #B8960F);
-        color: #1A1A2E !important;
-        font-weight: 700;
-        padding: 5px 20px !important;
-        border-radius: 50px !important;
-        box-shadow: 0 4px 16px rgba(212, 175, 55, 0.25);
-        transition: all 0.3s ease;
+    /* ============================================================ */
+    /* ===== واکنش‌گرایی ===== */
+    /* ============================================================ */
+
+    /* ===== دسکتاپ (≥992px): منو نمایش داده شود ===== */
+    @media (min-width: 992px) {
+        .custom-header .d-none.d-lg-flex {
+            display: flex !important;
+        }
     }
 
-    .custom-header .btn-login i {
-        color: #1A1A2E !important;
-    }
-
-    .custom-header .btn-login:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 30px rgba(212, 175, 55, 0.35);
-        background: linear-gradient(135deg, #dbb93e, #c4a21a);
-        color: #1A1A2E !important;
-    }
-
-    .custom-header .btn-register {
-        border: 2px solid rgba(212, 175, 55, 0.25);
-        color: #D4AF37 !important;
-        padding: 5px 20px !important;
-        border-radius: 50px !important;
-        transition: all 0.3s ease;
-        background: transparent;
-    }
-
-    .custom-header .btn-register i {
-        color: #D4AF37 !important;
-    }
-
-    .custom-header .btn-register:hover {
-        background: rgba(212, 175, 55, 0.10);
-        border-color: #D4AF37;
-        transform: translateY(-1px);
-    }
-
-    .custom-header .btn-logout {
-        background: rgba(220, 53, 69, 0.10);
-        color: #f8a7a7 !important;
-        border-radius: 50px !important;
-        padding: 5px 18px !important;
-        transition: all 0.3s ease;
-    }
-
-    .custom-header .btn-logout i {
-        color: #f8a7a7 !important;
-    }
-
-    .custom-header .btn-logout:hover {
-        background: rgba(220, 53, 69, 0.22);
-        color: #ffffff !important;
-    }
-
-    .custom-header .btn-logout:hover i {
-        color: #ffffff !important;
-    }
-
+    /* ===== تبلت و موبایل (≤991px): منو کاملاً مخفی ===== */
     @media (max-width: 991.98px) {
-        .custom-header .navbar-nav .nav-link {
-            font-size: 13px;
-            padding: 5px 10px;
+        .custom-header .d-none.d-lg-flex {
+            display: none !important;
         }
-        .custom-header .navbar-brand .brand-text {
-            font-size: 1rem;
-        }
+
         .custom-header .navbar-brand img {
-            height: 34px;
+            height: 60px;
+        }
+
+        .custom-header .brand-text {
+            font-size: 1.1rem;
+            white-space: normal;
+        }
+
+        .custom-header .brand-sub {
+            font-size: 0.65rem;
+        }
+
+        .custom-header .container {
+            justify-content: center;
+        }
+
+        .custom-header .navbar-brand {
+            justify-content: center;
         }
     }
 
-    @media (max-width: 767.98px) {
-        .custom-header .navbar-brand {
-            gap: 12px;
-            flex-direction: row;
-            justify-content: flex-start;
-            width: 100%;
-        }
-        .custom-header .navbar-brand .brand-text {
-            font-size: 1.2rem;
-            white-space: nowrap;
-        }
+    @media (max-width: 576px) {
         .custom-header .navbar-brand img {
             height: 50px;
-            width: auto;
         }
-        .custom-header .navbar-nav .nav-link {
-            font-size: 12px;
-            padding: 4px 8px;
+
+        .custom-header .brand-text {
+            font-size: 0.9rem;
+        }
+
+        .custom-header .brand-sub {
+            font-size: 0.55rem;
+        }
+
+        .custom-header .navbar-brand {
+            gap: 10px;
         }
     }
 
-    @media (max-width: 480px) {
-        .custom-header .navbar-brand .brand-text {
-            font-size: 1rem;
-        }
+    @media (max-width: 400px) {
         .custom-header .navbar-brand img {
             height: 42px;
         }
-        .custom-header {
-            padding: 4px 0;
+
+        .custom-header .brand-text {
+            font-size: 0.75rem;
+        }
+
+        .custom-header .brand-sub {
+            font-size: 0.5rem;
+        }
+
+        .custom-header .navbar-brand {
+            gap: 8px;
         }
     }
 </style>
 
 <script>
-// ===== مدیریت خروج =====
-document.addEventListener("DOMContentLoaded", function () {
+    // ===== مدیریت خروج =====
+    (function() {
+        'use strict';
 
-    const logoutBtn = document.getElementById("logoutBtn");
+        function forceReload() {
+            window.location.href = '/?t=' + Date.now();
+        }
 
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", function () {
-            sessionStorage.clear();
+        function handleLogout(e) {
+            e.preventDefault();
+            const url = this.href;
+
+            sessionStorage.setItem('logout_pending', 'true');
+
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(function(response) {
+                if (response.ok) {
+                    forceReload();
+                } else {
+                    window.location.href = url;
+                }
+            })
+            .catch(function() {
+                window.location.href = url;
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', handleLogout);
+            }
+
+            if (sessionStorage.getItem('logout_pending') === 'true') {
+                sessionStorage.removeItem('logout_pending');
+
+                fetch('/accounts/check-login-status/')
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.is_authenticated === true) {
+                            forceReload();
+                        }
+                    })
+                    .catch(function() {
+                        forceReload();
+                    });
+            }
         });
-    }
 
-});
+    })();
 </script>
