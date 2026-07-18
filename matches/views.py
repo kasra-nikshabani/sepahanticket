@@ -30,12 +30,12 @@ from .models import Match, MatchCost, MatchRevenue, MatchFinancialReport
 from .forms import MatchCostForm, MatchRevenueForm
 from tickets.models import Ticket
 from django.views.decorators.cache import cache_page
+from django.views.decorators.cache import never_cache
 
-@cache_page(60)
 # ============================================================
 #  ویوهای عمومی (کاربران عادی)
 # ============================================================
-
+@never_cache
 def home(request):
     """صفحه اصلی - نمایش مسابقات با ظرفیت‌های دقیق"""
     # ===== بررسی نمایش صفحه لودینگ =====

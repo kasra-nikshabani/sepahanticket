@@ -307,58 +307,15 @@
 
 <script>
 // ===== مدیریت خروج =====
-(function() {
-    'use strict';
+document.addEventListener("DOMContentLoaded", function () {
 
-    function forceReload() {
-        window.location.href = '/?t=' + Date.now();
-    }
+    const logoutBtn = document.getElementById("logoutBtn");
 
-    function handleLogout(e) {
-        e.preventDefault();
-        const url = this.href;
-
-        sessionStorage.setItem('logout_pending', 'true');
-
-        fetch(url, {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(function(response) {
-            if (response.ok) {
-                forceReload();
-            } else {
-                window.location.href = url;
-            }
-        })
-        .catch(function() {
-            window.location.href = url;
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", function () {
+            sessionStorage.clear();
         });
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        var logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', handleLogout);
-        }
-
-        if (sessionStorage.getItem('logout_pending') === 'true') {
-            sessionStorage.removeItem('logout_pending');
-
-            fetch('/accounts/check-login-status/')
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
-                    if (data.is_authenticated === true) {
-                        forceReload();
-                    }
-                })
-                .catch(function() {
-                    forceReload();
-                });
-        }
-    });
-
-})();
+});
 </script>

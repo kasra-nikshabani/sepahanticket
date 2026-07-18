@@ -268,10 +268,14 @@ def login_view(request):
                     messages.success(request, f'خوش آمدید {user.get_full_name() or user.username}!')
 
                     # ===== بازگشت به صفحه قبلی =====
-                    next_url = request.GET.get('next')
-                    if next_url:
-                        return redirect(next_url)
-                    return redirect('matches:home')
+                    next_url = request.GET.get('next', 'matches:home')
+
+                    response = redirect(next_url)
+                    response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+                    response["Pragma"] = "no-cache"
+                    response["Expires"] = "0"
+
+                    return response
                 else:
                     messages.error(request, 'این روش ورود فقط برای مدیران و کاربران ویژه است.')
                     return redirect('accounts:phone_login')
@@ -290,14 +294,16 @@ def logout_view(request):
     """خروج از حساب کاربری"""
     # ===== خروج =====
     logout(request)
-
-    # ===== پاک کردن کامل سشن =====
     request.session.flush()
 
     messages.info(request, 'شما از حساب خود خارج شدید.')
 
-    # ===== هدایت با پارامتر زمان برای جلوگیری از کش =====
-    return redirect(f'/')
+    response = redirect('matches:home')
+    response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response["Pragma"] = "no-cache"
+    response["Expires"] = "0"
+
+    return response
 
 
 @login_required
