@@ -50,8 +50,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    "django.middleware.cache.UpdateCacheMiddleware",
-    "django.middleware.cache.FetchFromCacheMiddleware",
+    # "django.middleware.cache.UpdateCacheMiddleware",
+    # "django.middleware.cache.FetchFromCacheMiddleware",
 ]
 
 ROOT_URLCONF = 'football_tickets.urls'
@@ -144,7 +144,7 @@ if not SMS_IR_API_KEY:
 
 ZIBAL_MERCHANT_ID = os.getenv('ZIBAL_MERCHANT_ID', 'zibal')
 ZIBAL_SANDBOX = os.getenv('ZIBAL_SANDBOX', 'True') == 'True'
-ZIBAL_CALLBACK_URL = os.getenv('ZIBAL_CALLBACK_URL', 'http://93.126.18.49/payment/verify/')
+ZIBAL_CALLBACK_URL = os.getenv('ZIBAL_CALLBACK_URL', 'http://ticket.sepahansc.com/payment/verify/')
 
 AUTHENTICATION_BACKENDS = [
     'accounts.backends.PhoneBackend',
