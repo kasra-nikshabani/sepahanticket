@@ -186,7 +186,7 @@ def payment_verify(request):
         messages.error(request, "❌ خطا در تایید پرداخت. لطفاً با پشتیبانی تماس بگیرید.")
         return redirect(next_url)
 
-    if result_code != 100:
+    if result_code not in [100, 101]:
         error_messages = {
             101: "تراکنش قبلاً تایید شده است", 102: "تراکنش ناموفق بوده است",
             103: "خطای امنیتی", 104: "کد مرچنت نامعتبر", 105: "مبلغ نامعتبر", 106: "آدرس بازگشت نامعتبر",
@@ -206,8 +206,7 @@ def payment_verify(request):
         messages.error(request, f"❌ پرداخت ناموفق! {error_msg}")
         return redirect(next_url)
 
-    amount = result.get('amount', 0)
-
+    amount = result.get('amount', payment.gateway_amount)
     with transaction.atomic():
         payment = Payment.objects.select_for_update().get(pk=payment.pk)
 
@@ -257,17 +256,13 @@ def _release_payment_seats(payment):
 
 
 def _finalize_ticket_purchase(payment, gateway_amount_paid):
-    """
-    بعد از تایید موفق زیبال: کیف پول کسر می‌شه، سفارش و بلیط‌ها ساخته می‌شن.
-    محدودیت‌های سن و تکرار کد ملی هم اینجا نهایی میشن.
-    """
     from tickets.models import Ticket, Order, DiscountCode
     from matches.models import Match, MatchSeat
     from tickets.reservation import SeatReservation
     from wallet.models import Wallet
+    from tickets.views import get_age_from_jalali
 
     try:
-        # قفل کردن رکورد مسابقه برای جلوگیری از ثبت همزمان (Race Condition)
         match = Match.objects.select_for_update().get(id=payment.match_id)
     except Match.DoesNotExist:
         return False, "مسابقه یافت نشد"
@@ -282,131 +277,111 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
         except DiscountCode.DoesNotExist:
             pass
 
-    # ===== کسر کیف پول =====
-    wallet_amount_used = payment.wallet_amount_used
-    if wallet_amount_used > 0:
-        if wallet.balance < wallet_amount_used:
-            wallet_amount_used = 0
-        else:
-            success = wallet.deduct_balance(
-                amount=wallet_amount_used,
-                description=f"پرداخت بخشی از خرید بلیط از کیف پول - مسابقه {match.home_team} vs {match.away_team}",
-                reference_id=f"PAY-{payment.id}",
-                tx_type='ticket_purchase',
-            )
-            if not success:
+    try:  # <--- این بلاک اضافه شد تا از کرش شدن Gunicorn جلوگیری کند
+        wallet_amount_used = payment.wallet_amount_used
+        if wallet_amount_used > 0:
+            if wallet.balance < wallet_amount_used:
                 wallet_amount_used = 0
+            else:
+                success = wallet.deduct_balance(
+                    amount=wallet_amount_used,
+                    description=f"پرداخت بخشی از خرید بلیط از کیف پول - مسابقه {match.home_team} vs {match.away_team}",
+                    reference_id=f"PAY-{payment.id}",
+                    tx_type='ticket_purchase',
+                )
+                if not success:
+                    wallet_amount_used = 0
 
-    # ===== محاسبه مجموع قیمت واقعی بلیط‌ها (با در نظر گرفتن سن) =====
-    actual_total_price = 0
-    processed_seats_data = []
+        actual_total_price = 0
+        processed_seats_data = []
 
-    # پیدا کردن شناسه صندلی‌ها از buyer_info
-    match_seat_pks = [k.replace('match_seat_id_', '') for k in payment.buyer_info if k.startswith('match_seat_id_')]
+        match_seat_pks = [k.replace('match_seat_id_', '') for k in payment.buyer_info if k.startswith('match_seat_id_')]
 
-    for pk in match_seat_pks:
-        full_name = payment.buyer_info.get(f'full_name_{pk}', '')
-        national_code = payment.buyer_info.get(f'national_code_{pk}', '')
-        tarikhe_tavallod = payment.buyer_info.get(f'tarikhe_tavallod_{pk}', '')
+        for pk in match_seat_pks:
+            full_name = payment.buyer_info.get(f'full_name_{pk}', '')
+            national_code = payment.buyer_info.get(f'national_code_{pk}', '')
+            tarikhe_tavallod = payment.buyer_info.get(f'tarikhe_tavallod_{pk}', '')
 
-        try:
-            match_seat = MatchSeat.objects.select_related('seat__row__block').get(id=int(pk), match=match)
-        except MatchSeat.DoesNotExist:
-            continue
-
-        age = get_age_from_jalali(tarikhe_tavallod)
-        base_price = match_seat.seat.row.block.price if match_seat.seat.row.block else 0
-        seat_price = 0 if age < 15 else base_price
-
-        actual_total_price += seat_price
-        processed_seats_data.append({
-            'match_seat': match_seat,
-            'full_name': full_name,
-            'national_code': national_code,
-            'price': seat_price
-        })
-
-    discount_amount = int(actual_total_price * (payment.discount_percent / 100))
-    total_amount = actual_total_price - discount_amount
-    payment_method = 'mixed' if wallet_amount_used > 0 else 'zibal'
-
-    order = Order.objects.create(
-        user=user,
-        match=match,
-        subtotal=actual_total_price,
-        discount_percent=payment.discount_percent,
-        discount_amount=discount_amount,
-        total_amount=total_amount,
-        wallet_balance_before=wallet.balance + wallet_amount_used,
-        wallet_amount=wallet_amount_used,
-        wallet_balance_after=wallet.balance,
-        payment_method=payment_method,
-        payment_status='paid',
-        discount_code=discount_obj.code if discount_obj else '',
-        discount_code_id=discount_obj.id if discount_obj else None,
-        full_name=user.get_full_name() or user.username,
-        phone_number=getattr(user, 'phone_number', ''),
-        track_id=payment.track_id,
-        paid_at=timezone.now(),
-    )
-    payment.order = order
-    payment.save(update_fields=['order'])
-
-    tickets_created = []
-    processed_national_codes = set()
-
-    for seat_data in processed_seats_data:
-        match_seat = seat_data['match_seat']
-        full_name = seat_data['full_name']
-        national_code = seat_data['national_code']
-        seat_price = seat_data['price']
-
-        # ===== بررسی امنیتی نهایی (جلوگیری از تقلب دو تب باز کردن) =====
-        if user.user_type != 'vip':
-            # اگر کد ملی در همین سفارش تکرار شده بود
-            if national_code in processed_national_codes:
-                logger.error(f"Duplicate national code {national_code} in same order {order.id}. Skipping.")
-                match_seat.is_available = True
-                match_seat.reserved_until = None
-                match_seat.save()
-                SeatReservation.release(match_seat.id)
+            try:
+                match_seat = MatchSeat.objects.select_related('seat__row__block').get(id=int(pk), match=match)
+            except MatchSeat.DoesNotExist:
                 continue
 
-            # اگر کد ملی قبلاً در این مسابقه بلیط خریده بود
-            if Ticket.objects.filter(national_code=national_code, match=match, status='paid').exists():
-                logger.error(f"User {user.username} tried to buy second ticket for {national_code} in match {match.id}. Skipping.")
-                match_seat.is_available = True
-                match_seat.reserved_until = None
-                match_seat.save()
-                SeatReservation.release(match_seat.id)
-                continue
+            age = get_age_from_jalali(tarikhe_tavallod)
+            base_price = match_seat.seat.row.block.price if match_seat.seat.row.block else 0
+            seat_price = 0 if age < 15 else base_price
 
-        processed_national_codes.add(national_code)
+            actual_total_price += seat_price
+            processed_seats_data.append({
+                'match_seat': match_seat,
+                'full_name': full_name,
+                'national_code': national_code,
+                'price': seat_price
+            })
 
-        ticket = Ticket.objects.create(
-            user=user,
-            match=match,
-            seat=match_seat.seat,
-            match_seat=match_seat,
-            full_name=full_name,
-            national_code=national_code,
-            status='paid',
-            is_admin_assigned=False,
-            order=order,
-            price=seat_price,
+        discount_amount = int(actual_total_price * (payment.discount_percent / 100))
+        total_amount = actual_total_price - discount_amount
+        payment_method = 'mixed' if wallet_amount_used > 0 else 'zibal'
+
+        order = Order.objects.create(
+            user=user, match=match, subtotal=actual_total_price,
+            discount_percent=payment.discount_percent, discount_amount=discount_amount,
+            total_amount=total_amount, wallet_balance_before=wallet.balance + wallet_amount_used,
+            wallet_amount=wallet_amount_used, wallet_balance_after=wallet.balance,
+            payment_method=payment_method, payment_status='paid',
+            discount_code=discount_obj.code if discount_obj else '',
+            discount_code_id=discount_obj.id if discount_obj else None,
+            full_name=user.get_full_name() or user.username,
+            phone_number=getattr(user, 'phone_number', ''),
+            track_id=payment.track_id, paid_at=timezone.now(),
         )
-        tickets_created.append(ticket)
+        payment.order = order
+        payment.save(update_fields=['order'])
 
-        match_seat.is_available = False
-        match_seat.reserved_until = None
-        match_seat.save()
-        SeatReservation.release(match_seat.id)
+        tickets_created = []
+        processed_national_codes = set()
 
-    if discount_obj and tickets_created:
-        discount_obj.used_count += 1
-        discount_obj.save(update_fields=['used_count'])
+        for seat_data in processed_seats_data:
+            match_seat = seat_data['match_seat']
+            full_name = seat_data['full_name']
+            national_code = seat_data['national_code']
+            seat_price = seat_data['price']
 
-    if not tickets_created:
-        return False, "هیچ بلیطی صادر نشد (صندلی‌ها یافت نشدند یا محدودیت خرید)"
+            if user.user_type != 'vip':
+                if national_code in processed_national_codes:
+                    logger.error(f"Duplicate national code {national_code} in same order {order.id}. Skipping.")
+                    match_seat.is_available = True; match_seat.reserved_until = None; match_seat.save()
+                    SeatReservation.release(match_seat.id)
+                    continue
 
-    return True, None
+                if Ticket.objects.filter(national_code=national_code, match=match, status='paid').exists():
+                    logger.error(f"User {user.username} tried to buy second ticket for {national_code} in match {match.id}. Skipping.")
+                    match_seat.is_available = True; match_seat.reserved_until = None; match_seat.save()
+                    SeatReservation.release(match_seat.id)
+                    continue
+
+            processed_national_codes.add(national_code)
+
+            ticket = Ticket.objects.create(
+                user=user, match=match, seat=match_seat.seat, match_seat=match_seat,
+                full_name=full_name, national_code=national_code, status='paid',
+                is_admin_assigned=False, order=order, price=seat_price,
+            )
+            tickets_created.append(ticket)
+
+            match_seat.is_available = False; match_seat.reserved_until = None
+            match_seat.save(); SeatReservation.release(match_seat.id)
+
+        if discount_obj and tickets_created:
+            discount_obj.used_count += 1
+            discount_obj.save(update_fields=['used_count'])
+
+        if not tickets_created:
+            return False, "هیچ بلیطی صادر نشد (صندلی‌ها یافت نشدند یا محدودیت خرید)"
+
+        return True, None
+
+    except Exception as e:
+        # اگر هر خطایی در صدور بلیط رخ دهد، آن را لاگ می‌کنیم تا 502 ندهد
+        logger.error(f"❌ CRITICAL ERROR in _finalize_ticket_purchase: {str(e)}", exc_info=True)
+        return False, str(e)
