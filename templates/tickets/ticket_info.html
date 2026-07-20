@@ -2,222 +2,305 @@
 {% load static %}
 {% load currency_filters %}
 
-
-{% block title %}اطلاعات خریدار{% endblock %}
+{% block title %}تکمیل اطلاعات خریدار{% endblock %}
 
 {% block content %}
-    <div class="container mt-4">
-        <div class="text-center mb-4">
-            <h2>اطلاعات خریدار</h2>
-            <p class="text-muted">{{ match.home_team }} 🆚 {{ match.away_team }}</p>
-            <p>{{ match.date_time|date:"Y/m/d H:i" }}</p>
+<style>
+    .ticket-card {
+        border: 2px solid #e9ecef;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+        background: #fff;
+    }
+    .ticket-card.is-valid {
+        border-color: #28a745;
+        background-color: #f8fff9;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.1);
+    }
+    .ticket-card.is-invalid {
+        border-color: #dc3545;
+        background-color: #fff5f5;
+    }
+    .summary-card {
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        border: none;
+    }
+    .sticky-summary {
+        position: sticky;
+        top: 20px;
+        align-self: flex-start; /* این خط مشکل همپوشانی و پنهان شدن فوتر را حل می‌کند */
+        z-index: 10;
+    }
+    .timer-box-modern {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        color: #D4AF37;
+        border-radius: 12px;
+        padding: 15px;
+        font-weight: bold;
+    }
+    .form-control-modern, .form-select-modern {
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+        padding: 10px 15px;
+        transition: all 0.2s;
+        height: 42px;
+    }
+    .form-control-modern:focus, .form-select-modern:focus {
+        border-color: #D4AF37;
+        box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25);
+    }
+    .btn-inquiry {
+        background: #1a1a2e;
+        color: #D4AF37;
+        font-weight: 700;
+        border-radius: 8px;
+        transition: all 0.2s;
+        height: 42px;
+    }
+    .btn-inquiry:hover {
+        background: #16213e;
+        color: #fff;
+    }
+    .btn-inquiry-verified {
+        background: #28a745 !important;
+        color: #fff !important;
+        cursor: not-allowed;
+    }
+    .remove-btn {
+        background: transparent;
+        border: 1px solid #dc3545;
+        color: #dc3545;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        font-size: 12px;
+    }
+    .remove-btn:hover {
+        background: #dc3545;
+        color: #fff;
+    }
+</style>
 
-            <!-- ===== تایمر ===== -->
-            <div id="timer-container" class="text-center mb-3">
-                <div class="timer-box" role="alert"
-                     style="max-width: 500px; margin: 0 auto; padding: 0.75rem 1.25rem;
-                            border: 1px solid #ffeeba; background-color: #fff3cd;
-                            color: #856404; border-radius: 0.375rem;">
-                    <i class="fas fa-clock"></i>
-                    زمان باقی‌مانده برای تکمیل خرید:
-                    <span id="timer-display"
-                          style="font-weight: bold; font-size: 1.8rem; direction: ltr; display: inline-block; min-width: 80px;">
-                        00:00
-                    </span>
+<div class="container mt-4 mb-5">
+    <div class="text-center mb-4">
+        <h2 class="fw-bold text-white">تکمیل اطلاعات خریدار</h2>
+        <div class="d-inline-block bg-light px-4 py-2 rounded-pill shadow-sm mt-2">
+            <span class="fw-bold text-dark">{{ match.home_team }}</span>
+            <span class="mx-2 text-muted">🆚</span>
+            <span class="fw-bold text-dark">{{ match.away_team }}</span>
+            <br>
+            <small class="text-muted"><i class="far fa-calendar-alt ms-1"></i> {{ match.date_time|date:"Y/m/d H:i" }}</small>
+        </div>
+    </div>
+
+    <!-- فرم از اینجا شروع می‌شود تا هر دو ستون را پوشش دهد -->
+    <form method="post" action="{% url 'payments:payment_request' %}" id="ticketForm" data-payment-url="{% url 'payments:payment_request' %}" data-free-checkout-url="{% url 'tickets:ticket_info' match.id %}">
+        {% csrf_token %}
+        <input type="hidden" name="match_id" value="{{ match.id }}">
+        <input type="hidden" name="discount_code" id="discount_code_input_zibal" value="">
+        <input type="hidden" name="discount_percent" id="discount_percent_input_zibal" value="0">
+        <input type="hidden" name="next_url" value="{% url 'tickets:user_tickets' %}">
+        <input type="hidden" name="amount" id="finalAmountInput" value="{{ total_price }}">
+        <input type="hidden" name="total_seats" value="{{ seats_data|length }}">
+        <input type="hidden" name="use_wallet" id="useWalletInput" value="false">
+        <input type="hidden" name="wallet_amount" id="walletAmountInput" value="0">
+
+        <div class="row gx-4">
+            <!-- ستون راست: فرم‌های اطلاعات صندلی‌ها -->
+            <div class="col-lg-8">
+                {% for seat in seats_data %}
+                <div class="ticket-card p-4 mb-4" id="seat_card_{{ forloop.counter }}">
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="fas fa-couch text-primary ms-2"></i>
+                            صندلی {{ seat.number }} - {{ seat.row_name }}
+                        </h5>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-light text-dark p-2 fs-6 ticket-price" data-base="{{ seat.price|default:0 }}" data-seat-index="{{ forloop.counter }}">
+                                {{ seat.price|rial_display }} ریال
+                            </span>
+                            <button type="button" class="btn remove-btn ms-3" onclick="removeTicket({{ forloop.counter }})" title="حذف این بلیط">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted">نام</label>
+                            <input type="text" id="name_{{ forloop.counter }}" class="form-control form-control-modern name-input" placeholder="مثال: علی" data-seat-index="{{ forloop.counter }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted">نام خانوادگی</label>
+                            <input type="text" id="famil_{{ forloop.counter }}" class="form-control form-control-modern famil-input" placeholder="مثال: رضایی" data-seat-index="{{ forloop.counter }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted">کد ملی (۱۰ رقم)</label>
+                            <input type="text" id="kodeMeli_{{ forloop.counter }}" class="form-control form-control-modern kode-meli-input" placeholder="XXXXXXXXXX" maxlength="10" data-seat-index="{{ forloop.counter }}" oninput="this.value = this.value.replace(/[^0-9]/g, '');" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted">شماره موبایل</label>
+                            <input type="text" id="shomareyeHamrah_{{ forloop.counter }}" class="form-control form-control-modern mobile-input" placeholder="09XXXXXXXXX" maxlength="11" data-seat-index="{{ forloop.counter }}" oninput="this.value = this.value.replace(/[^0-9]/g, '');" required>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-bold text-muted">تاریخ تولد</label>
+                            <div class="row g-2">
+                                <div class="col-4">
+                                    <select class="form-select form-select-modern dob-day" data-seat-index="{{ forloop.counter }}" required></select>
+                                </div>
+                                <div class="col-4">
+                                    <select class="form-select form-select-modern dob-month" data-seat-index="{{ forloop.counter }}" required>
+                                        <option value="01">فروردین</option><option value="02">اردیبهشت</option><option value="03">خرداد</option>
+                                        <option value="04">تیر</option><option value="05">مرداد</option><option value="06">شهریور</option>
+                                        <option value="07">مهر</option><option value="08">آبان</option><option value="09">آذر</option>
+                                        <option value="10">دی</option><option value="11">بهمن</option><option value="12">اسفند</option>
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <select class="form-select form-select-modern dob-year" data-seat-index="{{ forloop.counter }}" required></select>
+                                </div>
+                            </div>
+                            <input type="hidden" id="tarikheTavallod_{{ forloop.counter }}" data-seat-index="{{ forloop.counter }}">
+                        </div>
+
+                        <div class="col-12 mt-3">
+                            <button type="button" class="btn btn-inquiry w-100 py-2 inquiry-btn" data-seat-index="{{ forloop.counter }}">
+                                <i class="fas fa-check-double"></i> استعلام و تایید اطلاعات
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="loading_{{ forloop.counter }}" style="display:none; margin-top: 15px;" class="text-center text-primary">
+                        <div class="spinner-border spinner-border-sm" role="status"></div> در حال استعلام از ثبت احوال...
+                    </div>
+
+                    <input type="hidden" id="fan_id_{{ forloop.counter }}" name="fan_id_{{ forloop.counter }}">
+                    <input type="hidden" id="fan_kodeMeli_{{ forloop.counter }}" name="national_code_{{ seat.id }}" value="">
+                    <input type="hidden" id="fan_name_{{ forloop.counter }}" name="full_name_{{ seat.id }}" value="">
+                    <input type="hidden" id="fan_dob_{{ forloop.counter }}" name="tarikhe_tavallod_{{ seat.id }}" value="">
+                    <input type="hidden" id="fan_mobile_{{ forloop.counter }}" name="shomare_hamrah_{{ seat.id }}" value="">
+                    <input type="hidden" name="match_seat_id_{{ forloop.counter }}" value="{{ seat.id }}">
+
+                    <div id="inquiryMessage_{{ forloop.counter }}" style="display: none;" class="mt-3 rounded p-2 small"></div>
                 </div>
+                {% endfor %}
             </div>
 
-            <!-- ===== مجموع قیمت ===== -->
-            <div class="row justify-content-center mt-3">
-                <div class="col-md-8">
-                    <div class="card bg-success text-white">
-                        <div class="card-body py-2">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span style="font-size: 1.1rem;">
-                                    <i class="fas fa-credit-card"></i> مجموع قیمت بلیط‌ها:
-                                </span>
-                                <span style="font-size: 1.8rem; font-weight: bold;"
-                                      id="totalPriceDisplay"
-                                      class="ticket-price"
-                                      data-base="{{ total_price|default:0 }}">
-                                    {{ total_price|rial_display }} ریال
-                                </span>
+            <!-- ستون چپ: خلاصه سفارش و پرداخت (Sticky) -->
+            <div class="col-lg-4">
+                <div class="sticky-summary">
+                    <div class="timer-box-modern text-center mb-3">
+                        <i class="fas fa-clock"></i> زمان باقی‌مانده:
+                        <span id="timer-display" style="font-size: 1.5rem; direction: ltr; display: inline-block; min-width: 80px;">00:00</span>
+                    </div>
+
+                    <div class="card summary-card">
+                        <div class="card-header bg-white py-3 border-bottom">
+                            <h5 class="mb-0 fw-bold"><i class="fas fa-receipt text-primary ms-2"></i> خلاصه سفارش</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">مجموع بلیط‌ها:</span>
+                                <span class="fw-bold" id="totalPriceDisplay">{{ total_price|rial_display }} ریال</span>
                             </div>
-                            <small class="d-block text-center text-white-50 mt-1">
-                                قیمت هر بلیط بر اساس سکو محاسبه شده است
-                            </small>
+
+                            <div class="mt-3">
+                                <div class="input-group input-group-sm">
+                                    <input type="text" id="discount_code" class="form-control form-control-modern" placeholder="کد تخفیف...">
+                                    <button type="button" class="btn btn-outline-primary" onclick="applyDiscount()">اعمال</button>
+                                </div>
+                                <div id="discount_msg" class="mt-1 small"></div>
+                                <input type="hidden" name="discount_code" id="discount_code_input" value="">
+                                <input type="hidden" name="discount_percent" id="discount_percent_input" value="0">
+                            </div>
+
+                            <div class="mt-3 border-top pt-3">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="useWalletSwitch" onchange="toggleWallet(this.checked)">
+                                    <label class="form-check-label small fw-bold" for="useWalletSwitch">
+                                        استفاده از کیف پول (موجودی: {{ wallet_balance|rial_display }})
+                                    </label>
+                                </div>
+                                <div id="wallet_info" class="small text-muted"></div>
+                            </div>
+
+                            <div class="mt-3 border-top pt-3 d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-dark">مبلغ نهایی:</span>
+                                <span class="fw-bold text-success fs-5" id="finalAmountDisplay">{{ total_price|rial_display }} ریال</span>
+                            </div>
+
+                            <button type="submit" class="btn btn-success w-100 mt-4 py-3 fw-bold shadow-sm" id="btn-buy" disabled>
+                                <i class="fas fa-credit-card"></i> پرداخت و دریافت بلیط
+                                <span id="finalPriceDisplay" class="badge bg-light text-dark ms-2 mt-1">{{ total_price|rial_display }} ریال</span>
+                            </button>
+                            <small id="btn-hint" class="text-danger d-block text-center mt-2" style="font-size: 11px;">⚠️ لطفاً اطلاعات همه صندلی‌ها را استعلام کنید</small>
+
+                            <a href="{% url 'tickets:cancel_reservation' match.id %}" class="btn btn-link w-100 mt-2 text-danger small">
+                                <i class="fas fa-times-circle"></i> انصراف و آزادسازی صندلی‌ها
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </form>
+</div>
 
-        <!-- ================================================== -->
-        <!-- ===== فرم اصلی (ارسال به زیبال با تخفیف و کیف پول) ===== -->
-        <!-- ================================================== -->
-        <form method="post"
-              action="{% url 'payments:payment_request' %}"
-              id="ticketForm"
-              data-payment-url="{% url 'payments:payment_request' %}"
-              data-free-checkout-url="{% url 'tickets:ticket_info' match.id %}">
-            {% csrf_token %}
-
-            <!-- ===== فیلدهای مخفی برای اطلاعات خریدار و پرداخت ===== -->
-            <input type="hidden" name="match_id" value="{{ match.id }}">
-            <input type="hidden" name="discount_code" id="discount_code_input_zibal" value="">
-            <input type="hidden" name="discount_percent" id="discount_percent_input_zibal" value="0">
-            <input type="hidden" name="next_url" value="{% url 'tickets:user_tickets' %}">
-            <!-- مبلغ نهایی به ریال (با احتساب تخفیف و کیف پول) -->
-            <input type="hidden" name="amount" id="finalAmountInput" value="{{ total_price }}">
-
-            <!-- محفظه‌ای برای اطلاعات خریدار که توسط جاوااسکریپت پر می‌شود -->
-            <div id="zibal_buyer_info"></div>
-
-            <!-- ===== اطلاعات خریدار ===== -->
-            <div class="row">
-                {% for seat in seats_data %}
-                    <div class="col-md-6 mb-3">
-                        <div class="card h-100 shadow-sm">
-                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0">
-                                    صندلی {{ seat.number }} - {{ seat.row_name }}
-                                    <span class="badge {% if seat.is_home %}bg-success{% else %}bg-warning text-dark{% endif %}">
-                                        {% if seat.is_home %}میزبان{% else %}میهمان{% endif %}
-                                    </span>
-                                </h5>
-                                <span class="badge bg-primary ticket-price"
-                                      data-base="{{ seat.price|default:0 }}"
-                                      style="font-size: 0.9rem; padding: 6px 14px;">
-                                    {{ seat.price|rial_display }} ریال
-                                </span>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <label class="form-label">نام و نام خانوادگی</label>
-                                    <input type="text" name="full_name_{{ seat.id }}"
-                                           class="form-control" required
-                                           placeholder="نام و نام خانوادگی را وارد کنید">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">کد ملی</label>
-                                    <input type="text" name="national_code_{{ seat.id }}"
-                                           class="form-control" maxlength="10"
-                                           pattern="\d{10}" required
-                                           placeholder="۱۰ رقم بدون فاصله">
-                                    <small class="text-muted">کد ملی باید ۱۰ رقم باشد.</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-
-            <!-- ===== بخش کد تخفیف ===== -->
-            <div class="card mb-4">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0"><i class="fas fa-tags"></i> کد تخفیف</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="input-group">
-                                <input type="text" id="discount_code" class="form-control form-control-lg"
-                                       placeholder="کد تخفیف را وارد کنید..." dir="ltr">
-                                <button type="button" class="btn btn-warning btn-lg" onclick="applyDiscount()">
-                                    <i class="fas fa-check-circle"></i> اعمال
-                                </button>
-                            </div>
-                            <div id="discount_msg" class="mt-2 small"></div>
-                        </div>
-                        <div class="col-md-4 text-center d-flex align-items-center">
-                            <div class="w-100">
-                                <small class="text-muted d-block">پس از اعمال تخفیف، قیمت‌ها به‌روز می‌شوند.</small>
-                            </div>
-                            <!-- فیلدهای مخفی برای تخفیف (در فرم اصلی) -->
-                            <input type="hidden" name="discount_code" id="discount_code_input" value="">
-                            <input type="hidden" name="discount_percent" id="discount_percent_input" value="0">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ===== بخش کیف پول ===== -->
-            <input type="hidden" name="use_wallet" id="useWalletInput" value="false">
-            <input type="hidden" name="wallet_amount" id="walletAmountInput" value="0">
-            <div class="card mb-4">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="fas fa-wallet"></i> استفاده از کیف پول</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>موجودی کیف پول شما:</strong> <span
-                                    id="displayBalance">{{ wallet_balance|rial_display }}</span> ریال</p>
-                            <p><strong>مبلغ کل خرید (بدون تخفیف):</strong> {{ total_price|rial_display }} ریال</p>
-                        </div>
-                        <div class="col-md-6">
-                            <!-- سوئیچ -->
-                            <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" id="useWalletSwitch"
-                                       onchange="toggleWallet(this.checked)">
-                                <label class="form-check-label fw-bold" for="useWalletSwitch">
-                                    <i class="fas fa-wallet"></i> استفاده از کیف پول
-                                </label>
-                            </div>
-
-                            <!-- نمایش مبالغ -->
-                            <div id="walletAmountDisplay" class="mt-2">
-                                <p class="mb-1">مبلغ قابل پرداخت از کیف پول:
-                                    <strong id="walletPayAmount">۰</strong> ریال
-                                </p>
-                                <p class="mb-1">مبلغ نهایی پرداختی (با تخفیف و کیف پول):
-                                    <strong id="finalAmountDisplay">{{ total_price|rial_display }}</strong> ریال
-                                </p>
-                                <div id="wallet_info" class="mt-2"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ===== دکمه تأیید ===== -->
-            <div class="d-grid gap-2 mt-4">
-                <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
-                    <i class="fas fa-credit-card"></i>
-                    پرداخت و دریافت بلیط
-                    <span id="finalPriceDisplay" class="badge bg-light text-dark ms-2">
-                        {{ total_price|rial_display }} ریال
-                    </span>
-                </button>
-                <a href="{% url 'tickets:cancel_reservation' match.id %}" class="btn btn-outline-danger">
-                    <i class="fas fa-times-circle"></i> انصراف از خرید
-                </a>
-            </div>
-        </form>
-        <!-- ================================================== -->
-        <!-- ===== پایان فرم اصلی ===== -->
-        <!-- ================================================== -->
-
-    </div>
-
-    <script>
+<script>
     document.addEventListener('DOMContentLoaded', function () {
-        // ===== تابع تبدیل به ریال با جداکننده (برای نمایش) =====
         function toRial(amount) {
             if (amount === 0 || amount === null || amount === undefined) return '۰';
             return amount.toLocaleString('fa-IR');
         }
 
-        // ===== تعریف متغیرهای مورد نیاز =====
-        const totalPrice = {{ total_price }};  // به ریال
-        const walletBalance = {{ wallet_balance }};  // به ریال
+        const totalPriceOriginal = {{ total_price }};
+        const walletBalance = {{ wallet_balance }};
+        const totalSeats = {{ seats_data|length }};
         const timerDisplay = document.getElementById('timer-display');
         const form = document.getElementById('ticketForm');
         let remaining = {{ remaining_time|default:0 }};
         let timerInterval = null;
         let formSubmitted = false;
 
-        // ===== تایمر =====
+        window.freeSeats = {};
+        window.removedSeats = {};
+
+        // ===== ساخت Dropdown های تاریخ تولد =====
+        const startYear = new Date().getFullYear() - 621; // تقریبی سال شمسی
+        document.querySelectorAll('.dob-year').forEach(sel => {
+            for (let y = startYear; y >= startYear - 80; y--) {
+                let opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y.toLocaleString('fa-IR');
+                sel.appendChild(opt);
+            }
+        });
+        document.querySelectorAll('.dob-day').forEach(sel => {
+            for (let d = 1; d <= 31; d++) {
+                let opt = document.createElement('option');
+                opt.value = String(d).padStart(2, '0');
+                opt.textContent = d.toLocaleString('fa-IR');
+                sel.appendChild(opt);
+            }
+        });
+
+        document.querySelectorAll('.dob-day, .dob-month, .dob-year').forEach(sel => {
+            sel.addEventListener('change', function() {
+                const index = this.dataset.seatIndex;
+                const y = document.querySelector(`.dob-year[data-seat-index="${index}"]`).value;
+                const m = document.querySelector(`.dob-month[data-seat-index="${index}"]`).value;
+                const d = document.querySelector(`.dob-day[data-seat-index="${index}"]`).value;
+                document.getElementById('tarikheTavallod_' + index).value = `${y}/${m}/${d}`;
+            });
+        });
+
         function formatTime(seconds) {
             const mins = Math.floor(seconds / 60);
             const secs = seconds % 60;
@@ -229,28 +312,20 @@
             timerInterval = setInterval(function () {
                 remaining--;
                 timerDisplay.textContent = formatTime(remaining);
-                if (remaining < 60) {
-                    timerDisplay.style.color = '#dc3545';
-                }
+                if (remaining < 60) timerDisplay.parentElement.style.color = '#dc3545';
                 if (remaining <= 0) {
                     clearInterval(timerInterval);
-                    timerDisplay.textContent = '⏰ زمان تمام شد';
-                    timerDisplay.style.color = '#dc3545';
-                    alert('⏰ زمان شما برای تکمیل خرید به پایان رسید. صندلی‌ها آزاد شدند.');
+                    timerDisplay.textContent = 'پایان یافت';
+                    alert('⏰ زمان شما برای تکمیل خرید به پایان رسید.');
                     window.location.href = "{% url 'tickets:cancel_reservation' match.id %}";
                 }
             }, 1000);
-        } else if (timerDisplay) {
-            timerDisplay.textContent = '⏰ زمان تمام شد';
-            timerDisplay.style.color = '#dc3545';
         }
 
         if (form) {
             form.addEventListener('submit', function () {
                 formSubmitted = true;
-                if (timerInterval) {
-                    clearInterval(timerInterval);
-                }
+                if (timerInterval) clearInterval(timerInterval);
             });
         }
 
@@ -261,273 +336,308 @@
                 const formData = new FormData();
                 formData.append('match_id', {{ match.id }});
                 const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-                if (csrfToken) {
-                    formData.append('csrfmiddlewaretoken', csrfToken);
-                }
+                if (csrfToken) formData.append('csrfmiddlewaretoken', csrfToken);
                 navigator.sendBeacon(url, formData);
             }
         });
 
-        // ===== تخفیف =====
         window.discountPercent = 0;
 
         window.applyDiscount = function () {
             const code = document.getElementById('discount_code').value.trim();
             const msg = document.getElementById('discount_msg');
-
             if (!code) {
-                msg.innerHTML = '<span class="text-warning">⚠️ لطفاً کد تخفیف را وارد کنید.</span>';
+                msg.innerHTML = '<span class="text-warning">⚠️ کد را وارد کنید.</span>';
                 return;
             }
-
             const matchId = {{ match.id }};
-
             fetch("{% url 'tickets:check_discount' %}", {
                 method: 'POST',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
+                headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `code=${encodeURIComponent(code)}&match_id=${matchId}`
             })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.valid) {
-                        document.getElementById('discount_code_input').value = code;
-                        document.getElementById('discount_percent_input').value = data.percent;
-                        window.discountPercent = data.percent;
-                        msg.innerHTML = `<span class="text-success">✅ ${data.message}</span>`;
-                    } else {
-                        document.getElementById('discount_code_input').value = '';
-                        document.getElementById('discount_percent_input').value = '0';
-                        window.discountPercent = 0;
-                        msg.innerHTML = `<span class="text-danger">❌ ${data.message}</span>`;
-                    }
-                    updateAll();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    msg.innerHTML = '<span class="text-danger">❌ خطا در ارتباط با سرور</span>';
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid) {
+                    document.getElementById('discount_code_input').value = code;
+                    document.getElementById('discount_percent_input').value = data.percent;
+                    window.discountPercent = data.percent;
+                    msg.innerHTML = `<span class="text-success">✅ ${data.message}</span>`;
+                } else {
                     document.getElementById('discount_code_input').value = '';
                     document.getElementById('discount_percent_input').value = '0';
                     window.discountPercent = 0;
-                    updateAll();
-                });
+                    msg.innerHTML = `<span class="text-danger">❌ ${data.message}</span>`;
+                }
+                window.updateAll();
+            })
+            .catch(error => {
+                msg.innerHTML = '<span class="text-danger">❌ خطا</span>';
+                window.discountPercent = 0;
+                window.updateAll();
+            });
         };
 
-        // ===== به‌روزرسانی قیمت‌ها =====
-        function updatePrices() {
-            document.querySelectorAll('.ticket-price').forEach(el => {
-                const base = parseInt(el.dataset.base);
-                const final = Math.round(base * (1 - (window.discountPercent || 0) / 100));
-                el.textContent = toRial(final) + ' ریال';
-            });
+        window.updatePrices = function () {
+            let currentTotal = 0;
+            document.querySelectorAll('.ticket-price[data-seat-index]').forEach(el => {
+                const seatIndex = el.dataset.seatIndex;
+                const card = document.getElementById('seat_card_' + seatIndex);
 
+                // اگر صندلی حذف شده بود، قیمتش رو حساب نکن
+                if (window.removedSeats[seatIndex] || card.style.display === 'none') return;
+
+                const base = parseInt(el.dataset.base);
+                if (window.freeSeats[seatIndex]) {
+                    el.textContent = 'رایگان';
+                    el.classList.add('text-success');
+                    currentTotal += 0;
+                } else {
+                    const final = Math.round(base * (1 - (window.discountPercent || 0) / 100));
+                    el.textContent = toRial(final) + ' ریال';
+                    el.classList.remove('text-success');
+                    currentTotal += final;
+                }
+            });
             const totalEl = document.getElementById('totalPriceDisplay');
             if (totalEl) {
-                const base = parseInt(totalEl.dataset.base);
-                const final = Math.round(base * (1 - (window.discountPercent || 0) / 100));
-                totalEl.textContent = toRial(final) + ' ریال';
+                totalEl.textContent = toRial(currentTotal) + ' ریال';
+                totalEl.dataset.current = currentTotal;
             }
-        }
+        };
 
-        // ===== تابع به‌روزرسانی همه چیز (تخفیف + کیف پول) =====
-        function updateAll() {
-            updatePrices();
+        window.updateAll = function () {
+            window.updatePrices();
             const useWallet = document.getElementById('useWalletSwitch').checked;
-            toggleWallet(useWallet);
-        }
+            window.toggleWallet(useWallet);
+        };
 
-        // ===== کیف پول =====
+        // ===== تابع حذف بلیط =====
+        window.removeTicket = function(index) {
+            document.getElementById('seat_card_' + index).style.display = 'none';
+            window.removedSeats[index] = true;
+
+            // پاکسازی فیلدهای مخفی
+            document.getElementById('fan_id_' + index).value = '';
+            document.getElementById('fan_kodeMeli_' + index).value = '';
+            document.getElementById('fan_name_' + index).value = '';
+            document.getElementById('fan_dob_' + index).value = '';
+            document.getElementById('fan_mobile_' + index).value = '';
+            document.querySelector(`input[name="match_seat_id_${index}"]`).value = '';
+
+            window.updateAll();
+            checkAllInquired();
+        };
+
         const useWalletInput = document.getElementById('useWalletInput');
         const walletAmountInput = document.getElementById('walletAmountInput');
         const finalAmountInput = document.getElementById('finalAmountInput');
         const finalAmountDisplay = document.getElementById('finalAmountDisplay');
-        const walletPayAmount = document.getElementById('walletPayAmount');
         const walletInfo = document.getElementById('wallet_info');
-        const submitBtn = document.getElementById('submitBtn');
+        const submitBtn = document.getElementById('btn-buy');
         const finalPriceDisplay = document.getElementById('finalPriceDisplay');
         const useWalletSwitch = document.getElementById('useWalletSwitch');
 
-        // ===== تابع به‌روزرسانی دکمه اصلی =====
         function updateSubmitButton(finalAmount) {
             if (finalAmount === 0) {
                 finalPriceDisplay.textContent = 'رایگان';
-                submitBtn.innerHTML = `
-                <i class="fas fa-credit-card"></i>
-                پرداخت و دریافت بلیط
-                <span class="badge bg-light text-dark ms-2">رایگان</span>
-            `;
+                submitBtn.innerHTML = `<i class="fas fa-check-circle"></i> دریافت بلیط (رایگان)`;
             } else {
                 finalPriceDisplay.textContent = toRial(finalAmount) + ' ریال';
-                submitBtn.innerHTML = `
-                <i class="fas fa-credit-card"></i>
-                پرداخت و دریافت بلیط
-                <span class="badge bg-light text-dark ms-2">${toRial(finalAmount)} ریال</span>
-            `;
+                submitBtn.innerHTML = `<i class="fas fa-credit-card"></i> پرداخت <span class="badge bg-light text-dark ms-2">${toRial(finalAmount)} ریال</span>`;
             }
         }
 
-        // ===== تابع اصلی مدیریت کیف پول =====
         window.toggleWallet = function (checked) {
-            // ۱. ذخیره وضعیت سوئیچ
             useWalletInput.value = checked ? 'true' : 'false';
+            const totalEl = document.getElementById('totalPriceDisplay');
+            const totalWithDiscount = parseInt(totalEl.dataset.current || totalPriceOriginal);
 
-            // ۲. محاسبه مبلغ با تخفیف (به ریال)
-            const discount = (window.discountPercent || 0) / 100;
-            const totalWithDiscount = Math.round(totalPrice * (1 - discount));
+            let walletPay = 0;
+            let finalAmount = totalWithDiscount;
 
-            let walletPay = 0;      // مبلغی که از کیف پول کسر می‌شود (به ریال)
-            let finalAmount = totalWithDiscount;  // مبلغ نهایی پرداختی (به ریال)
-
-            // ۳. محاسبه مبلغ قابل پرداخت از کیف پول
             if (checked) {
-                // اگر موجودی کیف پول صفر یا کمتر از صفر است
                 if (walletBalance <= 0) {
                     useWalletSwitch.checked = false;
                     useWalletInput.value = 'false';
-                    walletInfo.innerHTML = `
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        موجودی کیف پول شما صفر است. لطفاً ابتدا کیف پول خود را شارژ کنید.
-                    </div>
-                `;
+                    walletInfo.innerHTML = `<span class="text-danger">موجودی کیف پول صفر است.</span>`;
                     updateSubmitButton(totalWithDiscount);
-                    walletPayAmount.textContent = '۰';
-                    finalAmountDisplay.textContent = toRial(totalWithDiscount) + ' ریال';
                     walletAmountInput.value = 0;
                     finalAmountInput.value = totalWithDiscount;
                     return;
                 }
-
-                // محاسبه مبلغ قابل پرداخت از کیف پول (حداکثر موجودی یا مبلغ کل)
                 walletPay = Math.min(walletBalance, totalWithDiscount);
                 finalAmount = totalWithDiscount - walletPay;
-
-                console.log('🔍 walletPay (ریال):', walletPay);
-                console.log('🔍 finalAmount (ریال):', finalAmount);
             }
 
-            // ۴. نمایش مقادیر (به ریال)
-            walletPayAmount.textContent = toRial(walletPay);
+            walletInfo.innerHTML = checked && walletPay > 0 ? `${toRial(walletPay)} ریال از کیف پول کسر می‌شود.` : '';
+            walletAmountInput.value = walletPay;
+            finalAmountInput.value = finalAmount;
             finalAmountDisplay.textContent = toRial(finalAmount) + ' ریال';
-
-            // ===== ذخیره در فیلدهای مخفی برای ارسال به سرور (همه‌چیز به ریال) =====
-            // سرور مقدار wallet_amount را مستقیماً به ریال می‌خواند، پس نباید هیچ تبدیلی
-            // (تقسیم یا ضرب بر ۱۰) اینجا انجام شود.
-            if (checked) {
-                walletAmountInput.value = walletPay;
-                console.log('🔍 walletAmountInput (ریال):', walletPay);
-            } else {
-                walletAmountInput.value = 0;
-            }
-            finalAmountInput.value = finalAmount; // به ریال برای درگاه / بررسی سمت سرور
-
-            console.log('🔍 finalAmountInput (ریال):', finalAmountInput.value);
-
-            // ۵. به‌روزرسانی دکمه اصلی
             updateSubmitButton(finalAmount);
-
-            // ۶. نمایش پیام‌های راهنما
-            if (checked) {
-                if (walletPay === 0) {
-                    walletInfo.innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-circle"></i>
-                        موجودی کیف پول شما صفر است. لطفاً ابتدا کیف پول خود را شارژ کنید.
-                    </div>
-                `;
-                } else if (finalAmount === 0) {
-                    walletInfo.innerHTML = `
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle"></i>
-                        مبلغ کل خرید (<strong>${toRial(totalWithDiscount)}</strong> ریال) از کیف پول کسر می‌شود.
-                        <br>
-                        مبلغ نهایی پرداختی: <strong>۰ ریال</strong>
-                    </div>
-                `;
-                } else {
-                    walletInfo.innerHTML = `
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle"></i>
-                        مبلغ <strong>${toRial(walletPay)}</strong> ریال از کیف پول کسر می‌شود.
-                        <br>
-                        مبلغ باقی‌مانده (<strong>${toRial(finalAmount)}</strong> ریال) به‌صورت آنلاین پرداخت می‌شود.
-                    </div>
-                `;
-                }
-            } else {
-                walletInfo.innerHTML = `
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    با فعال‌سازی این گزینه، مبلغ از کیف پول شما کسر می‌شود.
-                    <br>
-                    <small class="text-muted">موجودی کیف پول: <strong>${toRial(walletBalance)}</strong> ریال</small>
-                </div>
-            `;
-            }
-
-            // ۷. بروزرسانی فیلدهای مخفی تخفیف (برای ارسال به سرور)
-            const discountCodeInput = document.getElementById('discount_code_input');
-            const discountPercentInput = document.getElementById('discount_percent_input');
-            if (discountCodeInput && discountPercentInput) {
-                document.getElementById('discount_code_input_zibal').value = discountCodeInput.value;
-                document.getElementById('discount_percent_input_zibal').value = discountPercentInput.value;
-            }
         };
 
-        // ===== اعتبارسنجی و مسیریابی قبل از ارسال فرم =====
         document.getElementById('ticketForm').addEventListener('submit', function (e) {
-            const useWallet = document.getElementById('useWalletSwitch').checked;
-            const walletAmount = parseInt(document.getElementById('walletAmountInput').value) || 0;  // به ریال
-            const finalAmount = parseInt(document.getElementById('finalAmountInput').value) || 0;  // به ریال
-
-            console.log('🔍 Submit - useWallet:', useWallet);
-            console.log('🔍 Submit - walletAmount (ریال):', walletAmount);
-            console.log('🔍 Submit - finalAmount (ریال):', finalAmount);
-
-            // اگر کاربر کیف پول را فعال کرده ولی موجودی کافی نیست
-            if (useWallet && walletAmount <= 0 && finalAmount > 0) {
+            let allInquired = true;
+            let visibleSeatsCount = 0;
+            for (let i = 1; i <= totalSeats; i++) {
+                const card = document.getElementById('seat_card_' + i);
+                if (card.style.display === 'none') continue;
+                visibleSeatsCount++;
+                const fanId = document.getElementById('fan_id_' + i);
+                if (!fanId || !fanId.value) { allInquired = false; break; }
+            }
+            if (visibleSeatsCount === 0) {
                 e.preventDefault();
-                alert('⚠️ موجودی کیف پول شما کافی نیست. لطفاً کیف پول خود را شارژ کنید.');
+                alert('⚠️ شما تمام صندلی‌ها را حذف کرده‌اید!');
                 return false;
             }
-
-            // ===== اگر مبلغ نهایی صفر شد =====
-            if (finalAmount === 0) {
+            if (!allInquired) {
+                e.preventDefault();
+                alert('⚠️ لطفاً برای همه صندلی‌ها اطلاعات را وارد و دکمه استعلام را بزنید.');
+                return false;
+            }
+            if (parseInt(document.getElementById('finalAmountInput').value) === 0) {
                 this.action = this.dataset.freeCheckoutUrl;
-                console.log('🔍 مسیر تغییر به: رایگان');
             } else {
                 this.action = this.dataset.paymentUrl;
-                console.log('🔍 مسیر تغییر به: درگاه پرداخت');
             }
         });
 
-        // ===== اجرای اولیه =====
-        // اگر موجودی کیف پول صفر است، سوئیچ را غیرفعال کنید
-        if (walletBalance <= 0) {
-            useWalletSwitch.disabled = true;
-            useWalletSwitch.checked = false;
-            walletInfo.innerHTML = `
-            <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle"></i>
-                موجودی کیف پول شما صفر است. لطفاً ابتدا کیف پول خود را شارژ کنید.
-            </div>
-        `;
-            const totalWithDiscount = Math.round(totalPrice * (1 - (window.discountPercent || 0) / 100));
-            updateSubmitButton(totalWithDiscount);
-            finalAmountDisplay.textContent = toRial(totalWithDiscount) + ' ریال';
-            walletAmountInput.value = 0;
-            finalAmountInput.value = totalWithDiscount;
-        } else {
-            // اجرای اولیه با وضعیت غیرفعال
-            window.toggleWallet(false);
-        }
+        window.toggleWallet(false);
+        useWalletSwitch.addEventListener('change', function () { window.toggleWallet(this.checked); });
 
-        // ===== رویداد تغییر سوئیچ =====
-        useWalletSwitch.addEventListener('change', function () {
-            window.toggleWallet(this.checked);
+        document.querySelectorAll('.inquiry-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() { inquiryFan(this.dataset.seatIndex); });
         });
     });
+
+    function inquiryFan(index) {
+        const name = document.getElementById('name_' + index).value.trim();
+        const famil = document.getElementById('famil_' + index).value.trim();
+        const kodeMeli = document.getElementById('kodeMeli_' + index).value.trim();
+        const shomareyeHamrah = document.getElementById('shomareyeHamrah_' + index).value.trim();
+        const tarikheTavallod = document.getElementById('tarikheTavallod_' + index).value.trim();
+
+        const card = document.getElementById('seat_card_' + index);
+        const btn = card.querySelector('.inquiry-btn');
+        const messageDiv = document.getElementById('inquiryMessage_' + index);
+        const loadingDiv = document.getElementById('loading_' + index);
+
+        card.classList.remove('is-valid', 'is-invalid');
+        messageDiv.style.display = 'none';
+
+        if (!name || !famil || !kodeMeli || !shomareyeHamrah || !tarikheTavallod) {
+            card.classList.add('is-invalid');
+            showInquiryMessage(index, '❌ لطفاً تمام فیلدها (به خصوص تاریخ تولد) را پر کنید.', 'danger');
+            return;
+        }
+        if (kodeMeli.length !== 10) {
+            card.classList.add('is-invalid');
+            showInquiryMessage(index, '❌ کد ملی باید ۱۰ رقم باشد.', 'danger');
+            return;
+        }
+
+        loadingDiv.style.display = 'block';
+        btn.disabled = true;
+
+        fetch('/tickets/inquiry-fan/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCookie('csrftoken') },
+            body: `name=${encodeURIComponent(name)}&famil=${encodeURIComponent(famil)}&kodeMeli=${encodeURIComponent(kodeMeli)}&shomareyeHamrah=${encodeURIComponent(shomareyeHamrah)}&tarikheTavallod=${encodeURIComponent(tarikheTavallod)}&seat_index=${index}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            loadingDiv.style.display = 'none';
+            btn.disabled = false;
+
+            if (data.success) {
+                card.classList.remove('is-invalid');
+                card.classList.add('is-valid');
+
+                document.getElementById('fan_id_' + index).value = data.id;
+                document.getElementById('fan_kodeMeli_' + index).value = kodeMeli;
+                document.getElementById('fan_name_' + index).value = name + ' ' + famil;
+                document.getElementById('fan_dob_' + index).value = tarikheTavallod;
+                document.getElementById('fan_mobile_' + index).value = shomareyeHamrah;
+
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> تایید شد';
+                btn.classList.add('btn-inquiry-verified');
+
+                if (data.is_free) {
+                    window.freeSeats[index] = true;
+                    showInquiryMessage(index, `✅ تایید شد. سن: ${data.age} سال (زیر ۱۵ سال) - این بلیط رایگان است!`, 'success');
+                } else {
+                    window.freeSeats[index] = false;
+                    showInquiryMessage(index, `✅ اطلاعات با ثبت احوال تطابق دارد. سن: ${data.age} سال`, 'success');
+                }
+
+                window.updateAll();
+                checkAllInquired();
+            } else {
+                card.classList.add('is-invalid');
+                document.getElementById('fan_id_' + index).value = '';
+                window.freeSeats[index] = false;
+                btn.innerHTML = '<i class="fas fa-check-double"></i> استعلام و تایید';
+                btn.classList.remove('btn-inquiry-verified');
+                showInquiryMessage(index, '❌ ' + (data.error || 'اطلاعات نامعتبر است'), 'danger');
+                window.updateAll();
+            }
+        })
+        .catch(error => {
+            loadingDiv.style.display = 'none';
+            btn.disabled = false;
+            card.classList.add('is-invalid');
+            showInquiryMessage(index, '❌ خطا در ارتباط با سرور: ' + error.message, 'danger');
+        });
+    }
+
+    function showInquiryMessage(index, text, type) {
+        const messageDiv = document.getElementById('inquiryMessage_' + index);
+        messageDiv.style.display = 'block';
+        messageDiv.className = 'alert alert-' + type + ' py-2 px-3';
+        messageDiv.textContent = text;
+    }
+
+    function checkAllInquired() {
+        const totalSeats = parseInt(document.querySelector('input[name="total_seats"]').value);
+        let allDone = true;
+        let visibleSeats = 0;
+        for (let i = 1; i <= totalSeats; i++) {
+            const card = document.getElementById('seat_card_' + i);
+            if (card.style.display === 'none') continue;
+            visibleSeats++;
+            const fanId = document.getElementById('fan_id_' + i);
+            if (!fanId || !fanId.value) { allDone = false; break; }
+        }
+        const btnBuy = document.getElementById('btn-buy');
+        const btnHint = document.getElementById('btn-hint');
+        if (allDone && visibleSeats > 0) {
+            btnBuy.disabled = false;
+            btnHint.textContent = '✅ تمام اطلاعات تأیید شد. می‌توانید خرید کنید.';
+            btnHint.classList.remove('text-danger');
+            btnHint.classList.add('text-success');
+        } else {
+            btnBuy.disabled = true;
+            btnHint.textContent = '⚠️ لطفاً برای همه صندلی‌ها اطلاعات را وارد و استعلام کنید';
+            btnHint.classList.add('text-danger');
+            btnHint.classList.remove('text-success');
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
 </script>
 {% endblock %}

@@ -155,3 +155,46 @@ LOGIN_URL = 'accounts:choose_login'
 LOGIN_REDIRECT_URL = 'matches:home'
 LOGOUT_REDIRECT_URL = 'accounts:choose_login'
 OTP_ENABLED = True
+
+# ===== اضافه به انتهای settings.py =====
+# این تنظیمات باعث می‌شه traceback کامل هر خطای 500 توی یک فایل مشخص
+# نوشته بشه، مستقل از journal یا mail_admins.
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{asctime} [{levelname}] {name}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'error_file': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'django-errors.log'),
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'error_file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['console', 'error_file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        # لاگرهای خود اپ‌ها (payments, tickets, wallet, ...) هم از همین استفاده می‌کنن
+        '': {
+            'handlers': ['console', 'error_file'],
+            'level': 'INFO',
+        },
+    },
+}

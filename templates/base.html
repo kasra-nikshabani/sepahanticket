@@ -33,6 +33,144 @@
             min-height: 100vh;
             position: relative;
         }
+                /* ===== استایل فوتر ===== */
+        .footer {
+            background-color: #1A1A2E;
+            color: #ffffff;
+            padding: 50px 0 20px 0;
+            margin-top: 60px;
+            border-top: 3px solid #D4AF37;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .footer-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #D4AF37;
+            margin-bottom: 15px;
+        }
+
+        .footer-description {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .footer-title {
+            color: #ffffff;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .footer-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 40px;
+            height: 3px;
+            background: #D4AF37;
+            border-radius: 3px;
+        }
+
+        .footer-links,
+        .footer-contact {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footer-links li,
+        .footer-contact li {
+            margin-bottom: 12px;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.75);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer-links a:hover {
+            color: #D4AF37;
+            transform: translateX(-5px);
+        }
+
+        .footer-contact li {
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .footer-contact i {
+            color: #D4AF37;
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .social-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            margin-left: 10px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .social-link:hover {
+            background: #D4AF37;
+            color: #1A1A2E;
+            transform: translateY(-3px);
+        }
+
+        .footer-divider {
+            border-color: rgba(212, 175, 55, 0.2);
+            margin: 30px 0 20px 0;
+        }
+
+        .footer-copy {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .badge-gold {
+            background: #D4AF37;
+            color: #1A1A2E;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 5px;
+        }
+
+        .badge-dark {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 5px;
+        }
 
         /* ===== یک لایه اوورلی ساده ===== */
         body::before {
