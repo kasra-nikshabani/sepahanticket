@@ -162,7 +162,11 @@ def vip_issue_manual(request, match_id):
         messages.error(request, 'شما دسترسی به این بخش ندارید.')
         return redirect('matches:home')
 
-    match = get_object_or_404(Match, id=match_id, is_active=True)
+    if request.method == 'POST':
+        # قفل کردن رکورد مسابقه برای جلوگیری از ثبت همزمان (Race Condition)
+        match = get_object_or_404(Match.objects.select_for_update(), id=match_id, is_active=True)
+    else:
+        match = get_object_or_404(Match, id=match_id, is_active=True)
     quota = get_object_or_404(VIPQuota, user=request.user, match=match)
 
     if quota.remaining <= 0:

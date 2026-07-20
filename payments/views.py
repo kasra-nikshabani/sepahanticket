@@ -267,7 +267,8 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
     from wallet.models import Wallet
 
     try:
-        match = Match.objects.get(id=payment.match_id)
+        # قفل کردن رکورد مسابقه برای جلوگیری از ثبت همزمان (Race Condition)
+        match = Match.objects.select_for_update().get(id=payment.match_id)
     except Match.DoesNotExist:
         return False, "مسابقه یافت نشد"
 
