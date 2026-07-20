@@ -319,8 +319,8 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
                 'price': seat_price
             })
 
-        discount_amount = int(actual_total_price * (payment.discount_percent / 100))
-        total_amount = actual_total_price - discount_amount
+        discount_amount = int(float(actual_total_price) * (payment.discount_percent / 100))
+        total_amount = float(actual_total_price) - discount_amount
         payment_method = 'mixed' if wallet_amount_used > 0 else 'zibal'
 
         order = Order.objects.create(
