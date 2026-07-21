@@ -879,31 +879,49 @@ def inquiry_fan(request):
         if not token:
             return JsonResponse({'success': False, 'error': 'خطا در دریافت توکن'}, status=401)
 
-        url = "https://fans.footballeticket.ir/api/v1/user/register"
+        url = "https://fans.footballeticket.ir/api/v1/user/register"  # یا آدرس API اصلی که به شما دادند
         headers = {
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {token}'
         }
+
         payload = {
-            "name": name, "famil": famil, "kodeMeli": kode_meli,
-            "shomareHamrah": shomare_hamrah, "tarikheTavallod": tarikhe_tavallod
+            "name": name,
+            "famil": famil,
+            "kodeMeli": kode_meli,
+            "shomareHamrah": shomare_hamrah,
+            "tarikheTavallod": tarikhe_tavallod
         }
 
         response = requests.post(url, json=payload, headers=headers, timeout=10)
-        data = response.json()
+
+        # ===== بررسی اینکه آیا سرور پاسخ JSON داده یا خیر =====
+        try:
+            data = response.json()
+        except ValueError:
+            # اگر سرور JSON برنگرداند (مثلا صفحه ارور بدهد)
+            return JsonResponse({
+                'success': False,
+                'error': 'اطلاعات با ثبت احوال تطابق ندارد. لطفاً کد ملی، نام و تاریخ تولد را دقیق وارد کنید.'
+            }, status=400)
 
         if response.status_code in [200, 201]:
             age = get_age_from_jalali(tarikhe_tavallod)
             is_free = age < 15
+
             return JsonResponse({
-                'success': True, 'id': data.get('id', ''), 'is_free': is_free, 'age': age
+                'success': True,
+                'id': data.get('id', ''),
+                'is_free': is_free,
+                'age': age
             })
         else:
             error_msg = data.get('message', data.get('error', 'اطلاعات با ثبت احوال تطابق ندارد.'))
             return JsonResponse({'success': False, 'error': error_msg}, status=response.status_code)
 
     except Exception as e:
-        return JsonResponse({'success': False, 'error': f'خطا در ارتباط با سامانه: {str(e)}'}, status=500)
+        return JsonResponse({'success': False, 'error': 'خطا در ارتباط با سامانه هواداری. لطفاً مجددا تلاش کنید.'},
+                            status=500)
 
 
 # ============================================================
