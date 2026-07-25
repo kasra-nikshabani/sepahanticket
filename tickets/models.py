@@ -74,7 +74,23 @@ class Ticket(models.Model):
         import random
         import string
         return ''.join(random.choices(string.digits, k=12))
-
+    @property
+    def block_type_label(self):
+        """پراپرتی برای دریافت نام فارسی نوع سکو برای استفاده در PDF و سایت"""
+        if self.seat and self.seat.row and self.seat.row.block:
+            block = self.seat.row.block
+            if getattr(block, 'is_vip', False):
+                return "VIP"
+            # نکته: اگر فیلد بانوان در دیتابیس چیز دیگری است، خط زیر را تغییر دهید
+            elif getattr(block, 'is_women', False) or getattr(block, 'team_type', '') == 'women':
+                return "بانوان"
+            elif getattr(block, 'is_class1', False):
+                return "کلاس ۱"
+            elif getattr(block, 'team_type', '') == 'home':
+                return "میزبان"
+            else:
+                return "میهمان"
+        return "نامشخص"
     def generate_qr_code(self):
         import qrcode
         from io import BytesIO
@@ -108,7 +124,8 @@ class Ticket(models.Model):
 
         logger = logging.getLogger(__name__)
 
-        team_type = self.seat.row.zone_label if self.seat and self.seat.row else ""
+        # ===== استفاده از پراپرتی جدید برای دریافت نام سکو =====
+        team_type = self.block_type_label
 
         qr_image_base64 = None
         if self.qr_code:
@@ -130,7 +147,7 @@ class Ticket(models.Model):
             'ticket': self,
             'match': self.match,
             'seat': self.seat,
-            'team_type': team_type,
+            'team_type': team_type,  # <--- این متغیر به PDF فرستاده می‌شود
             'user': self.user,
             'qr_base64': qr_image_base64,
         }

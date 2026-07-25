@@ -162,7 +162,6 @@
     </div>
 
     <!-- QR Code -->
-    <!-- QR Code -->
     <div class="qr-code">
         {% if qr_base64 %}
             <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR Code">
@@ -195,7 +194,7 @@
         </div>
     </div>
 
-    <!-- نوع تیم -->
+        <!-- نوع تیم -->
     <div class="team-type-wrapper">
         <div style="
                 display: inline-block;
@@ -205,17 +204,14 @@
                 font-weight: bold;
                 font-family: 'Tahoma', 'Vazir', sans-serif;
                 background-color:
-                {% if ticket.seat.row.zone_label == 'VIP' %}#9b59b6
-                {% elif ticket.seat.row.zone_label == 'میزبان' %}#28a745
-                {% elif ticket.seat.row.zone_label == 'میهمان' %}#ffc107
-                {% elif ticket.seat.row.zone_label == 'کلاس ۱' %}#007bff
-                {% elif ticket.seat.row.zone_label == 'بانوان' %}#e83e8c
-                {% else %}#6c757d{% endif %};
-                color:
-                {% if ticket.seat.row.zone_label == 'میهمان' %}#212529
-                {% else %}white{% endif %};
+                {% if team_type == 'VIP' %}#9b59b6
+                {% elif team_type == 'بانوان' %}#e83e8c
+                {% elif team_type == 'کلاس ۱' %}#007bff
+                {% elif team_type == 'میزبان' %}#28a745
+                {% else %}#ffc107{% endif %};
+                color: {% if team_type == 'میهمان' %}#212529{% else %}white{% endif %};
                 ">
-            {{ ticket.seat.row.zone_label }}
+            {{ team_type }}
         </div>
     </div>
 
