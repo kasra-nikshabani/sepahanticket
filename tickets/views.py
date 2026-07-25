@@ -991,9 +991,9 @@ def bulk_issue_tickets(request):
     if request.method == 'POST':
         form = BulkTicketForm(request.POST)
         if form.is_valid():
-            match = form.cleaned_data['match'];
+            match = form.cleaned_data['match']
             users = form.cleaned_data['users']
-            block = form.cleaned_data['block'];
+            block = form.cleaned_data['block']
             count_per_user = form.cleaned_data['seat_count_per_user']
 
             seats_in_block = Seat.objects.filter(row__block=block, row__is_active=True, is_available=True).order_by(
@@ -1012,23 +1012,25 @@ def bulk_issue_tickets(request):
                 return render(request, 'tickets/bulk_issue.html', {'form': form})
 
             with transaction.atomic():
-                ticket_index = 0;
+                ticket_index = 0
                 created_count = 0
                 for user in users:
                     for _ in range(count_per_user):
                         if ticket_index >= len(available_match_seats): break
-                        match_seat = available_match_seats[ticket_index];
+                        match_seat = available_match_seats[ticket_index]
                         ticket_index += 1
                         if match_seat.match_id != match.id:
-                            match_seat.match = match;
+                            match_seat.match = match
                             match_seat.save()
+
                         ticket = Ticket.objects.create(
                             user=user, match=match, seat=match_seat.seat, match_seat=match_seat,
-                            full_name=user.get_full_name() or user.username, national_code=user.national_code,
+                            full_name=user.get_full_name() or user.username,
+                            national_code=getattr(user, 'national_code', ''),  # <--- اصلاح شد
                             status='admin_assigned', is_admin_assigned=True, price=match_seat.seat.row.block.price or 0,
                         )
                         ticket.save()
-                        match_seat.is_available = False;
+                        match_seat.is_available = False
                         match_seat.save()
                         created_count += 1
 
@@ -1121,30 +1123,63 @@ def row_occupancy_report(request):
     matches = Match.objects.all().order_by('-date_time')
     match_id = request.GET.get('match_id')
 
-    if not match_id and matches.exists():
-        match_id = matches.first().id
-    elif match_id:
+    if match_id:
         try:
             match_id = int(match_id)
         except (ValueError, TypeError):
             match_id = None
+    else:
+        match_id = None
 
     report_data = []
     if match_id:
         match = get_object_or_404(Match, id=match_id)
-        blocks = Block.objects.filter(is_active=True).order_by('order')
+
+        # ===== اصلاح مهم: فقط بلوک‌های متعلق به ورزشگاه همین مسابقه =====
+        blocks = Block.objects.filter(stadium=match.stadium, is_active=True).order_by('order')
+
         for block in blocks:
-            total_seats = Seat.objects.filter(row__block=block).count()
-            occupied = MatchSeat.objects.filter(match=match, seat__row__block=block, is_available=False).count()
-            available = total_seats - occupied
+            # ۱. کل صندلی‌های فعال این بلوک
+            total_seats = Seat.objects.filter(row__block=block, row__is_active=True).count()
+
+            # ۲. بلیط‌های قطعا فروخته شده برای این مسابقه در این بلوک
+            sold_tickets = Ticket.objects.filter(
+                match=match,
+                seat__row__block=block,
+                status__in=['paid', 'admin_assigned', 'vip_issued']
+            ).count()
+
+            # ۳. صندلی‌هایی که الان در سبد خرید هستند (رزرو موقت) برای این مسابقه
+            reserved_seats = MatchSeat.objects.filter(
+                match=match,
+                seat__row__block=block,
+                is_available=False,
+                reserved_until__gt=timezone.now()
+            ).count()
+
+            # مجموع اشغال شده‌ها
+            occupied = sold_tickets + reserved_seats
+            available = max(0, total_seats - occupied)
+
             report_data.append({
                 'row': block, 'total': total_seats, 'occupied': occupied, 'available': available,
                 'occupancy_percent': round((occupied / total_seats * 100) if total_seats > 0 else 0, 1)
             })
 
-    context = {'report_data': report_data, 'matches': matches, 'selected_match_id': match_id}
-    return render(request, 'tickets/row_occupancy.html', context)
+    # محاسبه مجموع‌ها برای کارت‌های آماری بالای جدول
+    total_seats_sum = sum(item['total'] for item in report_data)
+    occupied_seats_sum = sum(item['occupied'] for item in report_data)
+    available_seats_sum = sum(item['available'] for item in report_data)
 
+    context = {
+        'report_data': report_data,
+        'matches': matches,
+        'selected_match_id': match_id,
+        'total_seats_sum': total_seats_sum,
+        'occupied_seats_sum': occupied_seats_sum,
+        'available_seats_sum': available_seats_sum,
+    }
+    return render(request, 'tickets/row_occupancy.html', context)
 
 # ============================================================
 #  ویوهای مربوط به دانلود گروهی

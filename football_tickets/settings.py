@@ -16,7 +16,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://93.126.18.49',
     'http://ticket.sepahansc.com',  # اگر دامنه دارید
 ]
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 # settings.py
 # ===== تنظیمات سشن =====

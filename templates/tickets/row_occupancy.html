@@ -1,206 +1,471 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load currency_filters %}
+
 {% block title %}گزارش اشغال صندلی‌ها{% endblock %}
 
 {% block extra_css %}
-<style>
-    .report-container {
-        max-width: 1000px;
-        margin: 30px auto;
-        padding: 0 15px;
-    }
-    .card-custom {
-        background: #ffffff;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-        border: 1px solid #e8eaed;
-        overflow: hidden;
-    }
-    .card-header-custom {
-        background: linear-gradient(135deg, #1A1A2E, #16213E);
-        padding: 20px 30px;
-        border-bottom: 3px solid #D4AF37;
-        color: white;
-    }
-    .card-header-custom h4 {
-        margin: 0;
-        font-weight: 700;
-        color: #D4AF37;
-    }
-    .card-header-custom h4 i {
-        margin-left: 10px;
-    }
-    .card-body-custom {
-        padding: 30px;
-        overflow-x: auto;
-    }
+    <style>
+        .report-container {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 0 15px;
+        }
 
-    .filter-form {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        align-items: center;
-        margin-bottom: 25px;
-        background: #f9f9f9;
-        padding: 15px 20px;
-        border-radius: 12px;
-        border: 1px solid #e8eaed;
-    }
-    .filter-form select {
-        padding: 8px 16px;
-        border-radius: 8px;
-        border: 1px solid #ddd;
-        background: #fff;
-        font-size: 0.95rem;
-        min-width: 250px;
-    }
-    .filter-form .btn {
-        padding: 8px 20px;
-        border-radius: 8px;
-        font-weight: 500;
-        border: none;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-    .filter-form .btn-primary {
-        background: #1A1A2E;
-        color: white;
-    }
-    .filter-form .btn-primary:hover {
-        background: #D4AF37;
-        color: #1A1A2E;
-    }
+        .card-custom {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            border: none;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
 
-    .table-custom {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.95rem;
-    }
-    .table-custom thead th {
-        background: #f8f9fa;
-        color: #1A1A2E;
-        font-weight: 600;
-        padding: 12px 16px;
-        text-align: right;
-        border-bottom: 2px solid #D4AF37;
-    }
-    .table-custom tbody td {
-        padding: 12px 16px;
-        border-bottom: 1px solid #e8eaed;
-        vertical-align: middle;
-    }
-    .table-custom tbody tr:hover {
-        background: #fafafa;
-    }
+        .card-header-custom {
+            background: linear-gradient(135deg, #1A1A2E, #16213E);
+            padding: 20px 30px;
+            border-bottom: 3px solid #D4AF37;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-    .progress-bar-custom {
-        height: 8px;
-        background: #e8eaed;
-        border-radius: 4px;
-        overflow: hidden;
-        width: 150px;
-        display: inline-block;
-        vertical-align: middle;
-    }
-    .progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #D4AF37, #B8960F);
-        border-radius: 4px;
-        transition: width 0.3s;
-    }
+        .card-header-custom h4 {
+            margin: 0;
+            font-weight: 700;
+            color: #D4AF37;
+            font-size: 1.25rem;
+        }
 
-    .alert {
-        padding: 12px 20px;
-        border-radius: 10px;
-        font-weight: 500;
-    }
-    .alert-info {
-        background: #e3f2fd;
-        border-color: #90caf9;
-        color: #0d47a1;
-        border: 1px solid #90caf9;
-    }
-
-    @media (max-width: 768px) {
         .card-body-custom {
-            padding: 16px;
+            padding: 25px;
         }
-        .table-custom {
-            font-size: 0.8rem;
+
+        /* ===== کارت‌های آماری ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
         }
-        .table-custom thead th,
-        .table-custom tbody td {
-            padding: 8px 10px;
+
+        .stat-box {
+            background: #f8f9fa;
+            border: 1px solid #e8eaed;
+            border-radius: 12px;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
+
+        .stat-box .stat-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .stat-box .stat-info h6 {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        .stat-box .stat-info span {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1A1A2E;
+        }
+
+        /* ===== فیلتر ===== */
         .filter-form {
-            flex-direction: column;
-            align-items: stretch;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 18px 20px;
+            border-radius: 12px;
+            border: 1px solid #e8eaed;
+            margin-bottom: 25px;
         }
+
         .filter-form select {
-            min-width: auto;
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: #fff;
+            font-size: 0.95rem;
+            min-width: 280px;
+            flex-grow: 1;
+            font-family: inherit;
         }
+
+        .filter-form .btn-filter {
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            background: #1A1A2E;
+            color: #D4AF37;
+            transition: all 0.2s;
+        }
+
+        .filter-form .btn-filter:hover {
+            background: #D4AF37;
+            color: #1A1A2E;
+        }
+
+        /* ===== جدول ===== */
+        .table-responsive-custom {
+            border-radius: 12px;
+            border: 1px solid #e8eaed;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .table-custom {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        .table-custom thead th {
+            background: #1A1A2E;
+            color: #D4AF37;
+            font-weight: 600;
+            padding: 14px 16px;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .table-custom tbody td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #e8eaed;
+            vertical-align: middle;
+        }
+
+        .table-custom tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-custom tbody tr:hover {
+            background: #fafafa;
+        }
+
+        .block-name-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .block-name-cell strong {
+            font-size: 1rem;
+            color: #1A1A2E;
+        }
+
+        /* برچسب‌های رنگی سکو */
+        .zone-badge {
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .zone-vip {
+            background: #D4AF37;
+            color: #1A1A2E;
+        }
+
+        .zone-women {
+            background: #e83e8c;
+            color: #fff;
+        }
+
+        .zone-class1 {
+            background: #007bff;
+            color: #fff;
+        }
+
+        .zone-home {
+            background: #28a745;
+            color: #fff;
+        }
+
+        .zone-away {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        /* نوار پیشرفت */
+        .progress-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
         .progress-bar-custom {
-            width: 80px;
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 6px;
+            overflow: hidden;
+            width: 120px;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
         }
-    }
-</style>
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            font-weight: 700;
+            font-size: 0.9rem;
+            min-width: 45px;
+        }
+
+        .alert-custom {
+            padding: 20px;
+            border-radius: 12px;
+            font-weight: 500;
+            text-align: center;
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            color: #0d47a1;
+        }
+
+        canvas {
+            max-height: 350px;
+            width: 100% !important;
+        }
+
+        @media (max-width: 768px) {
+            .card-body-custom {
+                padding: 15px;
+            }
+
+            .filter-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-form select {
+                min-width: auto;
+            }
+
+            .table-custom {
+                font-size: 0.85rem;
+            }
+
+            .table-custom thead th, .table-custom tbody td {
+                padding: 10px 8px;
+            }
+
+            .progress-bar-custom {
+                width: 60px;
+            }
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
-<div class="report-container">
-    <div class="card-custom">
-        <div class="card-header-custom">
-            <h4><i class="fas fa-chair"></i> گزارش اشغال صندلی‌ها</h4>
-        </div>
-        <div class="card-body-custom">
-            <!-- ===== فیلتر مسابقه ===== -->
-            <form method="get" class="filter-form">
-                <select name="match_id">
-                    <option value="">انتخاب مسابقه...</option>
-                    {% for m in matches %}
-                        <option value="{{ m.id }}" {% if selected_match_id == m.id %}selected{% endif %}>
-                            {{ m.home_team }} vs {{ m.away_team }} - {{ m.date_time|date:"Y/m/d" }}
-                        </option>
-                    {% endfor %}
-                </select>
-                <button type="submit" class="btn btn-primary">نمایش</button>
-            </form>
+    <div class="report-container">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <h4><i class="fas fa-chart-pie"></i> گزارش اشغال سکوها</h4>
+            </div>
+            <div class="card-body-custom">
+                <!-- ===== فیلتر مسابقه ===== -->
+                <form method="get" class="filter-form">
+                    <select name="match_id" onchange="this.form.submit()" class="form-control">
+                        <option value="">انتخاب مسابقه...</option>
+                        {% for m in matches %}
+                            <option value="{{ m.id }}" {% if selected_match_id == m.id %}selected{% endif %}>
+                                {{ m.home_team }} vs {{ m.away_team }} - {{ m.date_time|date:"Y/m/d" }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-filter">
+                        <i class="fas fa-sync-alt"></i> بروزرسانی گزارش
+                    </button>
+                </form>
 
-            {% if report_data %}
-            <table class="table-custom">
-                <thead>
-                    <tr>
-                        <th>ردیف</th>
-                        <th>کل صندلی‌ها</th>
-                        <th>پر شده</th>
-                        <th>خالی</th>
-                        <th>درصد اشغال</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in report_data %}
-                    <tr>
-                        <td><strong>{{ item.row.name }}</strong></td>
-                        <td>{{ item.total }}</td>
-                        <td>{{ item.occupied }}</td>
-                        <td>{{ item.available }}</td>
-                        <td>
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span>{{ item.occupancy_percent }}%</span>
-                                <div class="progress-bar-custom">
-                                    <div class="progress-fill" style="width: {{ item.occupancy_percent }}%;"></div>
-                                </div>
+                {% if report_data %}
+                    <!-- ===== کارت‌های آماری ===== -->
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-info">
+                                <h6>کل ظرفیت</h6>
+                                <span>{{ total_seats_sum }}</span>
                             </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <div class="alert alert-info">لطفاً یک مسابقه را انتخاب کنید.</div>
-            {% endif %}
+                            <div class="stat-icon" style="background: #e3f2fd; color: #0d47a1;">
+                                <i class="fas fa-chair"></i>
+                            </div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-info">
+                                <h6>فروخته شده</h6>
+                                <span style="color: #dc3545;">{{ occupied_seats_sum }}</span>
+                            </div>
+                            <div class="stat-icon" style="background: #ffebee; color: #dc3545;">
+                                <i class="fas fa-ticket-alt"></i>
+                            </div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-info">
+                                <h6>باقی‌مانده</h6>
+                                <span style="color: #28a745;">{{ available_seats_sum }}</span>
+                            </div>
+                            <div class="stat-icon" style="background: #e8f5e9; color: #28a745;">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== نمودار اشغال ===== -->
+                    <div style="padding: 20px; border: 1px solid #e8eaed; border-radius: 12px; margin-bottom: 20px;">
+                        <canvas id="occupancyChart"></canvas>
+                    </div>
+
+                    <!-- ===== جدول ===== -->
+                    <div class="table-responsive-custom">
+                        <table class="table-custom">
+                            <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>نام سکو</th>
+                                <th>کل صندلی‌ها</th>
+                                <th>فروخته شده</th>
+                                <th>باقی‌مانده</th>
+                                <th>درصد اشغال</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for item in report_data %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <div class="block-name-cell">
+                                            <strong>{{ item.row.name }}</strong>
+
+                                                                                        <!-- برچسب نوع سکو (اصلاح شده بر اساس فیلدهای مدل Block) -->
+                                            {% if item.row.is_vip or item.row.zone_type == 'vip' %}
+                                                <span class="zone-badge zone-vip"><i class="fas fa-crown"></i> VIP</span>
+                                            {% elif item.row.is_class1 or item.row.zone_type == 'class1' %}
+                                                <span class="zone-badge zone-class1"><i class="fas fa-star"></i> کلاس ۱</span>
+                                            {% elif item.row.zone_type == 'women' %}
+                                                <span class="zone-badge zone-women"><i class="fas fa-venus"></i> بانوان</span>
+                                            {% elif item.row.zone_type == 'home' %}
+                                                <span class="zone-badge zone-home"><i class="fas fa-home"></i> میزبان</span>
+                                            {% else %}
+                                                <span class="zone-badge zone-away"><i class="fas fa-flag"></i> میهمان</span>
+                                            {% endif %}
+
+                                        </div>
+                                    </td>
+                                    <td>{{ item.total }}</td>
+                                    <td style="color: #dc3545; font-weight: 600;">{{ item.occupied }}</td>
+                                    <td style="color: #28a745; font-weight: 600;">{{ item.available }}</td>
+                                    <td>
+                                        <div class="progress-wrapper">
+                                            <div class="progress-bar-custom">
+                                                <div class="progress-fill
+                                            {% if item.occupancy_percent > 80 %}bg-danger
+                                            {% elif item.occupancy_percent > 50 %}bg-warning
+                                            {% else %}bg-success{% endif %}"
+                                                     style="width: {{ item.occupancy_percent }}%;"></div>
+                                            </div>
+                                            <span class="progress-text">{{ item.occupancy_percent }}%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert-custom">
+                        <i class="fas fa-info-circle"></i> لطفاً یک مسابقه را برای مشاهده گزارش اشغال صندلی‌ها انتخاب
+                        کنید.
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </div>
-</div>
+
+    {% if report_data %}
+        <!-- ===== اسکریپت نمودار ===== -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const ctx = document.getElementById('occupancyChart').getContext('2d');
+
+                const labels = [{% for item in report_data %}"{{ item.row.name|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}];
+                const occupiedData = [{% for item in report_data %}{{ item.occupied }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+                const availableData = [{% for item in report_data %}{{ item.available }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'فروخته شده',
+                                data: occupiedData,
+                                backgroundColor: '#dc3545',
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'باقی‌مانده',
+                                data: availableData,
+                                backgroundColor: '#28a745',
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'نمودار اشغال سکوها',
+                                font: {size: 16, family: 'Vazirmatn, Tahoma'},
+                                color: '#1A1A2E'
+                            },
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: {family: 'Vazirmatn, Tahoma'}
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                ticks: {font: {family: 'Vazirmatn, Tahoma'}}
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                ticks: {font: {family: 'Vazirmatn, Tahoma'}}
+                            }
+                        }
+                    }
+                });
+            });
+        </script>
+    {% endif %}
 {% endblock %}

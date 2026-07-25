@@ -4,313 +4,520 @@
 {% block title %}بلیط‌های صادرشده{% endblock %}
 
 {% block extra_css %}
-<style>
-    .tickets-container { max-width: 1000px; margin: 30px auto; }
-    .card-custom { background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #e8eaed; overflow: hidden; }
-    .card-header-custom { background: linear-gradient(135deg, #1A1A2E, #16213E); padding: 20px 30px; border-bottom: 3px solid #D4AF37; }
-    .card-header-custom h4 { margin: 0; font-weight: 700; color: #D4AF37; }
-    .card-header-custom h4 i { margin-left: 10px; }
-    .card-body-custom { padding: 30px; overflow-x: auto; }
+    <style>
+        .tickets-container {
+            max-width: 1000px;
+            margin: 30px auto;
+        }
 
-    /* فیلتر */
-    .filter-form {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        align-items: center;
-        margin-bottom: 20px;
-        padding: 15px 20px;
-        background: #f8f9fa;
-        border-radius: 12px;
-        border: 1px solid #e8eaed;
-    }
-    .filter-form select {
-        padding: 8px 16px;
-        border-radius: 8px;
-        border: 1px solid #ddd;
-        background: #fff;
-        font-size: 0.95rem;
-        min-width: 250px;
-    }
-    .filter-form .btn {
-        padding: 8px 20px;
-        border-radius: 8px;
-        font-weight: 500;
-        border: none;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-    .filter-form .btn-primary {
-        background: #1A1A2E;
-        color: white;
-    }
-    .filter-form .btn-primary:hover {
-        background: #D4AF37;
-        color: #1A1A2E;
-    }
-    .filter-form .btn-secondary {
-        background: #f1f3f4;
-        color: #1A1A2E;
-    }
-    .filter-form .btn-secondary:hover {
-        background: #e8eaed;
-    }
+        .card-custom {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e8eaed;
+            overflow: hidden;
+        }
 
-    .table-custom { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
-    .table-custom th { background: #f8f9fa; color: #1A1A2E; font-weight: 600; padding: 12px 16px; text-align: right; border-bottom: 2px solid #D4AF37; }
-    .table-custom td { padding: 12px 16px; border-bottom: 1px solid #e8eaed; vertical-align: middle; }
-    .table-custom tbody tr:hover { background: #fafafa; }
+        .card-header-custom {
+            background: linear-gradient(135deg, #1A1A2E, #16213E);
+            padding: 20px 30px;
+            border-bottom: 3px solid #D4AF37;
+        }
 
-    .btn-action { background: #f1f3f4; border: none; color: #1A1A2E; padding: 6px 14px; border-radius: 6px; font-weight: 500; transition: all 0.2s; font-size: 0.85rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
-    .btn-action:hover { background: #D4AF37; color: #1A1A2E; }
-    .btn-edit { background: #ffc107; color: #212529; }
-    .btn-edit:hover { background: #e0a800; color: #212529; }
-    .btn-delete { background: #dc3545; color: #fff; }
-    .btn-delete:hover { background: #c82333; color: #fff; }
-    .btn-download { background: #28a745; color: #fff; border: none; padding: 8px 20px; border-radius: 8px; font-weight: 600; transition: all 0.2s; }
-    .btn-download:hover { background: #1e7e34; transform: translateY(-2px); }
-    .btn-share { background: #1a73e8; color: #fff; border: none; padding: 8px 20px; border-radius: 8px; font-weight: 600; transition: all 0.2s; }
-    .btn-share:hover { background: #1557b0; transform: translateY(-2px); }
+        .card-header-custom h4 {
+            margin: 0;
+            font-weight: 700;
+            color: #D4AF37;
+        }
 
-    .empty-state { text-align: center; padding: 40px; color: #6c757d; }
-    .empty-state i { font-size: 3rem; color: #D4AF37; margin-bottom: 12px; }
+        .card-header-custom h4 i {
+            margin-left: 10px;
+        }
 
-    .checkbox-column { width: 40px; text-align: center; }
-    .checkbox-column input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #D4AF37; }
+        .card-body-custom {
+            padding: 30px;
+            overflow-x: auto;
+        }
 
-    .bulk-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
-    .bulk-actions .btn { padding: 8px 20px; border-radius: 8px; font-weight: 600; border: none; }
-    #select-all { accent-color: #D4AF37; width: 18px; height: 18px; cursor: pointer; }
-    .selected-count { background: #D4AF37; color: #1A1A2E; padding: 2px 12px; border-radius: 12px; font-weight: 700; }
+        /* فیلتر */
+        .filter-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 1px solid #e8eaed;
+        }
 
-    /* وضعیت استفاده */
-    .badge-used { background: #dc3545; color: #fff; padding: 2px 10px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; }
-    .badge-unused { background: #28a745; color: #fff; padding: 2px 10px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; }
+        .filter-form select {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: #fff;
+            font-size: 0.95rem;
+            min-width: 250px;
+        }
 
-    /* عملیات در یک ستون */
-    .actions-cell { display: flex; gap: 4px; flex-wrap: wrap; }
-    .actions-cell .btn-action { padding: 4px 10px; font-size: 0.8rem; }
+        .filter-form .btn {
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
 
-    @media (max-width: 768px) {
-        .filter-form { flex-direction: column; align-items: stretch; }
-        .filter-form select { min-width: auto; }
-        .card-body-custom { padding: 16px; }
-        .table-custom { font-size: 0.8rem; }
-        .table-custom th, .table-custom td { padding: 8px 10px; }
-        .bulk-actions { flex-direction: column; align-items: stretch; }
-        .bulk-actions .btn { text-align: center; }
-        .actions-cell { flex-wrap: wrap; }
-    }
-</style>
+        .filter-form .btn-primary {
+            background: #1A1A2E;
+            color: white;
+        }
+
+        .filter-form .btn-primary:hover {
+            background: #D4AF37;
+            color: #1A1A2E;
+        }
+
+        .filter-form .btn-secondary {
+            background: #f1f3f4;
+            color: #1A1A2E;
+        }
+
+        .filter-form .btn-secondary:hover {
+            background: #e8eaed;
+        }
+
+        .table-custom {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        .table-custom th {
+            background: #f8f9fa;
+            color: #1A1A2E;
+            font-weight: 600;
+            padding: 12px 16px;
+            text-align: right;
+            border-bottom: 2px solid #D4AF37;
+        }
+
+        .table-custom td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e8eaed;
+            vertical-align: middle;
+        }
+
+        .table-custom tbody tr:hover {
+            background: #fafafa;
+        }
+
+        .btn-action {
+            background: #f1f3f4;
+            border: none;
+            color: #1A1A2E;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-action:hover {
+            background: #D4AF37;
+            color: #1A1A2E;
+        }
+
+        .btn-edit {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-edit:hover {
+            background: #e0a800;
+            color: #212529;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: #fff;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+            color: #fff;
+        }
+
+        .btn-download {
+            background: #28a745;
+            color: #fff;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-download:hover {
+            background: #1e7e34;
+            transform: translateY(-2px);
+        }
+
+        .btn-share {
+            background: #1a73e8;
+            color: #fff;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-share:hover {
+            background: #1557b0;
+            transform: translateY(-2px);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: #D4AF37;
+            margin-bottom: 12px;
+        }
+
+        .checkbox-column {
+            width: 40px;
+            text-align: center;
+        }
+
+        .checkbox-column input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #D4AF37;
+        }
+
+        .bulk-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .bulk-actions .btn {
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            border: none;
+        }
+
+        #select-all {
+            accent-color: #D4AF37;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .selected-count {
+            background: #D4AF37;
+            color: #1A1A2E;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-weight: 700;
+        }
+
+        /* وضعیت استفاده */
+        .badge-used {
+            background: #dc3545;
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-unused {
+            background: #28a745;
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* عملیات در یک ستون */
+        .actions-cell {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .actions-cell .btn-action {
+            padding: 4px 10px;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .filter-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-form select {
+                min-width: auto;
+            }
+
+            .card-body-custom {
+                padding: 16px;
+            }
+
+            .table-custom {
+                font-size: 0.8rem;
+            }
+
+            .table-custom th, .table-custom td {
+                padding: 8px 10px;
+            }
+
+            .bulk-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .bulk-actions .btn {
+                text-align: center;
+            }
+
+            .actions-cell {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
-<div class="tickets-container">
-    <div class="card-custom">
-        <div class="card-header-custom">
-            <h4><i class="fas fa-list"></i> بلیط‌های صادرشده توسط شما</h4>
-        </div>
-        <div class="card-body-custom">
-            <!-- ===== فیلتر مسابقه ===== -->
-            <form method="get" class="filter-form">
-                <select name="match_id">
-                    <option value="">همه مسابقات</option>
-                    {% for m in matches %}
-                        <option value="{{ m.id }}" {% if selected_match_id == m.id %}selected{% endif %}>
-                            {{ m.home_team }} vs {{ m.away_team }} - {{ m.date_time|date:"Y/m/d" }}
-                        </option>
-                    {% endfor %}
-                </select>
-                <button type="submit" class="btn btn-primary">اعمال فیلتر</button>
-                {% if selected_match_id %}
-                    <a href="{% url 'tickets:vip_issued_tickets' %}" class="btn btn-secondary">حذف فیلتر</a>
-                {% endif %}
-            </form>
+    <div class="tickets-container">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <h4><i class="fas fa-list"></i> بلیط‌های صادرشده توسط شما</h4>
+            </div>
+            <div class="card-body-custom">
+                <!-- ===== فیلتر مسابقه ===== -->
+                <form method="get" class="filter-form">
+                    <select name="match_id">
+                        <option value="">همه مسابقات</option>
+                        {% for m in matches %}
+                            <option value="{{ m.id }}" {% if selected_match_id == m.id %}selected{% endif %}>
+                                {{ m.home_team }} vs {{ m.away_team }} - {{ m.date_time|date:"Y/m/d" }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-primary">اعمال فیلتر</button>
+                    {% if selected_match_id %}
+                        <a href="{% url 'tickets:vip_issued_tickets' %}" class="btn btn-secondary">حذف فیلتر</a>
+                    {% endif %}
+                </form>
 
-            <form method="post" id="ticketForm" action="{% url 'tickets:bulk_download_user_tickets' %}">
-                {% csrf_token %}
-                <input type="hidden" name="action" id="actionInput" value="download">
+                <form method="post" id="ticketForm" action="{% url 'tickets:bulk_download_user_tickets' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" id="actionInput" value="download">
 
-                <div class="bulk-actions">
-                    <div>
-                        <input type="checkbox" id="select-all">
-                        <label for="select-all" style="margin-right: 5px;">انتخاب همه</label>
+                    <div class="bulk-actions">
+                        <div>
+                            <input type="checkbox" id="select-all">
+                            <label for="select-all" style="margin-right: 5px;">انتخاب همه</label>
+                        </div>
+                        <span class="selected-count" id="selectedCount">0</span> بلیط انتخاب شده
+                        <button type="submit" class="btn-download" id="downloadBtn">
+                            <i class="fas fa-download"></i> دانلود گروهی (ZIP)
+                        </button>
+                        <button type="button" class="btn-share" id="shareBtn">
+                            <i class="fas fa-share-alt"></i> اشتراک‌گذاری
+                        </button>
                     </div>
-                    <span class="selected-count" id="selectedCount">0</span> بلیط انتخاب شده
-                    <button type="submit" class="btn-download" id="downloadBtn">
-                        <i class="fas fa-download"></i> دانلود گروهی (ZIP)
-                    </button>
-                    <button type="button" class="btn-share" id="shareBtn">
-                        <i class="fas fa-share-alt"></i> اشتراک‌گذاری
-                    </button>
-                </div>
 
-                {% if tickets %}
-                <div class="table-responsive">
-                    <table class="table-custom">
-                        <thead>
-                            <tr>
-                                <th class="checkbox-column">#</th>
-                                <th>شماره بلیط</th>
-                                <th>مسابقه</th>
-                                <th>نام خریدار</th>
-                                <th>کد ملی</th>
-                                <th>صندلی</th>
-                                <th>وضعیت</th>
-                                <th>تاریخ صدور</th>
-                                <th>عملیات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for ticket in tickets %}
-                            <tr>
-                                <td class="checkbox-column">
-                                    <input type="checkbox" name="ticket_ids" value="{{ ticket.id }}" class="ticket-checkbox">
-                                </td>
-                                <td><strong>{{ ticket.ticket_number }}</strong></td>
-                                <td>{{ ticket.match.home_team }} vs {{ ticket.match.away_team }}</td>
-                                <td>{{ ticket.full_name }}</td>
-                                <td>{{ ticket.national_code }}</td>
-                                <td>{{ ticket.seat.row.name }} - {{ ticket.seat.number }}</td>
-                                <td>
-                                    {% if ticket.is_used %}
-                                        <span class="badge-used">استفاده شده</span>
-                                    {% else %}
-                                        <span class="badge-unused">استفاده نشده</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
-                                <td>
-                                    <div class="actions-cell">
-                                        <a href="{{ ticket.pdf_file.url }}" target="_blank" class="btn-action" title="دانلود PDF">
-                                            <i class="fas fa-file-pdf"></i>
-                                        </a>
-                                        <a href="{% url 'tickets:vip_edit_issued_ticket' ticket.id %}" class="btn-action btn-edit" title="ویرایش">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="{% url 'tickets:vip_delete_issued_ticket' ticket.id %}" class="btn-action btn-delete" title="لغو بلیط">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <div class="empty-state">
-                    <i class="fas fa-ticket-alt"></i>
-                    <p>
-                        {% if selected_match_id %}
-                            شما هیچ بلیطی برای مسابقه انتخاب‌شده صادر نکرده‌اید.
-                        {% else %}
-                            شما هیچ بلیطی صادر نکرده‌اید.
-                        {% endif %}
-                    </p>
-                </div>
-                {% endif %}
-            </form>
+                    {% if tickets %}
+                        <div class="table-responsive">
+                            <table class="table-custom">
+                                <thead>
+                                <tr>
+                                    <th class="checkbox-column">#</th>
+                                    <th>شماره بلیط</th>
+                                    <th>مسابقه</th>
+                                    <th>نام خریدار</th>
+                                    <th>کد ملی</th>
+                                    <th>صندلی</th>
+                                    <th>وضعیت</th>
+                                    <th>تاریخ صدور</th>
+                                    <th>عملیات</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for ticket in tickets %}
+                                    <tr>
+                                        <td class="checkbox-column">
+                                            <input type="checkbox" name="ticket_ids" value="{{ ticket.id }}"
+                                                   class="ticket-checkbox">
+                                        </td>
+                                        <td><strong>{{ ticket.ticket_number }}</strong></td>
+                                        <td>{{ ticket.match.home_team }} vs {{ ticket.match.away_team }}</td>
+                                        <td>{{ ticket.full_name }}</td>
+                                        <td>{{ ticket.national_code }}</td>
+                                        <td>{{ ticket.seat.row.name }} - {{ ticket.seat.number }}</td>
+                                        <td>
+                                            {% if ticket.is_used %}
+                                                <span class="badge-used">استفاده شده</span>
+                                            {% else %}
+                                                <span class="badge-unused">استفاده نشده</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
+                                        <td>
+                                            <div class="actions-cell">
+                                                <a href="{{ ticket.pdf_file.url }}" target="_blank" class="btn-action"
+                                                   title="دانلود PDF">
+                                                    <i class="fas fa-file-pdf"></i>
+                                                </a>
+                                                <a href="{% url 'tickets:vip_edit_issued_ticket' ticket.id %}"
+                                                   class="btn-action btn-edit" title="ویرایش">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'tickets:vip_delete_issued_ticket' ticket.id %}"
+                                                   class="btn-action btn-delete" title="لغو بلیط">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-ticket-alt"></i>
+                            <p>
+                                {% if selected_match_id %}
+                                    شما هیچ بلیطی برای مسابقه انتخاب‌شده صادر نکرده‌اید.
+                                {% else %}
+                                    شما هیچ بلیطی صادر نکرده‌اید.
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% endif %}
+                </form>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-    (function() {
-        const checkboxes = document.querySelectorAll('.ticket-checkbox');
-        const selectAll = document.getElementById('select-all');
-        const selectedCount = document.getElementById('selectedCount');
-        const form = document.getElementById('ticketForm');
-        const actionInput = document.getElementById('actionInput');
-        const downloadBtn = document.getElementById('downloadBtn');
-        const shareBtn = document.getElementById('shareBtn');
+    <script>
+        (function () {
+            const checkboxes = document.querySelectorAll('.ticket-checkbox');
+            const selectAll = document.getElementById('select-all');
+            const selectedCount = document.getElementById('selectedCount');
+            const form = document.getElementById('ticketForm');
+            const actionInput = document.getElementById('actionInput');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const shareBtn = document.getElementById('shareBtn');
 
-        function updateSelectedCount() {
-            const checked = document.querySelectorAll('.ticket-checkbox:checked');
-            const count = checked.length;
-            selectedCount.textContent = count;
-            if (checkboxes.length > 0) {
-                selectAll.checked = (count === checkboxes.length);
-            }
-            // غیرفعال کردن دکمه دانلود در صورت عدم انتخاب
-            downloadBtn.disabled = (count === 0);
-        }
-
-        // رویداد انتخاب همه
-        if (selectAll) {
-            selectAll.addEventListener('change', function() {
-                checkboxes.forEach(cb => cb.checked = this.checked);
-                updateSelectedCount();
-            });
-        }
-
-        // رویداد تغییر هر چک‌باکس
-        checkboxes.forEach(cb => {
-            cb.addEventListener('change', updateSelectedCount);
-        });
-
-        // مقداردهی اولیه
-        updateSelectedCount();
-
-        // ===== اشتراک‌گذاری =====
-        if (shareBtn) {
-            shareBtn.addEventListener('click', function() {
+            function updateSelectedCount() {
                 const checked = document.querySelectorAll('.ticket-checkbox:checked');
-                if (checked.length === 0) {
-                    alert('لطفاً حداقل یک بلیط را انتخاب کنید.');
-                    return;
+                const count = checked.length;
+                selectedCount.textContent = count;
+                if (checkboxes.length > 0) {
+                    selectAll.checked = (count === checkboxes.length);
                 }
+                // غیرفعال کردن دکمه دانلود در صورت عدم انتخاب
+                downloadBtn.disabled = (count === 0);
+            }
 
-                // جمع‌آوری اطلاعات بلیط‌های انتخاب‌شده
-                const ticketsInfo = [];
-                checked.forEach(cb => {
-                    const row = cb.closest('tr');
-                    const number = row.querySelector('td:nth-child(2) strong').textContent;
-                    const match = row.querySelector('td:nth-child(3)').textContent.trim();
-                    const name = row.querySelector('td:nth-child(4)').textContent.trim();
-                    ticketsInfo.push(`${number} - ${match} (${name})`);
+            // رویداد انتخاب همه
+            if (selectAll) {
+                selectAll.addEventListener('change', function () {
+                    checkboxes.forEach(cb => cb.checked = this.checked);
+                    updateSelectedCount();
                 });
+            }
 
-                const shareText = `🎫 بلیط‌های صادرشده:\n${ticketsInfo.join('\n')}\n\nجهت دریافت فایل PDF، از گزینه دانلود استفاده کنید.`;
+            // رویداد تغییر هر چک‌باکس
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', updateSelectedCount);
+            });
 
-                if (navigator.share) {
-                    navigator.share({
-                        title: 'بلیط‌های صادرشده',
-                        text: shareText,
-                        url: window.location.href,
-                    }).catch(err => {
-                        if (err.name !== 'AbortError') {
-                            fallbackShare(shareText);
-                        }
+            // مقداردهی اولیه
+            updateSelectedCount();
+
+            // ===== اشتراک‌گذاری =====
+            if (shareBtn) {
+                shareBtn.addEventListener('click', function () {
+                    const checked = document.querySelectorAll('.ticket-checkbox:checked');
+                    if (checked.length === 0) {
+                        alert('لطفاً حداقل یک بلیط را انتخاب کنید.');
+                        return;
+                    }
+
+                    // جمع‌آوری اطلاعات بلیط‌های انتخاب‌شده
+                    const ticketsInfo = [];
+                    checked.forEach(cb => {
+                        const row = cb.closest('tr');
+                        const number = row.querySelector('td:nth-child(2) strong').textContent;
+                        const match = row.querySelector('td:nth-child(3)').textContent.trim();
+                        const name = row.querySelector('td:nth-child(4)').textContent.trim();
+                        ticketsInfo.push(`${number} - ${match} (${name})`);
+                    });
+
+                    const shareText = `🎫 بلیط‌های صادرشده:\n${ticketsInfo.join('\n')}\n\nجهت دریافت فایل PDF، از گزینه دانلود استفاده کنید.`;
+
+                    if (navigator.share) {
+                        navigator.share({
+                            title: 'بلیط‌های صادرشده',
+                            text: shareText,
+                            url: window.location.href,
+                        }).catch(err => {
+                            if (err.name !== 'AbortError') {
+                                fallbackShare(shareText);
+                            }
+                        });
+                    } else {
+                        fallbackShare(shareText);
+                    }
+                });
+            }
+
+            // ===== روش جایگزین برای اشتراک‌گذاری =====
+            function fallbackShare(text) {
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        alert('✅ اطلاعات بلیط‌ها در کلیپ‌بورد کپی شد. می‌توانید در شبکه‌های اجتماعی به اشتراک بگذارید.');
+                    }).catch(() => {
+                        prompt('برای اشتراک‌گذاری، متن زیر را کپی کنید:', text);
                     });
                 } else {
-                    fallbackShare(shareText);
+                    prompt('برای اشتراک‌گذاری، متن زیر را کپی کنید:', text);
+                }
+            }
+
+            // ===== جلوگیری از ارسال فرم بدون انتخاب =====
+            form.addEventListener('submit', function (e) {
+                const checked = document.querySelectorAll('.ticket-checkbox:checked');
+                if (checked.length === 0) {
+                    e.preventDefault();
+                    alert('لطفاً حداقل یک بلیط را انتخاب کنید.');
                 }
             });
-        }
 
-        // ===== روش جایگزین برای اشتراک‌گذاری =====
-        function fallbackShare(text) {
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(text).then(() => {
-                    alert('✅ اطلاعات بلیط‌ها در کلیپ‌بورد کپی شد. می‌توانید در شبکه‌های اجتماعی به اشتراک بگذارید.');
-                }).catch(() => {
-                    prompt('برای اشتراک‌گذاری، متن زیر را کپی کنید:', text);
-                });
-            } else {
-                prompt('برای اشتراک‌گذاری، متن زیر را کپی کنید:', text);
-            }
-        }
-
-        // ===== جلوگیری از ارسال فرم بدون انتخاب =====
-        form.addEventListener('submit', function(e) {
-            const checked = document.querySelectorAll('.ticket-checkbox:checked');
-            if (checked.length === 0) {
-                e.preventDefault();
-                alert('لطفاً حداقل یک بلیط را انتخاب کنید.');
-            }
-        });
-
-    })();
-</script>
+        })();
+    </script>
 {% endblock %}

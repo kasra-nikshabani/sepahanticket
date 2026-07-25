@@ -141,6 +141,10 @@
             color: #6f42c1;
         }
 
+        .stat-card.pink .stat-number {
+            color: #e83e8c;
+        }
+
         /* ----- بخش بلوک‌ها ----- */
         .section-title {
             font-size: 18px;
@@ -550,6 +554,35 @@
                 <div class="stat-number">{{ total_revenue|floatformat:0|default:"0" }}</div>
                 <p class="stat-label">درآمد کل (تومان)</p>
             </div>
+
+            <!-- ===== آمار تفکیکی سکوها ===== -->
+            <div class="stat-card green">
+                <span class="stat-icon"><i class="fas fa-home"></i></span>
+                <div class="stat-number">{{ home_sold }}</div>
+                <p class="stat-label">بلیط میزبان</p>
+            </div>
+            <div class="stat-card orange">
+                <span class="stat-icon"><i class="fas fa-flag"></i></span>
+                <div class="stat-number">{{ away_sold }}</div>
+                <p class="stat-label">بلیط میهمان</p>
+            </div>
+            <div class="stat-card purple">
+                <span class="stat-icon"><i class="fas fa-crown"></i></span>
+                <div class="stat-number">{{ vip_sold }}</div>
+                <p class="stat-label">بلیط VIP</p>
+            </div>
+            <div class="stat-card blue">
+                <span class="stat-icon"><i class="fas fa-star"></i></span>
+                <div class="stat-number">{{ class1_sold }}</div>
+                <p class="stat-label">بلیط کلاس ۱</p>
+            </div>
+            <div class="stat-card pink">
+                <span class="stat-icon"><i class="fas fa-venus"></i></span>
+                <div class="stat-number">{{ women_sold }}</div>
+                <p class="stat-label">بلیط بانوان</p>
+            </div>
+            <!-- ===== پایان آمار سکوها ===== -->
+
             <div class="stat-card red">
                 <span class="stat-icon"><i class="fas fa-chair"></i></span>
                 <div class="stat-number">{{ occupied }} / {{ total_match_seats }}</div>
@@ -757,7 +790,6 @@
                                 <i class="fas fa-angle-double-right"></i>
                             </a>
                             <a href="?sold_page=
-
                                     {{ sold_page.previous_page_number }}{% if vip_page.number %}&vip_page={{ vip_page.number }}{% endif %}">
                                 <i class="fas fa-angle-right"></i>
                             </a>
@@ -779,12 +811,10 @@
 
                         {% if sold_page.has_next %}
                             <a href="?sold_page=
-
                                     {{ sold_page.next_page_number }}{% if vip_page.number %}&vip_page={{ vip_page.number }}{% endif %}">
                                 <i class="fas fa-angle-left"></i>
                             </a>
                             <a href="?sold_page=
-
                                     {{ sold_page.paginator.num_pages }}{% if vip_page.number %}&vip_page={{ vip_page.number }}{% endif %}">
                                 <i class="fas fa-angle-double-left"></i>
                             </a>
@@ -855,7 +885,6 @@
                                 <i class="fas fa-angle-double-right"></i>
                             </a>
                             <a href="?vip_page=
-
                                     {{ vip_page.previous_page_number }}{% if sold_page.number %}&sold_page={{ sold_page.number }}{% endif %}">
                                 <i class="fas fa-angle-right"></i>
                             </a>
@@ -877,12 +906,10 @@
 
                         {% if vip_page.has_next %}
                             <a href="?vip_page=
-
                                     {{ vip_page.next_page_number }}{% if sold_page.number %}&sold_page={{ sold_page.number }}{% endif %}">
                                 <i class="fas fa-angle-left"></i>
                             </a>
                             <a href="?vip_page=
-
                                     {{ vip_page.paginator.num_pages }}{% if sold_page.number %}&sold_page={{ sold_page.number }}{% endif %}">
                                 <i class="fas fa-angle-double-left"></i>
                             </a>
