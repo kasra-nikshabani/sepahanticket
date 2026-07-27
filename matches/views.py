@@ -125,16 +125,19 @@ def match_detail(request, match_id):
 # ============================================================
 @login_required
 def select_floor(request, match_id):
-    """انتخاب طبقه (پایین یا بالا) قبل از نمایش بلوک‌ها"""
+    """انتخاب طبقه (پایین یا بالا) و تیم (میزبان یا میهمان) قبل از نمایش بلوک‌ها"""
     match = get_object_or_404(Match, id=match_id, is_active=True)
 
     if request.method == 'POST':
         floor = request.POST.get('floor')
-        if floor in ['ground', 'second']:
+        team_type = request.POST.get('team_type')  # <--- اضافه شد
+
+        if floor in ['ground', 'second'] and team_type in ['home', 'away']:
             request.session['selected_floor'] = floor
+            request.session['selected_team_type'] = team_type  # <--- ذخیره در سشن
             return redirect('matches:select_block', match_id=match_id)
         else:
-            messages.error(request, 'لطفاً یک طبقه را انتخاب کنید.')
+            messages.error(request, 'لطفاً طبقه و تیم (میزبان/میهمان) را به درستی انتخاب کنید.')
 
     return render(request, 'matches/select_floor.html', {'match': match})
 
@@ -145,7 +148,9 @@ def select_block(request, match_id):
     stadium = match.stadium
 
     selected_floor = request.session.get('selected_floor', 'ground')
+    selected_team_type = request.session.get('selected_team_type', 'home')  # <--- دریافت انتخاب کاربر از سشن
 
+    # فیلتر بر اساس طبقه
     if selected_floor == 'second':
         blocks = Block.objects.filter(
             stadium=stadium,
@@ -158,10 +163,18 @@ def select_block(request, match_id):
             is_active=True
         ).exclude(name__contains='طبقه دوم').order_by('order')
 
+    # ===== فیلتر بر اساس میزبان یا میهمان بودن =====
+    if selected_team_type == 'away':
+        # اگر کاربر میهمان را انتخاب کرده باشد، فقط بلوک‌های میهمان نشان داده شود
+        blocks = blocks.filter(zone_type='away')
+    else:
+        # اگر کاربر میزبان را انتخاب کرده باشد، بلوک‌های میهمان نشان داده نشود (تا VIP، بانوان و کلاس ۱ هم برای میزبان باشد)
+        blocks = blocks.exclude(zone_type='away')
+
     if not blocks.exists():
         messages.warning(
             request,
-            f'هیچ بلوکی برای ورزشگاه "{stadium.name}" در طبقه {"بالا" if selected_floor == "second" else "پایین"} تعریف نشده است.'
+            f'هیچ بلوکی برای تیم "{"میهمان" if selected_team_type == "away" else "میزبان"}" در طبقه {"بالا" if selected_floor == "second" else "پایین"} تعریف نشده است.'
         )
         return redirect('matches:select_floor', match_id=match_id)
 
@@ -219,8 +232,9 @@ def select_block(request, match_id):
         'match': match,
         'blocks': blocks,
         'selected_floor': selected_floor,
+        'selected_team_type': selected_team_type,  # <--- ارسال به قالب
         'floor_label': 'طبقه بالا' if selected_floor == 'second' else 'طبقه پایین',
-        'stadium_image': stadium.image.url if stadium.image else None,  # ← اضافه شد
+        'stadium_image': stadium.image.url if stadium.image else None,
     }
     return render(request, 'matches/select_block.html', context)
 
