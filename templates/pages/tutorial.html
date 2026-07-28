@@ -5,485 +5,619 @@
 {% block title %}آموزش خرید بلیط{% endblock %}
 
 {% block extra_css %}
-<style>
-    .tutorial-page {
-        padding: 30px 0;
-        min-height: 80vh;
-    }
-
-    /* ===== باکس هدر ===== */
-    .tutorial-header {
-        background: #ffffff;
-        border-radius: 20px;
-        padding: 35px 40px;
-        margin-bottom: 50px;
-        border: 1px solid #e8eaed;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-        text-align: center;
-    }
-
-    .tutorial-header h1 {
-        font-weight: 700;
-        color: #1A1A2E;
-        font-size: 32px;
-        margin: 0;
-    }
-
-    .tutorial-header h1 i {
-        color: #D4AF37;
-        margin-left: 10px;
-    }
-
-    .tutorial-header p {
-        color: #6c757d;
-        font-size: 18px;
-        max-width: 600px;
-        margin: 10px auto 0;
-    }
-
-    /* ===== تایم‌لاین ===== */
-    .timeline {
-        position: relative;
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 20px 0;
-    }
-
-    .timeline::before {
-        content: '';
-        position: absolute;
-        right: 50%;
-        top: 0;
-        bottom: 0;
-        width: 3px;
-        background: linear-gradient(to bottom, #D4AF37, #B8960F);
-        transform: translateX(50%);
-    }
-
-    .timeline-item {
-        display: flex;
-        justify-content: flex-end;
-        padding: 0 20px 40px 20px;
-        position: relative;
-        width: 50%;
-    }
-
-    .timeline-item:nth-child(odd) {
-        align-self: flex-end;
-        justify-content: flex-start;
-        margin-right: 50%;
-    }
-
-    .timeline-item:nth-child(even) {
-        margin-left: 50%;
-    }
-
-    .timeline-item .timeline-icon {
-        position: absolute;
-        right: -18px;
-        top: 0;
-        width: 40px;
-        height: 40px;
-        background: #fff;
-        border: 3px solid #D4AF37;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-        color: #D4AF37;
-        z-index: 2;
-        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
-    }
-
-    .timeline-item:nth-child(odd) .timeline-icon {
-        right: auto;
-        left: -18px;
-    }
-
-    .timeline-item .timeline-content {
-        background: #fff;
-        border-radius: 16px;
-        padding: 24px 28px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-        border: 1px solid #e8eaed;
-        width: 100%;
-        max-width: 400px;
-        transition: all 0.3s ease;
-        position: relative;
-    }
-
-    .timeline-item .timeline-content:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 40px rgba(212, 175, 55, 0.12);
-        border-color: #D4AF37;
-    }
-
-    .timeline-item .timeline-content .step-number {
-        display: inline-block;
-        background: linear-gradient(135deg, #1A1A2E, #16213E);
-        color: #D4AF37;
-        padding: 2px 12px;
-        border-radius: 50px;
-        font-size: 12px;
-        font-weight: 700;
-        margin-bottom: 10px;
-    }
-
-    .timeline-item .timeline-content h3 {
-        font-weight: 700;
-        color: #1A1A2E;
-        font-size: 18px;
-        margin: 0 0 8px 0;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .timeline-item .timeline-content h3 i {
-        color: #D4AF37;
-    }
-
-    .timeline-item .timeline-content p {
-        color: #555;
-        font-size: 14px;
-        line-height: 1.8;
-        margin: 0;
-    }
-
-    .timeline-item .timeline-content .highlight {
-        background: #faf8f3;
-        padding: 10px 14px;
-        border-radius: 8px;
-        border-right: 3px solid #D4AF37;
-        margin-top: 12px;
-        font-size: 13px;
-        color: #1A1A2E;
-    }
-
-    .timeline-item .timeline-content .highlight i {
-        color: #D4AF37;
-        margin-left: 6px;
-    }
-
-    /* ===== نکات پایانی ===== */
-    .tips-section {
-        max-width: 900px;
-        margin: 40px auto 0;
-        background: #fff;
-        border-radius: 16px;
-        padding: 30px 35px;
-        border: 1px solid #e8eaed;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-    }
-
-    .tips-section h3 {
-        font-weight: 700;
-        color: #1A1A2E;
-        font-size: 20px;
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .tips-section h3 i {
-        color: #D4AF37;
-    }
-
-    .tips-section ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-    }
-
-    .tips-section ul li {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        font-size: 14px;
-        color: #333;
-        padding: 8px 12px;
-        background: #fafafa;
-        border-radius: 8px;
-        transition: all 0.2s;
-    }
-
-    .tips-section ul li:hover {
-        background: #f8f3e8;
-    }
-
-    .tips-section ul li i {
-        color: #D4AF37;
-        margin-top: 2px;
-        min-width: 18px;
-    }
-
-    /* ===== دکمه شروع ===== */
-    .btn-start {
-        background: linear-gradient(135deg, #D4AF37, #B8960F);
-        color: #1A1A2E;
-        padding: 14px 40px;
-        border-radius: 12px;
-        font-weight: 700;
-        font-size: 18px;
-        text-decoration: none;
-        display: inline-block;
-        transition: all 0.3s;
-        box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
-        border: none;
-    }
-
-    .btn-start:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 35px rgba(212, 175, 55, 0.4);
-        color: #1A1A2E;
-    }
-
-    /* ===== واکنش‌گرایی ===== */
-    @media (max-width: 768px) {
-        .timeline::before {
-            right: 20px;
+    <style>
+        .tutorial-page {
+            padding: 30px 0;
+            min-height: 80vh;
         }
 
-        .timeline-item {
-            width: 100%;
-            padding-right: 50px;
-            padding-left: 0;
-            justify-content: flex-start;
-        }
-
-        .timeline-item:nth-child(odd) {
-            margin-right: 0;
-        }
-
-        .timeline-item:nth-child(even) {
-            margin-left: 0;
-        }
-
-        .timeline-item .timeline-icon {
-            right: -10px;
-            left: auto;
-            width: 34px;
-            height: 34px;
-            font-size: 15px;
-        }
-
-        .timeline-item:nth-child(odd) .timeline-icon {
-            right: -10px;
-            left: auto;
-        }
-
-        .timeline-item .timeline-content {
-            max-width: 100%;
-        }
-
-        .tips-section ul {
-            grid-template-columns: 1fr;
-        }
-
-        .tutorial-header h1 {
-            font-size: 26px;
-        }
-
+        /* ===== باکس هدر ===== */
         .tutorial-header {
-            padding: 25px 20px;
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 35px 40px;
+            margin-bottom: 50px;
+            border: 1px solid #e8eaed;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            text-align: center;
         }
-    }
 
-    @media (max-width: 480px) {
         .tutorial-header h1 {
-            font-size: 22px;
+            font-weight: 700;
+            color: #1A1A2E;
+            font-size: 32px;
+            margin: 0;
+        }
+
+        .tutorial-header h1 i {
+            color: #D4AF37;
+            margin-left: 10px;
         }
 
         .tutorial-header p {
-            font-size: 15px;
+            color: #6c757d;
+            font-size: 18px;
+            max-width: 600px;
+            margin: 10px auto 0;
+        }
+
+        /* ===== تایم‌لاین ===== */
+        .timeline {
+            position: relative;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            right: 50%;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, #D4AF37, #B8960F);
+            transform: translateX(50%);
+        }
+
+        .timeline-item {
+            display: flex;
+            justify-content: flex-end;
+            padding: 0 20px 40px 20px;
+            position: relative;
+            width: 50%;
+        }
+
+        .timeline-item:nth-child(odd) {
+            align-self: flex-end;
+            justify-content: flex-start;
+            margin-right: 50%;
+        }
+
+        .timeline-item:nth-child(even) {
+            margin-left: 50%;
+        }
+
+        .timeline-item .timeline-icon {
+            position: absolute;
+            right: -18px;
+            top: 0;
+            width: 40px;
+            height: 40px;
+            background: #fff;
+            border: 3px solid #D4AF37;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #D4AF37;
+            z-index: 2;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
+        }
+
+        .timeline-item:nth-child(odd) .timeline-icon {
+            right: auto;
+            left: -18px;
         }
 
         .timeline-item .timeline-content {
-            padding: 18px 16px;
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px 28px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e8eaed;
+            width: 100%;
+            max-width: 400px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .timeline-item .timeline-content:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(212, 175, 55, 0.12);
+            border-color: #D4AF37;
+        }
+
+        .timeline-item .timeline-content .step-number {
+            display: inline-block;
+            background: linear-gradient(135deg, #1A1A2E, #16213E);
+            color: #D4AF37;
+            padding: 2px 12px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 10px;
         }
 
         .timeline-item .timeline-content h3 {
-            font-size: 16px;
+            font-weight: 700;
+            color: #1A1A2E;
+            font-size: 18px;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
+        .timeline-item .timeline-content h3 i {
+            color: #D4AF37;
+        }
+
+        .timeline-item .timeline-content p {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.8;
+            margin: 0;
+        }
+
+        .timeline-item .timeline-content .highlight {
+            background: #faf8f3;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border-right: 3px solid #D4AF37;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #1A1A2E;
+        }
+
+        .timeline-item .timeline-content .highlight i {
+            color: #D4AF37;
+            margin-left: 6px;
+        }
+
+        /* ===== نکات پایانی ===== */
         .tips-section {
-            padding: 20px;
+            max-width: 900px;
+            margin: 40px auto 0;
+            background: #fff;
+            border-radius: 16px;
+            padding: 30px 35px;
+            border: 1px solid #e8eaed;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
         }
 
-        .btn-start {
-            padding: 12px 28px;
-            font-size: 16px;
-            width: 100%;
+        .tips-section h3 {
+            font-weight: 700;
+            color: #1A1A2E;
+            font-size: 20px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-    }
-</style>
+
+        .tips-section h3 i {
+            color: #D4AF37;
+        }
+
+        .tips-section ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .tips-section ul li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 14px;
+            color: #333;
+            padding: 8px 12px;
+            background: #fafafa;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .tips-section ul li:hover {
+            background: #f8f3e8;
+        }
+
+        .tips-section ul li i {
+            color: #D4AF37;
+            margin-top: 2px;
+            min-width: 18px;
+        }
+
+        /* ===== باکس راهنمای ورود به ورزشگاه ===== */
+        .stadium-guide {
+            max-width: 900px;
+            margin: 40px auto 0;
+            background: #fffcf5;
+            border: 1px solid #D4AF37;
+            border-radius: 16px;
+            padding: 30px 35px;
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.1);
+        }
+
+        .stadium-guide h3 {
+            font-weight: 700;
+            color: #1A1A2E;
+            font-size: 22px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px dashed #D4AF37;
+            padding-bottom: 15px;
+        }
+
+        .stadium-guide h3 i {
+            color: #D4AF37;
+        }
+
+        .stadium-guide .intro-text {
+            font-size: 15px;
+            color: #444;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+
+        .stadium-guide .step-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .stadium-guide .step-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 14px;
+            color: #333;
+            padding: 12px 15px;
+            background: #fff;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #f0f0f0;
+            transition: all 0.2s;
+        }
+
+        .stadium-guide .step-list li:hover {
+            border-color: #D4AF37;
+            transform: translateX(-5px);
+        }
+
+        .stadium-guide .step-list li i {
+            color: #D4AF37;
+            margin-top: 4px;
+            min-width: 20px;
+            font-size: 16px;
+        }
+
+        .warning-text {
+            color: #dc3545 !important;
+            font-size: 13px;
+            display: block;
+            margin-top: 4px;
+        }
+
+        /* ===== دکمه شروع ===== */
+        .btn-start {
+            background: linear-gradient(135deg, #D4AF37, #B8960F);
+            color: #1A1A2E;
+            padding: 14px 40px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 18px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+            border: none;
+        }
+
+        .btn-start:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 35px rgba(212, 175, 55, 0.4);
+            color: #1A1A2E;
+        }
+
+        /* ===== واکنش‌گرایی ===== */
+        @media (max-width: 768px) {
+            .timeline::before {
+                right: 20px;
+            }
+
+            .timeline-item {
+                width: 100%;
+                padding-right: 50px;
+                padding-left: 0;
+                justify-content: flex-start;
+            }
+
+            .timeline-item:nth-child(odd) {
+                margin-right: 0;
+            }
+
+            .timeline-item:nth-child(even) {
+                margin-left: 0;
+            }
+
+            .timeline-item .timeline-icon {
+                right: -10px;
+                left: auto;
+                width: 34px;
+                height: 34px;
+                font-size: 15px;
+            }
+
+            .timeline-item:nth-child(odd) .timeline-icon {
+                right: -10px;
+                left: auto;
+            }
+
+            .timeline-item .timeline-content {
+                max-width: 100%;
+            }
+
+            .tips-section ul {
+                grid-template-columns: 1fr;
+            }
+
+            .tutorial-header h1 {
+                font-size: 26px;
+            }
+
+            .tutorial-header {
+                padding: 25px 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tutorial-header h1 {
+                font-size: 22px;
+            }
+
+            .tutorial-header p {
+                font-size: 15px;
+            }
+
+            .timeline-item .timeline-content {
+                padding: 18px 16px;
+            }
+
+            .timeline-item .timeline-content h3 {
+                font-size: 16px;
+            }
+
+            .tips-section, .stadium-guide {
+                padding: 20px;
+            }
+
+            .btn-start {
+                padding: 12px 28px;
+                font-size: 16px;
+                width: 100%;
+            }
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
-<div class="tutorial-page">
-    <div class="container">
+    <div class="tutorial-page">
+        <div class="container">
 
-        <!-- ===== هدر ===== -->
-        <div class="tutorial-header">
-            <h1>
-                <i class="fas fa-graduation-cap"></i>
-                آموزش خرید بلیط
-            </h1>
-            <p>
-                از ثبت‌نام تا ورود به ورزشگاه، تمام مراحل را گام‌به‌گام دنبال کنید.
-            </p>
-        </div>
-
-        <!-- ===== تایم‌لاین ===== -->
-        <div class="timeline">
-
-            <!-- مرحله ۱ -->
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fas fa-user-plus"></i></div>
-                <div class="timeline-content">
-                    <span class="step-number">مرحله ۱</span>
-                    <h3><i class="fas fa-user-plus"></i> ثبت‌نام در سایت</h3>
-                    <p>
-                        برای خرید بلیط ابتدا باید یک حساب کاربری ایجاد کنید.
-                        روی دکمه <strong>«ثبت‌نام»</strong> در بالای صفحه کلیک کنید.
-                    </p>
-                    <div class="highlight">
-                        <i class="fas fa-info-circle"></i>
-                        اطلاعات خواسته‌شده شامل نام، نام‌خانوادگی، شماره موبایل و کد ملی را وارد کنید.
-                    </div>
-                </div>
+            <!-- ===== هدر ===== -->
+            <div class="tutorial-header">
+                <h1>
+                    <i class="fas fa-graduation-cap"></i>
+                    آموزش خرید بلیط
+                </h1>
+                <p>
+                    از ثبت‌نام تا ورود به ورزشگاه، تمام مراحل را گام‌به‌گام دنبال کنید.
+                </p>
             </div>
 
-            <!-- مرحله ۲ -->
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fas fa-sign-in-alt"></i></div>
-                <div class="timeline-content">
-                    <span class="step-number">مرحله ۲</span>
-                    <h3><i class="fas fa-sign-in-alt"></i> ورود به حساب کاربری</h3>
-                    <p>
-                        پس از ثبت‌نام، با شماره موبایل و رمز عبور وارد سایت شوید.
-                        اگر کد تأیید برای شما ارسال شد، آن را وارد کنید.
-                    </p>
-                    <div class="highlight">
+            <!-- ===== تایم‌لاین ===== -->
+            <div class="timeline">
+
+                <!-- مرحله ۱ -->
+                <div class="timeline-item">
+                    <div class="timeline-icon"><i class="fas fa-user-plus"></i></div>
+                    <div class="timeline-content">
+                        <span class="step-number">مرحله ۱</span>
+                        <h3><i class="fas fa-user-plus"></i> ثبت‌نام در سایت</h3>
+                        <p>
+                            برای خرید بلیط ابتدا باید یک حساب کاربری ایجاد کنید.
+                            روی دکمه <strong>«ثبت‌نام»</strong> در بالای صفحه کلیک کنید.
+                        </p>
+                        <div class="highlight">
+                            <i class="fas fa-info-circle"></i>
+                            اطلاعات خواسته‌شده شامل نام، نام‌خانوادگی، شماره موبایل و کد ملی را وارد کنید.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- مرحله ۲ -->
+                <div class="timeline-item">
+                    <div class="timeline-icon"><i class="fas fa-sign-in-alt"></i></div>
+                    <div class="timeline-content">
+                        <span class="step-number">مرحله ۲</span>
+                        <h3><i class="fas fa-sign-in-alt"></i> ورود به حساب کاربری</h3>
+                        <p>
+                            پس از ثبت‌نام، با شماره موبایل و رمز عبور وارد سایت شوید.
+                            اگر کد تأیید برای شما ارسال شد، آن را وارد کنید.
+                        </p>
+                        <div class="highlight">
+                            <i class="fas fa-lightbulb"></i>
+                            رمز عبور خود را فراموش نکنید. در صورت نیاز از گزینه «فراموشی رمز» استفاده کنید.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- مرحله ۳ -->
+                <div class="timeline-item">
+                    <div class="timeline-icon"><i class="fas fa-futbol"></i></div>
+                    <div class="timeline-content">
+                        <span class="step-number">مرحله ۳</span>
+                        <h3><i class="fas fa-futbol"></i> انتخاب مسابقه</h3>
+                        <p>
+                            در صفحه اصلی، لیست مسابقات فعال را مشاهده می‌کنید.
+                            مسابقه مورد نظر خود را انتخاب کنید و روی دکمه <strong>«خرید بلیط»</strong> کلیک کنید.
+                        </p>
+                        <div class="highlight">
+                            <i class="fas fa-clock"></i>
+                            مسابقات نزدیک به زمان برگزاری، اولویت نمایش دارند.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- مرحله ۴ -->
+                <div class="timeline-item">
+                    <div class="timeline-icon"><i class="fas fa-layer-group"></i></div>
+                    <div class="timeline-content">
+                        <span class="step-number">مرحله ۴</span>
+                        <h3><i class="fas fa-layer-group"></i> انتخاب بلوک و صندلی</h3>
+                        <p>
+                            نقشه ورزشگاه به شما نمایش داده می‌شود. یک بلوک را انتخاب کنید و سپس
+                            صندلی مورد نظر را روی نقشه کلیک کنید.
+                        </p>
+                        <div class="highlight">
+                            <i class="fas fa-chair"></i>
+                            صندلی‌های <span style="color:#28a745;">سبز</span> موجود و
+                            <span style="color:#dc3545;">قرمز</span> فروخته‌شده هستند.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- مرحله ۵ -->
+                <div class="timeline-item">
+                    <div class="timeline-icon"><i class="fas fa-credit-card"></i></div>
+                    <div class="timeline-content">
+                        <span class="step-number">مرحله ۵</span>
+                        <h3><i class="fas fa-credit-card"></i> پرداخت و تأیید نهایی</h3>
+                        <p>
+                            پس از انتخاب صندلی، اطلاعات بلیط شامل قیمت و شماره صندلی را بررسی کنید.
+                            سپس روی دکمه <strong>«پرداخت»</strong> کلیک کنید.
+                        </p>
+                        <div class="highlight">
+                            <i class="fas fa-lock"></i>
+                            تمام تراکنش‌ها با پروتکل امن انجام می‌شود.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- مرحله ۶ -->
+                <div class="timeline-item">
+                    <div class="timeline-icon"><i class="fas fa-ticket-alt"></i></div>
+                    <div class="timeline-content">
+                        <span class="step-number">مرحله ۶</span>
+                        <h3><i class="fas fa-ticket-alt"></i> دریافت بلیط</h3>
+                        <p>
+                            پس از پرداخت موفق، بلیط شما به‌صورت الکترونیکی صادر می‌شود.
+                            می‌توانید آن را از بخش <strong>«بلیط‌های من»</strong> در پروفایل مشاهده کنید.
+                        </p>
+                        <div class="highlight">
+                            <i class="fas fa-download"></i>
+                            بلیط را به‌صورت PDF دانلود کنید یا در روز مسابقه با موبایل نمایش دهید.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- مرحله ۷ -->
+                <div class="timeline-item">
+                    <div class="timeline-icon"><i class="fas fa-stadium"></i></div>
+                    <div class="timeline-content">
+                        <span class="step-number">مرحله ۷</span>
+                        <h3><i class="fas fa-stadium"></i> ورود به ورزشگاه</h3>
+                        <p>
+                            در روز مسابقه، بلیط خود را به‌صورت دیجیتال (در موبایل) یا پرینت‌شده
+                            به مسئول بلیط‌بخوانی نشان دهید. کد QR روی بلیط اسکن می‌شود.
+                        </p>
+                        <div class="highlight">
+                            <i class="fas fa-clock"></i>
+                            حداقل <strong>۳۰ دقیقه</strong> قبل از شروع مسابقه در ورزشگاه حاضر باشید.
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- پایان تایم‌لاین -->
+
+            <!-- ===== نکات مهم ===== -->
+            <div class="tips-section">
+                <h3><i class="fas fa-lightbulb"></i> نکات طلایی</h3>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> بلیط‌ها <strong>غیرقابل انتقال</strong> هستند و فقط به نام
+                        خریدار صادر می‌شوند.
+                    </li>
+                    <li><i class="fas fa-check-circle"></i> در صورت لغو مسابقه، مبلغ بلیط به حساب شما بازگردانده می‌شود.
+                    </li>
+                    <li><i class="fas fa-check-circle"></i> همراه داشتن <strong>کارت ملی</strong> برای تطابق با اطلاعات
+                        بلیط الزامی است.
+                    </li>
+                    <li><i class="fas fa-check-circle"></i> در صورت مشکل، با پشتیبانی از طریق <strong>پنل
+                        پیام‌ها</strong> ارتباط بگیرید.
+                    </li>
+                    <li><i class="fas fa-check-circle"></i> قیمت بلیط‌ها در روز مسابقه ممکن است تغییر کند، پس زودتر خرید
+                        کنید.
+                    </li>
+                    <li><i class="fas fa-check-circle"></i> برای ورود VIP، از درب اختصاصی استفاده کنید و کارت مخصوص را
+                        همراه داشته باشید.
+                    </li>
+                </ul>
+            </div>
+
+            <!-- ===== راهنمای ورود به ورزشگاه ===== -->
+            <div class="stadium-guide">
+                <h3><i class="fas fa-door-open"></i> راهنمای ورود به ورزشگاه</h3>
+                <p class="intro-text">
+                    تماشاگران عزیزی که با مراجعه به وب سایت سامانه به آدرس  www.ticket.sepahansc.com ، با کدملی بلیت خریده‌اند
+                    می‌بایست جهت تماشای مسابقه و استقرار خود، مراحل ذیل را طی نمایند:
+                </p>
+                <ul class="step-list">
+                    <li>
+                        <i class="fas fa-id-card"></i>
+                        <div>
+                            با همراه داشتن کارت ملی یا شناسنامه، به درب ورودی مراجعه کرده و کارت ملی خود را به دستگاه
+                            بارکدخوان موجود در ورودی مذکور نزدیک نمایید.
+                            <span class="warning-text">(افرادی که با کد ملی بلیت خریده‌اند نمی‌توانند با کارت دیگری جز کارت ملی وارد ورزشگاه شوند.)</span>
+                        </div>
+                    </li>
+                    <li>
                         <i class="fas fa-lightbulb"></i>
-                        رمز عبور خود را فراموش نکنید. در صورت نیاز از گزینه «فراموشی رمز» استفاده کنید.
-                    </div>
-                </div>
-            </div>
-
-            <!-- مرحله ۳ -->
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fas fa-futbol"></i></div>
-                <div class="timeline-content">
-                    <span class="step-number">مرحله ۳</span>
-                    <h3><i class="fas fa-futbol"></i> انتخاب مسابقه</h3>
-                    <p>
-                        در صفحه اصلی، لیست مسابقات فعال را مشاهده می‌کنید.
-                        مسابقه مورد نظر خود را انتخاب کنید و روی دکمه <strong>«خرید بلیط»</strong> کلیک کنید.
-                    </p>
-                    <div class="highlight">
-                        <i class="fas fa-clock"></i>
-                        مسابقات نزدیک به زمان برگزاری، اولویت نمایش دارند.
-                    </div>
-                </div>
-            </div>
-
-            <!-- مرحله ۴ -->
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fas fa-layer-group"></i></div>
-                <div class="timeline-content">
-                    <span class="step-number">مرحله ۴</span>
-                    <h3><i class="fas fa-layer-group"></i> انتخاب بلوک و صندلی</h3>
-                    <p>
-                        نقشه ورزشگاه به شما نمایش داده می‌شود. یک بلوک را انتخاب کنید و سپس
-                        صندلی مورد نظر را روی نقشه کلیک کنید.
-                    </p>
-                    <div class="highlight">
+                        <div>در صورتیکه بلیت مسابقه حاضر را خریداری کرده باشید، چراغ ورودی سبز شده و شما می‌توانید وارد
+                            استادیوم شوید.
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-map-marked-alt"></i>
+                        <div>در محوطه ورزشگاه با استفاده از راهنمای محل استقرار و تابلوهای راهنمای نصب شده در ورزشگاه،
+                            گیتِ مرتبط با موقعیت استقرار خود را که در رسید درج شده در سایت نمایش داده شده، پیدا نمایید.
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-door-closed"></i>
+                        <div>با ورود به گیت مورد نظر و نزدیک کردن کارت ملی خود به بارکدخوان، گیتِ مرتبط با موقعیت
+                            استقرار باز شده و شما می‌توانید وارد استادیوم شوید.
+                        </div>
+                    </li>
+                    <li>
                         <i class="fas fa-chair"></i>
-                        صندلی‌های <span style="color:#28a745;">سبز</span> موجود و
-                        <span style="color:#dc3545;">قرمز</span> فروخته‌شده هستند.
-                    </div>
-                </div>
+                        <div>با استفاده از راهنمای محل استقرار و راهنما‌های نصب شده در استادیوم، بلوک، ردیف و صندلی خود
+                            را پیدا کرده و مستقر شوید.
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-user-tie"></i>
+                        <div>در صورتیکه در استادیوم به هر علتی جهت استقرار با مشکل مواجه شدید، به بازرسان مستقر در
+                            ورزشگاه که کارتخوان همراه دارند، مراجعه نمایید.
+                        </div>
+                    </li>
+                </ul>
             </div>
 
-            <!-- مرحله ۵ -->
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fas fa-credit-card"></i></div>
-                <div class="timeline-content">
-                    <span class="step-number">مرحله ۵</span>
-                    <h3><i class="fas fa-credit-card"></i> پرداخت و تأیید نهایی</h3>
-                    <p>
-                        پس از انتخاب صندلی، اطلاعات بلیط شامل قیمت و شماره صندلی را بررسی کنید.
-                        سپس روی دکمه <strong>«پرداخت»</strong> کلیک کنید.
-                    </p>
-                    <div class="highlight">
-                        <i class="fas fa-lock"></i>
-                        تمام تراکنش‌ها با پروتکل امن انجام می‌شود.
-                    </div>
-                </div>
+            <!-- ===== دکمه شروع ===== -->
+            <div style="text-align:center; margin-top: 40px;">
+                <a href="{% url 'matches:home' %}" class="btn-start">
+                    <i class="fas fa-arrow-left"></i> شروع خرید بلیط
+                </a>
             </div>
 
-            <!-- مرحله ۶ -->
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fas fa-ticket-alt"></i></div>
-                <div class="timeline-content">
-                    <span class="step-number">مرحله ۶</span>
-                    <h3><i class="fas fa-ticket-alt"></i> دریافت بلیط</h3>
-                    <p>
-                        پس از پرداخت موفق، بلیط شما به‌صورت الکترونیکی صادر می‌شود.
-                        می‌توانید آن را از بخش <strong>«بلیط‌های من»</strong> در پروفایل مشاهده کنید.
-                    </p>
-                    <div class="highlight">
-                        <i class="fas fa-download"></i>
-                        بلیط را به‌صورت PDF دانلود کنید یا در روز مسابقه با موبایل نمایش دهید.
-                    </div>
-                </div>
-            </div>
-
-            <!-- مرحله ۷ -->
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fas fa-stadium"></i></div>
-                <div class="timeline-content">
-                    <span class="step-number">مرحله ۷</span>
-                    <h3><i class="fas fa-stadium"></i> ورود به ورزشگاه</h3>
-                    <p>
-                        در روز مسابقه، بلیط خود را به‌صورت دیجیتال (در موبایل) یا پرینت‌شده
-                        به مسئول بلیط‌بخوانی نشان دهید. کد QR روی بلیط اسکن می‌شود.
-                    </p>
-                    <div class="highlight">
-                        <i class="fas fa-clock"></i>
-                        حداقل <strong>۳۰ دقیقه</strong> قبل از شروع مسابقه در ورزشگاه حاضر باشید.
-                    </div>
-                </div>
-            </div>
-
-        </div><!-- پایان تایم‌لاین -->
-
-        <!-- ===== نکات مهم ===== -->
-        <div class="tips-section">
-            <h3><i class="fas fa-lightbulb"></i> نکات طلایی</h3>
-            <ul>
-                <li><i class="fas fa-check-circle"></i> بلیط‌ها <strong>غیرقابل انتقال</strong> هستند و فقط به نام خریدار صادر می‌شوند.</li>
-                <li><i class="fas fa-check-circle"></i> در صورت لغو مسابقه، مبلغ بلیط به حساب شما بازگردانده می‌شود.</li>
-                <li><i class="fas fa-check-circle"></i> همراه داشتن <strong>کارت ملی</strong> برای تطابق با اطلاعات بلیط الزامی است.</li>
-                <li><i class="fas fa-check-circle"></i> در صورت مشکل، با پشتیبانی از طریق <strong>پنل پیام‌ها</strong> ارتباط بگیرید.</li>
-                <li><i class="fas fa-check-circle"></i> قیمت بلیط‌ها در روز مسابقه ممکن است تغییر کند، پس زودتر خرید کنید.</li>
-                <li><i class="fas fa-check-circle"></i> برای ورود VIP، از درب اختصاصی استفاده کنید و کارت مخصوص را همراه داشته باشید.</li>
-            </ul>
         </div>
-
-        <!-- ===== دکمه شروع ===== -->
-        <div style="text-align:center; margin-top: 40px;">
-            <a href="{% url 'matches:home' %}" class="btn-start">
-                <i class="fas fa-arrow-left"></i> شروع خرید بلیط
-            </a>
-        </div>
-
     </div>
-</div>
 {% endblock %}
