@@ -74,23 +74,24 @@ class Ticket(models.Model):
         import random
         import string
         return ''.join(random.choices(string.digits, k=12))
+
     @property
     def block_type_label(self):
         """پراپرتی برای دریافت نام فارسی نوع سکو برای استفاده در PDF و سایت"""
         if self.seat and self.seat.row and self.seat.row.block:
             block = self.seat.row.block
-            if getattr(block, 'is_vip', False):
+            if getattr(block, 'is_vip', False) or block.zone_type == 'vip':
                 return "VIP"
-            # نکته: اگر فیلد بانوان در دیتابیس چیز دیگری است، خط زیر را تغییر دهید
-            elif getattr(block, 'is_women', False) or getattr(block, 'team_type', '') == 'women':
-                return "بانوان"
-            elif getattr(block, 'is_class1', False):
+            elif getattr(block, 'is_class1', False) or block.zone_type == 'class1':
                 return "کلاس ۱"
-            elif getattr(block, 'team_type', '') == 'home':
+            elif block.zone_type == 'women':
+                return "بانوان"
+            elif block.zone_type == 'home':
                 return "میزبان"
-            else:
+            elif block.zone_type == 'away':
                 return "میهمان"
         return "نامشخص"
+
     def generate_qr_code(self):
         import qrcode
         from io import BytesIO
@@ -196,6 +197,7 @@ class Ticket(models.Model):
     def __str__(self):
         return f"بلیط {self.ticket_number} - {self.user.username}"
 
+
 class VIPQuota(models.Model):
     """تخصیص ظرفیت صدور بلیط به کاربران ویژه برای هر مسابقه"""
     user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='vip_quotas')
@@ -262,6 +264,7 @@ class Transaction(WalletTransaction):
     """
     Proxy Model برای نمایش تراکنش‌ها در بخش tickets
     """
+
     class Meta:
         proxy = True
         verbose_name = 'تراکنش'
