@@ -241,18 +241,21 @@ def _release_payment_seats(payment):
     """وقتی پرداخت باقی‌مانده‌ی خرید بلیط ناموفق بود، صندلی‌های رزروشده رو آزاد کن."""
     from matches.models import MatchSeat
     from tickets.reservation import SeatReservation
+    from django.db import transaction
 
-    for key, match_seat_id in payment.buyer_info.items():
-        if not key.startswith('match_seat_id_'):
-            continue
-        try:
-            ms = MatchSeat.objects.get(id=int(match_seat_id), match_id=payment.match_id)
-            ms.is_available = True
-            ms.reserved_until = None
-            ms.save(update_fields=['is_available', 'reserved_until'])
-        except MatchSeat.DoesNotExist:
-            pass
-        SeatReservation.release(match_seat_id)
+    seat_ids = [
+        int(v) for k, v in payment.buyer_info.items()
+        if k.startswith('match_seat_id_')
+    ]
+    if not seat_ids:
+        return
+
+    with transaction.atomic():
+        MatchSeat.objects.filter(
+            id__in=seat_ids, match_id=payment.match_id
+        ).update(is_available=True, reserved_until=None)
+
+    SeatReservation.release_many(seat_ids, force=True)
 
 
 def _finalize_ticket_purchase(payment, gateway_amount_paid):
@@ -295,16 +298,31 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
         actual_total_price = 0
         processed_seats_data = []
 
-        match_seat_pks = [k.replace('match_seat_id_', '') for k in payment.buyer_info if k.startswith('match_seat_id_')]
+        match_seat_pks = [
+            int(k.replace('match_seat_id_', ''))
+            for k in payment.buyer_info
+            if k.startswith('match_seat_id_')
+        ]
+
+        # قفل صندلی‌ها تا پایان تراکنش صدور بلیط
+        locked_seats = {
+            ms.id: ms
+            for ms in (
+                MatchSeat.objects
+                .select_for_update()
+                .select_related('seat__row__block')
+                .filter(id__in=match_seat_pks, match=match)
+            )
+        }
 
         for pk in match_seat_pks:
-            full_name = payment.buyer_info.get(f'full_name_{pk}', '')
-            national_code = payment.buyer_info.get(f'national_code_{pk}', '')
-            tarikhe_tavallod = payment.buyer_info.get(f'tarikhe_tavallod_{pk}', '')
+            pk_str = str(pk)
+            full_name = payment.buyer_info.get(f'full_name_{pk_str}', '')
+            national_code = payment.buyer_info.get(f'national_code_{pk_str}', '')
+            tarikhe_tavallod = payment.buyer_info.get(f'tarikhe_tavallod_{pk_str}', '')
 
-            try:
-                match_seat = MatchSeat.objects.select_related('seat__row__block').get(id=int(pk), match=match)
-            except MatchSeat.DoesNotExist:
+            match_seat = locked_seats.get(pk)
+            if not match_seat:
                 continue
 
             age = get_age_from_jalali(tarikhe_tavallod)
@@ -351,13 +369,13 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
                 if national_code in processed_national_codes:
                     logger.error(f"Duplicate national code {national_code} in same order {order.id}. Skipping.")
                     match_seat.is_available = True; match_seat.reserved_until = None; match_seat.save()
-                    SeatReservation.release(match_seat.id)
+                    SeatReservation.release(match_seat.id, force=True)
                     continue
 
                 if Ticket.objects.filter(national_code=national_code, match=match, status='paid').exists():
                     logger.error(f"User {user.username} tried to buy second ticket for {national_code} in match {match.id}. Skipping.")
                     match_seat.is_available = True; match_seat.reserved_until = None; match_seat.save()
-                    SeatReservation.release(match_seat.id)
+                    SeatReservation.release(match_seat.id, force=True)
                     continue
 
             processed_national_codes.add(national_code)
@@ -370,7 +388,7 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             tickets_created.append(ticket)
 
             match_seat.is_available = False; match_seat.reserved_until = None
-            match_seat.save(); SeatReservation.release(match_seat.id)
+            match_seat.save(); SeatReservation.release(match_seat.id, force=True)
 
         if discount_obj and tickets_created:
             discount_obj.used_count += 1

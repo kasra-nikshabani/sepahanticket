@@ -84,20 +84,35 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASSWORD', 'kasra123'),
         'HOST': os.getenv('DB_HOST', '127.0.0.1'),
         'PORT': os.getenv('DB_PORT', '5432'),
+        # نگه داشتن اتصال بین درخواست‌ها (کاهش overhead در ترافیک بالا)
+        'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '60')),
+        'OPTIONS': {
+            'connect_timeout': 5,
+        },
     }
 }
 
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1'),
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        }
+            # جلوگیری از timeout طولانی زیر فشار
+            'SOCKET_CONNECT_TIMEOUT': 2,
+            'SOCKET_TIMEOUT': 2,
+        },
+        'KEY_PREFIX': 'sepahan',
     }
 }
 
-SEAT_RESERVATION_TIMEOUT = 600
+# Session روی Redis — حیاتی برای ترافیک بالا (جلوگیری از قفل جدول django_session)
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
+SESSION_COOKIE_AGE = 60 * 60 * 12  # ۱۲ ساعت
+SESSION_SAVE_EVERY_REQUEST = False
+
+SEAT_RESERVATION_TIMEOUT = int(os.getenv('SEAT_RESERVATION_TIMEOUT', '600'))
 
 AUTH_PASSWORD_VALIDATORS = []
 

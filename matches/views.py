@@ -2,7 +2,7 @@ import json
 from django.urls import reverse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction, IntegrityError
-from django.db.models import Q
+from django.db.models import Q, Count, Prefetch
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
@@ -64,28 +64,46 @@ def home(request):
     if stadium_filter:
         matches = matches.filter(stadium_id=stadium_filter)
 
-    # ===== محاسبه آمار برای هر مسابقه =====
-    for match in matches:
-        # ===== ۱. ظرفیت کل = مجموع صندلی‌های بلوک‌های فعال ورزشگاه =====
-        total_seats = Seat.objects.filter(
-            row__block__stadium=match.stadium,
-            row__block__is_active=True,
-            row__is_active=True
-        ).count()
+    # ===== محاسبه آمار برای همه مسابقات با حداقل کوئری (بدون N+1) =====
+    matches_list = list(matches)
+    stadium_ids = {m.stadium_id for m in matches_list}
 
-        # ===== ۲. فروخته‌شده = تعداد MatchSeatهای غیرفعال =====
-        sold_seats = MatchSeat.objects.filter(match=match, is_available=False).count()
+    # ظرفیت کل هر ورزشگاه (یک کوئری)
+    stadium_capacity = {
+        row['row__block__stadium']: row['c']
+        for row in (
+            Seat.objects
+            .filter(
+                row__block__stadium_id__in=stadium_ids,
+                row__block__is_active=True,
+                row__is_active=True,
+            )
+            .values('row__block__stadium')
+            .annotate(c=Count('id'))
+        )
+    }
 
-        # ===== ۳. باقی‌مانده = ظرفیت کل - فروخته‌شده =====
-        available_seats = total_seats - sold_seats
+    # تعداد صندلی‌های غیرفعال (فروخته/رزرو) per match
+    sold_map = {
+        row['match_id']: row['c']
+        for row in (
+            MatchSeat.objects
+            .filter(match_id__in=[m.id for m in matches_list], is_available=False)
+            .values('match_id')
+            .annotate(c=Count('id'))
+        )
+    }
 
-        # ===== ۴. درصد اشغال =====
+    for match in matches_list:
+        total_seats = stadium_capacity.get(match.stadium_id, 0)
+        sold_seats = sold_map.get(match.id, 0)
+        available_seats = max(total_seats - sold_seats, 0)
         occupancy = round((sold_seats / total_seats * 100) if total_seats > 0 else 0, 1)
-
-        # ===== ۵. اختصاص به آبجکت match =====
         match.sold_tickets = sold_seats
         match.available_seats = available_seats
         match.occupancy = occupancy
+
+    matches = matches_list
 
     # ===== دریافت لیست ورزشگاه‌ها =====
     stadiums = Stadium.objects.all().order_by('name')
@@ -186,22 +204,45 @@ def select_block(request, match_id):
         'vip': ('vip', 'VIP'),
     }
 
+    # آمار بلوک‌ها با ۲–۳ کوئری به‌جای N+1
+    blocks = list(blocks)
+    block_ids = [b.id for b in blocks]
+
+    total_map = {
+        row['row__block']: row['c']
+        for row in (
+            Seat.objects
+            .filter(row__block_id__in=block_ids)
+            .values('row__block')
+            .annotate(c=Count('id'))
+        )
+    }
+
+    # تعداد MatchSeat موجود و کل MatchSeat per block برای این مسابقه
+    ms_stats = {
+        row['seat__row__block']: row
+        for row in (
+            MatchSeat.objects
+            .filter(match=match, seat__row__block_id__in=block_ids)
+            .values('seat__row__block')
+            .annotate(
+                total_ms=Count('id'),
+                available_ms=Count('id', filter=Q(is_available=True)),
+            )
+        )
+    }
+
     for block in blocks:
-        total_seats = Seat.objects.filter(row__block=block).count()
+        total_seats = total_map.get(block.id, 0)
+        stats = ms_stats.get(block.id, {})
+        available_ms = stats.get('available_ms', 0)
+        total_ms = stats.get('total_ms', 0)
+        # صندلی‌هایی که هنوز MatchSeat ندارند = در دسترس فرض می‌شوند
+        seats_without_ms = max(total_seats - total_ms, 0)
+        available_seats = available_ms + seats_without_ms
+
         block.total_seats = total_seats
-
-        available_with_matchseat = MatchSeat.objects.filter(
-            match=match,
-            seat__row__block=block,
-            is_available=True
-        ).count()
-        seats_without_matchseat = Seat.objects.filter(
-            row__block=block
-        ).exclude(match_seats__match=match).count()
-
-        available_seats = available_with_matchseat + seats_without_matchseat
         block.available_seats = available_seats
-
         block.occupancy = round(
             ((total_seats - available_seats) / total_seats * 100) if total_seats > 0 else 0,
             1
@@ -250,28 +291,70 @@ def show_block_map(request, match_id):
     block = get_object_or_404(Block, id=block_id)
     rows = Row.objects.filter(block=block, is_active=True).order_by('number')
 
+    # بارگذاری یک‌جا: همه صندلی‌ها + MatchSeatهای موجود (بدون get_or_create در حلقه)
+    rows = list(rows)
+    all_seats = list(
+        Seat.objects
+        .filter(row__block=block, row__is_active=True)
+        .select_related('row')
+        .order_by('row__number', 'number')
+    )
+    seat_ids = [s.id for s in all_seats]
+
+    existing_ms = {
+        ms.seat_id: ms
+        for ms in MatchSeat.objects.filter(match=match, seat_id__in=seat_ids)
+    }
+
+    # ساخت MatchSeatهای گم‌شده به‌صورت bulk (یک‌بار، نه per-request در حالت ایده‌آل)
+    missing = [
+        MatchSeat(match=match, seat_id=s.id, is_available=True)
+        for s in all_seats if s.id not in existing_ms
+    ]
+    if missing:
+        MatchSeat.objects.bulk_create(missing, ignore_conflicts=True)
+        # بارگذاری مجدد برای گرفتن idها
+        existing_ms = {
+            ms.seat_id: ms
+            for ms in MatchSeat.objects.filter(match=match, seat_id__in=seat_ids)
+        }
+
+    # وضعیت رزرو Redis برای نمایش دقیق‌تر (اختیاری ولی سبک با get_many)
+    ms_ids = [ms.id for ms in existing_ms.values()]
+    reserved_map = SeatReservation.get_reserved_map(ms_ids)
+
     map_data = []
     first_row_id = None
+    seats_by_row = {}
+    for seat in all_seats:
+        seats_by_row.setdefault(seat.row_id, []).append(seat)
 
     for row in rows:
-        seats = Seat.objects.filter(row=row).order_by('number')
-        if not seats.exists():
+        row_seats = seats_by_row.get(row.id, [])
+        if not row_seats:
             continue
-
         if first_row_id is None:
             first_row_id = row.id
 
         seat_list = []
-        for seat in seats:
-            match_seat, _ = MatchSeat.objects.get_or_create(
-                match=match,
-                seat=seat,
-                defaults={'is_available': True}
-            )
+        for seat in row_seats:
+            ms = existing_ms.get(seat.id)
+            if not ms:
+                continue
+            # اگر در Redis رزرو شده و هنوز is_available در DB True مانده، غیرفعال نشان بده
+            is_avail = ms.is_available and not reserved_map.get(ms.id)
+            # رزرو منقضی‌شده در DB را در دسترس نشان بده
+            if (
+                not ms.is_available
+                and ms.reserved_until
+                and ms.reserved_until < timezone.now()
+                and not reserved_map.get(ms.id)
+            ):
+                is_avail = True
             seat_list.append({
                 'number': seat.number,
-                'is_available': match_seat.is_available,
-                'id': match_seat.id,
+                'is_available': is_avail,
+                'id': ms.id,
             })
         map_data.append({
             'row_number': row.number,

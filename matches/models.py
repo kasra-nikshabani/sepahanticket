@@ -339,6 +339,36 @@ class MatchSeat(models.Model):
         obj, created = cls.objects.get_or_create(match=match, seat=seat, defaults={'is_available': True})
         return obj
 
+    @classmethod
+    def ensure_for_match(cls, match, block=None, batch_size=2000):
+        """
+        پیش‌ساخت تمام MatchSeatهای یک مسابقه (یا یک بلوک).
+        قبل از شروع فروش اجرا شود تا get_or_create در مسیر خرید نباشد.
+        """
+        seat_qs = Seat.objects.filter(
+            row__block__stadium=match.stadium,
+            row__block__is_active=True,
+            row__is_active=True,
+        )
+        if block is not None:
+            seat_qs = seat_qs.filter(row__block=block)
+
+        existing = set(
+            cls.objects.filter(match=match, seat_id__in=seat_qs.values_list('id', flat=True))
+            .values_list('seat_id', flat=True)
+        )
+        to_create = [
+            cls(match=match, seat_id=sid, is_available=True)
+            for sid in seat_qs.values_list('id', flat=True)
+            if sid not in existing
+        ]
+        created = 0
+        for i in range(0, len(to_create), batch_size):
+            batch = to_create[i:i + batch_size]
+            cls.objects.bulk_create(batch, ignore_conflicts=True)
+            created += len(batch)
+        return created
+
     class Meta:
         unique_together = ('match', 'seat')
         verbose_name = "صندلی مسابقه"

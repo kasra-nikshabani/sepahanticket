@@ -412,7 +412,7 @@ def select_seats(request, match_id):
                     ms.save()
                 except MatchSeat.DoesNotExist:
                     pass
-                SeatReservation.release(seat_id)
+                SeatReservation.release(seat_id, user_id=getattr(request.user, 'id', None), force=True)
         request.session.pop('selected_seats', None)
         request.session.pop('match_id', None)
         request.session.pop('section_id', None)
@@ -433,6 +433,10 @@ def select_seats(request, match_id):
 
 @login_required
 def reserve_seats(request, match_id):
+    """
+    رزرو صندلی با قفل دیتابیس (select_for_update) + Redis atomic (SET NX).
+    از oversell و race condition در فشار بالا جلوگیری می‌کند.
+    """
     if request.user.user_type == 'vip':
         messages.error(request, 'کاربران ویژه امکان خرید بلیط ندارند.')
         return redirect('matches:home')
@@ -454,51 +458,83 @@ def reserve_seats(request, match_id):
 
     try:
         selected_seats = json.loads(selected_seats_data)
+        selected_seats = [int(s) for s in selected_seats]
         if len(selected_seats) > 5:
             messages.error(request, 'حداکثر ۵ بلیط مجاز است.')
             return redirect('matches:block_map', match_id=match_id)
-    except json.JSONDecodeError:
+        if len(selected_seats) == 0:
+            messages.error(request, 'هیچ صندلی‌ای انتخاب نشده است.')
+            return redirect('matches:block_map', match_id=match_id)
+    except (json.JSONDecodeError, TypeError, ValueError):
         messages.error(request, 'خطا در اطلاعات ارسال شده.')
         return redirect('matches:block_map', match_id=match_id)
 
     reserved_seats = []
+    timeout = getattr(settings, 'SEAT_RESERVATION_TIMEOUT', 600)
+    now = timezone.now()
+
     try:
         with transaction.atomic():
+            # قفل ردیف‌های MatchSeat تا پایان تراکنش — جلوگیری از double-booking
+            locked = (
+                MatchSeat.objects
+                .select_for_update()
+                .filter(id__in=selected_seats, match=match)
+            )
+            locked_map = {ms.id: ms for ms in locked}
+
+            if len(locked_map) != len(set(selected_seats)):
+                messages.error(request, 'یکی از صندلی‌های انتخاب‌شده معتبر نیست.')
+                return redirect('matches:block_map', match_id=match_id)
+
             for seat_id in selected_seats:
+                match_seat = locked_map[seat_id]
+
+                # اگر قبلاً توسط همین کاربر رزرو شده، تمدید کن
                 if SeatReservation.is_reserved_by_user(seat_id, request.user.id):
+                    SeatReservation.extend_reservation(seat_id, user_id=request.user.id)
+                    match_seat.reserved_until = now + timedelta(seconds=timeout)
+                    match_seat.is_available = False
+                    match_seat.save(update_fields=['is_available', 'reserved_until'])
+                    reserved_seats.append(seat_id)
                     continue
 
-                try:
-                    match_seat = MatchSeat.objects.get(id=seat_id, match=match, is_available=True)
-                except MatchSeat.DoesNotExist:
-                    for rid in reserved_seats:
-                        SeatReservation.release(rid)
-                    messages.error(request, 'یکی از صندلی‌های انتخاب‌شده معتبر نیست یا قبلاً فروخته شده است.')
-                    return redirect('matches:block_map', match_id=match_id)
+                # صندلی فروخته‌شده یا رزرو فعال دیگران
+                if not match_seat.is_available:
+                    expired = (
+                        match_seat.reserved_until is not None
+                        and match_seat.reserved_until < now
+                    )
+                    if not expired:
+                        SeatReservation.release_many(reserved_seats, user_id=getattr(request.user, 'id', None), force=True)
+                        messages.error(
+                            request,
+                            'یکی از صندلی‌های انتخاب‌شده قبلاً فروخته یا رزرو شده است.'
+                        )
+                        return redirect('matches:block_map', match_id=match_id)
+                    # رزرو منقضی شده — آزادسازی و ادامه
 
                 success, msg = SeatReservation.reserve(seat_id, request.user.id, match_id)
                 if not success:
-                    for rid in reserved_seats:
-                        SeatReservation.release(rid)
+                    SeatReservation.release_many(reserved_seats, user_id=getattr(request.user, 'id', None), force=True)
                     messages.error(request, msg)
                     return redirect('matches:block_map', match_id=match_id)
 
                 match_seat.is_available = False
-                match_seat.reserved_until = timezone.now() + timedelta(seconds=settings.SEAT_RESERVATION_TIMEOUT)
-                match_seat.save()
+                match_seat.reserved_until = now + timedelta(seconds=timeout)
+                match_seat.save(update_fields=['is_available', 'reserved_until'])
                 reserved_seats.append(seat_id)
 
     except Exception as e:
-        for rid in reserved_seats:
-            SeatReservation.release(rid)
-        logger.error(f"Error in reserve_seats: {str(e)}")
-        messages.error(request, f'خطا در رزرو: {str(e)}')
+        SeatReservation.release_many(reserved_seats, user_id=getattr(request.user, 'id', None), force=True)
+        logger.error(f"Error in reserve_seats: {str(e)}", exc_info=True)
+        messages.error(request, 'خطا در رزرو صندلی. لطفاً دوباره تلاش کنید.')
         return redirect('matches:block_map', match_id=match_id)
 
     request.session['selected_seats'] = selected_seats
     request.session['match_id'] = match_id
     request.session['section_id'] = row_id
-    request.session['reserved_at'] = timezone.now().isoformat()
+    request.session['reserved_at'] = now.isoformat()
 
     return redirect('tickets:ticket_info', match_id=match_id)
 
@@ -734,7 +770,7 @@ def ticket_info(request, match_id):
                         match_seat.is_available = True
                         match_seat.reserved_until = None
                         match_seat.save()
-                        SeatReservation.release(match_seat_id)
+                        SeatReservation.release(match_seat_id, user_id=getattr(request.user, 'id', None), force=True)
                         messages.error(request, f'مدت زمان رزرو صندلی {match_seat.seat.number} به پایان رسیده است.')
                         return redirect('matches:block_map', match_id=match_id)
 
@@ -749,7 +785,7 @@ def ticket_info(request, match_id):
                     match_seat.is_available = False
                     match_seat.reserved_until = None
                     match_seat.save()
-                    SeatReservation.release(match_seat_id)
+                    SeatReservation.release(match_seat_id, user_id=getattr(request.user, 'id', None), force=True)
 
                 if wallet_amount_used > 0:
                     success = wallet.deduct_balance(
@@ -802,7 +838,7 @@ def cancel_reservation(request, match_id):
                 match_seat.save(update_fields=['is_available', 'reserved_until'])
             except MatchSeat.DoesNotExist:
                 pass
-            SeatReservation.release(seat_id)
+            SeatReservation.release(seat_id, user_id=getattr(request.user, 'id', None), force=True)
 
         request.session.pop('selected_seats', None)
         request.session.pop('match_id', None)
@@ -842,7 +878,7 @@ def release_reservation(request):
                     match_seat.is_available = True
                     match_seat.reserved_until = None
                     match_seat.save()
-                    SeatReservation.release(seat_id)
+                    SeatReservation.release(seat_id, user_id=getattr(request.user, 'id', None), force=True)
             except MatchSeat.DoesNotExist:
                 pass
 
