@@ -115,129 +115,6 @@
     .sport-tag.basketball { background: rgba(255, 193, 7, 0.15); color: #ffd966; }
     .sport-tag.volleyball { background: rgba(220, 53, 69, 0.15); color: #f8a7a7; }
 
-    /* ===== تایمر ===== */
-    .match-timer {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        background: rgba(0, 0, 0, 0.30);
-        padding: 8px 22px 8px 18px;
-        border-radius: 50px;
-        color: #ffffff;
-        font-weight: 700;
-        font-size: 15px;
-        border: 1px solid rgba(212, 175, 55, 0.15);
-        backdrop-filter: blur(4px);
-    }
-
-    .match-timer .timer-label {
-        font-size: 14px;
-        font-weight: 600;
-        color: rgba(255, 255, 255, 0.8);
-        white-space: nowrap;
-    }
-
-    .match-timer .timer-numbers {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        direction: ltr;
-    }
-
-    .match-timer .timer-unit {
-        font-size: 11px;
-        font-weight: 400;
-        color: rgba(255, 255, 255, 0.5);
-        margin: 0 2px;
-    }
-
-    .match-timer .time-block {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(255, 255, 255, 0.07);
-        padding: 2px 10px;
-        border-radius: 6px;
-        min-width: 32px;
-        font-size: 17px;
-        font-weight: 800;
-        color: #D4AF37;
-        letter-spacing: 1px;
-    }
-
-    /* ===== دسکتاپ: برچسب سمت راست ===== */
-    @media (min-width: 769px) {
-        .match-timer {
-            flex-direction: row;
-        }
-
-        .match-timer .timer-label {
-            order: 2;
-            margin-right: 4px;
-        }
-
-        .match-timer .timer-numbers {
-            order: 1;
-        }
-    }
-
-    /* ===== موبایل: برچسب بالای تایمر ===== */
-    @media (max-width: 768px) {
-        .match-timer {
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            padding: 10px 16px;
-            border-radius: 16px;
-            width: 100%;
-        }
-
-        .match-timer .timer-label {
-            font-size: 13px;
-            order: 0;
-            width: 100%;
-            text-align: center;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .match-timer .timer-numbers {
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 2px 4px;
-        }
-
-        .match-timer .time-block {
-            font-size: 15px;
-            min-width: 28px;
-            padding: 2px 8px;
-        }
-
-        .match-timer .timer-unit {
-            font-size: 10px;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .match-timer {
-            padding: 8px 12px;
-            border-radius: 14px;
-        }
-
-        .match-timer .timer-label {
-            font-size: 12px;
-        }
-
-        .match-timer .time-block {
-            font-size: 13px;
-            min-width: 22px;
-            padding: 1px 6px;
-        }
-
-        .match-timer .timer-unit {
-            font-size: 9px;
-        }
-    }
-
     /* ===== بدنه ===== */
     .match-card-body {
         padding: 32px 24px 28px;
@@ -609,7 +486,7 @@
 
     <!-- ===== لیست مسابقات ===== -->
     {% for match in matches %}
-    <div class="match-card" data-match-time="{{ match.date_time.isoformat }}">
+    <div class="match-card">
         <!-- ===== هدر ===== -->
         <div class="match-card-header">
             <div class="match-meta">
@@ -640,20 +517,6 @@
                 </span>
             </div>
 
-            <!-- ===== تایمر ===== -->
-            <div class="match-timer" id="timer-{{ forloop.counter }}">
-                <span class="timer-label">تا آغاز مسابقه</span>
-                <div class="timer-numbers">
-                    <span class="time-block" id="days-{{ forloop.counter }}">۰۰</span>
-                    <span class="timer-unit">روز</span>
-                    <span class="time-block" id="hours-{{ forloop.counter }}">۰۰</span>
-                    <span class="timer-unit">ساعت</span>
-                    <span class="time-block" id="minutes-{{ forloop.counter }}">۰۰</span>
-                    <span class="timer-unit">دقیقه</span>
-                    <span class="time-block" id="seconds-{{ forloop.counter }}">۰۰</span>
-                    <span class="timer-unit">ثانیه</span>
-                </div>
-            </div>
         </div>
 
         <!-- ===== بدنه ===== -->
@@ -715,48 +578,4 @@
     </div>
     {% endfor %}
 </div>
-
-<script>
-    // ===== تایمر شمارش معکوس =====
-    document.addEventListener('DOMContentLoaded', function() {
-        const cards = document.querySelectorAll('.match-card');
-
-        cards.forEach(function(card, index) {
-            const matchTime = card.dataset.matchTime;
-            if (!matchTime) return;
-
-            const targetTime = new Date(matchTime).getTime();
-            const daysEl = document.getElementById('days-' + (index + 1));
-            const hoursEl = document.getElementById('hours-' + (index + 1));
-            const minutesEl = document.getElementById('minutes-' + (index + 1));
-            const secondsEl = document.getElementById('seconds-' + (index + 1));
-
-            function updateTimer() {
-                const now = new Date().getTime();
-                let diff = targetTime - now;
-
-                if (diff <= 0) {
-                    daysEl.textContent = '۰۰';
-                    hoursEl.textContent = '۰۰';
-                    minutesEl.textContent = '۰۰';
-                    secondsEl.textContent = '۰۰';
-                    return;
-                }
-
-                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-                daysEl.textContent = String(days).padStart(2, '0');
-                hoursEl.textContent = String(hours).padStart(2, '0');
-                minutesEl.textContent = String(minutes).padStart(2, '0');
-                secondsEl.textContent = String(seconds).padStart(2, '0');
-            }
-
-            updateTimer();
-            setInterval(updateTimer, 1000);
-        });
-    });
-</script>
 {% endblock %}
