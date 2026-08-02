@@ -9,6 +9,7 @@ import requests
 from django.views.decorators.csrf import csrf_exempt
 
 from django.conf import settings
+from django.core.cache import cache
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
@@ -891,10 +892,19 @@ def release_reservation(request):
 # ============================================================
 #  استعلام از ثبت احوال
 # ============================================================
-@csrf_exempt
+@login_required
 def inquiry_fan(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    # ===== محدودیت تعداد استعلام (جلوگیری از سوءاستفاده از API ثبت‌احوال) =====
+    rate_key = f'inquiry_fan_count:{request.user.id}'
+    count = cache.get(rate_key, 0)
+    if count >= 20:
+        return JsonResponse(
+            {'success': False, 'error': 'تعداد استعلام‌های شما زیاد است. چند دقیقه صبر کنید.'}, status=429
+        )
+    cache.set(rate_key, count + 1, timeout=600)  # ۱۰ دقیقه
 
     name = request.POST.get('name')
     famil = request.POST.get('famil')
