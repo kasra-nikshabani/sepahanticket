@@ -242,6 +242,13 @@ def vip_issue_manual(request, match_id):
             return redirect('tickets:vip_issue_manual', match_id=match_id)
 
         with transaction.atomic():
+            # quota بالاتر بدون قفل خونده شده بود؛ دو درخواست هم‌زمان (دو تب یا
+            # دابل‌کلیک) می‌تونستن هر دو remaining>0 رو ببینن و هر دو صادر کنن.
+            quota = VIPQuota.objects.select_for_update().get(pk=quota.pk)
+            if quota.remaining <= 0:
+                messages.error(request, 'ظرفیت شما برای این مسابقه تکمیل شده است.')
+                return redirect('tickets:vip_dashboard')
+
             try:
                 match_seat = MatchSeat.objects.select_for_update().get(id=match_seat_id, match=match, is_available=True)
             except MatchSeat.DoesNotExist:
@@ -355,22 +362,28 @@ def vip_issue_excel(request, match_id):
                 messages.error(request, 'فایل باید شامل ستون‌های "نام و نام خانوادگی" و "کد ملی" باشد.')
                 return redirect('tickets:vip_issue_excel', match_id=match_id)
 
-            available_match_seats = list(
-                MatchSeat.objects.filter(match=match, is_available=True).select_related('seat')
-                .order_by('seat__row__block__order', 'seat__row__number', 'seat__number')
-            )
-
-            if len(available_match_seats) < len(df):
-                messages.error(request,
-                               f'تعداد صندلی‌های موجود ({len(available_match_seats)}) کمتر از تعداد درخواست‌ها ({len(df)}) است.')
-                return redirect('tickets:vip_issue_excel', match_id=match_id)
-
-            if len(df) > quota.remaining:
-                messages.error(request,
-                               f'ظرفیت باقی‌مانده شما ({quota.remaining}) کمتر از تعداد درخواست‌ها ({len(df)}) است.')
-                return redirect('tickets:vip_issue_excel', match_id=match_id)
-
             with transaction.atomic():
+                # quota و لیست صندلی‌های موجود بالاتر بدون قفل خونده شده بودن؛
+                # دو آپلود اکسل هم‌زمان می‌تونستن هم روی سهمیه هم روی همون
+                # صندلی‌های «موجود» با هم تداخل کنن. اینجا با قفل دوباره چک می‌شه.
+                quota = VIPQuota.objects.select_for_update().get(pk=quota.pk)
+
+                available_match_seats = list(
+                    MatchSeat.objects.select_for_update().filter(match=match, is_available=True)
+                    .select_related('seat')
+                    .order_by('seat__row__block__order', 'seat__row__number', 'seat__number')
+                )
+
+                if len(available_match_seats) < len(df):
+                    messages.error(request,
+                                   f'تعداد صندلی‌های موجود ({len(available_match_seats)}) کمتر از تعداد درخواست‌ها ({len(df)}) است.')
+                    return redirect('tickets:vip_issue_excel', match_id=match_id)
+
+                if len(df) > quota.remaining:
+                    messages.error(request,
+                                   f'ظرفیت باقی‌مانده شما ({quota.remaining}) کمتر از تعداد درخواست‌ها ({len(df)}) است.')
+                    return redirect('tickets:vip_issue_excel', match_id=match_id)
+
                 created = 0
                 for _, row_data in df.iterrows():
                     full_name = str(row_data['نام و نام خانوادگی']).strip()
@@ -761,6 +774,17 @@ def ticket_info(request, match_id):
 
         try:
             with transaction.atomic():
+                # ===== قفل و اعتبارسنجی مجدد کد تخفیف (جلوگیری از race condition) =====
+                # discount_obj بالاتر بدون قفل خونده و چک شده بود؛ دو خرید همزمان
+                # با همون کد می‌تونستن هر دو رد شرط used_count < max_uses رو
+                # ببینن و هر دو used_count رو افزایش بدن و از max_uses رد بشه.
+                if discount_obj:
+                    discount_obj = DiscountCode.objects.select_for_update().get(pk=discount_obj.pk)
+                    valid, msg = discount_obj.is_valid(match=match)
+                    if not valid:
+                        messages.error(request, f'کد تخفیف دیگر معتبر نیست: {msg}')
+                        return render(request, 'tickets/ticket_info.html', context)
+
                 payment_method = 'free'
                 if wallet_amount_used > 0 and discount_percent > 0:
                     payment_method = 'mixed'

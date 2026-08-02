@@ -273,10 +273,17 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
     user = payment.user
     wallet, _ = Wallet.objects.get_or_create(user=user)
 
+    # ===== قفل کد تخفیف =====
+    # مبلغی که کاربر واقعاً از طریق زیبال پرداخت کرده (payment.gateway_amount)
+    # از قبل بر اساس همین discount_percent محاسبه و از او دریافت شده؛ اینجا
+    # دیگه نمی‌تونیم تخفیف رو رد کنیم چون پول از قبل با همون درصد گرفته شده.
+    # فقط قفل می‌گیریم تا افزایش used_count زیر آن (پایین‌تر) با
+    # درخواست‌های هم‌زمان دیگر تداخل نکند و به‌جای += پایتونی، شمارنده به‌درستی
+    # جمع بزند.
     discount_obj = None
     if payment.discount_code:
         try:
-            discount_obj = DiscountCode.objects.get(code=payment.discount_code)
+            discount_obj = DiscountCode.objects.select_for_update().get(code=payment.discount_code)
         except DiscountCode.DoesNotExist:
             pass
 
