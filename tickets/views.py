@@ -266,14 +266,12 @@ def vip_edit_issued_ticket(request, ticket_id):
 
         ticket.full_name = full_name
         ticket.national_code = national_code
-        ticket.save()
-
         if ticket.pdf_file:
             ticket.pdf_file.delete(save=False)
-        ticket.generate_pdf()
-        ticket.save()
+            ticket.pdf_file = None
+        ticket.save()  # pdf_file خالیه -> تولید مجدد PDF خودکار توی صف پس‌زمینه enqueue می‌شه
 
-        messages.success(request, f'✅ اطلاعات بلیط {ticket.ticket_number} با موفقیت ویرایش شد.')
+        messages.success(request, f'✅ اطلاعات بلیط {ticket.ticket_number} با موفقیت ویرایش شد. تولید PDF جدید چند لحظه طول می‌کشد.')
         return redirect('tickets:vip_issued_tickets')
 
     return render(request, 'tickets/vip_edit_issued_ticket.html', {'ticket': ticket})

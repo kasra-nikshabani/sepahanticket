@@ -386,10 +386,16 @@
                                         <td>{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
                                         <td>
                                             <div class="actions-cell">
+                                                {% if ticket.pdf_file %}
                                                 <a href="{{ ticket.pdf_file.url }}" target="_blank" class="btn-action"
                                                    title="دانلود PDF">
                                                     <i class="fas fa-file-pdf"></i>
                                                 </a>
+                                                {% else %}
+                                                <span class="btn-action disabled" title="در حال آماده‌سازی">
+                                                    <i class="fas fa-clock"></i>
+                                                </span>
+                                                {% endif %}
                                                 <a href="{% url 'tickets:vip_edit_issued_ticket' ticket.id %}"
                                                    class="btn-action btn-edit" title="ویرایش">
                                                     <i class="fas fa-edit"></i>

@@ -179,14 +179,16 @@ class Ticket(models.Model):
         # ===== ۳. ذخیره اولیه =====
         super().save(*args, **kwargs)
 
-        # ===== ۴. تولید QR و PDF =====
+        # ===== ۴. تولید QR (سریع -> همینجا، سینک) =====
         if is_new or not self.qr_code:
             self.generate_qr_code()
             super().save(update_fields=['qr_code'])
 
+        # ===== ۵. تولید PDF (سنگین -> صف پس‌زمینه، بعد از commit شدن تراکنش) =====
         if is_new or not self.pdf_file:
-            self.generate_pdf()
-            super().save(update_fields=['pdf_file'])
+            from django.db import transaction
+            from .tasks import enqueue_pdf_generation
+            transaction.on_commit(lambda ticket_id=self.pk: enqueue_pdf_generation(ticket_id))
 
     def mark_as_used(self):
         from django.utils import timezone

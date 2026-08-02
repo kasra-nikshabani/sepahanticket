@@ -35,6 +35,7 @@ pytz==2026.2
 qrcode==8.2
 redis==8.0.1
 requests==2.34.2
+rq==2.10.0
 scinum==2.2.2
 six==1.17.0
 sqlparse==0.5.5

@@ -314,9 +314,15 @@
                                     <td>{{ ticket.national_code }}</td>
                                     <td>{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
                                     <td>
+                                        {% if ticket.pdf_file %}
                                         <a href="{{ ticket.pdf_file.url }}" target="_blank" class="btn-action" download>
                                             <i class="fas fa-file-pdf"></i> دانلود
                                         </a>
+                                        {% else %}
+                                        <span class="btn-action disabled" title="در حال آماده‌سازی">
+                                            <i class="fas fa-clock"></i> آماده‌سازی...
+                                        </span>
+                                        {% endif %}
                                     </td>
                                 </tr>
                             {% endfor %}

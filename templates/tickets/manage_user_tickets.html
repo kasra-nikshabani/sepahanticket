@@ -445,9 +445,15 @@
                                     </td>
                                     <td>
                                         <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                                            {% if ticket.pdf_file %}
                                             <a href="{{ ticket.pdf_file.url }}" target="_blank" class="btn-download" title="دانلود PDF">
                                                 <i class="fas fa-file-pdf"></i>
                                             </a>
+                                            {% else %}
+                                            <span class="btn-download disabled" title="در حال آماده‌سازی">
+                                                <i class="fas fa-clock"></i>
+                                            </span>
+                                            {% endif %}
                                             <form method="post" style="display:inline;" onsubmit="return confirm('آیا از حذف این بلیط مطمئن هستید؟ صندلی مربوطه آزاد خواهد شد.');">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
