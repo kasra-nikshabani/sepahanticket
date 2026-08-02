@@ -1,1 +1,12 @@
 .env
+.env.*
+*.sqlite3
+*.sqlite3.backup
+*.sql
+data*.json
+__pycache__/
+*.pyc
+venv/
+staticfiles/
+media/
+*.log
