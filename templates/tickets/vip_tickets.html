@@ -315,7 +315,7 @@
                                     <td>{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
                                     <td>
                                         {% if ticket.pdf_file %}
-                                        <a href="{{ ticket.pdf_file.url }}" target="_blank" class="btn-action" download>
+                                        <a href="{% url 'tickets:download_ticket_pdf' ticket.id %}" target="_blank" class="btn-action" download>
                                             <i class="fas fa-file-pdf"></i> دانلود
                                         </a>
                                         {% else %}

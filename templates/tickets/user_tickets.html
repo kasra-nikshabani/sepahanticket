@@ -186,7 +186,7 @@
                                     <i class="fas fa-clock"></i> {{ ticket.purchase_date|date:"Y/m/d H:i" }}
                                 </small>
                                 {% if ticket.pdf_file %}
-                                <a href="{{ ticket.pdf_file.url }}" target="_blank" class="btn btn-sm btn-primary">
+                                <a href="{% url 'tickets:download_ticket_pdf' ticket.id %}" target="_blank" class="btn btn-sm btn-primary">
                                     <i class="fas fa-file-pdf"></i> دانلود
                                 </a>
                                 {% else %}

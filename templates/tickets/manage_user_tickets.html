@@ -446,7 +446,7 @@
                                     <td>
                                         <div style="display:flex; gap:4px; flex-wrap:wrap;">
                                             {% if ticket.pdf_file %}
-                                            <a href="{{ ticket.pdf_file.url }}" target="_blank" class="btn-download" title="دانلود PDF">
+                                            <a href="{% url 'tickets:download_ticket_pdf' ticket.id %}" target="_blank" class="btn-download" title="دانلود PDF">
                                                 <i class="fas fa-file-pdf"></i>
                                             </a>
                                             {% else %}

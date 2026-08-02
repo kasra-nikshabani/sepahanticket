@@ -16,7 +16,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db import transaction
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, Http404
 from django.urls import reverse
 from django.utils import timezone
 from django.db.models import Count, Sum, Avg
@@ -76,6 +76,32 @@ def user_tickets(request):
         'selected_status': status_filter,
     }
     return render(request, 'tickets/user_tickets.html', context)
+
+
+@login_required
+def download_ticket_pdf(request, ticket_id):
+    """
+    دانلود PDF بلیط فقط برای صاحب بلیط یا ادمین.
+
+    فایل‌های media/ticket_pdfs و media/qr_codes روی nginx به‌صورت internal
+    تنظیم شده‌اند (دیگه از طریق /media/... مستقیم و بدون احراز هویت در
+    دسترس نیستند)؛ این ویو بعد از چک مالکیت، با هدر X-Accel-Redirect از
+    nginx می‌خواهد فایل را serve کند.
+    """
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+
+    is_owner = ticket.user_id == request.user.id
+    is_staff = request.user.is_staff or request.user.user_type == 'admin'
+    if not (is_owner or is_staff):
+        raise Http404
+
+    if not ticket.pdf_file:
+        raise Http404
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="ticket_{ticket.ticket_number}.pdf"'
+    response['X-Accel-Redirect'] = f'/{settings.MEDIA_URL.strip("/")}/{ticket.pdf_file.name}'
+    return response
 
 
 @login_required

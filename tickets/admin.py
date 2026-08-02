@@ -1,5 +1,6 @@
 # tickets/admin.py
 from django.contrib import admin
+from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.contrib import messages
@@ -34,7 +35,7 @@ class TicketAdmin(admin.ModelAdmin):
     list_filter = ('status', 'is_admin_assigned', 'is_used', 'match')
     search_fields = ('ticket_number', 'user__username', 'full_name', 'national_code')
     actions = [assign_to_vip]
-    readonly_fields = ('ticket_number', 'qr_code', 'pdf_file', 'used_at')
+    readonly_fields = ('ticket_number', 'qr_code', 'pdf_file_display', 'used_at')
     fieldsets = (
         ('اطلاعات اصلی', {
             'fields': ('user', 'match', 'seat', 'full_name', 'national_code')
@@ -43,11 +44,24 @@ class TicketAdmin(admin.ModelAdmin):
             'fields': ('status', 'is_admin_assigned', 'is_used', 'used_at')
         }),
         ('فایل‌ها', {
-            'fields': ('qr_code', 'pdf_file', 'ticket_number')
+            'fields': ('qr_code', 'pdf_file_display', 'ticket_number')
         }),
     )
     list_per_page = 20
     ordering = ('-purchase_date',)
+
+    def pdf_file_display(self, obj):
+        """
+        فایل PDF بلیط دیگر از طریق /media/ مستقیم در دسترس نیست (چون شامل
+        نام و کد ملی خریدار است)؛ اینجا لینکش را از طریق ویوی احراز
+        هویت‌شده نشون می‌دیم تا برای ادمین هم قابل دانلود بمونه.
+        """
+        if not obj.pk or not obj.pdf_file:
+            return '—'
+        url = reverse('tickets:download_ticket_pdf', args=[obj.pk])
+        return format_html('<a href="{}" target="_blank">دانلود PDF</a>', url)
+
+    pdf_file_display.short_description = 'فایل PDF'
 
 
 @admin.register(VIPQuota)

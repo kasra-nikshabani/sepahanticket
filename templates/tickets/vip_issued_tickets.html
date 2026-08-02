@@ -387,7 +387,7 @@
                                         <td>
                                             <div class="actions-cell">
                                                 {% if ticket.pdf_file %}
-                                                <a href="{{ ticket.pdf_file.url }}" target="_blank" class="btn-action"
+                                                <a href="{% url 'tickets:download_ticket_pdf' ticket.id %}" target="_blank" class="btn-action"
                                                    title="دانلود PDF">
                                                     <i class="fas fa-file-pdf"></i>
                                                 </a>
