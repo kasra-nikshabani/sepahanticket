@@ -264,7 +264,6 @@ class Match(models.Model):
     date_time = models.DateTimeField(verbose_name="تاریخ و ساعت برگزاری")
     is_active = models.BooleanField(default=True)
     created_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True)
-    total_capacity = models.IntegerField(default=0, verbose_name="ظرفیت کل")
     sold_tickets = models.IntegerField(default=0, verbose_name="تعداد بلیط‌های فروخته‌شده")
     # ===== انتخاب‌های رشته ورزشی =====
     SPORT_CHOICES = (
@@ -283,18 +282,6 @@ class Match(models.Model):
     )
 
     @property
-    def available_capacity(self):
-        """ظرفیت باقی‌مانده"""
-        return self.total_capacity - self.sold_tickets
-
-    @property
-    def occupancy_percent(self):
-        """درصد اشغال"""
-        if self.total_capacity == 0:
-            return 0
-        return round((self.sold_tickets / self.total_capacity) * 100, 1)
-
-    @property
     def status(self):
         """وضعیت مسابقه"""
         now = timezone.now()
@@ -304,24 +291,6 @@ class Match(models.Model):
             return 'live'
         else:
             return 'finished'
-
-    @property
-    def min_ticket_price(self):
-        """حداقل قیمت بلیط"""
-        # منطق محاسبه قیمت
-        pass
-
-    @property
-    def remaining_tickets(self):
-        """تعداد بلیط باقی‌مانده"""
-        # منطق محاسبه
-        pass
-
-    @property
-    def total_capacity(self):
-        """ظرفیت کل ورزشگاه"""
-        # منطق محاسبه
-        pass
 
     def __str__(self):
         return f"{self.home_team} vs {self.away_team} - {self.date_time}"
