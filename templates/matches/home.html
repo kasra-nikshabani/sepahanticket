@@ -38,29 +38,6 @@
         50% { background-position: 200% 0; }
     }
 
-    /* ===== شیر با عکس (سمت راست) ===== */
-    .match-card .lion-image {
-        position: absolute;
-        right: -30px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 220px;
-        height: auto;
-        opacity: 0.06;
-        z-index: 1;
-        pointer-events: none;
-        transition: all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
-        user-select: none;
-        filter: drop-shadow(0 0 30px rgba(212, 175, 55, 0.05));
-        border-radius: 20px;
-    }
-
-    .match-card:hover .lion-image {
-        opacity: 0.15;
-        transform: translateY(-50%) scale(1.08) rotate(-2deg);
-        filter: drop-shadow(0 0 50px rgba(212, 175, 55, 0.15));
-    }
-
     /* ===== افکت نور پس‌زمینه ===== */
     .match-card::after {
         content: '';
@@ -518,10 +495,6 @@
             font-size: 18px;
             min-width: 200px;
         }
-        .match-card .lion-image {
-            width: 160px;
-            right: -20px;
-        }
     }
 
     @media (max-width: 768px) {
@@ -559,11 +532,6 @@
             gap: 12px 24px;
         }
         .match-card-footer .info-item { font-size: 12px; }
-        .match-card .lion-image {
-            width: 120px;
-            right: -10px;
-            opacity: 0.05;
-        }
     }
 
     @media (max-width: 576px) {
@@ -602,7 +570,6 @@
             gap: 4px;
         }
         .match-card-footer .info-item i { font-size: 11px; }
-        .match-card .lion-image { display: none; }
     }
 
     @media (max-width: 400px) {
@@ -643,12 +610,6 @@
     <!-- ===== لیست مسابقات ===== -->
     {% for match in matches %}
     <div class="match-card" data-match-time="{{ match.date_time.isoformat }}">
-        <!-- ===== شیر با عکس (سمت راست) ===== -->
-        <img src="{% static 'img/lion-roar.png' %}"
-             alt="شیر غرش‌کننده"
-             class="lion-image"
-             loading="lazy">
-
         <!-- ===== هدر ===== -->
         <div class="match-card-header">
             <div class="match-meta">
