@@ -1,5 +1,6 @@
 # wallet/models.py
-from django.db import models
+from django.db import models, transaction
+from django.db.models import F
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -15,44 +16,55 @@ class Wallet(models.Model):
         return f"کیف پول {self.user.username} - {self.balance:,} ریال"
 
     def deduct_balance(self, amount, description="", reference_id="", tx_type="ticket_purchase"):
-        """کسر از کیف پول با ثبت تراکنش"""
+        """
+        کسر از کیف پول با ثبت تراکنش.
+
+        با یک UPDATE شرطی در سطح دیتابیس (نه خواندن self.balance در پایتون و
+        نوشتن دوباره) انجام می‌شود تا در برابر دو درخواست همزمان (مثلاً دو تب یا
+        دو دستگاه) امن باشد؛ در غیر این صورت هر دو می‌توانستند همان موجودی
+        قدیمی را ببینند و هر دو کسر را با موفقیت انجام دهند.
+        """
         if amount <= 0:
             return False
 
-        if self.balance < amount:
-            return False
+        with transaction.atomic():
+            updated = Wallet.objects.filter(pk=self.pk, balance__gte=amount).update(
+                balance=F('balance') - amount
+            )
+            if not updated:
+                return False
 
-        self.balance -= amount
-        self.save()
+            self.refresh_from_db(fields=['balance'])
 
-        Transaction.objects.create(
-            user=self.user,
-            amount=-amount,
-            transaction_type=tx_type,
-            description=description,
-            reference_id=reference_id,
-            balance_after=self.balance,
-            is_wallet=True,
-        )
+            Transaction.objects.create(
+                user=self.user,
+                amount=-amount,
+                transaction_type=tx_type,
+                description=description,
+                reference_id=reference_id,
+                balance_after=self.balance,
+                is_wallet=True,
+            )
         return True
 
     def add_balance(self, amount, description="", reference_id=""):
-        """افزایش موجودی کیف پول با ثبت تراکنش"""
+        """افزایش atomic موجودی کیف پول (همان دلیل deduct_balance) با ثبت تراکنش"""
         if amount <= 0:
             return False
 
-        self.balance += amount
-        self.save()
+        with transaction.atomic():
+            Wallet.objects.filter(pk=self.pk).update(balance=F('balance') + amount)
+            self.refresh_from_db(fields=['balance'])
 
-        Transaction.objects.create(
-            user=self.user,
-            amount=amount,
-            transaction_type='deposit',
-            description=description,
-            reference_id=reference_id,
-            balance_after=self.balance,
-            is_wallet=True,
-        )
+            Transaction.objects.create(
+                user=self.user,
+                amount=amount,
+                transaction_type='deposit',
+                description=description,
+                reference_id=reference_id,
+                balance_after=self.balance,
+                is_wallet=True,
+            )
         return True
 
 
