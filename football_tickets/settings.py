@@ -160,6 +160,16 @@ if not SMS_IR_API_KEY:
 FAN_API_USERNAME = os.getenv('FAN_API_USERNAME', '')
 FAN_API_PASSWORD = os.getenv('FAN_API_PASSWORD', '')
 
+# ===== گیت‌های اسکن بلیط =====
+GATE_USERS = {
+    'gate_class1': {'password': os.getenv('GATE_PASSWORD_CLASS1', ''), 'zone': 'class1'},
+    'gate_home': {'password': os.getenv('GATE_PASSWORD_HOME', ''), 'zone': 'home'},
+    'gate_away': {'password': os.getenv('GATE_PASSWORD_AWAY', ''), 'zone': 'away'},
+    'gate_women': {'password': os.getenv('GATE_PASSWORD_WOMEN', ''), 'zone': 'women'},
+    'gate_vip': {'password': os.getenv('GATE_PASSWORD_VIP', ''), 'zone': 'vip'},
+}
+GATE_TOKEN_TTL = int(os.getenv('GATE_TOKEN_TTL', str(12 * 60 * 60)))  # ۱۲ ساعت
+
 ZIBAL_MERCHANT_ID = os.getenv('ZIBAL_MERCHANT_ID', 'zibal')
 ZIBAL_SANDBOX = os.getenv('ZIBAL_SANDBOX', 'True') == 'True'
 ZIBAL_CALLBACK_URL = os.getenv('ZIBAL_CALLBACK_URL', 'http://ticket.sepahansc.com/payment/verify/')
