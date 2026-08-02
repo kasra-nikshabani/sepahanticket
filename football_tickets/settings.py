@@ -157,6 +157,9 @@ SMS_IR_LINE_NUMBER = os.getenv('SMS_IR_LINE_NUMBER', '1000xxxx')
 if not SMS_IR_API_KEY:
     raise ValueError("❌ SMS_IR_API_KEY not found in environment variables!")
 
+FAN_API_USERNAME = os.getenv('FAN_API_USERNAME', '')
+FAN_API_PASSWORD = os.getenv('FAN_API_PASSWORD', '')
+
 ZIBAL_MERCHANT_ID = os.getenv('ZIBAL_MERCHANT_ID', 'zibal')
 ZIBAL_SANDBOX = os.getenv('ZIBAL_SANDBOX', 'True') == 'True'
 ZIBAL_CALLBACK_URL = os.getenv('ZIBAL_CALLBACK_URL', 'http://ticket.sepahansc.com/payment/verify/')
