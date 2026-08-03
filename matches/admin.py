@@ -91,7 +91,9 @@ class MatchAdmin(admin.ModelAdmin):
             )
 
             occupied_seats = MatchSeat.objects.filter(match=match, is_available=False).count()
-            total_seats = Seat.objects.count()
+            total_seats = Seat.objects.filter(
+                row__block__stadium=match.stadium, row__block__is_active=True, row__is_active=True
+            ).count()
 
             report_data.append({
                 'match': match,
