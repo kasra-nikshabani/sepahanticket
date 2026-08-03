@@ -242,7 +242,7 @@ class MatchAdmin(admin.ModelAdmin):
         ws1.cell(row=3, column=2).font = Font(bold=True, color='006400')
         ws1.append([])
 
-        headers = ['شماره بلیط', 'کاربر', 'نام خریدار', 'کد ملی', 'قیمت (تومان)', 'تاریخ خرید']
+        headers = ['شماره بلیط', 'کاربر', 'نام خریدار', 'کد ملی', 'قیمت (ریال)', 'تاریخ خرید']
         ws1.append(headers)
         for cell in ws1[ws1.max_row]:
             cell.font = Font(bold=True)
@@ -321,7 +321,7 @@ class MatchAdmin(admin.ModelAdmin):
         ws.cell(row=3, column=2).font = Font(bold=True, color='B8860B')
         ws.append([])
 
-        headers = ['شماره بلیط', 'کاربر', 'نام خریدار', 'کد ملی', 'قیمت (تومان)', 'تاریخ تخصیص']
+        headers = ['شماره بلیط', 'کاربر', 'نام خریدار', 'کد ملی', 'قیمت (ریال)', 'تاریخ تخصیص']
         ws.append(headers)
         for cell in ws[ws.max_row]:
             cell.font = Font(bold=True)
@@ -478,7 +478,7 @@ class MatchAdmin(admin.ModelAdmin):
         ws1.cell(row=3, column=2).font = Font(bold=True, color='006400')
         ws1.append([])
 
-        headers = ['شماره بلیط', 'کاربر', 'نام خریدار', 'کد ملی', 'قیمت (تومان)', 'تاریخ خرید']
+        headers = ['شماره بلیط', 'کاربر', 'نام خریدار', 'کد ملی', 'قیمت (ریال)', 'تاریخ خرید']
         ws1.append(headers)
         for cell in ws1[ws1.max_row]:
             cell.font = Font(bold=True)
@@ -557,7 +557,7 @@ class MatchAdmin(admin.ModelAdmin):
         ws.cell(row=3, column=2).font = Font(bold=True, color='B8860B')
         ws.append([])
 
-        headers = ['شماره بلیط', 'کاربر', 'نام خریدار', 'کد ملی', 'قیمت (تومان)', 'تاریخ تخصیص']
+        headers = ['شماره بلیط', 'کاربر', 'نام خریدار', 'کد ملی', 'قیمت (ریال)', 'تاریخ تخصیص']
         ws.append(headers)
         for cell in ws[ws.max_row]:
             cell.font = Font(bold=True)
@@ -638,7 +638,7 @@ class MatchCostAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at']
 
     def amount_display(self, obj):
-        return f"{obj.amount:,} تومان"
+        return f"{obj.amount:,} ریال"
 
     amount_display.short_description = 'مبلغ'
 
@@ -651,7 +651,7 @@ class MatchRevenueAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at']
 
     def amount_display(self, obj):
-        return f"{obj.amount:,} تومان"
+        return f"{obj.amount:,} ریال"
 
     amount_display.short_description = 'مبلغ'
 
@@ -691,24 +691,24 @@ class MatchFinancialReportAdmin(admin.ModelAdmin):
     total_wallet_usage_display.short_description = 'مصرف از کیف پول'
 
     def total_ticket_revenue_display(self, obj):
-        return f"{obj.total_ticket_revenue:,} تومان"
+        return f"{obj.total_ticket_revenue:,} ریال"
 
     total_ticket_revenue_display.short_description = 'درآمد فروش بلیط'
 
     def total_costs_display(self, obj):
-        return f"{obj.total_costs:,} تومان"
+        return f"{obj.total_costs:,} ریال"
 
     total_costs_display.short_description = 'مجموع هزینه‌ها'
 
     def total_revenues_display(self, obj):
-        return f"{obj.total_revenues:,} تومان"
+        return f"{obj.total_revenues:,} ریال"
 
     total_revenues_display.short_description = 'درآمدهای اضافی'
 
     def net_profit_display(self, obj):
         color = 'green' if obj.net_profit >= 0 else 'red'
         return format_html(
-            '<span style="color: {}; font-weight: bold;">{} تومان</span>',
+            '<span style="color: {}; font-weight: bold;">{} ریال</span>',
             color,
             f"{obj.net_profit:,}"
         )

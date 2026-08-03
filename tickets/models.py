@@ -298,13 +298,13 @@ class Order(models.Model):
     order_number = models.CharField(max_length=50, unique=True, editable=False)
 
     # اطلاعات مالی
-    subtotal = models.BigIntegerField(default=0, help_text='مبلغ کل قبل از تخفیف (تومان)')
+    subtotal = models.BigIntegerField(default=0, help_text='مبلغ کل قبل از تخفیف (ریال)')
     discount_percent = models.IntegerField(default=0, help_text='درصد تخفیف')
-    discount_amount = models.BigIntegerField(default=0, help_text='مبلغ تخفیف (تومان)')
-    total_amount = models.BigIntegerField(default=0, help_text='مبلغ نهایی (تومان)')
+    discount_amount = models.BigIntegerField(default=0, help_text='مبلغ تخفیف (ریال)')
+    total_amount = models.BigIntegerField(default=0, help_text='مبلغ نهایی (ریال)')
 
     # اطلاعات کیف پول
-    wallet_amount = models.BigIntegerField(default=0, help_text='مبلغ پرداخت شده از کیف پول (تومان)')
+    wallet_amount = models.BigIntegerField(default=0, help_text='مبلغ پرداخت شده از کیف پول (ریال)')
     wallet_balance_before = models.BigIntegerField(default=0, help_text='موجودی کیف پول قبل از خرید')
     wallet_balance_after = models.BigIntegerField(default=0, help_text='موجودی کیف پول بعد از خرید')
 
@@ -337,7 +337,7 @@ class Order(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.order_number} - {self.user.username} - {self.total_amount:,} تومان"
+        return f"{self.order_number} - {self.user.username} - {self.total_amount:,} ریال"
 
     @property
     def ticket_count(self):

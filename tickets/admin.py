@@ -159,7 +159,7 @@ class OrderAdmin(admin.ModelAdmin):
         """نمایش مبلغ نهایی با رنگ مناسب"""
         color = '#28a745' if obj.payment_status == 'paid' else '#dc3545'
         return format_html(
-            '<span style="color: {}; font-weight: 600;">{} تومان</span>',
+            '<span style="color: {}; font-weight: 600;">{} ریال</span>',
             color,
             f"{obj.total_amount:,}"
         )
@@ -170,7 +170,7 @@ class OrderAdmin(admin.ModelAdmin):
         """نمایش مبلغ پرداخت شده از کیف پول"""
         if obj.wallet_amount > 0:
             return format_html(
-                '<span style="color: #17a2b8; font-weight: 600;">{} تومان</span>',
+                '<span style="color: #17a2b8; font-weight: 600;">{} ریال</span>',
                 f"{obj.wallet_amount:,}"
             )
         return "—"
@@ -181,7 +181,7 @@ class OrderAdmin(admin.ModelAdmin):
         """نمایش مبلغ تخفیف"""
         if obj.discount_amount > 0:
             return format_html(
-                '<span style="color: #D4AF37; font-weight: 600;">{} تومان ({}%)</span>',
+                '<span style="color: #D4AF37; font-weight: 600;">{} ریال ({}%)</span>',
                 f"{obj.discount_amount:,}",
                 obj.discount_percent
             )
@@ -241,7 +241,7 @@ class TransactionAdmin(admin.ModelAdmin):
 
     def amount_display(self, obj):
         return format_html(
-            '<span style="font-weight: 600;">{} تومان</span>',
+            '<span style="font-weight: 600;">{} ریال</span>',
             f"{obj.amount:,}"
         )
 

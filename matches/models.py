@@ -180,7 +180,7 @@ class Block(models.Model):
         max_digits=10,
         decimal_places=0,
         default=50000,
-        verbose_name="قیمت (تومان)"
+        verbose_name="قیمت (ریال)"
     )
     zone_type = models.CharField(
         max_length=10,

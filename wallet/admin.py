@@ -49,8 +49,8 @@ class TransactionAdmin(admin.ModelAdmin):
     )
 
     def amount_display(self, obj):
-        """نمایش مبلغ به تومان با جداکننده"""
-        return f"{obj.amount:,} تومان"
+        """نمایش مبلغ به ریال با جداکننده"""
+        return f"{obj.amount:,} ریال"
     amount_display.short_description = 'مبلغ'
 
     def get_queryset(self, request):
@@ -65,5 +65,5 @@ class WalletModelAdmin(admin.ModelAdmin):  # ← نام را تغییر دادی
     readonly_fields = ['created_at', 'updated_at']
 
     def balance_display(self, obj):
-        return f"{obj.balance:,} تومان"
+        return f"{obj.balance:,} ریال"
     balance_display.short_description = 'موجودی'
