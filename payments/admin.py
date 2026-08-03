@@ -95,7 +95,7 @@ class PaymentAdmin(admin.ModelAdmin):
             return '—'
 
         seat_pks = sorted({
-            key.split('_', 1)[1] for key in obj.buyer_info if '_' in key
+            key.rsplit('_', 1)[1] for key in obj.buyer_info if '_' in key
         })
         if not seat_pks:
             return format_html('<pre style="margin:0">{}</pre>', obj.buyer_info)
