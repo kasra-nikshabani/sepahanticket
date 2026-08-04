@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 def generate_otp_code():
     """تولید کد تصادفی ۵ رقمی"""
-    return str(random.randint(10000, 99999))  # ← ۵ رقمی
+    return str(random.randint(1000, 9999))  # ← ۴ رقمی
 
 
 # accounts/services/sms.py

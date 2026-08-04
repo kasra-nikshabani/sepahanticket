@@ -132,15 +132,13 @@ class PhoneLoginForm(forms.Form):
 # accounts/forms.py
 class OTPVerifyForm(forms.Form):
     otp_code = forms.CharField(
-        max_length=5,
-        min_length=5,  # ← تغییر به ۵
+        max_length=4,
+        min_length=4,
         label='کد تأیید',
-        widget=forms.TextInput(attrs={
-            'class': 'form-control form-control-lg text-center',
-            'placeholder': '۱۲۳۴۵',
-            'dir': 'ltr',
-            'style': 'font-size: 2rem; letter-spacing: 10px; font-weight: bold;',
-            'maxlength': '5'  # ← محدودیت ورودی
+        widget=forms.HiddenInput(attrs={
+            'id': 'id_otp_code',
+            'autocomplete': 'one-time-code',
+            'inputmode': 'numeric',
         })
     )
 
@@ -148,8 +146,8 @@ class OTPVerifyForm(forms.Form):
         code = self.cleaned_data['otp_code']
         if not code.isdigit():
             raise ValidationError('کد باید عددی باشد.')
-        if len(code) != 5:  # ← بررسی ۵ رقم
-            raise ValidationError('کد باید دقیقاً ۵ رقم باشد.')
+        if len(code) != 4:
+            raise ValidationError('کد باید دقیقاً ۴ رقم باشد.')
         return code
 
 

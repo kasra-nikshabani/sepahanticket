@@ -164,12 +164,12 @@ def resend_otp(request):
         messages.error(request, 'لطفاً ابتدا شماره تلفن را وارد کنید.')
         return redirect('accounts:phone_login')
 
-    # ===== محدودیت درخواست مجدد (هر ۲ دقیقه) =====
+    # ===== محدودیت درخواست مجدد (هر ۱ دقیقه) =====
     last_request = request.session.get('last_otp_request_time')
     if last_request:
         import time
-        if time.time() - last_request < 120:  # ۲ دقیقه
-            return JsonResponse({'status': 'error', 'message': '⏳ لطفاً ۲ دقیقه صبر کنید و دوباره تلاش کنید.'},
+        if time.time() - last_request < 60:  # ۱ دقیقه
+            return JsonResponse({'status': 'error', 'message': '⏳ لطفاً ۱ دقیقه صبر کنید و دوباره تلاش کنید.'},
                                 status=429)
 
     # حذف کدهای قبلی
