@@ -293,62 +293,31 @@
         margin-left: 4px;
     }
 
-    /* ===== تایمر ===== */
-    .timer-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 14px;
-        padding: 14px 20px;
-        background: linear-gradient(145deg, #f8f6f2, #f0ece6);
-        border-radius: 14px;
-        margin-bottom: 24px;
-        border: none;
-        box-shadow: inset 0 2px 6px rgba(0,0,0,0.02);
-    }
-
-    .timer-container .timer-icon {
-        color: #D4AF37;
-        font-size: 20px;
-        animation: spin 4s linear infinite;
-    }
-
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .timer-container .timer-text {
-        font-size: 14px;
-        color: #4a5a6a;
-        margin: 0;
-        font-weight: 500;
-    }
-
-    .timer-container .timer-value {
-        font-weight: 800;
-        font-size: 22px;
-        color: #1A1A2E;
-        min-width: 64px;
-        text-align: center;
-        direction: ltr;
-        font-feature-settings: "tnum";
-        background: #ffffff;
-        padding: 2px 12px;
-        border-radius: 8px;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-        transition: color 0.3s ease;
+    /* ===== دکمه‌ی ارسال مجدد (با تایمر داخلش) ===== */
+    .btn-resend {
         font-variant-numeric: tabular-nums;
     }
 
-    .timer-container .timer-value.warning {
-        color: #e74c3c;
-        animation: pulse-blink 0.8s ease-in-out infinite;
+    .btn-resend .countdown {
+        direction: ltr;
+        display: inline-block;
+        font-feature-settings: "tnum";
+    }
+
+    .btn-resend.counting {
+        cursor: not-allowed;
+    }
+
+    .btn-resend.ready {
+        border-color: #D4AF37;
+        color: #b8960f;
+        background: #fffdf7;
+        animation: pulse-blink 1.4s ease-in-out infinite;
     }
 
     @keyframes pulse-blink {
         0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.5; transform: scale(0.97); }
+        50% { opacity: 0.85; transform: scale(1.01); }
     }
 
     /* ===== دکمه‌ها ===== */
@@ -357,6 +326,11 @@
         flex-direction: column;
         gap: 14px;
         margin-top: 6px;
+    }
+
+    .otp-actions .btn-outline-secondary-custom,
+    .otp-actions .btn-outline-danger-custom {
+        width: 100%;
     }
 
     .btn-verify {
@@ -497,20 +471,6 @@
         color: #b05a5a;
     }
 
-    .otp-footer-links {
-        display: flex;
-        justify-content: center;
-        gap: 14px;
-        flex-wrap: wrap;
-        margin-top: 8px;
-    }
-
-    .otp-footer-links .btn-outline-secondary-custom,
-    .otp-footer-links .btn-outline-danger-custom {
-        flex: 0 1 auto;
-        min-width: 120px;
-    }
-
     #resendFeedback {
         font-size: 13px;
         min-height: 24px;
@@ -569,29 +529,9 @@
             height: 64px;
             font-size: 1.7rem;
         }
-        .timer-container {
-            padding: 12px 14px;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .timer-container .timer-value {
-            font-size: 19px;
-            min-width: 54px;
-        }
         .btn-verify {
             font-size: 15px;
             padding: 14px 18px;
-        }
-        .otp-footer-links {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 8px;
-        }
-        .otp-footer-links .btn-outline-secondary-custom,
-        .otp-footer-links .btn-outline-danger-custom {
-            width: 100%;
-            justify-content: center;
-            padding: 12px;
         }
     }
 
@@ -610,10 +550,6 @@
         }
         .otp-header h2 {
             font-size: 18px;
-        }
-        .timer-container .timer-value {
-            font-size: 17px;
-            min-width: 48px;
         }
     }
 </style>
@@ -642,7 +578,7 @@
             <p class="info-text">
                 کد <strong class="highlight">۴ رقمی</strong> ارسال‌شده را در کادر زیر وارد کنید.
                 <br>
-                <span style="font-size: 12px; color: #8a9aaa;">این کد تا ۵ دقیقه اعتبار دارد.</span>
+                <span style="font-size: 12px; color: #8a9aaa;">این کد تا ۱ دقیقه اعتبار دارد.</span>
             </p>
 
             <!-- ===== فرم ===== -->
@@ -674,26 +610,18 @@
                     <small class="hint-text"><i class="fas fa-info-circle"></i> کد را به‌صورت پیوسته وارد کنید</small>
                 </div>
 
-                <!-- ===== تایمر ===== -->
-                <div class="timer-container">
-                    <span class="timer-icon"><i class="fas fa-hourglass-half"></i></span>
-                    <span class="timer-text">زمان باقی‌مانده</span>
-                    <span class="timer-value" id="timerDisplay">05:00</span>
-                </div>
-
                 <!-- ===== دکمه‌ها ===== -->
                 <div class="otp-actions">
                     <button type="submit" class="btn-verify" id="verifyBtn">
                         <i class="fas fa-check-circle"></i> تأیید و ورود
                         <span class="spinner" id="btnSpinner"></span>
                     </button>
-                </div>
 
-                <div class="otp-footer-links">
-                    <button type="button" class="btn-outline-secondary-custom" id="resendBtn">
-                        <i class="fas fa-redo"></i> ارسال مجدد
+                    <button type="button" class="btn-outline-secondary-custom btn-resend" id="resendBtn">
+                        <i class="fas fa-redo"></i> <span id="resendBtnText">ارسال مجدد کد</span>
                     </button>
-                    <a href="{% url 'accounts:phone_login' %}" class="btn-outline-danger-custom">
+
+                    <a href="{% url 'accounts:phone_login' %}" class="btn-outline-danger-custom btn-full">
                         <i class="fas fa-times"></i> تغییر شماره
                     </a>
                 </div>
@@ -708,20 +636,20 @@
 <!-- ===== اسکریپت‌ها ===== -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const timerDisplay = document.getElementById('timerDisplay');
         const verifyBtn = document.getElementById('verifyBtn');
         const resendBtn = document.getElementById('resendBtn');
+        const resendBtnText = document.getElementById('resendBtnText');
         const otpInput = document.querySelector('input[name="otp_code"]');
         const otpBoxes = Array.from(document.querySelectorAll('.otp-box'));
         const form = document.getElementById('otpForm');
         const resendFeedback = document.getElementById('resendFeedback');
         const btnSpinner = document.getElementById('btnSpinner');
 
-        const TOTAL_SECONDS = parseInt('{{ remaining_time|default:300 }}');
-        let remaining = TOTAL_SECONDS > 0 ? TOTAL_SECONDS : 300;
-        let timerInterval = null;
-        let resendCooldown = 0;
-        let resendInterval = null;
+        // ===== تایمر یکپارچه‌ی ارسال مجدد (کد هم دقیقاً همین ۱ دقیقه اعتبار دارد) =====
+        const START_SECONDS = 60;
+        const INITIAL_REMAINING = parseInt('{{ remaining_time|default:60 }}');
+        let remaining = INITIAL_REMAINING > 0 ? INITIAL_REMAINING : 0;
+        let countdownInterval = null;
 
         function formatTime(seconds) {
             const mins = Math.floor(Math.max(0, seconds) / 60);
@@ -729,71 +657,46 @@
             return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         }
 
-        function updateTimer() {
-            timerDisplay.textContent = formatTime(remaining);
-            if (remaining <= 0) {
-                timerDisplay.textContent = '۰۰:۰۰';
-                timerDisplay.classList.add('warning');
-                verifyBtn.disabled = true;
-                verifyBtn.innerHTML = '<i class="fas fa-clock"></i> کد منقضی شد';
-                verifyBtn.style.opacity = '0.6';
-                if (timerInterval) clearInterval(timerInterval);
-            } else if (remaining < 60) {
-                timerDisplay.classList.add('warning');
+        function renderResendButton() {
+            if (remaining > 0) {
+                resendBtn.disabled = true;
+                resendBtn.classList.add('counting');
+                resendBtn.classList.remove('ready');
+                resendBtnText.innerHTML = `ارسال مجدد کد <span class="countdown">(${formatTime(remaining)})</span>`;
             } else {
-                timerDisplay.classList.remove('warning');
+                resendBtn.disabled = false;
+                resendBtn.classList.remove('counting');
+                resendBtn.classList.add('ready');
+                resendBtnText.textContent = 'ارسال مجدد کد';
             }
+        }
+
+        function startCountdown() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            renderResendButton();
+            countdownInterval = setInterval(function () {
+                remaining--;
+                if (remaining <= 0) {
+                    remaining = 0;
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                }
+                renderResendButton();
+            }, 1000);
         }
 
         if (remaining > 0) {
-            timerInterval = setInterval(function () {
-                remaining--;
-                updateTimer();
-                if (remaining <= 0) clearInterval(timerInterval);
-            }, 1000);
-            updateTimer();
+            startCountdown();
         } else {
-            timerDisplay.textContent = '۰۰:۰۰';
-            timerDisplay.classList.add('warning');
-            verifyBtn.disabled = true;
-            verifyBtn.innerHTML = '<i class="fas fa-clock"></i> کد منقضی شد';
-        }
-
-        function updateResendButton() {
-            if (resendCooldown > 0) {
-                resendBtn.disabled = true;
-                resendBtn.innerHTML = `<i class="fas fa-hourglass-half"></i> ${formatTime(resendCooldown)}`;
-                resendFeedback.innerHTML = `<span class="text-muted">⏳ لطفاً ${Math.ceil(resendCooldown)} ثانیه صبر کنید</span>`;
-                resendFeedback.style.display = 'block';
-            } else {
-                resendBtn.disabled = false;
-                resendBtn.innerHTML = '<i class="fas fa-redo"></i> ارسال مجدد';
-                resendFeedback.innerHTML = '';
-                resendFeedback.style.display = 'none';
-                if (resendInterval) {
-                    clearInterval(resendInterval);
-                    resendInterval = null;
-                }
-            }
+            renderResendButton();
         }
 
         resendBtn.addEventListener('click', function (e) {
             e.preventDefault();
             if (resendBtn.disabled) return;
 
-            resendCooldown = 60;
-            updateResendButton();
-
-            if (resendInterval) clearInterval(resendInterval);
-            resendInterval = setInterval(function () {
-                resendCooldown--;
-                updateResendButton();
-                if (resendCooldown <= 0) {
-                    clearInterval(resendInterval);
-                    resendInterval = null;
-                    updateResendButton();
-                }
-            }, 1000);
+            resendFeedback.innerHTML = '';
+            resendFeedback.style.display = 'none';
 
             fetch("{% url 'accounts:resend_otp' %}", {
                 method: 'POST',
@@ -806,17 +709,8 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    remaining = TOTAL_SECONDS;
-                    clearInterval(timerInterval);
-                    timerInterval = setInterval(function () {
-                        remaining--;
-                        updateTimer();
-                        if (remaining <= 0) clearInterval(timerInterval);
-                    }, 1000);
-                    updateTimer();
-                    verifyBtn.disabled = false;
-                    verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> تأیید و ورود';
-                    verifyBtn.style.opacity = '1';
+                    remaining = START_SECONDS;
+                    startCountdown();
                     resendFeedback.innerHTML = `<span class="text-success">✅ ${data.message}</span>`;
                     resendFeedback.style.display = 'block';
                 } else {

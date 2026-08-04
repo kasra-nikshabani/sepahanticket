@@ -123,13 +123,13 @@ def create_otp(phone_number):
     print(f"📱 NEW OTP GENERATED")
     print(f"📞 Phone: {phone_number}")
     print(f"🔑 Code: {code}")
-    print(f"⏰ Expires in 5 minutes")
+    print(f"⏰ Expires in 1 minute")
     print(f"{'=' * 50}\n")
 
     otp = OTP.objects.create(
         phone_number=phone_number,
         code=code,
-        expires_at=timezone.now() + timezone.timedelta(minutes=5)
+        expires_at=timezone.now() + timezone.timedelta(minutes=1)
     )
 
     # ارسال پیامک
