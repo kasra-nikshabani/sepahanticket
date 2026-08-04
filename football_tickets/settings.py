@@ -15,17 +15,26 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
     'http://93.126.18.49',
     'http://ticket.sepahansc.com',  # اگر دامنه دارید
+    'https://ticket.sepahansc.com',
 ]
 DEBUG = False
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+
+# nginx به‌عنوان reverse proxy، SSL رو خودش terminate می‌کنه و این هدر رو
+# ست می‌کنه (proxy_set_header X-Forwarded-Proto $scheme;) -- بدون این،
+# جنگو هیچ‌وقت request.is_secure() رو True نمی‌بینه چون خودِ اتصال
+# nginx<->gunicorn روی http هست.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # settings.py
 # ===== تنظیمات سشن =====
 SESSION_COOKIE_AGE = 3600 * 24 * 7
-SESSION_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_SAVE_EVERY_REQUEST = True  # ← مهم
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SECURE = True
 
 INSTALLED_APPS = [
     'django.contrib.admin',
