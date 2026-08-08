@@ -199,6 +199,10 @@ class Ticket(models.Model):
     def __str__(self):
         return f"بلیط {self.ticket_number} - {self.user.username}"
 
+    class Meta:
+        verbose_name = "بلیط"
+        verbose_name_plural = "بلیط‌ها"
+
 
 class VIPQuota(models.Model):
     """تخصیص ظرفیت صدور بلیط به کاربران ویژه برای هر مسابقه"""

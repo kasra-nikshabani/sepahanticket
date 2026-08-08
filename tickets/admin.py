@@ -31,24 +31,33 @@ def assign_to_vip(modeladmin, request, queryset):
 
 @admin.register(Ticket)
 class TicketAdmin(admin.ModelAdmin):
-    list_display = ('ticket_number', 'user', 'match', 'full_name', 'status', 'is_admin_assigned', 'is_used', 'used_at')
-    list_filter = ('status', 'is_admin_assigned', 'is_used', 'match')
-    search_fields = ('ticket_number', 'user__username', 'full_name', 'national_code')
+    list_display = (
+        'ticket_number', 'match', 'user', 'full_name', 'price_display',
+        'status', 'is_admin_assigned', 'is_used', 'purchase_date',
+    )
+    list_filter = ('match', 'status', 'is_admin_assigned', 'is_used')
+    search_fields = ('ticket_number', 'user__username', 'user__phone_number', 'full_name', 'national_code')
     actions = [assign_to_vip]
-    readonly_fields = ('ticket_number', 'qr_code', 'pdf_file_display', 'used_at')
+    readonly_fields = ('ticket_number', 'qr_code', 'pdf_file_display', 'used_at', 'purchase_date')
     fieldsets = (
         ('اطلاعات اصلی', {
-            'fields': ('user', 'match', 'seat', 'full_name', 'national_code')
+            'fields': ('user', 'match', 'seat', 'full_name', 'national_code', 'price')
         }),
         ('وضعیت', {
-            'fields': ('status', 'is_admin_assigned', 'is_used', 'used_at')
+            'fields': ('status', 'is_admin_assigned', 'is_used', 'used_at', 'purchase_date')
         }),
         ('فایل‌ها', {
             'fields': ('qr_code', 'pdf_file_display', 'ticket_number')
         }),
     )
-    list_per_page = 20
-    ordering = ('-purchase_date',)
+    list_per_page = 30
+    list_select_related = ('match', 'user')
+    ordering = ('match', '-purchase_date')
+    date_hierarchy = 'purchase_date'
+
+    def price_display(self, obj):
+        return f"{obj.price:,} ریال"
+    price_display.short_description = 'قیمت'
 
     def pdf_file_display(self, obj):
         """
