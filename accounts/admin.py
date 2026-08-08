@@ -1,7 +1,7 @@
 # accounts/admin.py
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User
+from .models import User, SiteVisit
 
 
 @admin.register(User)
@@ -52,3 +52,20 @@ class CustomUserAdmin(UserAdmin):
             return '—'
         return obj.ticket_set.count()
     tickets_count.short_description = 'تعداد بلیط'
+
+
+@admin.register(SiteVisit)
+class SiteVisitAdmin(admin.ModelAdmin):
+    """لاگ خام بازدیدها -- فقط برای مرور، از پنل قابل افزودن/ویرایش نیست."""
+    list_display = ('visitor_id', 'user', 'ip_address', 'visited_at')
+    list_filter = ('visited_at',)
+    search_fields = ('visitor_id', 'ip_address', 'user__username', 'user__phone_number')
+    date_hierarchy = 'visited_at'
+    ordering = ('-visited_at',)
+    list_per_page = 50
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False

@@ -56,3 +56,23 @@ class OTP(models.Model):
 
     def __str__(self):
         return f"{self.phone_number} - {self.code}"
+
+
+class SiteVisit(models.Model):
+    """
+    یک ردیف به‌ازای هر بازدیدکننده‌ی یکتا در هر ۲۴ ساعت (نه هر درخواست؛
+    VisitTrackingMiddleware با یک فلگ در Redis از نوشتن تکراری در همین
+    بازه جلوگیری می‌کند تا زیر بار زیاد فشار اضافه به دیتابیس نیاید).
+    """
+    visitor_id = models.CharField(max_length=64, db_index=True, help_text="user:<id> یا ip:<آدرس>")
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user = models.ForeignKey('accounts.User', null=True, blank=True, on_delete=models.SET_NULL)
+    visited_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-visited_at']
+        verbose_name = "بازدید سایت"
+        verbose_name_plural = "بازدیدهای سایت"
+
+    def __str__(self):
+        return f"{self.visitor_id} - {self.visited_at:%Y-%m-%d %H:%M}"

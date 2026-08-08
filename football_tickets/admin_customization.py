@@ -52,3 +52,55 @@ def _pinned_get_app_list(self, request, app_label=None):
 
 
 default_admin_site.get_app_list = types.MethodType(_pinned_get_app_list, default_admin_site)
+
+
+# ============================================================
+#  شمارنده‌ی «کاربران آنلاین» و «بازدید ۲۴ ساعت گذشته» در صفحه‌ی اصلی ادمین
+# ============================================================
+_original_index = default_admin_site.__class__.index
+
+
+def _count_online_visitors():
+    """
+    تعداد کلیدهای online_visitor:* در Redis را می‌شمارد (بدون گرفتن خود
+    مقادیر -- SCAN سبک است و برخلاف KEYS بلاک‌کننده نیست).
+    """
+    from django.core.cache import cache
+
+    try:
+        client = cache.client.get_client(write=False)
+    except Exception:
+        return None
+
+    try:
+        pattern = cache.make_key('online_visitor:*')
+    except Exception:
+        pattern = 'online_visitor:*'
+
+    try:
+        return sum(1 for _ in client.scan_iter(match=pattern, count=1000))
+    except Exception:
+        return None
+
+
+def _count_visits_24h():
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from accounts.models import SiteVisit
+
+    try:
+        return SiteVisit.objects.filter(visited_at__gte=timezone.now() - timedelta(hours=24)).count()
+    except Exception:
+        return None
+
+
+def _custom_index(self, request, extra_context=None):
+    extra_context = extra_context or {}
+    extra_context['online_visitors_count'] = _count_online_visitors()
+    extra_context['visits_24h_count'] = _count_visits_24h()
+    return _original_index(self, request, extra_context)
+
+
+default_admin_site.index = types.MethodType(_custom_index, default_admin_site)
