@@ -151,10 +151,26 @@ class OTPVerifyForm(forms.Form):
         return code
 
 
+PERSIAN_NAME_RE = re.compile(r'^[؀-ۿ‌ ]+$')
+
+
 class PhoneRegisterForm(forms.Form):
-    """فرم ثبت‌نام با شماره تلفن (اختیاری - در صورت نیاز)"""
+    """فرم ثبت‌نام با شماره تلفن"""
+    first_name = forms.CharField(
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'نام'}),
+        label="نام"
+    )
+    last_name = forms.CharField(
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'نام خانوادگی'}),
+        label="نام خانوادگی"
+    )
     phone_number = forms.CharField(
         max_length=11,
+        required=True,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'شماره موبایل را وارد کنید',
@@ -163,11 +179,20 @@ class PhoneRegisterForm(forms.Form):
         }),
         label="شماره موبایل"
     )
-    full_name = forms.CharField(
-        max_length=200,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'نام و نام خانوادگی'}),
-        label="نام و نام خانوادگی"
-    )
+
+    def _clean_persian_name(self, field_name, label):
+        value = (self.cleaned_data.get(field_name) or '').strip()
+        if not value:
+            raise ValidationError(f'{label} را وارد کنید.')
+        if not PERSIAN_NAME_RE.match(value):
+            raise ValidationError(f'{label} باید فقط با حروف فارسی نوشته شود.')
+        return value
+
+    def clean_first_name(self):
+        return self._clean_persian_name('first_name', 'نام')
+
+    def clean_last_name(self):
+        return self._clean_persian_name('last_name', 'نام خانوادگی')
 
     def clean_phone_number(self):
         phone = self.cleaned_data.get('phone_number')

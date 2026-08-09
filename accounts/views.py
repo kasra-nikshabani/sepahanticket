@@ -119,6 +119,32 @@ def otp_verify(request):
                     return response
 
                 except User.DoesNotExist:
+                    pending = request.session.get('pending_registration')
+                    if pending and pending.get('phone_number') == phone_number:
+                        user = User.objects.create_user(
+                            username=phone_number,
+                            phone_number=phone_number,
+                            first_name=pending['first_name'],
+                            last_name=pending['last_name'],
+                            is_active=True,
+                            user_type='normal',
+                            password=None,
+                        )
+                        user.is_phone_verified = True
+                        user.save(update_fields=['is_phone_verified'])
+                        otp.use()
+
+                        user.backend = 'accounts.backends.PhoneBackend'
+                        login(request, user)
+
+                        request.session['user_type'] = user.user_type
+                        request.session.pop('otp_phone', None)
+                        request.session.pop('pending_registration', None)
+                        messages.success(request, f'خوش آمدید {user.get_full_name()}!')
+
+                        response = redirect(request.GET.get('next', 'matches:home'))
+                        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                        return response
                     messages.error(request, 'کاربری با این شماره وجود ندارد.')
             else:
                 try:
@@ -203,24 +229,23 @@ def phone_register(request):
         form = PhoneRegisterForm(request.POST)
         if form.is_valid():
             phone_number = form.cleaned_data['phone_number']
-            full_name = form.cleaned_data['full_name']
+            first_name = form.cleaned_data['first_name']
+            last_name = form.cleaned_data['last_name']
 
             if User.objects.filter(phone_number=phone_number).exists():
                 messages.error(request, 'این شماره تلفن قبلاً ثبت شده است.')
                 return render(request, 'accounts/phone_register.html', {'form': form})
 
             try:
-                # ایجاد کاربر معمولی با شماره تلفن (بدون رمز عبور)
-                user = User.objects.create_user(
-                    username=phone_number,
-                    phone_number=phone_number,
-                    first_name=full_name,
-                    is_active=False,
-                    user_type='normal',
-                    password=None  # بدون رمز عبور
-                )
+                # حساب کاربری فقط بعد از تأیید موفق کد OTP ساخته می‌شود
+                # (تا کاربرِ ثبت‌نامِ ناتمام در دیتابیس باقی نماند)
                 create_otp(phone_number)
                 request.session['otp_phone'] = phone_number
+                request.session['pending_registration'] = {
+                    'phone_number': phone_number,
+                    'first_name': first_name,
+                    'last_name': last_name,
+                }
                 messages.success(request, f'✅ کد تأیید به شماره {phone_number} ارسال شد.')
                 return redirect('accounts:otp_verify')
             except Exception as e:

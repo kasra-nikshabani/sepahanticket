@@ -129,7 +129,9 @@ SEAT_RESERVATION_TIMEOUT = int(os.getenv('SEAT_RESERVATION_TIMEOUT', '600'))
 AUTH_PASSWORD_VALIDATORS = []
 
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+# داده‌ها همچنان به‌صورت UTC در دیتابیس ذخیره می‌شوند (USE_TZ=True)؛ فقط
+# نمایش تاریخ/ساعت (پنل ادمین، قالب‌ها و ...) با ساعت تهران محاسبه می‌شود.
+TIME_ZONE = 'Asia/Tehran'
 USE_I18N = True
 USE_TZ = True
 

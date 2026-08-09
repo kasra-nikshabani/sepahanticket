@@ -290,18 +290,36 @@
             <form method="post" novalidate>
                 {% csrf_token %}
 
-                <!-- نام و نام خانوادگی -->
+                <!-- نام -->
                 <div class="form-group">
-                    <label><i class="fas fa-user label-icon"></i> نام و نام خانوادگی</label>
+                    <label><i class="fas fa-user label-icon"></i> نام</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-id-card"></i></span>
-                        <input type="text" name="full_name" class="form-control"
-                               placeholder="نام و نام خانوادگی خود را وارد کنید" required>
+                        <input type="text" name="first_name" class="form-control persian-name-input"
+                               placeholder="نام خود را به فارسی وارد کنید"
+                               value="{{ form.first_name.value|default:'' }}" required>
                     </div>
-                    {% if form.full_name.errors %}
+                    {% if form.first_name.errors %}
                         <div class="error-message">
                             <i class="fas fa-exclamation-circle"></i>
-                            {% for error in form.full_name.errors %}{{ error }}{% endfor %}
+                            {% for error in form.first_name.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- نام خانوادگی -->
+                <div class="form-group">
+                    <label><i class="fas fa-user label-icon"></i> نام خانوادگی</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                        <input type="text" name="last_name" class="form-control persian-name-input"
+                               placeholder="نام خانوادگی خود را به فارسی وارد کنید"
+                               value="{{ form.last_name.value|default:'' }}" required>
+                    </div>
+                    {% if form.last_name.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {% for error in form.last_name.errors %}{{ error }}{% endfor %}
                         </div>
                     {% endif %}
                 </div>
@@ -353,16 +371,40 @@
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.querySelector('form');
         const phoneInput = document.querySelector('input[name="phone_number"]');
+        const nameInputs = document.querySelectorAll('.persian-name-input');
+        const persianPattern = /^[؀-ۿ‌ ]+$/;
 
         // محدود کردن ورودی شماره موبایل به عدد
         phoneInput.addEventListener('input', function() {
             this.value = this.value.replace(/\D/g, '').slice(0, 11);
         });
 
+        // محدود کردن نام/نام‌خانوادگی به حروف فارسی
+        nameInputs.forEach(function(input) {
+            input.addEventListener('input', function() {
+                this.value = this.value.replace(/[^؀-ۿ‌ ]/g, '');
+                this.classList.remove('is-invalid');
+            });
+        });
+
         // اعتبارسنجی قبل از ارسال
         form.addEventListener('submit', function(e) {
             const phone = phoneInput.value;
             const phonePattern = /^09[0-9]{9}$/;
+            let ok = true;
+
+            nameInputs.forEach(function(input) {
+                if (!persianPattern.test(input.value.trim())) {
+                    input.classList.add('is-invalid');
+                    ok = false;
+                }
+            });
+
+            if (!ok) {
+                e.preventDefault();
+                alert('⚠️ نام و نام خانوادگی باید فقط با حروف فارسی وارد شود.');
+                return;
+            }
 
             if (!phonePattern.test(phone)) {
                 e.preventDefault();

@@ -57,12 +57,23 @@ class CustomUserAdmin(UserAdmin):
 @admin.register(SiteVisit)
 class SiteVisitAdmin(admin.ModelAdmin):
     """لاگ خام بازدیدها -- فقط برای مرور، از پنل قابل افزودن/ویرایش نیست."""
-    list_display = ('visitor_id', 'user', 'ip_address', 'visited_at')
+    list_display = ('visitor_display', 'ip_address', 'visited_at')
     list_filter = ('visited_at',)
-    search_fields = ('visitor_id', 'ip_address', 'user__username', 'user__phone_number')
+    search_fields = (
+        'visitor_id', 'ip_address',
+        'user__username', 'user__phone_number', 'user__first_name', 'user__last_name',
+    )
     date_hierarchy = 'visited_at'
     ordering = ('-visited_at',)
     list_per_page = 50
+    list_select_related = ('user',)
+
+    def visitor_display(self, obj):
+        if obj.user_id:
+            return obj.user.get_full_name() or obj.visitor_id
+        return obj.visitor_id
+    visitor_display.short_description = 'بازدیدکننده'
+    visitor_display.admin_order_field = 'user__first_name'
 
     def has_add_permission(self, request):
         return False
