@@ -14,6 +14,7 @@ SESSION_SAVE_EVERY_REQUEST را خاموش نگه داشته تا نوشتن ا�
   بازه‌ی ۲۴ ساعته (با یک فلگ در Redis از نوشتن‌های تکراری جلوگیری می‌شود).
 """
 from django.core.cache import cache
+from django.shortcuts import render
 
 ONLINE_TTL = 300  # ۵ دقیقه -> «الان آنلاینه»
 VISIT_DEDUPE_TTL = 60 * 60 * 24  # ۲۴ ساعت -> حداکثر یک ردیف دیتابیس در این بازه
@@ -53,3 +54,31 @@ class VisitTrackingMiddleware:
             ip_address=request.META.get('HTTP_X_REAL_IP') or request.META.get('REMOTE_ADDR'),
             user=request.user if request.user.is_authenticated else None,
         )
+
+
+# ============================================================
+#  مسدودسازی/بازکردن آی‌پی‌های خارج از ایران -- قابل کنترل زنده از پنل ادمین
+# ============================================================
+# nginx برای هر درخواست هدر X-Iran-IP رو ۰ یا ۱ می‌فرسته (بر اساس دیتابیس
+# CIDR کشورها که خودِ nginx نگه می‌داره). این هدر فقط وقتی قابل‌اعتماده که
+# gunicorn فقط از طریق nginx در دسترس باشه (روی 127.0.0.1 بایند شده، نه
+# 0.0.0.0)، وگرنه یه کلاینت می‌تونست مستقیم به gunicorn وصل بشه و این هدر رو
+# جعل کنه. تصمیم مسدودسازی/عدم مسدودسازی از روی SiteSettings.block_foreign_ips
+# گرفته می‌شه که ادمین از پنل جنگو (بدون نیاز به دسترسی سرور) روشن/خاموشش می‌کنه.
+GEO_EXEMPT_PREFIXES = ('/admin/',)
+
+
+class GeoAccessMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.path.startswith(GEO_EXEMPT_PREFIXES):
+            return self.get_response(request)
+
+        from .models import SiteSettings
+        if SiteSettings.get_solo().block_foreign_ips:
+            if request.META.get('HTTP_X_IRAN_IP') != '1':
+                return render(request, 'accounts/geo_blocked.html', status=403)
+
+        return self.get_response(request)

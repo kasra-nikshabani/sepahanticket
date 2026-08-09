@@ -1,7 +1,9 @@
 # accounts/admin.py
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, SiteVisit
+from django.shortcuts import redirect
+from django.urls import reverse
+from .models import User, SiteVisit, SiteSettings
 
 
 @admin.register(User)
@@ -80,3 +82,24 @@ class SiteVisitAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+
+@admin.register(SiteSettings)
+class SiteSettingsAdmin(admin.ModelAdmin):
+    """
+    تنظیمات سراسری سایت (فعلاً فقط سوییچ مسدودسازی آی‌پی‌های خارج از ایران).
+    فقط یک ردیف (singleton) وجود داره؛ کلیک روی این آیتم توی سایدبار
+    مستقیم می‌بره به همون یک فرم ویرایش، بدون نیاز به رفتن توی یه لیست.
+    """
+    fields = ('block_foreign_ips', 'updated_at')
+    readonly_fields = ('updated_at',)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        obj = SiteSettings.get_solo()
+        return redirect(reverse('admin:accounts_sitesettings_change', args=[obj.pk]))

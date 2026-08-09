@@ -58,6 +58,47 @@ class OTP(models.Model):
         return f"{self.phone_number} - {self.code}"
 
 
+SITE_SETTINGS_CACHE_KEY = 'site_settings:singleton'
+
+
+class SiteSettings(models.Model):
+    """
+    تنظیمات سراسری سایت که ادمین بدون نیاز به دسترسی به سرور از پنل ادمین
+    جنگو تغییرشون می‌ده. فقط یک ردیف (singleton، pk=1) وجود داره.
+    """
+    block_foreign_ips = models.BooleanField(
+        default=True,
+        verbose_name="مسدودسازی آی‌پی‌های خارج از ایران",
+        help_text="در صورت فعال بودن، فقط بازدیدکننده‌هایی با آی‌پی ایران می‌توانند "
+                   "سایت را ببینند (پنل ادمین از این قانون همیشه مستثناست). "
+                   "با غیرفعال کردن این گزینه، آی‌پی‌های خارج از ایران هم اجازه‌ی "
+                   "اتصال پیدا می‌کنند.",
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "تنظیمات سایت"
+        verbose_name_plural = "تنظیمات سایت"
+
+    def __str__(self):
+        return "تنظیمات سایت"
+
+    def save(self, *args, **kwargs):
+        from django.core.cache import cache
+        self.pk = 1
+        super().save(*args, **kwargs)
+        cache.delete(SITE_SETTINGS_CACHE_KEY)
+
+    @classmethod
+    def get_solo(cls):
+        from django.core.cache import cache
+        obj = cache.get(SITE_SETTINGS_CACHE_KEY)
+        if obj is None:
+            obj, _ = cls.objects.get_or_create(pk=1)
+            cache.set(SITE_SETTINGS_CACHE_KEY, obj, 30)
+        return obj
+
+
 class SiteVisit(models.Model):
     """
     یک ردیف به‌ازای هر بازدیدکننده‌ی یکتا در هر ۲۴ ساعت (نه هر درخواست؛
