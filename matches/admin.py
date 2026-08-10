@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.core.paginator import Paginator
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from django.urls import path, reverse
@@ -11,6 +12,56 @@ from openpyxl.styles import Font, Alignment
 # ===== ایمپورت مدل‌ها (با اضافه کردن Block) =====
 from .models import Match, Row, Seat, Stadium, MatchSeat, Block
 from tickets.models import Ticket
+
+
+def _write_ticket_sheet(wb, sheet_title, report_title, amount_label, qs):
+    """یک شیت اکسل با عنوان، خلاصه (مجموع مبلغ + تعداد کل) و جدول بلیط‌ها می‌سازد."""
+    ws = wb.create_sheet(sheet_title[:31])
+    total_amount = sum(t.seat.row.block.price for t in qs if t.seat and t.seat.row and t.seat.row.block)
+    total_count = qs.count()
+
+    ws.append([report_title])
+    ws.merge_cells('A1:F1')
+    ws['A1'].font = Font(bold=True, size=14)
+    ws['A1'].alignment = Alignment(horizontal='center')
+    ws.append([])
+    ws.append([amount_label, total_amount, '', 'تعداد کل بلیط:', total_count, ''])
+    ws.cell(row=3, column=1).font = Font(bold=True)
+    ws.cell(row=3, column=2).font = Font(bold=True, color='006400')
+    ws.cell(row=3, column=4).font = Font(bold=True)
+    ws.cell(row=3, column=5).font = Font(bold=True, color='006400')
+    ws.append([])
+
+    headers = ['شماره بلیط', 'کاربر', 'نام خریدار', 'کد ملی', 'قیمت (ریال)', 'تاریخ']
+    ws.append(headers)
+    for cell in ws[ws.max_row]:
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal='center')
+
+    for t in qs:
+        ws.append([
+            t.ticket_number, t.user.username, t.full_name, t.national_code,
+            t.seat.row.block.price if t.seat and t.seat.row and t.seat.row.block else 0,
+            t.purchase_date.strftime('%Y/%m/%d %H:%M') if t.purchase_date else '',
+        ])
+
+    for col in ['A', 'B', 'C', 'D', 'E', 'F']:
+        ws.column_dimensions[col].width = 16
+
+    return total_amount, total_count
+
+
+def _match_zone_categories(sold_tickets_qs):
+    """بلیط‌های فروخته‌شده‌ی یک مسابقه را بر اساس دسته‌بندی جایگاه (میزبان/میهمان/بانوان/کلاس ۱/VIP) تفکیک می‌کند."""
+    return [
+        ('میزبان', sold_tickets_qs.filter(seat__row__block__zone_type='home')),
+        ('میهمان', sold_tickets_qs.filter(seat__row__block__zone_type='away')),
+        ('بانوان', sold_tickets_qs.filter(seat__row__block__zone_type='women')),
+        ('کلاس ۱', sold_tickets_qs.filter(
+            Q(seat__row__block__zone_type='class1') | Q(seat__row__block__is_class1=True))),
+        ('VIP', sold_tickets_qs.filter(
+            Q(seat__row__block__zone_type='vip') | Q(seat__row__block__is_vip=True))),
+    ]
 
 
 # ============================================================
@@ -68,6 +119,9 @@ class MatchAdmin(admin.ModelAdmin):
         custom_urls = [
             path('export/<int:match_id>/', self.export_tickets_view, name='export_tickets'),
             path('export-vip/<int:match_id>/', self.export_vip_tickets_view, name='export_vip_tickets'),
+            path('export-categorized/<int:match_id>/', self.export_categorized_tickets_view,
+                 name='export_categorized_tickets'),
+            path('export-all/<int:match_id>/', self.export_all_tickets_view, name='export_all_tickets'),
             path('report/', self.report_view, name='matches_report'),
             path('report/<int:match_id>/', self.match_report_view, name='match_report'),
         ]
@@ -113,237 +167,6 @@ class MatchAdmin(admin.ModelAdmin):
             'title': 'گزارش کلی مسابقات',
         }
         return TemplateResponse(request, 'admin/matches/report.html', context)
-
-    def match_report_view(self, request, match_id):
-        match = get_object_or_404(Match, id=match_id)
-        sold_tickets = Ticket.objects.filter(match=match, status='paid')
-        vip_tickets = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued'])
-
-        total_sold = sold_tickets.count()
-        total_vip = vip_tickets.count()
-        total_tickets = total_sold + total_vip
-
-        sold_revenue = sum(
-            t.seat.row.block.price for t in sold_tickets
-            if t.seat and t.seat.row and t.seat.row.block
-        )
-        vip_revenue = sum(
-            t.seat.row.block.price for t in vip_tickets
-            if t.seat and t.seat.row and t.seat.row.block
-        )
-
-        match_seats = MatchSeat.objects.filter(match=match)
-        total_match_seats = match_seats.count()
-        occupied = match_seats.filter(is_available=False).count()
-        available = total_match_seats - occupied
-
-        # ===== اصلاح بخش block_set =====
-        # استفاده از روش جایگزین برای دریافت بلوک‌ها
-        try:
-            blocks = match.stadium.block_set.all()
-        except AttributeError:
-            # اگر block_set وجود نداشت، از related_name='blocks' استفاده کنید
-            blocks = match.stadium.blocks.all() if hasattr(match.stadium, 'blocks') else Block.objects.filter(
-                stadium=match.stadium)
-
-        block_stats = []
-        for block in blocks:
-            block_seats = MatchSeat.objects.filter(match=match, seat__row__block=block)
-            block_total = block_seats.count()
-            block_occupied = block_seats.filter(is_available=False).count()
-            block_available = block_total - block_occupied
-            block_stats.append({
-                'block': block,
-                'total': block_total,
-                'occupied': block_occupied,
-                'available': block_available,
-                'occupancy': round((block_occupied / block_total * 100) if block_total > 0 else 0, 1),
-            })
-
-        context = {
-            'match': match,
-            'total_sold': total_sold,
-            'total_vip': total_vip,
-            'total_tickets': total_tickets,
-            'sold_revenue': sold_revenue,
-            'vip_revenue': vip_revenue,
-            'total_revenue': sold_revenue,
-            'total_match_seats': total_match_seats,
-            'occupied': occupied,
-            'available': available,
-            'occupancy_percent': round((occupied / total_match_seats * 100) if total_match_seats > 0 else 0, 1),
-            'block_stats': block_stats,
-            'title': f'گزارش مسابقه {match.home_team} vs {match.away_team}',
-        }
-        return TemplateResponse(request, 'admin/matches/match_report.html', context)
-
-    def change_view(self, request, object_id, form_url='', extra_context=None):
-        extra_context = extra_context or {}
-        match = get_object_or_404(Match, pk=object_id)
-
-        sold_tickets_qs = Ticket.objects.filter(match=match, status='paid').order_by('-purchase_date')
-        vip_tickets_qs = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued']).order_by(
-            '-purchase_date')
-
-        sold_total = sum(
-            t.seat.row.block.price for t in sold_tickets_qs
-            if t.seat and t.seat.row and t.seat.row.block
-        )
-        vip_total = sum(
-            t.seat.row.block.price for t in vip_tickets_qs
-            if t.seat and t.seat.row and t.seat.row.block
-        )
-
-        per_page = 10
-        sold_page_num = request.GET.get('sold_page', 1)
-        vip_page_num = request.GET.get('vip_page', 1)
-
-        sold_paginator = Paginator(sold_tickets_qs, per_page)
-        sold_page = sold_paginator.get_page(sold_page_num)
-
-        vip_paginator = Paginator(vip_tickets_qs, per_page)
-        vip_page = vip_paginator.get_page(vip_page_num)
-
-        extra_context.update({
-            'match': match,
-            'sold_page': sold_page,
-            'vip_page': vip_page,
-            'sold_total': sold_total,
-            'vip_total': vip_total,
-            'match_id': object_id,
-            'sold_page_range': sold_paginator.page_range,
-            'vip_page_range': vip_paginator.page_range,
-            'current_sold_page': sold_page.number,
-            'current_vip_page': vip_page.number,
-        })
-
-        return super().change_view(request, object_id, form_url, extra_context=extra_context)
-
-    def export_tickets_view(self, request, match_id):
-        match = get_object_or_404(Match, pk=match_id)
-        sold_tickets = Ticket.objects.filter(match=match, status='paid')
-        vip_tickets = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued'])
-
-        wb = Workbook()
-        ws1 = wb.active
-        ws1.title = "فروخته‌شده"
-        total_sold = sum(
-            t.seat.row.block.price for t in sold_tickets
-            if t.seat and t.seat.row and t.seat.row.block
-        )
-
-        ws1.append(['گزارش بلیط‌های فروخته‌شده'])
-        ws1.merge_cells('A1:F1')
-        ws1['A1'].font = Font(bold=True, size=14)
-        ws1['A1'].alignment = Alignment(horizontal='center')
-        ws1.append([])
-        ws1.append(['جمع کل فروش:', total_sold, '', '', '', ''])
-        ws1.cell(row=3, column=1).font = Font(bold=True)
-        ws1.cell(row=3, column=2).font = Font(bold=True, color='006400')
-        ws1.append([])
-
-        headers = ['شماره بلیط', 'کاربر', 'نام خریدار', 'کد ملی', 'قیمت (ریال)', 'تاریخ خرید']
-        ws1.append(headers)
-        for cell in ws1[ws1.max_row]:
-            cell.font = Font(bold=True)
-            cell.alignment = Alignment(horizontal='center')
-
-        for t in sold_tickets:
-            row = [
-                t.ticket_number,
-                t.user.username,
-                t.full_name,
-                t.national_code,
-                t.seat.row.block.price if t.seat and t.seat.row and t.seat.row.block else 0,
-                t.purchase_date.strftime('%Y/%m/%d %H:%M')
-            ]
-            ws1.append(row)
-
-        for col in ['A', 'B', 'C', 'D', 'E', 'F']:
-            ws1.column_dimensions[col].width = 16
-
-        ws2 = wb.create_sheet("تخصیص بلیط ویژه")
-        total_vip = sum(
-            t.seat.row.block.price for t in vip_tickets
-            if t.seat and t.seat.row and t.seat.row.block
-        )
-        ws2.append(['گزارش بلیط‌های تخصیص‌یافته به کاربران ویژه'])
-        ws2.merge_cells('A1:F1')
-        ws2['A1'].font = Font(bold=True, size=14)
-        ws2['A1'].alignment = Alignment(horizontal='center')
-        ws2.append([])
-        ws2.append(['جمع کل تخصیص‌ها:', total_vip, '', '', '', ''])
-        ws2.cell(row=3, column=1).font = Font(bold=True)
-        ws2.cell(row=3, column=2).font = Font(bold=True, color='B8860B')
-        ws2.append([])
-        ws2.append(headers)
-        for cell in ws2[ws2.max_row]:
-            cell.font = Font(bold=True)
-            cell.alignment = Alignment(horizontal='center')
-        for t in vip_tickets:
-            row = [
-                t.ticket_number,
-                t.user.username,
-                t.full_name,
-                t.national_code,
-                t.seat.row.block.price if t.seat and t.seat.row and t.seat.row.block else 0,
-                t.purchase_date.strftime('%Y/%m/%d %H:%M')
-            ]
-            ws2.append(row)
-        for col in ['A', 'B', 'C', 'D', 'E', 'F']:
-            ws2.column_dimensions[col].width = 16
-
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response[
-            'Content-Disposition'] = f'attachment; filename="tickets_{match.id}_{match.home_team}_{match.away_team}.xlsx"'
-        wb.save(response)
-        return response
-
-    def export_vip_tickets_view(self, request, match_id):
-        match = get_object_or_404(Match, pk=match_id)
-        vip_tickets = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued'])
-
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "بلیط‌های ویژه"
-        total_vip = sum(
-            t.seat.row.block.price for t in vip_tickets
-            if t.seat and t.seat.row and t.seat.row.block
-        )
-
-        ws.append(['گزارش بلیط‌های تخصیص‌یافته به کاربران ویژه'])
-        ws.merge_cells('A1:F1')
-        ws['A1'].font = Font(bold=True, size=14)
-        ws['A1'].alignment = Alignment(horizontal='center')
-        ws.append([])
-        ws.append(['جمع کل تخصیص‌ها:', total_vip, '', '', '', ''])
-        ws.cell(row=3, column=1).font = Font(bold=True)
-        ws.cell(row=3, column=2).font = Font(bold=True, color='B8860B')
-        ws.append([])
-
-        headers = ['شماره بلیط', 'کاربر', 'نام خریدار', 'کد ملی', 'قیمت (ریال)', 'تاریخ تخصیص']
-        ws.append(headers)
-        for cell in ws[ws.max_row]:
-            cell.font = Font(bold=True)
-            cell.alignment = Alignment(horizontal='center')
-        for t in vip_tickets:
-            row = [
-                t.ticket_number,
-                t.user.username,
-                t.full_name,
-                t.national_code,
-                t.seat.row.block.price if t.seat and t.seat.row and t.seat.row.block else 0,
-                t.purchase_date.strftime('%Y/%m/%d %H:%M')
-            ]
-            ws.append(row)
-        for col in ['A', 'B', 'C', 'D', 'E', 'F']:
-            ws.column_dimensions[col].width = 16
-
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response[
-            'Content-Disposition'] = f'attachment; filename="vip_tickets_{match.id}_{match.home_team}_{match.away_team}.xlsx"'
-        wb.save(response)
-        return response
 
     def match_report_view(self, request, match_id):
         match = get_object_or_404(Match, id=match_id)
@@ -461,73 +284,11 @@ class MatchAdmin(admin.ModelAdmin):
         vip_tickets = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued'])
 
         wb = Workbook()
-        ws1 = wb.active
-        ws1.title = "فروخته‌شده"
-        total_sold = sum(
-            t.seat.row.block.price for t in sold_tickets
-            if t.seat and t.seat.row and t.seat.row.block
+        wb.remove(wb.active)
+        _write_ticket_sheet(wb, 'فروخته‌شده', 'گزارش بلیط‌های فروخته‌شده', 'جمع کل فروش:', sold_tickets)
+        _write_ticket_sheet(
+            wb, 'تخصیص بلیط ویژه', 'گزارش بلیط‌های تخصیص‌یافته به کاربران ویژه', 'جمع کل تخصیص‌ها:', vip_tickets
         )
-
-        ws1.append(['گزارش بلیط‌های فروخته‌شده'])
-        ws1.merge_cells('A1:F1')
-        ws1['A1'].font = Font(bold=True, size=14)
-        ws1['A1'].alignment = Alignment(horizontal='center')
-        ws1.append([])
-        ws1.append(['جمع کل فروش:', total_sold, '', '', '', ''])
-        ws1.cell(row=3, column=1).font = Font(bold=True)
-        ws1.cell(row=3, column=2).font = Font(bold=True, color='006400')
-        ws1.append([])
-
-        headers = ['شماره بلیط', 'کاربر', 'نام خریدار', 'کد ملی', 'قیمت (ریال)', 'تاریخ خرید']
-        ws1.append(headers)
-        for cell in ws1[ws1.max_row]:
-            cell.font = Font(bold=True)
-            cell.alignment = Alignment(horizontal='center')
-
-        for t in sold_tickets:
-            row = [
-                t.ticket_number,
-                t.user.username,
-                t.full_name,
-                t.national_code,
-                t.seat.row.block.price if t.seat and t.seat.row and t.seat.row.block else 0,
-                t.purchase_date.strftime('%Y/%m/%d %H:%M')
-            ]
-            ws1.append(row)
-
-        for col in ['A', 'B', 'C', 'D', 'E', 'F']:
-            ws1.column_dimensions[col].width = 16
-
-        ws2 = wb.create_sheet("تخصیص بلیط ویژه")
-        total_vip = sum(
-            t.seat.row.block.price for t in vip_tickets
-            if t.seat and t.seat.row and t.seat.row.block
-        )
-        ws2.append(['گزارش بلیط‌های تخصیص‌یافته به کاربران ویژه'])
-        ws2.merge_cells('A1:F1')
-        ws2['A1'].font = Font(bold=True, size=14)
-        ws2['A1'].alignment = Alignment(horizontal='center')
-        ws2.append([])
-        ws2.append(['جمع کل تخصیص‌ها:', total_vip, '', '', '', ''])
-        ws2.cell(row=3, column=1).font = Font(bold=True)
-        ws2.cell(row=3, column=2).font = Font(bold=True, color='B8860B')
-        ws2.append([])
-        ws2.append(headers)
-        for cell in ws2[ws2.max_row]:
-            cell.font = Font(bold=True)
-            cell.alignment = Alignment(horizontal='center')
-        for t in vip_tickets:
-            row = [
-                t.ticket_number,
-                t.user.username,
-                t.full_name,
-                t.national_code,
-                t.seat.row.block.price if t.seat and t.seat.row and t.seat.row.block else 0,
-                t.purchase_date.strftime('%Y/%m/%d %H:%M')
-            ]
-            ws2.append(row)
-        for col in ['A', 'B', 'C', 'D', 'E', 'F']:
-            ws2.column_dimensions[col].width = 16
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response[
@@ -540,44 +301,52 @@ class MatchAdmin(admin.ModelAdmin):
         vip_tickets = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued'])
 
         wb = Workbook()
-        ws = wb.active
-        ws.title = "بلیط‌های ویژه"
-        total_vip = sum(
-            t.seat.row.block.price for t in vip_tickets
-            if t.seat and t.seat.row and t.seat.row.block
+        wb.remove(wb.active)
+        _write_ticket_sheet(
+            wb, 'بلیط‌های ویژه', 'گزارش بلیط‌های تخصیص‌یافته به کاربران ویژه', 'جمع کل تخصیص‌ها:', vip_tickets
         )
-
-        ws.append(['گزارش بلیط‌های تخصیص‌یافته به کاربران ویژه'])
-        ws.merge_cells('A1:F1')
-        ws['A1'].font = Font(bold=True, size=14)
-        ws['A1'].alignment = Alignment(horizontal='center')
-        ws.append([])
-        ws.append(['جمع کل تخصیص‌ها:', total_vip, '', '', '', ''])
-        ws.cell(row=3, column=1).font = Font(bold=True)
-        ws.cell(row=3, column=2).font = Font(bold=True, color='B8860B')
-        ws.append([])
-
-        headers = ['شماره بلیط', 'کاربر', 'نام خریدار', 'کد ملی', 'قیمت (ریال)', 'تاریخ تخصیص']
-        ws.append(headers)
-        for cell in ws[ws.max_row]:
-            cell.font = Font(bold=True)
-            cell.alignment = Alignment(horizontal='center')
-        for t in vip_tickets:
-            row = [
-                t.ticket_number,
-                t.user.username,
-                t.full_name,
-                t.national_code,
-                t.seat.row.block.price if t.seat and t.seat.row and t.seat.row.block else 0,
-                t.purchase_date.strftime('%Y/%m/%d %H:%M')
-            ]
-            ws.append(row)
-        for col in ['A', 'B', 'C', 'D', 'E', 'F']:
-            ws.column_dimensions[col].width = 16
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response[
             'Content-Disposition'] = f'attachment; filename="vip_tickets_{match.id}_{match.home_team}_{match.away_team}.xlsx"'
+        wb.save(response)
+        return response
+
+    def export_categorized_tickets_view(self, request, match_id):
+        """اکسل بلیط‌های فروخته‌شده به تفکیک دسته‌بندی جایگاه (میزبان/میهمان/بانوان/کلاس ۱/VIP)."""
+        match = get_object_or_404(Match, pk=match_id)
+        sold_tickets = Ticket.objects.filter(match=match, status='paid')
+
+        wb = Workbook()
+        wb.remove(wb.active)
+        for title, qs in _match_zone_categories(sold_tickets):
+            _write_ticket_sheet(wb, title, f'گزارش بلیط‌های فروخته‌شده - {title}', 'جمع مبلغ فروش این بخش:', qs)
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = (
+            f'attachment; filename="tickets_by_category_{match.id}_{match.home_team}_{match.away_team}.xlsx"'
+        )
+        wb.save(response)
+        return response
+
+    def export_all_tickets_view(self, request, match_id):
+        """اکسل کامل: همه‌ی دسته‌بندی‌های بلیط فروخته‌شده + بلیط‌های ویژه، هرکدام در شیت جدا با جمع مبلغ و تعداد کل."""
+        match = get_object_or_404(Match, pk=match_id)
+        sold_tickets = Ticket.objects.filter(match=match, status='paid')
+        vip_tickets = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued'])
+
+        wb = Workbook()
+        wb.remove(wb.active)
+        for title, qs in _match_zone_categories(sold_tickets):
+            _write_ticket_sheet(wb, title, f'گزارش بلیط‌های فروخته‌شده - {title}', 'جمع مبلغ فروش این بخش:', qs)
+        _write_ticket_sheet(
+            wb, 'بلیط ویژه', 'گزارش بلیط‌های تخصیص‌یافته به کاربران ویژه', 'جمع کل تخصیص‌ها:', vip_tickets
+        )
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = (
+            f'attachment; filename="tickets_all_{match.id}_{match.home_team}_{match.away_team}.xlsx"'
+        )
         wb.save(response)
         return response
 

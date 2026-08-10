@@ -20,8 +20,14 @@
                     <a href="{% url 'admin:export_tickets' match_id %}" class="button" style="background: #28a745; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: bold;">
                         ⬇️ خروجی کامل اکسل
                     </a>
+                    <a href="{% url 'admin:export_categorized_tickets' match_id %}" class="button" style="background: #28a745; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: bold;">
+                        ⬇️ خروجی اکسل به تفکیک دسته‌بندی
+                    </a>
                     <a href="{% url 'admin:export_vip_tickets' match_id %}" class="button" style="background: #b8860b; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: bold;">
                         ⬇️ خروجی اکسل بلیط ویژه
+                    </a>
+                    <a href="{% url 'admin:export_all_tickets' match_id %}" class="button" style="background: #b8860b; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: bold;">
+                        ⬇️ خروجی اکسل کامل (همه به تفکیک)
                     </a>
                 </div>
             </div>
