@@ -155,7 +155,7 @@ ZONE_CHOICES = (
     ('away', 'میهمان'),
     ('class1', 'کلاس ۱'),
     ('women', 'بانوان'),
-    ('vip', 'بلیط ویژه'),
+    ('vip', 'VIP'),
 )
 
 
@@ -173,7 +173,7 @@ class Block(models.Model):
     )
     name = models.CharField(max_length=50, verbose_name="نام سکو")
     order = models.IntegerField(default=0, verbose_name="ترتیب")
-    is_vip = models.BooleanField(default=False, verbose_name="بلیط ویژه")
+    is_vip = models.BooleanField(default=False, verbose_name="VIP")
     is_class1 = models.BooleanField(default=False, verbose_name="کلاس ۱")
     is_active = models.BooleanField(default=True, verbose_name="فعال")
     price = models.DecimalField(
@@ -210,9 +210,9 @@ class Row(models.Model):
 
     @property
     def zone_label(self):
-        # اولویت با بلیط ویژه
+        # اولویت با VIP
         if self.block.is_vip:
-            return "بلیط ویژه"
+            return "VIP"
         # سپس کلاس ۱
         if self.block.is_class1:
             return "کلاس ۱"

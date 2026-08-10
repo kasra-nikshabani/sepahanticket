@@ -81,7 +81,7 @@ class Ticket(models.Model):
         if self.seat and self.seat.row and self.seat.row.block:
             block = self.seat.row.block
             if getattr(block, 'is_vip', False) or block.zone_type == 'vip':
-                return "بلیط ویژه"
+                return "VIP"
             elif getattr(block, 'is_class1', False) or block.zone_type == 'class1':
                 return "کلاس ۱"
             elif block.zone_type == 'women':

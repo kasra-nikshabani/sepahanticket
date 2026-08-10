@@ -9,7 +9,7 @@ from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from .models import Ticket
 
-ZONE_LABELS = {'class1': 'کلاس ۱', 'home': 'میزبان', 'away': 'میهمان', 'women': 'بانوان', 'vip': 'بلیط ویژه'}
+ZONE_LABELS = {'class1': 'کلاس ۱', 'home': 'میزبان', 'away': 'میهمان', 'women': 'بانوان', 'vip': 'VIP'}
 
 # حداکثر تلاش ناموفق ورود گیت قبل از قفل موقت
 GATE_LOGIN_MAX_ATTEMPTS = 5
