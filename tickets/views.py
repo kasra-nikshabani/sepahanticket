@@ -1523,7 +1523,7 @@ def export_sales_report_excel(request):
     summary_ws['A1'].alignment = Alignment(horizontal='center')
     summary_ws.append([])
 
-    summary_headers = ['ردیف', 'مسابقه', 'رشته', 'تاریخ', 'تعداد فروش', 'درآمد کل (تومان)', 'درصد اشغال']
+    summary_headers = ['ردیف', 'مسابقه', 'رشته', 'تاریخ', 'تعداد فروش', 'درآمد کل (ریال)', 'درصد اشغال']
     summary_ws.append(summary_headers)
     for cell in summary_ws[summary_ws.max_row]:
         cell.font = Font(bold=True);
@@ -1543,7 +1543,7 @@ def export_sales_report_excel(request):
 
         revenue = sum(t.seat.row.block.price for t in sold_tickets if t.seat and t.seat.row and t.seat.row.block)
         vip_revenue = sum(t.seat.row.block.price for t in vip_tickets if t.seat and t.seat.row and t.seat.row.block)
-        total_revenue = revenue + vip_revenue
+        total_revenue = revenue
 
         total_seats = Seat.objects.filter(row__block__stadium=match.stadium, row__block__is_active=True,
                                           row__is_active=True).count()
@@ -1574,7 +1574,7 @@ def export_sales_report_excel(request):
         ws.append(['درصد اشغال:', f"{occupancy}%"])
         ws.append([])
 
-        headers = ['شماره بلیط', 'کاربر', 'نام خریدار', 'کد ملی', 'قیمت (تومان)', 'وضعیت']
+        headers = ['شماره بلیط', 'کاربر', 'نام خریدار', 'کد ملی', 'قیمت (ریال)', 'وضعیت']
         ws.append(headers)
         for cell in ws[ws.max_row]:
             cell.font = Font(bold=True);

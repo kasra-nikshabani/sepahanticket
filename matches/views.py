@@ -1195,7 +1195,7 @@ def admin_match_detail(request, match_id):
 
     context = {
         'match': match, 'sold_page': sold_page, 'vip_page': vip_page,
-        'sold_total': sold_total, 'vip_total': vip_total, 'total_revenue': sold_total + vip_total,
+        'sold_total': sold_total, 'vip_total': vip_total, 'total_revenue': sold_total,
         'sold_count': sold_tickets_qs.count(), 'vip_count': vip_tickets_qs.count(),
         'total_tickets': sold_tickets_qs.count() + vip_tickets_qs.count(),
         'total_match_seats': total_match_seats, 'occupied': occupied, 'available': available,

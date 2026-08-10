@@ -10,11 +10,11 @@
             <div style="display: flex; gap: 40px; flex-wrap: wrap; align-items: center;">
                 <div style="background: #e8f5e9; padding: 8px 16px; border-radius: 6px; border-right: 4px solid #28a745;">
                     <strong>جمع بلیط‌های فروخته‌شده:</strong>
-                    <span style="color: #28a745; font-weight: bold; font-size: 1.1em;">{{ sold_total|default:0|floatformat:0 }}</span> تومان
+                    <span style="color: #28a745; font-weight: bold; font-size: 1.1em;">{{ sold_total|default:0|floatformat:0 }}</span> ریال
                 </div>
                 <div style="background: #fff8e1; padding: 8px 16px; border-radius: 6px; border-right: 4px solid #b8860b;">
                     <strong>جمع بلیط‌های تخصیص‌یافته به کاربران ویژه:</strong>
-                    <span style="color: #b8860b; font-weight: bold; font-size: 1.1em;">{{ vip_total|default:0|floatformat:0 }}</span> تومان
+                    <span style="color: #b8860b; font-weight: bold; font-size: 1.1em;">{{ vip_total|default:0|floatformat:0 }}</span> ریال
                 </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <a href="{% url 'admin:export_tickets' match_id %}" class="button" style="background: #28a745; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: bold;">
@@ -37,7 +37,7 @@
                         <th style="padding:8px; border:1px solid #ddd; text-align:right;">کاربر</th>
                         <th style="padding:8px; border:1px solid #ddd; text-align:right;">نام خریدار</th>
                         <th style="padding:8px; border:1px solid #ddd; text-align:right;">کد ملی</th>
-                        <th style="padding:8px; border:1px solid #ddd; text-align:right;">قیمت (تومان)</th>
+                        <th style="padding:8px; border:1px solid #ddd; text-align:right;">قیمت (ریال)</th>
                         <th style="padding:8px; border:1px solid #ddd; text-align:right;">تاریخ خرید</th>
                     </tr>
                 </thead>
@@ -87,7 +87,7 @@
                         <th style="padding:8px; border:1px solid #ddd; text-align:right;">کاربر</th>
                         <th style="padding:8px; border:1px solid #ddd; text-align:right;">نام خریدار</th>
                         <th style="padding:8px; border:1px solid #ddd; text-align:right;">کد ملی</th>
-                        <th style="padding:8px; border:1px solid #ddd; text-align:right;">قیمت (تومان)</th>
+                        <th style="padding:8px; border:1px solid #ddd; text-align:right;">قیمت (ریال)</th>
                         <th style="padding:8px; border:1px solid #ddd; text-align:right;">تاریخ تخصیص</th>
                     </tr>
                 </thead>
