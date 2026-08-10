@@ -608,6 +608,25 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // ===== چسباندن دقیق نوار انتخاب صندلی به بالای bottom-nav (بدون فاصله) =====
+            // به‌جای یک عدد ثابت حدسی، ارتفاع واقعی bottom-nav را اندازه می‌گیریم؛ چون این
+            // ارتفاع به‌خاطر safe-area-inset (نوار پایین گوشی‌های دارای Notch) بین دستگاه‌ها فرق دارد.
+            const selectionBarEl = document.querySelector('.selection-bar');
+            const bottomNavEl = document.querySelector('.bottom-nav');
+
+            function syncSelectionBarOffset() {
+                if (!selectionBarEl) return;
+                if (bottomNavEl && getComputedStyle(bottomNavEl).display !== 'none') {
+                    selectionBarEl.style.bottom = bottomNavEl.getBoundingClientRect().height + 'px';
+                } else {
+                    selectionBarEl.style.bottom = '0px';
+                }
+            }
+
+            syncSelectionBarOffset();
+            window.addEventListener('resize', syncSelectionBarOffset);
+            window.addEventListener('orientationchange', syncSelectionBarOffset);
+
             // ===== دکمه تغییر حالت =====
             const toggleBtn = document.getElementById('toggleViewBtn');
             const seatGrids = document.querySelectorAll('.seat-grid');
