@@ -353,6 +353,13 @@
             max-width: 950px;
         }
 
+        .selection-cta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
         .selection-info {
             font-size: 15px;
         }
@@ -416,9 +423,11 @@
                 padding: 16px 8px 210px;
             }
 
-            /* روی موبایل نوار پایین سایت (bottom-nav) هم هست، پس نوار انتخاب صندلی باید بالای آن بنشیند */
+            /* روی موبایل نوار پایین سایت (bottom-nav) هم هست، پس نوار انتخاب صندلی باید بالای آن بنشیند.
+               همچنین جمع‌وجورتر است و تا وقتی صندلی‌ای انتخاب نشده، فقط دکمه‌ی بازگشت نشان داده می‌شود. */
             .selection-bar {
                 bottom: 92px;
+                padding: 8px 14px;
             }
 
             .seat {
@@ -447,12 +456,37 @@
                 font-size: 11px;
             }
 
-            .selection-bar-inner {
+            .btn-back {
+                padding: 6px 16px;
+                font-size: 13px;
+            }
+
+            /* پیش‌فرض جمع‌شده و مخفی؛ با کلیک روی اولین صندلی کلاس visible اضافه می‌شود */
+            .selection-cta {
                 flex-direction: column;
+                align-items: stretch;
+                width: 100%;
+                max-height: 0;
+                opacity: 0;
+                margin-top: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease, opacity 0.25s ease, margin-top 0.3s ease;
+            }
+
+            .selection-cta.visible {
+                max-height: 160px;
+                opacity: 1;
+                margin-top: 10px;
+            }
+
+            .selection-info {
+                font-size: 13px;
                 text-align: center;
             }
 
             .btn-continue {
+                padding: 8px 20px;
+                font-size: 14px;
                 width: 100%;
                 justify-content: center;
             }
@@ -556,13 +590,14 @@
         <!-- نوار انتخاب و اقدامات (همیشه پایین صفحه ثابت است) -->
         <div class="selection-bar">
           <div class="selection-bar-inner">
-            <div class="selection-info">
-                🎫 تعداد انتخاب شده: <strong id="selectedCount">0</strong> از ۵
-            </div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                <a href="{% url 'matches:select_floor' match.id %}" class="btn-back">
-                    <i class="fas fa-arrow-right"></i> بازگشت
-                </a>
+            <a href="{% url 'matches:select_floor' match.id %}" class="btn-back">
+                <i class="fas fa-arrow-right"></i> بازگشت
+            </a>
+            <!-- روی موبایل این بخش تا وقتی صندلی‌ای انتخاب نشده مخفی است -->
+            <div class="selection-cta" id="selectionCta">
+                <div class="selection-info">
+                    🎫 تعداد انتخاب شده: <strong id="selectedCount">0</strong> از ۵
+                </div>
                 <button class="btn-continue" id="continueBtn" disabled>
                     <i class="fas fa-credit-card"></i> ادامه به اطلاعات خریدار
                 </button>
@@ -607,6 +642,7 @@
             const selectedSeats = new Set();
             const selectedCountSpan = document.getElementById('selectedCount');
             const continueBtn = document.getElementById('continueBtn');
+            const selectionCta = document.getElementById('selectionCta');
 
             const form = document.createElement('form');
             form.method = 'POST';
@@ -636,6 +672,7 @@
                 const count = selectedSeats.size;
                 selectedCountSpan.textContent = count;
                 continueBtn.disabled = count === 0;
+                selectionCta.classList.toggle('visible', count > 0);
                 input.value = JSON.stringify(Array.from(selectedSeats));
             }
 
