@@ -11,7 +11,7 @@ from django.views.decorators.cache import never_cache
 
 from .forms import RegisterForm, LoginForm, PhoneLoginForm, OTPVerifyForm, PhoneRegisterForm
 from .models import OTP
-from .services import create_otp, get_valid_otp
+from .services import create_otp, get_valid_otp, OTPRateLimitError
 
 User = get_user_model()
 
@@ -61,6 +61,11 @@ def phone_login(request):
                 create_otp(phone_number)
                 request.session['otp_phone'] = phone_number
                 messages.success(request, 'کد تأیید به شماره شما ارسال شد.')
+                return redirect('accounts:otp_verify')
+            except OTPRateLimitError as e:
+                # کد قبلی هنوز معتبر است؛ کاربر را همان‌جا به صفحه‌ی تأیید می‌فرستیم
+                request.session['otp_phone'] = phone_number
+                messages.info(request, f'کد قبلی هنوز معتبر است. {e.retry_after} ثانیه دیگر می‌توانید کد جدید بگیرید.')
                 return redirect('accounts:otp_verify')
             except Exception as e:
                 messages.error(request, f'خطا در ارسال پیامک: {str(e)}')
@@ -190,22 +195,17 @@ def resend_otp(request):
         messages.error(request, 'لطفاً ابتدا شماره تلفن را وارد کنید.')
         return redirect('accounts:phone_login')
 
-    # ===== محدودیت درخواست مجدد (هر ۱ دقیقه) =====
-    last_request = request.session.get('last_otp_request_time')
-    if last_request:
-        import time
-        if time.time() - last_request < 60:  # ۱ دقیقه
-            return JsonResponse({'status': 'error', 'message': '⏳ لطفاً ۱ دقیقه صبر کنید و دوباره تلاش کنید.'},
-                                status=429)
-
-    # حذف کدهای قبلی
-    OTP.objects.filter(phone_number=phone_number).delete()
-
-    # ایجاد کد جدید
+    # ===== محدودیت واقعی درخواست مجدد -- سمت بک‌اند، مستقل از session =====
+    # (پیاده‌سازی داخل create_otp؛ اینجا فقط خطای آن را به فرانت‌اند برمی‌گردانیم)
     try:
         create_otp(phone_number)
-        request.session['last_otp_request_time'] = time.time()
         return JsonResponse({'status': 'success', 'message': '✅ کد جدید با موفقیت ارسال شد.'})
+    except OTPRateLimitError as e:
+        return JsonResponse(
+            {'status': 'error', 'message': f'⏳ لطفاً {e.retry_after} ثانیه صبر کنید و دوباره تلاش کنید.',
+             'retry_after': e.retry_after},
+            status=429,
+        )
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': f'❌ خطا در ارسال پیامک: {str(e)}'}, status=500)
 
@@ -236,17 +236,24 @@ def phone_register(request):
                 messages.error(request, 'این شماره تلفن قبلاً ثبت شده است.')
                 return render(request, 'accounts/phone_register.html', {'form': form})
 
+            pending_data = {
+                'phone_number': phone_number,
+                'first_name': first_name,
+                'last_name': last_name,
+            }
             try:
                 # حساب کاربری فقط بعد از تأیید موفق کد OTP ساخته می‌شود
                 # (تا کاربرِ ثبت‌نامِ ناتمام در دیتابیس باقی نماند)
                 create_otp(phone_number)
                 request.session['otp_phone'] = phone_number
-                request.session['pending_registration'] = {
-                    'phone_number': phone_number,
-                    'first_name': first_name,
-                    'last_name': last_name,
-                }
+                request.session['pending_registration'] = pending_data
                 messages.success(request, f'✅ کد تأیید به شماره {phone_number} ارسال شد.')
+                return redirect('accounts:otp_verify')
+            except OTPRateLimitError as e:
+                # کد قبلی هنوز معتبر است؛ کاربر را همان‌جا به صفحه‌ی تأیید می‌فرستیم
+                request.session['otp_phone'] = phone_number
+                request.session['pending_registration'] = pending_data
+                messages.info(request, f'کد قبلی هنوز معتبر است. {e.retry_after} ثانیه دیگر می‌توانید کد جدید بگیرید.')
                 return redirect('accounts:otp_verify')
             except Exception as e:
                 messages.error(request, f'❌ خطا در ثبت‌نام: {str(e)}')

@@ -2,6 +2,7 @@
 import random
 import requests
 from django.conf import settings
+from django.core.cache import cache
 from django.utils import timezone
 from datetime import timedelta
 from .models import OTP
@@ -9,6 +10,22 @@ from .models import OTP
 import logging
 
 logger = logging.getLogger(__name__)
+
+OTP_COOLDOWN_SECONDS = 60
+
+
+class OTPRateLimitError(Exception):
+    """
+    برای یک شماره تلفن، در کمتر از OTP_COOLDOWN_SECONDS ثانیه دوباره
+    درخواست کد شده. مستقل از session/کوکی است (کلید آن فقط شماره تلفن
+    در Redis است)، پس هر ویویی که create_otp را صدا بزند -- ورود، ثبت‌نام،
+    یا دکمه‌ی ارسال مجدد -- به‌طور یکسان محدود می‌شود؛ محدودیتِ سمت
+    فرانت‌اند (تایمر) صرفاً برای تجربه‌ی کاربری است و به‌تنهایی قابل دور زدن است.
+    """
+
+    def __init__(self, retry_after):
+        self.retry_after = retry_after
+        super().__init__(f'لطفاً {retry_after} ثانیه دیگر دوباره تلاش کنید.')
 
 
 # ================================================
@@ -113,8 +130,18 @@ def send_sms_via_smsir(phone_number, code):
 
 def create_otp(phone_number):
     """ایجاد کد OTP جدید و ارسال آن"""
-    # حذف کدهای قبلی منقضی‌شده
-    OTP.objects.filter(phone_number=phone_number, expires_at__lt=timezone.now()).delete()
+    # ===== Rate limit سمت بک‌اند (مستقل از session) =====
+    # cache.add اتمیک است: اگر کلید از قبل موجود باشد False برمی‌گرداند، پس
+    # حتی دو درخواست هم‌زمان هم نمی‌توانند هر دو رد شوند.
+    cooldown_key = f'otp_cooldown:{phone_number}'
+    if not cache.add(cooldown_key, 1, timeout=OTP_COOLDOWN_SECONDS):
+        ttl = cache.ttl(cooldown_key) if hasattr(cache, 'ttl') else None
+        raise OTPRateLimitError(retry_after=int(ttl) if ttl else OTP_COOLDOWN_SECONDS)
+
+    # چون قفل بالا از تولید بیش‌ازحد کد جلوگیری می‌کند، خیالمان راحت است که
+    # کدهای قبلیِ استفاده‌نشده‌ی این شماره را هم پاک کنیم -- فقط آخرین کد
+    # صادرشده معتبر باشد (چه هنوز منقضی نشده باشد چه شده باشد).
+    OTP.objects.filter(phone_number=phone_number, is_used=False).delete()
 
     code = generate_otp_code()
 
@@ -136,6 +163,9 @@ def create_otp(phone_number):
     success, msg = send_sms_via_smsir(phone_number, code)
     if not success:
         otp.delete()
+        # چون پیامک واقعاً ارسال نشده، قفل ۶۰ ثانیه‌ای را هم آزاد می‌کنیم
+        # تا خرابی موقت سرویس پیامک باعث انتظار بی‌خودِ کاربر نشود.
+        cache.delete(cooldown_key)
         raise Exception(f"خطا در ارسال پیامک: {msg}")
 
     return otp
