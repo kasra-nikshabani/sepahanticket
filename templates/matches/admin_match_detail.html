@@ -547,7 +547,7 @@
             <div class="stat-card orange">
                 <span class="stat-icon"><i class="fas fa-crown"></i></span>
                 <div class="stat-number">{{ vip_count }}</div>
-                <p class="stat-label">بلیط VIP</p>
+                <p class="stat-label">بلیط ویژه</p>
             </div>
             <div class="stat-card blue">
                 <span class="stat-icon"><i class="fas fa-money-bill-wave"></i></span>
@@ -569,7 +569,7 @@
             <div class="stat-card purple">
                 <span class="stat-icon"><i class="fas fa-crown"></i></span>
                 <div class="stat-number">{{ vip_sold }}</div>
-                <p class="stat-label">بلیط VIP</p>
+                <p class="stat-label">بلیط ویژه</p>
             </div>
             <div class="stat-card blue">
                 <span class="stat-icon"><i class="fas fa-star"></i></span>
@@ -827,15 +827,15 @@
             {% endif %}
         </div>
 
-        <!-- ===== بلیط‌های VIP ===== -->
+        <!-- ===== بلیط‌های ویژه ===== -->
         <div class="section-title">
             <i class="fas fa-crown"></i>
-            بلیط‌های تخصیص‌یافته به VIP
+            بلیط‌های تخصیص‌یافته به کاربران ویژه
             <span class="badge-count">{{ vip_count }}</span>
         </div>
         <div class="table-wrapper">
             <div class="table-header">
-                <h5><i class="fas fa-list"></i> لیست بلیط‌های VIP</h5>
+                <h5><i class="fas fa-list"></i> لیست بلیط‌های ویژه</h5>
                 <span class="count-badge">{{ vip_count }} عدد</span>
             </div>
             <div class="table-responsive-custom">
@@ -865,7 +865,7 @@
                             <td colspan="6">
                                 <div class="empty-state">
                                     <i class="fas fa-crown"></i>
-                                    <p>هیچ بلیط VIP برای این مسابقه وجود ندارد.</p>
+                                    <p>هیچ بلیط ویژه‌ای برای این مسابقه وجود ندارد.</p>
                                 </div>
                             </td>
                         </tr>
@@ -932,7 +932,7 @@
                 <i class="fas fa-file-excel"></i> دانلود اکسل فروش
             </a>
             <a href="{% url 'admin:export_vip_tickets' match.id %}" class="btn-download excel-vip">
-                <i class="fas fa-file-excel"></i> دانلود اکسل VIP
+                <i class="fas fa-file-excel"></i> دانلود اکسل بلیط ویژه
             </a>
         </div>
     </div>

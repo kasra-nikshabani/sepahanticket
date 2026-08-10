@@ -11,7 +11,7 @@ from .models import Ticket, DiscountCode, VIPQuota, Transaction, Order
 #  اکشن‌های سفارشی
 # ============================================================
 
-@admin.action(description='تخصیص به کاربر ویژه (VIP)')
+@admin.action(description='تخصیص به کاربر ویژه')
 def assign_to_vip(modeladmin, request, queryset):
     count = 0
     for ticket in queryset:

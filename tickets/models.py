@@ -81,7 +81,7 @@ class Ticket(models.Model):
         if self.seat and self.seat.row and self.seat.row.block:
             block = self.seat.row.block
             if getattr(block, 'is_vip', False) or block.zone_type == 'vip':
-                return "VIP"
+                return "بلیط ویژه"
             elif getattr(block, 'is_class1', False) or block.zone_type == 'class1':
                 return "کلاس ۱"
             elif block.zone_type == 'women':
@@ -285,7 +285,7 @@ class Order(models.Model):
         ('wallet', 'کیف پول'),
         ('zibal', 'درگاه زیبال'),
         ('mixed', 'ترکیبی (کیف پول + زیبال)'),
-        ('vip', 'صدور VIP'),
+        ('vip', 'صدور بلیط ویژه'),
         ('admin', 'تخصیص ادمین'),
     )
 

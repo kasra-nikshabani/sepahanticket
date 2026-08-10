@@ -392,7 +392,7 @@
         <div class="stat-card orange">
             <span class="stat-icon"><i class="fas fa-crown"></i></span>
             <div class="stat-number">{{ total_vip|default:"0" }}</div>
-            <p class="stat-label">VIP</p>
+            <p class="stat-label">بلیط ویژه</p>
         </div>
         <div class="stat-card blue">
             <span class="stat-icon"><i class="fas fa-money-bill-wave"></i></span>
@@ -465,7 +465,7 @@
                 <canvas id="barChart"></canvas>
             </div>
             <div class="chart-card">
-                <div class="chart-title"><i class="fas fa-chart-pie"></i> نسبت فروش و VIP</div>
+                <div class="chart-title"><i class="fas fa-chart-pie"></i> نسبت فروش و بلیط ویژه</div>
                 <canvas id="pieChart"></canvas>
             </div>
         </div>
@@ -487,7 +487,7 @@
                             <th><i class="fas fa-map-marker-alt"></i> ورزشگاه</th>
                             <th><i class="fas fa-calendar-day"></i> تاریخ</th>
                             <th><i class="fas fa-ticket-alt"></i> فروش</th>
-                            <th><i class="fas fa-crown"></i> VIP</th>
+                            <th><i class="fas fa-crown"></i> ویژه</th>
                             <th><i class="fas fa-calculator"></i> جمع</th>
                             <th><i class="fas fa-money-bill"></i> درآمد</th>
                             <th><i class="fas fa-chair"></i> اشغال</th>
@@ -633,7 +633,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 labels: labels,
                 datasets: [
                     { label: 'فروخته‌شده', data: sold, backgroundColor: 'rgba(23,162,184,0.7)', borderColor: 'rgba(23,162,184,1)', borderWidth: 2, borderRadius: 4 },
-                    { label: 'VIP', data: vip, backgroundColor: 'rgba(255,193,7,0.7)', borderColor: 'rgba(255,193,7,1)', borderWidth: 2, borderRadius: 4 }
+                    { label: 'بلیط ویژه', data: vip, backgroundColor: 'rgba(255,193,7,0.7)', borderColor: 'rgba(255,193,7,1)', borderWidth: 2, borderRadius: 4 }
                 ]
             },
             options: {
@@ -657,7 +657,7 @@ document.addEventListener('DOMContentLoaded', function() {
         new Chart(ctx2.getContext('2d'), {
             type: 'doughnut',
             data: {
-                labels: ['فروخته‌شده', 'VIP'],
+                labels: ['فروخته‌شده', 'بلیط ویژه'],
                 datasets: [{
                     data: [totalSold, totalVip],
                     backgroundColor: ['rgba(23,162,184,0.8)', 'rgba(255,193,7,0.8)'],

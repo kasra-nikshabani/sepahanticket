@@ -51,7 +51,7 @@ class MatchFinancialReport(models.Model):
     match = models.OneToOneField('Match', on_delete=models.CASCADE, related_name='financial_report')
     total_ticket_revenue = models.BigIntegerField(default=0, verbose_name="درآمد فروش بلیط")
     total_ticket_sold = models.IntegerField(default=0, verbose_name="تعداد بلیط فروخته شده")
-    total_vip_tickets = models.IntegerField(default=0, verbose_name="تعداد بلیط VIP")
+    total_vip_tickets = models.IntegerField(default=0, verbose_name="تعداد بلیط ویژه")
     total_used_tickets = models.IntegerField(default=0, verbose_name="تعداد بلیط استفاده شده")
     total_wallet_usage = models.BigIntegerField(default=0, verbose_name="مبلغ استفاده شده از کیف پول")  # ← اضافه شد
     total_costs = models.BigIntegerField(default=0, verbose_name="مجموع هزینه‌ها")
@@ -155,7 +155,7 @@ ZONE_CHOICES = (
     ('away', 'میهمان'),
     ('class1', 'کلاس ۱'),
     ('women', 'بانوان'),
-    ('vip', 'VIP'),
+    ('vip', 'بلیط ویژه'),
 )
 
 
@@ -173,7 +173,7 @@ class Block(models.Model):
     )
     name = models.CharField(max_length=50, verbose_name="نام سکو")
     order = models.IntegerField(default=0, verbose_name="ترتیب")
-    is_vip = models.BooleanField(default=False, verbose_name="VIP")
+    is_vip = models.BooleanField(default=False, verbose_name="بلیط ویژه")
     is_class1 = models.BooleanField(default=False, verbose_name="کلاس ۱")
     is_active = models.BooleanField(default=True, verbose_name="فعال")
     price = models.DecimalField(
@@ -210,9 +210,9 @@ class Row(models.Model):
 
     @property
     def zone_label(self):
-        # اولویت با VIP
+        # اولویت با بلیط ویژه
         if self.block.is_vip:
-            return "VIP"
+            return "بلیط ویژه"
         # سپس کلاس ۱
         if self.block.is_class1:
             return "کلاس ۱"

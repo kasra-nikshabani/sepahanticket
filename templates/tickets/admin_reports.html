@@ -220,11 +220,11 @@
             <span class="value green">{{ sold_total|default:0|floatformat:0 }} تومان</span>
         </div>
         <div class="item">
-            <span class="label">👑 کل بلیط‌های VIP:</span>
+            <span class="label">👑 کل بلیط‌های ویژه:</span>
             <span class="value gold">{{ total_vip_count|default:0 }}</span>
         </div>
         <div class="item">
-            <span class="label">💎 جمع تخصیص‌های VIP:</span>
+            <span class="label">💎 جمع تخصیص‌های بلیط ویژه:</span>
             <span class="value gold">{{ vip_total|default:0|floatformat:0 }} تومان</span>
         </div>
     </div>
@@ -284,8 +284,8 @@
         </div>
     </div>
 
-    <!-- ===== جدول بلیط‌های تخصیص‌یافته به VIP ===== -->
-    <h3 class="section-title">👑 بلیط‌های تخصیص‌یافته به VIP</h3>
+    <!-- ===== جدول بلیط‌های تخصیص‌یافته به کاربران ویژه ===== -->
+    <h3 class="section-title">👑 بلیط‌های تخصیص‌یافته به کاربران ویژه</h3>
     <div class="card-custom">
         <div class="card-body-custom">
             {% if vip_page %}
@@ -318,11 +318,11 @@
             {% else %}
             <div class="empty-state">
                 <i class="fas fa-ticket-alt"></i>
-                <p>هیچ بلیطی به VIP تخصیص داده نشده است.</p>
+                <p>هیچ بلیطی به کاربران ویژه تخصیص داده نشده است.</p>
             </div>
             {% endif %}
 
-            <!-- صفحه‌بندی VIP -->
+            <!-- صفحه‌بندی کاربران ویژه -->
             {% if vip_page.paginator.num_pages > 1 %}
             <div class="pagination-wrapper">
                 {% if vip_page.has_previous %}

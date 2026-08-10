@@ -13,7 +13,7 @@
                     <span style="color: #28a745; font-weight: bold; font-size: 1.1em;">{{ sold_total|default:0|floatformat:0 }}</span> تومان
                 </div>
                 <div style="background: #fff8e1; padding: 8px 16px; border-radius: 6px; border-right: 4px solid #b8860b;">
-                    <strong>جمع بلیط‌های تخصیص‌یافته به VIP:</strong>
+                    <strong>جمع بلیط‌های تخصیص‌یافته به کاربران ویژه:</strong>
                     <span style="color: #b8860b; font-weight: bold; font-size: 1.1em;">{{ vip_total|default:0|floatformat:0 }}</span> تومان
                 </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -21,7 +21,7 @@
                         ⬇️ خروجی کامل اکسل
                     </a>
                     <a href="{% url 'admin:export_vip_tickets' match_id %}" class="button" style="background: #b8860b; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: bold;">
-                        ⬇️ خروجی اکسل VIP
+                        ⬇️ خروجی اکسل بلیط ویژه
                     </a>
                 </div>
             </div>
@@ -77,9 +77,9 @@
             {% endif %}
         </div>
 
-        <!-- ===== جدول بلیط‌های تخصیص‌یافته به VIP ===== -->
+        <!-- ===== جدول بلیط‌های تخصیص‌یافته به کاربران ویژه ===== -->
         <div style="margin-top: 30px;">
-            <h3>👑 بلیط‌های تخصیص‌یافته به VIP</h3>
+            <h3>👑 بلیط‌های تخصیص‌یافته به کاربران ویژه</h3>
             <table style="width:100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background-color: #f2f2f2;">
@@ -102,12 +102,12 @@
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="6" style="padding:8px; border:1px solid #ddd; text-align:center;">هیچ بلیطی به VIP تخصیص داده نشده است.</td></tr>
+                    <tr><td colspan="6" style="padding:8px; border:1px solid #ddd; text-align:center;">هیچ بلیطی به کاربران ویژه تخصیص داده نشده است.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
 
-            <!-- ===== صفحه‌بندی VIP ===== -->
+            <!-- ===== صفحه‌بندی کاربران ویژه ===== -->
             {% if vip_page.paginator.num_pages > 1 %}
             <div style="margin-top: 10px; display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;">
                 {% if vip_page.has_previous %}

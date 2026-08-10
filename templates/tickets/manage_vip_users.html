@@ -410,7 +410,7 @@
     <div class="page-header">
         <div>
             <h2><i class="fas fa-crown"></i> مدیریت کاربران ویژه</h2>
-            <div class="subtitle">مدیریت و مشاهده بلیط‌های تخصیص‌یافته به کاربران VIP</div>
+            <div class="subtitle">مدیریت و مشاهده بلیط‌های تخصیص‌یافته به کاربران ویژه</div>
         </div>
         <a href="{% url 'matches:admin_match_list' %}" class="btn-back">
             <i class="fas fa-arrow-right"></i> بازگشت به مدیریت مسابقات
@@ -527,7 +527,7 @@
                         {% if selected_match_id %}
                             هیچ کاربری برای مسابقه انتخاب‌شده بلیط ندارد.
                         {% else %}
-                            در حال حاضر هیچ کاربری با نقش VIP در سیستم وجود ندارد.
+                            در حال حاضر هیچ کاربری با نقش کاربر ویژه در سیستم وجود ندارد.
                         {% endif %}
                     </p>
                     {% if not selected_match_id %}

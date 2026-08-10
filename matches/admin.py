@@ -35,8 +35,8 @@ class VIPAssignedTicketInline(admin.TabularInline):
     max_num = 0
     show_change_link = False
     can_delete = False
-    verbose_name = "بلیط تخصیص‌یافته به VIP"
-    verbose_name_plural = "بلیط‌های تخصیص‌یافته به VIP"
+    verbose_name = "بلیط تخصیص‌یافته به کاربر ویژه"
+    verbose_name_plural = "بلیط‌های تخصیص‌یافته به کاربران ویژه"
 
     def get_queryset(self, request):
         return Ticket.objects.none()
@@ -262,12 +262,12 @@ class MatchAdmin(admin.ModelAdmin):
         for col in ['A', 'B', 'C', 'D', 'E', 'F']:
             ws1.column_dimensions[col].width = 16
 
-        ws2 = wb.create_sheet("تخصیص VIP")
+        ws2 = wb.create_sheet("تخصیص بلیط ویژه")
         total_vip = sum(
             t.seat.row.block.price for t in vip_tickets
             if t.seat and t.seat.row and t.seat.row.block
         )
-        ws2.append(['گزارش بلیط‌های تخصیص‌یافته به VIP'])
+        ws2.append(['گزارش بلیط‌های تخصیص‌یافته به کاربران ویژه'])
         ws2.merge_cells('A1:F1')
         ws2['A1'].font = Font(bold=True, size=14)
         ws2['A1'].alignment = Alignment(horizontal='center')
@@ -305,13 +305,13 @@ class MatchAdmin(admin.ModelAdmin):
 
         wb = Workbook()
         ws = wb.active
-        ws.title = "بلیط‌های VIP"
+        ws.title = "بلیط‌های ویژه"
         total_vip = sum(
             t.seat.row.block.price for t in vip_tickets
             if t.seat and t.seat.row and t.seat.row.block
         )
 
-        ws.append(['گزارش بلیط‌های تخصیص‌یافته به VIP'])
+        ws.append(['گزارش بلیط‌های تخصیص‌یافته به کاربران ویژه'])
         ws.merge_cells('A1:F1')
         ws['A1'].font = Font(bold=True, size=14)
         ws['A1'].alignment = Alignment(horizontal='center')
@@ -498,12 +498,12 @@ class MatchAdmin(admin.ModelAdmin):
         for col in ['A', 'B', 'C', 'D', 'E', 'F']:
             ws1.column_dimensions[col].width = 16
 
-        ws2 = wb.create_sheet("تخصیص VIP")
+        ws2 = wb.create_sheet("تخصیص بلیط ویژه")
         total_vip = sum(
             t.seat.row.block.price for t in vip_tickets
             if t.seat and t.seat.row and t.seat.row.block
         )
-        ws2.append(['گزارش بلیط‌های تخصیص‌یافته به VIP'])
+        ws2.append(['گزارش بلیط‌های تخصیص‌یافته به کاربران ویژه'])
         ws2.merge_cells('A1:F1')
         ws2['A1'].font = Font(bold=True, size=14)
         ws2['A1'].alignment = Alignment(horizontal='center')
@@ -541,13 +541,13 @@ class MatchAdmin(admin.ModelAdmin):
 
         wb = Workbook()
         ws = wb.active
-        ws.title = "بلیط‌های VIP"
+        ws.title = "بلیط‌های ویژه"
         total_vip = sum(
             t.seat.row.block.price for t in vip_tickets
             if t.seat and t.seat.row and t.seat.row.block
         )
 
-        ws.append(['گزارش بلیط‌های تخصیص‌یافته به VIP'])
+        ws.append(['گزارش بلیط‌های تخصیص‌یافته به کاربران ویژه'])
         ws.merge_cells('A1:F1')
         ws['A1'].font = Font(bold=True, size=14)
         ws['A1'].alignment = Alignment(horizontal='center')

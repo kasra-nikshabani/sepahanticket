@@ -504,7 +504,7 @@
             </div>
             <div class="stat-box" style="border-color:#D4AF37;">
                 <div class="number gold">{{ sold_seats }}</div>
-                <div class="label">فروخته‌شده / VIP</div>
+                <div class="label">فروخته‌شده / بلیط ویژه</div>
             </div>
         </div>
 
@@ -580,7 +580,7 @@
                             {% elif seat.is_available %}active-seat
                             {% else %}inactive-seat{% endif %}"
                             data-seat-id="{{ seat.id }}"
-                            {% if has_ticket %}title="این صندلی قبلاً فروخته شده یا به VIP اختصاص یافته است"{% endif %}>
+                            {% if has_ticket %}title="این صندلی قبلاً فروخته شده یا به کاربر ویژه اختصاص یافته است"{% endif %}>
                             <input type="checkbox" name="selected_seats" value="{{ seat.id }}" class="seat-checkbox"
                                    {% if has_ticket %}disabled{% endif %}>
                             <span class="selection-indicator"><i class="fas fa-check"></i></span>
