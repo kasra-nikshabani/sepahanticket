@@ -146,7 +146,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-bold text-muted">شماره موبایل</label>
-                            <input type="text" id="shomareyeHamrah_{{ forloop.counter }}" class="form-control form-control-modern mobile-input" placeholder="09XXXXXXXXX" maxlength="11" data-seat-index="{{ forloop.counter }}" oninput="this.value = this.value.replace(/[^0-9]/g, '');" required>
+                            <input type="tel" id="shomareyeHamrah_{{ forloop.counter }}" class="form-control form-control-modern mobile-input" placeholder="09XXXXXXXXX" maxlength="11" inputmode="numeric" pattern="09[0-9]{9}" dir="ltr" data-seat-index="{{ forloop.counter }}" oninput="this.value = this.value.replace(/[^0-9]/g, '');" required>
                         </div>
 
                         <div class="col-12">

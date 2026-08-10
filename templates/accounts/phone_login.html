@@ -27,8 +27,9 @@
                                 <label class="form-label fw-semibold">شماره تلفن</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-mobile-alt"></i></span>
-                                    <input type="text" name="phone_number" class="form-control form-control-lg"
-                                           placeholder="۰۹۱۲۳۴۵۶۷۸۹" dir="ltr" maxlength="11" required
+                                    <input type="tel" name="phone_number" class="form-control form-control-lg"
+                                           placeholder="۰۹۱۲۳۴۵۶۷۸۹" dir="ltr" maxlength="11"
+                                           pattern="09[0-9]{9}" inputmode="numeric" required
                                            id="phoneInput" value="{{ form.phone_number.value|default:'' }}">
                                 </div>
                                 {% if form.phone_number.errors %}
@@ -68,6 +69,11 @@
     </div>
 
     <script>
+        // ===== محدود کردن ورودی شماره تلفن به عدد انگلیسی =====
+        document.getElementById('phoneInput').addEventListener('input', function () {
+            this.value = this.value.replace(/\D/g, '').slice(0, 11);
+        });
+
         // ===== اعتبارسنجی شماره تلفن =====
         document.getElementById('loginForm').addEventListener('submit', function (e) {
             const phone = document.getElementById('phoneInput').value;

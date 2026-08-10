@@ -56,8 +56,10 @@
 
                     <div class="mb-3">
                         <label for="phone_number" class="form-label">شماره موبایل</label>
-                        <input type="text" name="phone_number" id="phone_number" class="form-control"
-                               value="{{ user.phone_number }}" required>
+                        <input type="tel" name="phone_number" id="phone_number" class="form-control"
+                               value="{{ user.phone_number }}" dir="ltr" maxlength="11"
+                               pattern="09[0-9]{9}" inputmode="numeric"
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11);" required>
                         <small class="text-muted">شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد.</small>
                     </div>
 
