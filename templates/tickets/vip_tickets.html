@@ -387,6 +387,18 @@
                 shareBtn.disabled = true;
                 shareBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال آماده‌سازی...';
 
+                function downloadFiles(files) {
+                    files.forEach(function (file) {
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(file);
+                        link.download = file.name;
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
+                        setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+                    });
+                }
+
                 try {
                     const files = await Promise.all(withPdf.map(async function (row) {
                         const resp = await fetch(row.dataset.pdfUrl);
@@ -401,29 +413,31 @@
                         files: files,
                     };
 
+                    let shared = false;
                     if (navigator.canShare && navigator.canShare({files: files})) {
-                        await navigator.share(shareData);
-                    } else {
-                        files.forEach(function (file) {
-                            const link = document.createElement('a');
-                            link.href = URL.createObjectURL(file);
-                            link.download = file.name;
-                            document.body.appendChild(link);
-                            link.click();
-                            link.remove();
-                            setTimeout(() => URL.revokeObjectURL(link.href), 10000);
-                        });
-                        alert('مرورگر شما امکان اشتراک‌گذاری مستقیم فایل را ندارد؛ فایل(های) PDF دانلود شد تا خودتان ارسال کنید.');
+                        try {
+                            await navigator.share(shareData);
+                            shared = true;
+                        } catch (shareErr) {
+                            if (shareErr.name === 'AbortError') {
+                                shared = true;
+                            }
+                            // خطاهای دیگر (مثلاً از دست رفتن user-gesture بعد از fetch
+                            // async، خصوصاً توی iOS Safari) -> برمی‌گردیم به دانلود مستقیم.
+                        }
+                    }
+
+                    if (!shared) {
+                        downloadFiles(files);
+                        alert('اشتراک‌گذاری مستقیم ممکن نشد؛ فایل(های) PDF دانلود شد تا خودتان ارسال کنید.');
                     }
 
                     if (withoutPdf.length > 0) {
                         alert(`توجه: فایل PDF ${withoutPdf.length} بلیط دیگر هنوز آماده نشده و به اشتراک گذاشته نشد.`);
                     }
                 } catch (err) {
-                    if (err.name !== 'AbortError') {
-                        console.error('Error sharing PDF:', err);
-                        alert('❌ خطا در آماده‌سازی فایل برای اشتراک‌گذاری.');
-                    }
+                    console.error('Error preparing PDF for sharing:', err);
+                    alert('❌ خطا در دریافت فایل PDF. لطفاً اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.');
                 } finally {
                     shareBtn.disabled = false;
                     shareBtn.innerHTML = originalHtml;
