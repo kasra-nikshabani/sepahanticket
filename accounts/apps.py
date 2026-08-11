@@ -6,3 +6,4 @@ class AccountsConfig(AppConfig):
 
     def ready(self):
         from football_tickets import admin_customization  # noqa: F401
+        from . import signals  # noqa: F401
