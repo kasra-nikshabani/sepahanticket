@@ -147,6 +147,21 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+# با این storage، آدرس هر فایل استاتیک شامل هش محتوایش می‌شود
+# (مثلاً script.a1b2c3d4.js) -- یعنی هر بار محتوای CSS/JS عوض بشود، آدرسش
+# هم عوض می‌شود و مرورگر مجبور است نسخه‌ی جدید را بگیرد، حتی اگر نسخه‌ی
+# قبلی را قبلاً به‌صورت طولانی‌مدت کش کرده باشد. تا امروز فایل‌های استاتیک
+# فقط با ETag/Last-Modified سرو می‌شدند که همیشه revalidate درستی تضمین
+# نمی‌کند (مثلاً با کش تهاجمی مرورگر یا CDN).
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage',
+    },
+}
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
