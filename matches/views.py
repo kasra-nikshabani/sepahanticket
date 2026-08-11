@@ -57,7 +57,9 @@ def home(request):
     stadium_filter = request.GET.get('stadium')
 
     # ===== کوئری پایه =====
-    matches = Match.objects.filter(is_active=True, date_time__gte=timezone.now()).order_by('date_time')
+    # نمایش/عدم‌نمایش مسابقه فقط با is_active کنترل می‌شود، نه با گذشتن زمان
+    # شروع؛ ادمین خودش تصمیم می‌گیرد کِی مسابقه از سایت جمع شود.
+    matches = Match.objects.filter(is_active=True).order_by('date_time')
 
     if sport_filter:
         matches = matches.filter(sport_type=sport_filter)
