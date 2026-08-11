@@ -53,12 +53,22 @@ def user_tickets(request):
     else:
         tickets_qs = Ticket.objects.filter(user=request.user, status='paid').order_by('-purchase_date')
 
-    if match_id:
-        tickets_qs = tickets_qs.filter(match_id=match_id)
-
     if status_filter and request.user.user_type == 'vip':
         if status_filter in ['paid', 'admin_assigned', 'vip_issued']:
             tickets_qs = tickets_qs.filter(status=status_filter)
+
+    # فیلتر «مسابقه» باید همه‌ی مسابقاتی که کاربر واقعاً برایشان بلیط دارد را
+    # نشان دهد، نه فقط مسابقات فعال -- وگرنه کاربر نمی‌تواند بلیط‌های یک
+    # مسابقه‌ی غیرفعال‌شده را فیلتر/پیدا کند (خودِ لیست اصلی بلیط‌ها از قبل
+    # بدون قید is_active است و همیشه همه را نشان می‌دهد). باید قبل از اعمال
+    # فیلتر match_id محاسبه شود، وگرنه با انتخاب یک مسابقه فقط همان یک
+    # گزینه در دراپ‌داون باقی می‌ماند.
+    matches = Match.objects.filter(
+        id__in=tickets_qs.values_list('match_id', flat=True).distinct()
+    ).order_by('-date_time')
+
+    if match_id:
+        tickets_qs = tickets_qs.filter(match_id=match_id)
 
     local_tz = pytz.timezone('Asia/Tehran')
     for ticket in tickets_qs:
@@ -66,8 +76,6 @@ def user_tickets(request):
             ticket.used_at_local = ticket.used_at.astimezone(local_tz)
         else:
             ticket.used_at_local = None
-
-    matches = Match.objects.filter(is_active=True).order_by('-date_time')
 
     context = {
         'tickets': tickets_qs,
