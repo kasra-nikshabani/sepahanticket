@@ -13,6 +13,7 @@ urlpatterns = [
     path('my-tickets/', views.user_tickets, name='user_tickets'),
     path('download/<int:ticket_id>/', views.download_ticket_pdf, name='download_ticket_pdf'),
     path('shared/<uuid:token>/', views.shared_ticket_pdf, name='shared_ticket_pdf'),
+    path('pdf-status/', views.tickets_pdf_status, name='tickets_pdf_status'),
     path('vip-tickets/', views.vip_tickets, name='vip_tickets'),
     path('vip-issue-manual/<int:match_id>/', views.vip_issue_manual, name='vip_issue_manual'),
     path('vip-issue-excel/<int:match_id>/', views.vip_issue_excel, name='vip_issue_excel'),

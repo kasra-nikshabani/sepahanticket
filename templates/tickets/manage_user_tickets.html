@@ -429,7 +429,8 @@
                         </thead>
                         <tbody>
                             {% for ticket in tickets %}
-                                <tr>
+                                <tr data-ticket-id="{{ ticket.id }}"
+                                    {% if ticket.pdf_file %}data-pdf-url="{% url 'tickets:download_ticket_pdf' ticket.id %}"{% endif %}>
                                     <td><strong>{{ ticket.ticket_number }}</strong></td>
                                     <td class="match-cell">
                                         {{ ticket.match.home_team }} vs {{ ticket.match.away_team }}
@@ -446,11 +447,11 @@
                                     <td>
                                         <div style="display:flex; gap:4px; flex-wrap:wrap;">
                                             {% if ticket.pdf_file %}
-                                            <a href="{% url 'tickets:download_ticket_pdf' ticket.id %}" target="_blank" class="btn-download" title="دانلود PDF">
+                                            <a href="{% url 'tickets:download_ticket_pdf' ticket.id %}" target="_blank" class="btn-download pdf-slot" title="دانلود PDF">
                                                 <i class="fas fa-file-pdf"></i>
                                             </a>
                                             {% else %}
-                                            <span class="btn-download disabled" title="در حال آماده‌سازی">
+                                            <span class="btn-download disabled pdf-slot" title="در حال آماده‌سازی">
                                                 <i class="fas fa-clock"></i>
                                             </span>
                                             {% endif %}
@@ -484,4 +485,46 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // ===== Polling برای بلیط‌هایی که PDF‌شان هنوز در صف پس‌زمینه آماده می‌شود =====
+        let attempts = 0;
+        const maxAttempts = 40;
+
+        function pendingIds() {
+            return Array.from(document.querySelectorAll('tr[data-ticket-id]:not([data-pdf-url])'))
+                .map(el => el.dataset.ticketId)
+                .filter(Boolean);
+        }
+
+        function tick() {
+            attempts++;
+            const ids = pendingIds();
+            if (ids.length === 0 || attempts > maxAttempts) return;
+
+            fetch(`{% url 'tickets:tickets_pdf_status' %}?ids=${ids.join(',')}`)
+                .then(r => r.json())
+                .then(data => {
+                    ids.forEach(id => {
+                        const info = data[id];
+                        if (!info || !info.ready) return;
+                        const row = document.querySelector(`tr[data-ticket-id="${id}"]`);
+                        if (!row) return;
+                        row.dataset.pdfUrl = info.pdf_url;
+                        const slot = row.querySelector('.pdf-slot');
+                        if (slot) {
+                            slot.outerHTML = `<a href="${info.pdf_url}" target="_blank" class="btn-download pdf-slot" title="دانلود PDF"><i class="fas fa-file-pdf"></i></a>`;
+                        }
+                    });
+                    setTimeout(tick, 3000);
+                })
+                .catch(() => setTimeout(tick, 5000));
+        }
+
+        if (pendingIds().length > 0) {
+            setTimeout(tick, 3000);
+        }
+    });
+</script>
 {% endblock %}

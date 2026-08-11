@@ -189,11 +189,11 @@
                                     <i class="fas fa-clock"></i> {{ ticket.purchase_date|date:"Y/m/d H:i" }}
                                 </small>
                                 {% if ticket.pdf_file %}
-                                <a href="{% url 'tickets:download_ticket_pdf' ticket.id %}" target="_blank" class="btn btn-sm btn-primary">
+                                <a href="{% url 'tickets:download_ticket_pdf' ticket.id %}" target="_blank" class="btn btn-sm btn-primary pdf-slot">
                                     <i class="fas fa-file-pdf"></i> دانلود
                                 </a>
                                 {% else %}
-                                <span class="btn btn-sm btn-secondary disabled">
+                                <span class="btn btn-sm btn-secondary disabled pdf-slot">
                                     <i class="fas fa-clock"></i> در حال آماده‌سازی...
                                 </span>
                                 {% endif %}
@@ -391,6 +391,47 @@
                     alert(`توجه: لینک ${withoutLink.length} بلیط دیگر هنوز آماده نشده و به اشتراک گذاشته نشد.`);
                 }
             });
+
+            // ===== Polling برای بلیط‌هایی که PDF‌شان هنوز در صف پس‌زمینه آماده می‌شود =====
+            (function pollPendingPdfs() {
+                let attempts = 0;
+                const maxAttempts = 40; // حدود ۲ دقیقه با فاصله ۳ ثانیه‌ای
+
+                function pendingIds() {
+                    return Array.from(document.querySelectorAll('.ticket-item:not([data-pdf-url])'))
+                        .map(el => el.dataset.ticketId)
+                        .filter(Boolean);
+                }
+
+                function tick() {
+                    attempts++;
+                    const ids = pendingIds();
+                    if (ids.length === 0 || attempts > maxAttempts) return;
+
+                    fetch(`{% url 'tickets:tickets_pdf_status' %}?ids=${ids.join(',')}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            ids.forEach(id => {
+                                const info = data[id];
+                                if (!info || !info.ready) return;
+                                const item = document.querySelector(`.ticket-item[data-ticket-id="${id}"]`);
+                                if (!item) return;
+                                item.dataset.pdfUrl = info.pdf_url;
+                                item.dataset.shareUrl = info.share_url;
+                                const slot = item.querySelector('.pdf-slot');
+                                if (slot) {
+                                    slot.outerHTML = `<a href="${info.pdf_url}" target="_blank" class="btn btn-sm btn-primary pdf-slot"><i class="fas fa-file-pdf"></i> دانلود</a>`;
+                                }
+                            });
+                            setTimeout(tick, 3000);
+                        })
+                        .catch(() => setTimeout(tick, 5000));
+                }
+
+                if (pendingIds().length > 0) {
+                    setTimeout(tick, 3000);
+                }
+            })();
         });
     </script>
 {% endblock %}

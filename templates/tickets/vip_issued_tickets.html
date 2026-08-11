@@ -366,7 +366,7 @@
                                 </thead>
                                 <tbody>
                                 {% for ticket in tickets %}
-                                    <tr data-ticket-number="{{ ticket.ticket_number }}"
+                                    <tr data-ticket-id="{{ ticket.id }}" data-ticket-number="{{ ticket.ticket_number }}"
                                         {% if ticket.pdf_file %}data-pdf-url="{% url 'tickets:download_ticket_pdf' ticket.id %}"
                                         data-share-url="{{ request.scheme }}://{{ request.get_host }}{% url 'tickets:shared_ticket_pdf' ticket.share_token %}"{% endif %}>
                                         <td class="checkbox-column">
@@ -389,12 +389,12 @@
                                         <td>
                                             <div class="actions-cell">
                                                 {% if ticket.pdf_file %}
-                                                <a href="{% url 'tickets:download_ticket_pdf' ticket.id %}" target="_blank" class="btn-action"
+                                                <a href="{% url 'tickets:download_ticket_pdf' ticket.id %}" target="_blank" class="btn-action pdf-slot"
                                                    title="دانلود PDF">
                                                     <i class="fas fa-file-pdf"></i>
                                                 </a>
                                                 {% else %}
-                                                <span class="btn-action disabled" title="در حال آماده‌سازی">
+                                                <span class="btn-action disabled pdf-slot" title="در حال آماده‌سازی">
                                                     <i class="fas fa-clock"></i>
                                                 </span>
                                                 {% endif %}
@@ -534,6 +534,47 @@
                     alert('لطفاً حداقل یک بلیط را انتخاب کنید.');
                 }
             });
+
+            // ===== Polling برای بلیط‌هایی که PDF‌شان هنوز در صف پس‌زمینه آماده می‌شود =====
+            (function pollPendingPdfs() {
+                let attempts = 0;
+                const maxAttempts = 40;
+
+                function pendingIds() {
+                    return Array.from(document.querySelectorAll('tr[data-ticket-id]:not([data-pdf-url])'))
+                        .map(el => el.dataset.ticketId)
+                        .filter(Boolean);
+                }
+
+                function tick() {
+                    attempts++;
+                    const ids = pendingIds();
+                    if (ids.length === 0 || attempts > maxAttempts) return;
+
+                    fetch(`{% url 'tickets:tickets_pdf_status' %}?ids=${ids.join(',')}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            ids.forEach(id => {
+                                const info = data[id];
+                                if (!info || !info.ready) return;
+                                const row = document.querySelector(`tr[data-ticket-id="${id}"]`);
+                                if (!row) return;
+                                row.dataset.pdfUrl = info.pdf_url;
+                                row.dataset.shareUrl = info.share_url;
+                                const slot = row.querySelector('.pdf-slot');
+                                if (slot) {
+                                    slot.outerHTML = `<a href="${info.pdf_url}" target="_blank" class="btn-action pdf-slot" title="دانلود PDF"><i class="fas fa-file-pdf"></i></a>`;
+                                }
+                            });
+                            setTimeout(tick, 3000);
+                        })
+                        .catch(() => setTimeout(tick, 5000));
+                }
+
+                if (pendingIds().length > 0) {
+                    setTimeout(tick, 3000);
+                }
+            })();
 
         })();
     </script>

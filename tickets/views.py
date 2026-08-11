@@ -134,6 +134,38 @@ def shared_ticket_pdf(request, token):
 
 
 @login_required
+def tickets_pdf_status(request):
+    """
+    وضعیت آماده بودن PDF چند بلیط را یک‌جا برمی‌گرداند -- برای Polling از
+    صفحاتی مثل «بلیط‌های من» که بلافاصله بعد از صدور، PDF هنوز در صف
+    پس‌زمینه (RQ) در حال تولید است و کاربر مجبور بود صفحه را رفرش کند تا
+    دکمه‌ی دانلود ظاهر شود.
+    """
+    ids_param = request.GET.get('ids', '')
+    try:
+        ticket_ids = [int(pk) for pk in ids_param.split(',') if pk.strip()]
+    except ValueError:
+        return JsonResponse({'error': 'invalid ids'}, status=400)
+
+    is_staff = request.user.is_staff or request.user.user_type == 'admin'
+    tickets = Ticket.objects.filter(id__in=ticket_ids)
+    if not is_staff:
+        tickets = tickets.filter(user_id=request.user.id)
+
+    result = {}
+    for ticket in tickets:
+        result[str(ticket.id)] = {
+            'ready': bool(ticket.pdf_file),
+            'pdf_url': reverse('tickets:download_ticket_pdf', args=[ticket.id]) if ticket.pdf_file else None,
+            'share_url': (
+                f"{request.scheme}://{request.get_host()}{reverse('tickets:shared_ticket_pdf', args=[ticket.share_token])}"
+                if ticket.pdf_file else None
+            ),
+        }
+    return JsonResponse(result)
+
+
+@login_required
 def vip_tickets(request):
     if request.user.user_type != 'vip':
         messages.error(request, 'شما دسترسی به این بخش ندارید.')
