@@ -93,7 +93,8 @@
                 {% for ticket in tickets %}
                     <div class="col-md-6 col-lg-4 mb-4 ticket-item" data-ticket-id="{{ ticket.id }}"
                          data-ticket-number="{{ ticket.ticket_number }}"
-                         {% if ticket.pdf_file %}data-pdf-url="{% url 'tickets:download_ticket_pdf' ticket.id %}"{% endif %}>
+                         {% if ticket.pdf_file %}data-pdf-url="{% url 'tickets:download_ticket_pdf' ticket.id %}"
+                         data-share-url="{{ request.scheme }}://{{ request.get_host }}{% url 'tickets:shared_ticket_pdf' ticket.share_token %}"{% endif %}>
                         <div class="card ticket-card shadow-sm h-100
                         {% if ticket.status == 'admin_assigned' %}border-warning
                         {% elif ticket.status == 'vip_issued' %}border-info
@@ -338,84 +339,56 @@
                 }
             });
 
-            shareSelectedBtn.addEventListener('click', async function () {
+            shareSelectedBtn.addEventListener('click', function () {
                 const checked = document.querySelectorAll('.ticket-checkbox:checked');
                 if (checked.length === 0) return;
 
                 const cards = Array.from(checked).map(cb => cb.closest('.ticket-item'));
-                const withPdf = cards.filter(c => c.dataset.pdfUrl);
-                const withoutPdf = cards.filter(c => !c.dataset.pdfUrl);
+                const withLink = cards.filter(c => c.dataset.shareUrl);
+                const withoutLink = cards.filter(c => !c.dataset.shareUrl);
 
-                if (withPdf.length === 0) {
-                    alert('❌ فایل PDF این بلیط(ها) هنوز آماده نشده. چند لحظه دیگر دوباره امتحان کنید.');
+                if (withLink.length === 0) {
+                    alert('❌ لینک این بلیط(ها) هنوز آماده نشده. چند لحظه دیگر دوباره امتحان کنید.');
                     return;
                 }
 
-                const originalHtml = shareSelectedBtn.innerHTML;
-                shareSelectedBtn.disabled = true;
-                shareSelectedBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال آماده‌سازی...';
-
-                function downloadFiles(files) {
-                    files.forEach(function (file) {
-                        const link = document.createElement('a');
-                        link.href = URL.createObjectURL(file);
-                        link.download = file.name;
-                        document.body.appendChild(link);
-                        link.click();
-                        link.remove();
-                        setTimeout(() => URL.revokeObjectURL(link.href), 10000);
-                    });
-                }
-
-                try {
-                    const files = await Promise.all(withPdf.map(async function (card) {
-                        const resp = await fetch(card.dataset.pdfUrl);
-                        const blob = await resp.blob();
-                        const number = card.dataset.ticketNumber || 'ticket';
-                        return new File([blob], `ticket_${number}.pdf`, {type: 'application/pdf'});
-                    }));
-
-                    const shareData = {
+                const links = withLink.map(c => c.dataset.shareUrl);
+                const shareData = links.length === 1
+                    ? {
                         title: 'بلیط سپاهان تیکت',
-                        text: `🎫 ${files.length} بلیط`,
-                        files: files,
+                        text: '🎫 برای دانلود فایل PDF بلیط، لینک زیر را باز کنید:',
+                        url: links[0],
+                    }
+                    : {
+                        title: 'بلیط سپاهان تیکت',
+                        text: `🎫 ${links.length} بلیط -- لینک دانلود هرکدام:\n${links.join('\n')}`,
                     };
 
-                    let shared = false;
-                    if (navigator.canShare && navigator.canShare({files: files})) {
-                        try {
-                            await navigator.share(shareData);
-                            shared = true;
-                        } catch (shareErr) {
-                            if (shareErr.name === 'AbortError') {
-                                // کاربر خودش از پنجره‌ی اشتراک‌گذاری انصراف داد -- کاری نکن
-                                shared = true;
-                            }
-                            // هر خطای دیگری (مثلاً از دست رفتن user-gesture بعد از fetch
-                            // async، که خصوصاً توی iOS Safari پیش می‌آید) را نادیده
-                            // می‌گیریم و به روش دانلود مستقیم برمی‌گردیم، به‌جای نشان
-                            // دادن یک خطای گنگ به کاربر.
+                function fallbackCopy() {
+                    const text = links.length === 1 ? links[0] : links.join('\n');
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(text).then(function () {
+                            alert('✅ لینک بلیط در کلیپ‌بورد کپی شد.');
+                        }).catch(function () {
+                            prompt('لینک را کپی کنید:', text);
+                        });
+                    } else {
+                        prompt('لینک را کپی کنید:', text);
+                    }
+                }
+
+                if (navigator.share) {
+                    navigator.share(shareData).catch(function (err) {
+                        if (err.name !== 'AbortError') {
+                            fallbackCopy();
                         }
-                    }
+                    });
+                } else {
+                    fallbackCopy();
+                }
 
-                    if (!shared) {
-                        // یا مرورگر اصلاً از اشتراک‌گذاری مستقیم فایل پشتیبانی نمی‌کند
-                        // (اکثر مرورگرهای دسکتاپ)، یا تلاش برای اشتراک‌گذاری شکست خورد --
-                        // در هر دو حالت فایل را دانلود می‌کنیم تا کاربر خودش از طریق
-                        // برنامه‌ی مقصد (تلگرام/واتس‌اپ/ایمیل و ...) ارسال کند.
-                        downloadFiles(files);
-                        alert('اشتراک‌گذاری مستقیم ممکن نشد؛ فایل(های) PDF دانلود شد تا خودتان ارسال کنید.');
-                    }
-
-                    if (withoutPdf.length > 0) {
-                        alert(`توجه: فایل PDF ${withoutPdf.length} بلیط دیگر هنوز آماده نشده و به اشتراک گذاشته نشد.`);
-                    }
-                } catch (err) {
-                    console.error('Error preparing PDF for sharing:', err);
-                    alert('❌ خطا در دریافت فایل PDF. لطفاً اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.');
-                } finally {
-                    shareSelectedBtn.disabled = false;
-                    shareSelectedBtn.innerHTML = originalHtml;
+                if (withoutLink.length > 0) {
+                    alert(`توجه: لینک ${withoutLink.length} بلیط دیگر هنوز آماده نشده و به اشتراک گذاشته نشد.`);
                 }
             });
         });

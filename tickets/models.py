@@ -3,6 +3,7 @@ import base64
 import qrcode
 import random  # ← اصلاح
 import string  # ← اصلاح
+import uuid
 from io import BytesIO
 from django.core.files import File
 from django.db import models
@@ -62,6 +63,12 @@ class Ticket(models.Model):
     qr_code = models.ImageField(upload_to='qr_codes/', blank=True, null=True)
     pdf_file = models.FileField(upload_to='ticket_pdfs/', blank=True, null=True)
     ticket_number = models.CharField(max_length=20, unique=True, blank=True, null=True)
+
+    # توکن غیرقابل‌حدس برای لینک اشتراک‌گذاری بلیط -- برخلاف ticket_number
+    # (که فقط ۶ رقمیه و برای دسترسی گیت طراحی شده)، این باید عملاً
+    # non-guessable باشه چون هر کسی با این لینک (بدون نیاز به لاگین) PDF
+    # بلیط رو دانلود می‌کنه.
+    share_token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
 
     # ===== تخصیص توسط ادمین =====
     is_admin_assigned = models.BooleanField(default=False, verbose_name="تخصیص توسط ادمین")

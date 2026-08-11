@@ -114,6 +114,25 @@ def download_ticket_pdf(request, ticket_id):
     return response
 
 
+def shared_ticket_pdf(request, token):
+    """
+    دانلود PDF بلیط از طریق لینک اشتراک‌گذاری -- عمداً بدون نیاز به لاگین،
+    چون قرار است هر کسی که خریدار لینک را برایش فرستاده (نه لزوماً خودِ
+    خریدار) بتواند بلیط را دانلود کند. امنیتش روی غیرقابل‌حدس بودنِ خودِ
+    توکن (UUID4) تکیه دارد، نه احراز هویت -- شبیه لینک‌های اشتراک‌گذاری
+    گوگل‌درایو/دراپ‌باکس.
+    """
+    ticket = get_object_or_404(Ticket, share_token=token)
+
+    if not ticket.pdf_file:
+        raise Http404
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="ticket_{ticket.ticket_number}.pdf"'
+    response['X-Accel-Redirect'] = f'/{settings.MEDIA_URL.strip("/")}/{ticket.pdf_file.name}'
+    return response
+
+
 @login_required
 def vip_tickets(request):
     if request.user.user_type != 'vip':
