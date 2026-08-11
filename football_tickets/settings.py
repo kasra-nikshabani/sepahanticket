@@ -35,6 +35,10 @@ SESSION_SAVE_EVERY_REQUEST = True  # ← مهم
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SECURE = True
+# شکست CSRF برای درخواست‌های fetch/AJAX باید JSON برگرداند، نه صفحه‌ی HTML
+# پیش‌فرض جنگو -- وگرنه response.json() سمت جاوااسکریپت با خطای
+# "Unexpected token '<'" می‌شکند. جزئیات در football_tickets/csrf.py
+CSRF_FAILURE_VIEW = 'football_tickets.csrf.csrf_failure'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
