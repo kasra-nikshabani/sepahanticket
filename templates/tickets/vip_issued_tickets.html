@@ -366,7 +366,8 @@
                                 </thead>
                                 <tbody>
                                 {% for ticket in tickets %}
-                                    <tr>
+                                    <tr data-ticket-number="{{ ticket.ticket_number }}"
+                                        {% if ticket.pdf_file %}data-pdf-url="{% url 'tickets:download_ticket_pdf' ticket.id %}"{% endif %}>
                                         <td class="checkbox-column">
                                             <input type="checkbox" name="ticket_ids" value="{{ ticket.id }}"
                                                    class="ticket-checkbox">
@@ -465,54 +466,70 @@
             // مقداردهی اولیه
             updateSelectedCount();
 
-            // ===== اشتراک‌گذاری =====
+            // ===== اشتراک‌گذاری (ارسال خودِ فایل PDF) =====
             if (shareBtn) {
-                shareBtn.addEventListener('click', function () {
+                shareBtn.addEventListener('click', async function () {
                     const checked = document.querySelectorAll('.ticket-checkbox:checked');
                     if (checked.length === 0) {
                         alert('لطفاً حداقل یک بلیط را انتخاب کنید.');
                         return;
                     }
 
-                    // جمع‌آوری اطلاعات بلیط‌های انتخاب‌شده
-                    const ticketsInfo = [];
-                    checked.forEach(cb => {
-                        const row = cb.closest('tr');
-                        const number = row.querySelector('td:nth-child(2) strong').textContent;
-                        const match = row.querySelector('td:nth-child(3)').textContent.trim();
-                        const name = row.querySelector('td:nth-child(4)').textContent.trim();
-                        ticketsInfo.push(`${number} - ${match} (${name})`);
-                    });
+                    const rows = Array.from(checked).map(cb => cb.closest('tr'));
+                    const withPdf = rows.filter(r => r.dataset.pdfUrl);
+                    const withoutPdf = rows.filter(r => !r.dataset.pdfUrl);
 
-                    const shareText = `🎫 بلیط‌های صادرشده:\n${ticketsInfo.join('\n')}\n\nجهت دریافت فایل PDF، از گزینه دانلود استفاده کنید.`;
+                    if (withPdf.length === 0) {
+                        alert('❌ فایل PDF این بلیط(ها) هنوز آماده نشده. چند لحظه دیگر دوباره امتحان کنید.');
+                        return;
+                    }
 
-                    if (navigator.share) {
-                        navigator.share({
+                    const originalHtml = shareBtn.innerHTML;
+                    shareBtn.disabled = true;
+                    shareBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال آماده‌سازی...';
+
+                    try {
+                        const files = await Promise.all(withPdf.map(async function (row) {
+                            const resp = await fetch(row.dataset.pdfUrl);
+                            const blob = await resp.blob();
+                            const number = row.dataset.ticketNumber || 'ticket';
+                            return new File([blob], `ticket_${number}.pdf`, {type: 'application/pdf'});
+                        }));
+
+                        const shareData = {
                             title: 'بلیط‌های صادرشده',
-                            text: shareText,
-                            url: window.location.href,
-                        }).catch(err => {
-                            if (err.name !== 'AbortError') {
-                                fallbackShare(shareText);
-                            }
-                        });
-                    } else {
-                        fallbackShare(shareText);
+                            text: `🎫 ${files.length} بلیط`,
+                            files: files,
+                        };
+
+                        if (navigator.canShare && navigator.canShare({files: files})) {
+                            await navigator.share(shareData);
+                        } else {
+                            files.forEach(function (file) {
+                                const link = document.createElement('a');
+                                link.href = URL.createObjectURL(file);
+                                link.download = file.name;
+                                document.body.appendChild(link);
+                                link.click();
+                                link.remove();
+                                setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+                            });
+                            alert('مرورگر شما امکان اشتراک‌گذاری مستقیم فایل را ندارد؛ فایل(های) PDF دانلود شد تا خودتان ارسال کنید.');
+                        }
+
+                        if (withoutPdf.length > 0) {
+                            alert(`توجه: فایل PDF ${withoutPdf.length} بلیط دیگر هنوز آماده نشده و به اشتراک گذاشته نشد.`);
+                        }
+                    } catch (err) {
+                        if (err.name !== 'AbortError') {
+                            console.error('Error sharing PDF:', err);
+                            alert('❌ خطا در آماده‌سازی فایل برای اشتراک‌گذاری.');
+                        }
+                    } finally {
+                        shareBtn.disabled = false;
+                        shareBtn.innerHTML = originalHtml;
                     }
                 });
-            }
-
-            // ===== روش جایگزین برای اشتراک‌گذاری =====
-            function fallbackShare(text) {
-                if (navigator.clipboard) {
-                    navigator.clipboard.writeText(text).then(() => {
-                        alert('✅ اطلاعات بلیط‌ها در کلیپ‌بورد کپی شد. می‌توانید در شبکه‌های اجتماعی به اشتراک بگذارید.');
-                    }).catch(() => {
-                        prompt('برای اشتراک‌گذاری، متن زیر را کپی کنید:', text);
-                    });
-                } else {
-                    prompt('برای اشتراک‌گذاری، متن زیر را کپی کنید:', text);
-                }
             }
 
             // ===== جلوگیری از ارسال فرم بدون انتخاب =====
