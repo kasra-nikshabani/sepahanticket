@@ -127,8 +127,9 @@ def otp_verify(request):
                     pending = request.session.get('pending_registration')
                     if pending and pending.get('phone_number') == phone_number:
                         user = User.objects.create_user(
-                            username=phone_number,
+                            username=pending['national_code'],
                             phone_number=phone_number,
+                            national_code=pending['national_code'],
                             first_name=pending['first_name'],
                             last_name=pending['last_name'],
                             is_active=True,
@@ -231,15 +232,21 @@ def phone_register(request):
             phone_number = form.cleaned_data['phone_number']
             first_name = form.cleaned_data['first_name']
             last_name = form.cleaned_data['last_name']
+            national_code = form.cleaned_data['national_code']
 
             if User.objects.filter(phone_number=phone_number).exists():
                 messages.error(request, 'این شماره تلفن قبلاً ثبت شده است.')
+                return render(request, 'accounts/phone_register.html', {'form': form})
+
+            if User.objects.filter(national_code=national_code).exists():
+                messages.error(request, 'این کد ملی قبلاً ثبت شده است.')
                 return render(request, 'accounts/phone_register.html', {'form': form})
 
             pending_data = {
                 'phone_number': phone_number,
                 'first_name': first_name,
                 'last_name': last_name,
+                'national_code': national_code,
             }
             try:
                 # حساب کاربری فقط بعد از تأیید موفق کد OTP ساخته می‌شود

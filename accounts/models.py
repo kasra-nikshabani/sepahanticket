@@ -13,6 +13,7 @@ class User(AbstractUser):
     )
     user_type = models.CharField(max_length=10, choices=USER_TYPES, default='normal')
     phone_number = models.CharField(max_length=11, unique=True, null=True, blank=True)
+    national_code = models.CharField(max_length=10, unique=True, null=True, blank=True, verbose_name="کد ملی")
     is_phone_verified = models.BooleanField(default=False)
 
     class Meta:

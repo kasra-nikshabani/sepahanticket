@@ -154,6 +154,18 @@ class OTPVerifyForm(forms.Form):
 PERSIAN_NAME_RE = re.compile(r'^[؀-ۿ‌ ]+$')
 
 
+def is_valid_iranian_national_code(code):
+    """اعتبارسنجی واقعی کد ملی ایران (رقم کنترلی)، نه فقط چک ۱۰ رقمی بودن."""
+    if not re.match(r'^\d{10}$', code):
+        return False
+    if len(set(code)) == 1:  # مثل 0000000000 یا 1111111111
+        return False
+    check_digit = int(code[9])
+    total = sum(int(code[i]) * (10 - i) for i in range(9))
+    remainder = total % 11
+    return check_digit == remainder if remainder < 2 else check_digit == 11 - remainder
+
+
 class PhoneRegisterForm(forms.Form):
     """فرم ثبت‌نام با شماره تلفن"""
     first_name = forms.CharField(
@@ -179,6 +191,18 @@ class PhoneRegisterForm(forms.Form):
         }),
         label="شماره موبایل"
     )
+    national_code = forms.CharField(
+        max_length=10,
+        min_length=10,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'کد ملی (۱۰ رقم)',
+            'dir': 'ltr',
+            'inputmode': 'numeric',
+        }),
+        label="کد ملی"
+    )
 
     def _clean_persian_name(self, field_name, label):
         value = (self.cleaned_data.get(field_name) or '').strip()
@@ -202,3 +226,11 @@ class PhoneRegisterForm(forms.Form):
         if User.objects.filter(phone_number=phone).exists():
             raise ValidationError('این شماره موبایل قبلاً ثبت شده است.')
         return phone
+
+    def clean_national_code(self):
+        code = (self.cleaned_data.get('national_code') or '').strip()
+        if not code.isdigit() or not is_valid_iranian_national_code(code):
+            raise ValidationError('کد ملی وارد شده معتبر نیست.')
+        if User.objects.filter(national_code=code).exists():
+            raise ValidationError('این کد ملی قبلاً ثبت شده است.')
+        return code

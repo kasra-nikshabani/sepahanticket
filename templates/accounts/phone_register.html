@@ -342,6 +342,23 @@
                     {% endif %}
                 </div>
 
+                <!-- کد ملی -->
+                <div class="form-group">
+                    <label><i class="fas fa-id-badge label-icon"></i> کد ملی</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                        <input type="text" name="national_code" class="form-control"
+                               placeholder="۱۰ رقم کد ملی" dir="ltr" maxlength="10"
+                               inputmode="numeric" value="{{ form.national_code.value|default:'' }}" required>
+                    </div>
+                    {% if form.national_code.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {% for error in form.national_code.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
                 <button type="submit" class="btn-register-phone">
                     <i class="fas fa-paper-plane"></i> دریافت کد تأیید
                 </button>
@@ -371,12 +388,29 @@
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.querySelector('form');
         const phoneInput = document.querySelector('input[name="phone_number"]');
+        const nationalCodeInput = document.querySelector('input[name="national_code"]');
         const nameInputs = document.querySelectorAll('.persian-name-input');
         const persianPattern = /^[؀-ۿ‌ ]+$/;
+
+        function isValidNationalCode(code) {
+            if (!/^\d{10}$/.test(code)) return false;
+            if (new Set(code.split('')).size === 1) return false; // مثل 0000000000
+            const check = parseInt(code[9], 10);
+            let sum = 0;
+            for (let i = 0; i < 9; i++) sum += parseInt(code[i], 10) * (10 - i);
+            const remainder = sum % 11;
+            return remainder < 2 ? check === remainder : check === (11 - remainder);
+        }
 
         // محدود کردن ورودی شماره موبایل به عدد
         phoneInput.addEventListener('input', function() {
             this.value = this.value.replace(/\D/g, '').slice(0, 11);
+        });
+
+        // محدود کردن ورودی کد ملی به عدد
+        nationalCodeInput.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '').slice(0, 10);
+            this.classList.remove('is-invalid');
         });
 
         // محدود کردن نام/نام‌خانوادگی به حروف فارسی
@@ -410,8 +444,17 @@
                 e.preventDefault();
                 phoneInput.classList.add('is-invalid');
                 alert('⚠️ شماره تلفن معتبر نیست. لطفاً به صورت ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید.');
+                return;
             } else {
                 phoneInput.classList.remove('is-invalid');
+            }
+
+            if (!isValidNationalCode(nationalCodeInput.value)) {
+                e.preventDefault();
+                nationalCodeInput.classList.add('is-invalid');
+                alert('⚠️ کد ملی وارد شده معتبر نیست.');
+            } else {
+                nationalCodeInput.classList.remove('is-invalid');
             }
         });
 
