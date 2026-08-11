@@ -7,6 +7,10 @@
     <h2>{{ match.home_team }} 🆚 {{ match.away_team }}</h2>
     <p>{{ match.date_time|date:"Y/m/d - H:i" }}</p>
     <p>ورزشگاه: {{ match.stadium.name }}</p>
-    <a href="{% url 'matches:select_floor' match.id %}" class="btn btn-primary">خرید بلیط</a>
+    {% if match.ticket_sales_enabled %}
+        <a href="{% url 'matches:select_floor' match.id %}" class="btn btn-primary">خرید بلیط</a>
+    {% else %}
+        <span class="btn btn-secondary disabled">فروش بلیط غیرفعال است</span>
+    {% endif %}
 </div>
 {% endblock %}

@@ -147,6 +147,9 @@ def match_detail(request, match_id):
 def select_floor(request, match_id):
     """انتخاب طبقه (پایین یا بالا) و تیم (میزبان یا میهمان) قبل از نمایش بلوک‌ها"""
     match = get_object_or_404(Match, id=match_id, is_active=True)
+    if not match.ticket_sales_enabled:
+        messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
+        return redirect('matches:home')
 
     if request.method == 'POST':
         floor = request.POST.get('floor')
@@ -165,6 +168,9 @@ def select_floor(request, match_id):
 @login_required
 def select_block(request, match_id):
     match = get_object_or_404(Match, id=match_id, is_active=True)
+    if not match.ticket_sales_enabled:
+        messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
+        return redirect('matches:home')
     stadium = match.stadium
 
     selected_floor = request.session.get('selected_floor', 'ground')
@@ -285,6 +291,9 @@ def select_block(request, match_id):
 @login_required
 def show_block_map(request, match_id):
     match = get_object_or_404(Match, id=match_id, is_active=True)
+    if not match.ticket_sales_enabled:
+        messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
+        return redirect('matches:home')
     block_id = request.session.get('selected_block_id')
     if not block_id:
         messages.error(request, 'لطفاً ابتدا یک بلوک را انتخاب کنید.')
@@ -379,6 +388,9 @@ def show_block_map(request, match_id):
 @login_required
 def select_row(request, match_id):
     match = get_object_or_404(Match, id=match_id, is_active=True)
+    if not match.ticket_sales_enabled:
+        messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
+        return redirect('matches:home')
     block_id = request.session.get('selected_block_id')
     if not block_id:
         messages.error(request, 'لطفاً ابتدا بلوک را انتخاب کنید.')

@@ -453,6 +453,9 @@ def vip_issue_excel(request, match_id):
 @login_required
 def select_seats(request, match_id):
     match = get_object_or_404(Match, id=match_id, is_active=True)
+    if not match.ticket_sales_enabled:
+        messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
+        return redirect('matches:home')
     row_id = request.session.get('selected_row_id')
     if not row_id:
         messages.error(request, 'لطفاً ابتدا یک ردیف را انتخاب کنید.')
@@ -509,6 +512,9 @@ def reserve_seats(request, match_id):
         return redirect('matches:home')
 
     match = get_object_or_404(Match, id=match_id, is_active=True)
+    if not match.ticket_sales_enabled:
+        messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
+        return redirect('matches:home')
 
     row_id = request.POST.get('row_id') or request.session.get('selected_row_id')
     if not row_id:
@@ -634,6 +640,9 @@ def ticket_info(request, match_id):
         return redirect('matches:home')
 
     match = get_object_or_404(Match, id=match_id, is_active=True)
+    if not match.ticket_sales_enabled:
+        messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
+        return redirect('matches:home')
     selected_seats = request.session.get('selected_seats', [])
 
     if not selected_seats:

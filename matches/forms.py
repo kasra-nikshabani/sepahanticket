@@ -26,7 +26,7 @@ class MatchForm(forms.ModelForm):
             'sport_type',
             'home_team', 'away_team',
             'home_team_logo', 'away_team_logo',
-            'stadium', 'date_time', 'is_active'
+            'stadium', 'date_time', 'is_active', 'ticket_sales_enabled'
         ]
         widgets = {
             'sport_type': forms.Select(attrs={'class': 'form-select'}),
@@ -37,6 +37,7 @@ class MatchForm(forms.ModelForm):
             'stadium': forms.Select(attrs={'class': 'form-select'}),
             'date_time': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'ticket_sales_enabled': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
 

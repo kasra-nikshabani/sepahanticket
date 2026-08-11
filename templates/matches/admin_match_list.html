@@ -935,9 +935,14 @@
                             {{ item.match.home_team }} <i class="fas fa-futbol"></i> {{ item.match.away_team }}
                             <span class="sport-badge">{{ item.match.get_sport_type_display }}</span>
                         </div>
-                        <span class="status-badge {% if item.match.is_active %}active{% else %}inactive{% endif %}">
-                    <span class="dot"></span> {{ item.match.is_active|yesno:"فعال,غیرفعال" }}
-                </span>
+                        <div class="d-flex gap-1 flex-wrap">
+                            <span class="status-badge {% if item.match.is_active %}active{% else %}inactive{% endif %}">
+                        <span class="dot"></span> {{ item.match.is_active|yesno:"فعال,غیرفعال" }}
+                    </span>
+                            <span class="status-badge {% if item.match.ticket_sales_enabled %}active{% else %}inactive{% endif %}">
+                        <span class="dot"></span> {{ item.match.ticket_sales_enabled|yesno:"فروش بلیط فعال,فروش بلیط غیرفعال" }}
+                    </span>
+                        </div>
                     </div>
 
                     <div class="card-body">

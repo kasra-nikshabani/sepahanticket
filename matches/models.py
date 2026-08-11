@@ -263,6 +263,7 @@ class Match(models.Model):
     stadium = models.ForeignKey(Stadium, on_delete=models.CASCADE)
     date_time = models.DateTimeField(verbose_name="تاریخ و ساعت برگزاری")
     is_active = models.BooleanField(default=True)
+    ticket_sales_enabled = models.BooleanField(default=True, verbose_name="فروش بلیط فعال")
     created_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True)
     sold_tickets = models.IntegerField(default=0, verbose_name="تعداد بلیط‌های فروخته‌شده")
     # ===== انتخاب‌های رشته ورزشی =====

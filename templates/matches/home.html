@@ -554,11 +554,18 @@
             <!-- ===== دکمه ===== -->
             <div class="text-center mt-4">
                 {% if user.user_type != 'vip' %}
-                    <a href="{% url 'matches:select_floor' match.id %}" class="btn-buy-match">
-                        <i class="fas fa-ticket-alt"></i>
-                        خرید بلیط
-                        <i class="fas fa-arrow-left"></i>
-                    </a>
+                    {% if match.ticket_sales_enabled %}
+                        <a href="{% url 'matches:select_floor' match.id %}" class="btn-buy-match">
+                            <i class="fas fa-ticket-alt"></i>
+                            خرید بلیط
+                            <i class="fas fa-arrow-left"></i>
+                        </a>
+                    {% else %}
+                        <span class="btn-vip-match">
+                            <i class="fas fa-ban"></i>
+                            فروش بلیط غیرفعال است
+                        </span>
+                    {% endif %}
                 {% else %}
                     <span class="btn-vip-match">
                         <i class="fas fa-star"></i>
