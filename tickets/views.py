@@ -1,4 +1,5 @@
 import json
+import re
 import zipfile
 from io import BytesIO
 from datetime import timedelta
@@ -949,6 +950,9 @@ def release_reservation(request):
     return JsonResponse({'status': 'ok', 'message': 'Reservation released'})
 
 
+PERSIAN_NAME_RE = re.compile(r'^[؀-ۿ‌ ]+$')
+
+
 # ============================================================
 #  استعلام از ثبت احوال
 # ============================================================
@@ -981,6 +985,11 @@ def inquiry_fan(request):
 
         if not all([name, famil, kode_meli, shomare_hamrah, tarikhe_tavallod]):
             return JsonResponse({'success': False, 'error': 'تمام فیلدها الزامی است'}, status=400)
+
+        if not PERSIAN_NAME_RE.match(name.strip()) or not PERSIAN_NAME_RE.match(famil.strip()):
+            return JsonResponse(
+                {'success': False, 'error': 'نام و نام خانوادگی باید فقط با حروف فارسی نوشته شود.'}, status=400
+            )
 
         if len(kode_meli) != 10:
             return JsonResponse({'success': False, 'error': 'کد ملی باید ۱۰ رقم باشد'}, status=400)

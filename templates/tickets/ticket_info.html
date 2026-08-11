@@ -133,11 +133,11 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label small fw-bold text-muted">نام</label>
-                            <input type="text" id="name_{{ forloop.counter }}" class="form-control form-control-modern name-input" placeholder="مثال: علی" data-seat-index="{{ forloop.counter }}" required>
+                            <input type="text" id="name_{{ forloop.counter }}" class="form-control form-control-modern name-input" placeholder="مثال: علی" data-seat-index="{{ forloop.counter }}" oninput="this.value = this.value.replace(/[^؀-ۿ‌ ]/g, '');" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-bold text-muted">نام خانوادگی</label>
-                            <input type="text" id="famil_{{ forloop.counter }}" class="form-control form-control-modern famil-input" placeholder="مثال: رضایی" data-seat-index="{{ forloop.counter }}" required>
+                            <input type="text" id="famil_{{ forloop.counter }}" class="form-control form-control-modern famil-input" placeholder="مثال: رضایی" data-seat-index="{{ forloop.counter }}" oninput="this.value = this.value.replace(/[^؀-ۿ‌ ]/g, '');" required>
                         </div>
 
                         <div class="col-md-6">
@@ -530,6 +530,12 @@
         if (!name || !famil || !kodeMeli || !shomareyeHamrah || !tarikheTavallod) {
             card.classList.add('is-invalid');
             showInquiryMessage(index, '❌ لطفاً تمام فیلدها (به خصوص تاریخ تولد) را پر کنید.', 'danger');
+            return;
+        }
+        const persianNameRe = /^[؀-ۿ‌ ]+$/;
+        if (!persianNameRe.test(name) || !persianNameRe.test(famil)) {
+            card.classList.add('is-invalid');
+            showInquiryMessage(index, '❌ نام و نام خانوادگی باید فقط با حروف فارسی نوشته شود.', 'danger');
             return;
         }
         if (kodeMeli.length !== 10) {
