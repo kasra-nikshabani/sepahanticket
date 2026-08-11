@@ -70,8 +70,7 @@ class MatchFinancialReport(models.Model):
     # matches/models.py
     def calculate(self):
         """محاسبه گزارش مالی"""
-        from tickets.models import Ticket
-        from wallet.models import Transaction
+        from tickets.models import Ticket, Order
         from matches.models import MatchCost, MatchRevenue
         from django.db.models import Sum
 
@@ -80,23 +79,20 @@ class MatchFinancialReport(models.Model):
         total_ticket_revenue = sum(t.price for t in tickets if t.price) or 0
 
         # ===== ۲. مصرف از کیف پول =====
-        # روش صحیح: فقط بلیط‌هایی که با کیف پول پرداخت شده‌اند
-        # یک بلیط با کیف پول پرداخت شده اگر تراکنش با reference_id برابر ticket_number داشته باشد
-        total_wallet_usage = 0
-        for ticket in tickets:
-            # بررسی وجود تراکنش کیف پول برای این بلیط
-            has_wallet_tx = Transaction.objects.filter(
-                transaction_type='ticket_purchase',
-                is_wallet=True,  # ← فقط تراکنش‌های کیف پول
-                user=ticket.user,
-                reference_id=ticket.ticket_number  # ← کلید اصلی: reference_id برابر ticket_number
-            ).exists()
-
-            if has_wallet_tx:
-                total_wallet_usage += ticket.price
-                print(f"  ✅ Ticket {ticket.ticket_number}: {ticket.price} ریال (کیف پول)")
-            else:
-                print(f"  ❌ Ticket {ticket.ticket_number}: {ticket.price} ریال (درگاه پرداخت)")
+        # مقدار مصرف کیف پول مستقیماً از روی سفارش‌ها (Order.wallet_amount) خوانده
+        # می‌شود که منبع درست و قطعی است. روش قبلی سعی می‌کرد با یافتن یک
+        # تراکنش کیف پول با reference_id برابر ticket_number حدس بزند، اما
+        # تراکنش‌های کیف پول همیشه با reference_id برابر order_number یا
+        # PAY-{payment.id} ثبت می‌شوند (نه ticket_number) و برای کل سفارش یک
+        # تراکنش واحد است، نه یکی به‌ازای هر بلیط -- پس آن روش هیچ‌وقت درست
+        # تطبیق پیدا نمی‌کرد و برای خریدهای ترکیبی (بخشی از درگاه + بخشی از
+        # کیف پول) هم کل قیمت بلیط را به‌جای سهم واقعی کیف پول حساب می‌کرد.
+        # جمع زدن روی order_id های distinct لازم است چون یک سفارش می‌تواند
+        # چند بلیط داشته باشد و نباید wallet_amount آن سفارش چند بار جمع زده شود.
+        order_ids = tickets.exclude(order__isnull=True).values_list('order_id', flat=True).distinct()
+        total_wallet_usage = Order.objects.filter(
+            id__in=order_ids, payment_status='paid'
+        ).aggregate(total=Sum('wallet_amount'))['total'] or 0
 
         # ===== ۳. تعداد بلیط فروخته شده =====
         total_ticket_sold = tickets.count()
