@@ -73,7 +73,18 @@ class Ticket(models.Model):
     def generate_ticket_number(self):
         import random
         import string
-        return ''.join(random.choices(string.digits, k=12))
+
+        # فضای ۶ رقمی خیلی کوچیک‌تر از حالت قبلی (۱۲ رقمی) است، پس برخلاف قبل
+        # باید صریحاً چک کنیم کد تکراری نباشد؛ وگرنه ذخیره‌سازی با خطای
+        # یکتایی (IntegrityError) روی ticket_number مواجه می‌شود.
+        for _ in range(30):
+            candidate = ''.join(random.choices(string.digits, k=6))
+            if not Ticket.objects.filter(ticket_number=candidate).exists():
+                return candidate
+
+        # اگر فضای ۶ رقمی تقریباً پر شده باشد (خیلی بعید)، برای جلوگیری از
+        # خطا یک کد طولانی‌تر و تقریباً بدون‌برخورد تولید می‌کنیم.
+        return ''.join(random.choices(string.digits, k=10))
 
     @property
     def block_type_label(self):
