@@ -28,10 +28,10 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # settings.py
 # ===== تنظیمات سشن =====
-SESSION_COOKIE_AGE = 3600 * 24 * 7
+# مقدار واقعی SESSION_COOKIE_AGE/SESSION_SAVE_EVERY_REQUEST پایین‌تر (کنار
+# SESSION_ENGINE) نهایی است -- این‌جا فقط تنظیمات مربوط به کوکی سشن هستند.
 SESSION_COOKIE_SECURE = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-SESSION_SAVE_EVERY_REQUEST = True  # ← مهم
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SECURE = True
@@ -126,7 +126,10 @@ CACHES = {
 # Session روی Redis — حیاتی برای ترافیک بالا (جلوگیری از قفل جدول django_session)
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'default'
-SESSION_COOKIE_AGE = 60 * 60 * 12  # ۱۲ ساعت
+# کاربر مجموعاً ۳۰ دقیقه بعد از ورود لاگین می‌ماند (نه ۳۰ دقیقه‌ی بی‌فعالیت)؛
+# چون SESSION_SAVE_EVERY_REQUEST خاموش است، این انقضا با هر درخواست تمدید
+# نمی‌شود -- دقیقاً همان چیزی که خواسته شده: پایان‌یافتن نشست، فارغ از فعالیت کاربر.
+SESSION_COOKIE_AGE = 60 * 30  # ۳۰ دقیقه
 SESSION_SAVE_EVERY_REQUEST = False
 
 SEAT_RESERVATION_TIMEOUT = int(os.getenv('SEAT_RESERVATION_TIMEOUT', '600'))
