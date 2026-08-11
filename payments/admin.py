@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from .models import Payment
+from matches.models import MatchSeat
 
 STATUS_COLORS = {
     'success': '#28a745',
@@ -100,21 +101,45 @@ class PaymentAdmin(admin.ModelAdmin):
         if not seat_pks:
             return format_html('<pre style="margin:0">{}</pre>', obj.buyer_info)
 
+        # کلیدهای buyer_info با شناسه‌ی MatchSeat ساخته می‌شوند (فیلد
+        # مخفی match_seat_id_{{ seat.id }} در ticket_info.html)، نه Seat --
+        # برای نمایش جایگاه/بلوک/ردیف/صندلی باید از همین رابطه عبور کرد.
+        match_seats = {
+            str(ms.id): ms
+            for ms in MatchSeat.objects.filter(id__in=seat_pks).select_related('seat__row__block')
+        }
+
         rows = []
         for pk in seat_pks:
             name = obj.buyer_info.get(f'full_name_{pk}', '')
             national_code = obj.buyer_info.get(f'national_code_{pk}', '')
             dob = obj.buyer_info.get(f'tarikhe_tavallod_{pk}', '')
             phone = obj.buyer_info.get(f'shomare_hamrah_{pk}', '')
-            rows.append(f'<tr><td>{pk}</td><td>{name}</td><td>{national_code}</td><td>{dob}</td><td>{phone}</td></tr>')
+
+            match_seat = match_seats.get(pk)
+            if match_seat:
+                zone = match_seat.seat.row.zone_label
+                block = match_seat.seat.row.block.name
+                row_number = match_seat.seat.row.number
+                seat_number = match_seat.seat.number
+            else:
+                zone = block = row_number = seat_number = '—'
+
+            rows.append(
+                f'<tr><td>{name}</td><td>{national_code}</td><td>{dob}</td><td>{phone}</td>'
+                f'<td>{zone}</td><td>{block}</td><td>{row_number}</td><td>{seat_number}</td></tr>'
+            )
 
         table = (
             '<table style="border-collapse:collapse">'
-            '<tr><th style="text-align:right;padding:2px 8px">صندلی</th>'
-            '<th style="text-align:right;padding:2px 8px">نام</th>'
+            '<tr><th style="text-align:right;padding:2px 8px">نام</th>'
             '<th style="text-align:right;padding:2px 8px">کد ملی</th>'
             '<th style="text-align:right;padding:2px 8px">تاریخ تولد</th>'
-            '<th style="text-align:right;padding:2px 8px">موبایل</th></tr>'
+            '<th style="text-align:right;padding:2px 8px">موبایل</th>'
+            '<th style="text-align:right;padding:2px 8px">جایگاه</th>'
+            '<th style="text-align:right;padding:2px 8px">بلوک</th>'
+            '<th style="text-align:right;padding:2px 8px">ردیف</th>'
+            '<th style="text-align:right;padding:2px 8px">صندلی</th></tr>'
             + ''.join(rows) + '</table>'
         )
         return mark_safe(table)
