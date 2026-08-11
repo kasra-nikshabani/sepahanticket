@@ -503,8 +503,36 @@
                 flex-direction: column;
             }
 
+            /* روی موبایل سایدبار به‌جای مخفی‌شدنِ کامل، به یک کشوی
+               کنارآمده (off-canvas) تبدیل می‌شود که با همون دکمه‌ی
+               همبرگری (sidebar-toggle) باز/بسته می‌شود -- قبلاً کاملاً
+               display:none بود و راهی برای دیدنش روی موبایل نبود. */
             .admin-sidebar {
+                display: block;
+                position: fixed;
+                top: 0;
+                right: -280px;
+                width: 260px;
+                height: 100vh;
+                z-index: 1200;
+                transition: right 0.3s ease;
+                box-shadow: -10px 0 30px rgba(0, 0, 0, 0.45);
+            }
+
+            .admin-sidebar.mobile-open {
+                right: 0;
+            }
+
+            .sidebar-backdrop {
                 display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 1150;
+            }
+
+            .sidebar-backdrop.show {
+                display: block;
             }
 
             .admin-main {
@@ -733,8 +761,10 @@
         <!-- سایدبار (فقط برای ادمین و VIP) -->
         {% if user.user_type == 'admin' %}
             {% include 'includes/admin_sidebar.html' %}
+            <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
         {% elif user.user_type == 'vip' %}
             {% include 'includes/vip_sidebar.html' %}
+            <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
         {% endif %}
 
         <!-- محتوای اصلی -->
@@ -881,11 +911,35 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         // ===== دکمه باز/بستن سایدبار =====
+        // روی دسکتاپ: جمع‌شدن به حالت آیکون‌فقط. روی موبایل: باز/بسته شدن
+        // کشوی کنارآمده (همون دکمه‌ی همبرگری، رفتار متفاوت بسته به سایز صفحه).
         const toggleBtn = document.getElementById('sidebarToggle');
         const sidebar = document.querySelector('.admin-sidebar');
+        const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+
+        function closeMobileSidebar() {
+            if (sidebar) sidebar.classList.remove('mobile-open');
+            if (sidebarBackdrop) sidebarBackdrop.classList.remove('show');
+        }
+
         if (toggleBtn && sidebar) {
             toggleBtn.addEventListener('click', function () {
-                sidebar.classList.toggle('sidebar-collapsed');
+                if (window.innerWidth <= 767.98) {
+                    sidebar.classList.toggle('mobile-open');
+                    if (sidebarBackdrop) sidebarBackdrop.classList.toggle('show');
+                } else {
+                    sidebar.classList.toggle('sidebar-collapsed');
+                }
+            });
+        }
+
+        if (sidebarBackdrop) {
+            sidebarBackdrop.addEventListener('click', closeMobileSidebar);
+        }
+
+        if (sidebar) {
+            sidebar.querySelectorAll('.nav-link').forEach(function (link) {
+                link.addEventListener('click', closeMobileSidebar);
             });
         }
 
