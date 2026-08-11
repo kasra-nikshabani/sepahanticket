@@ -665,14 +665,9 @@ body {
         display: block;
     }
 
-    .admin-sidebar {
-        right: -280px;
-        width: 280px;
-        box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
-    }
-    .admin-sidebar.sidebar-collapsed {
-        right: 0;
-    }
+    /* موقعیت واقعی سایدبار روی موبایل الان توی base.html (کلاس mobile-open،
+       بریک‌پوینت 767.98px) کنترل می‌شود -- این‌جا قوانین قدیمی‌ای که با آن
+       تداخل می‌کردند (هر دو روی .admin-sidebar/.sidebar-collapsed) حذف شدند. */
 
     .admin-main {
         margin-right: 0;
@@ -686,13 +681,6 @@ body {
     }
     .admin-main {
         padding: 12px;
-    }
-    .admin-sidebar {
-        width: 100%;
-        right: -100%;
-    }
-    .admin-sidebar.sidebar-collapsed {
-        right: 0;
     }
 }
 

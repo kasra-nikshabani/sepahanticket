@@ -203,6 +203,11 @@
             body {
                 padding-bottom: 92px;
             }
+
+            /* کاربران ویژه نوار پایین ندارند، پس فضای رزروشده برایش هم لازم نیست */
+            body.no-bottom-nav {
+                padding-bottom: 0;
+            }
         }
 
         /* ===== هدر ادمین/VIP ===== */
@@ -540,6 +545,10 @@
                 padding-bottom: 100px;
                 min-height: auto;
             }
+
+            body.no-bottom-nav .admin-main {
+                padding-bottom: 12px;
+            }
         }
 
         .bottom-nav-inner {
@@ -726,7 +735,7 @@
     {% block extra_css %}{% endblock %}
 </head>
 
-<body class="{% if user.is_authenticated and user.user_type in 'admin,vip' %}sidebar-mode{% endif %}">
+<body class="{% if user.is_authenticated and user.user_type in 'admin,vip' %}sidebar-mode{% endif %} {% if user.user_type == 'vip' %}no-bottom-nav{% endif %}">
 
 <!-- ===== تمام محتوا در wrapper ===== -->
 <div class="page-wrapper">
@@ -790,8 +799,9 @@
     </div>
 
     <!-- ============================================================ -->
-    <!--  Bottom Navigation (فقط موبایل)                              -->
+    <!--  Bottom Navigation (فقط موبایل -- کاربران ویژه این نوار را ندارند) -->
     <!-- ============================================================ -->
+    {% if user.user_type != 'vip' %}
     <div class="bottom-nav">
         <div class="bottom-nav-inner">
 
@@ -890,6 +900,7 @@
 
         </div>
     </div>
+    {% endif %}
 
     <!-- ============================================================ -->
     <!--  فوتر (فقط برای مهمان و کاربران عادی)                       -->
