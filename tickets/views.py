@@ -21,6 +21,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.db.models import Count, Sum, Avg
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.cache import never_cache
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 import pytz
@@ -605,6 +606,7 @@ def get_age_from_jalali(dob_str):
 # ============================================================
 #  ویو اطلاعات خریدار و پرداخت
 # ============================================================
+@never_cache
 @login_required
 def ticket_info(request, match_id):
     if request.user.user_type == 'vip':
@@ -950,33 +952,39 @@ def release_reservation(request):
 # ============================================================
 #  استعلام از ثبت احوال
 # ============================================================
+@never_cache
 @login_required
 def inquiry_fan(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
-    # ===== محدودیت تعداد استعلام (جلوگیری از سوءاستفاده از API ثبت‌احوال) =====
-    rate_key = f'inquiry_fan_count:{request.user.id}'
-    count = cache.get(rate_key, 0)
-    if count >= 20:
-        return JsonResponse(
-            {'success': False, 'error': 'تعداد استعلام‌های شما زیاد است. چند دقیقه صبر کنید.'}, status=429
-        )
-    cache.set(rate_key, count + 1, timeout=600)  # ۱۰ دقیقه
-
-    name = request.POST.get('name')
-    famil = request.POST.get('famil')
-    kode_meli = request.POST.get('kodeMeli')
-    shomare_hamrah = request.POST.get('shomareyeHamrah')
-    tarikhe_tavallod = request.POST.get('tarikheTavallod')
-
-    if not all([name, famil, kode_meli, shomare_hamrah, tarikhe_tavallod]):
-        return JsonResponse({'success': False, 'error': 'تمام فیلدها الزامی است'}, status=400)
-
-    if len(kode_meli) != 10:
-        return JsonResponse({'success': False, 'error': 'کد ملی باید ۱۰ رقم باشد'}, status=400)
-
+    # ===== همه‌چیز (حتی چک نرخ‌محدودیت) داخل try است تا این ویو هرگز صفحه‌ی
+    # خطای HTML جنگو/سرور را برنگرداند -- فرانت‌اند همیشه response.json() صدا
+    # می‌زند و اگر یک خطای پیش‌بینی‌نشده (مثلاً یک قطعی لحظه‌ای Redis) این
+    # try را دور بزند، به‌جای JSON یک صفحه‌ی HTML برمی‌گردد و همان خطای
+    # "Unexpected token '<'" سمت کاربر ظاهر می‌شود =====
     try:
+        # ===== محدودیت تعداد استعلام (جلوگیری از سوءاستفاده از API ثبت‌احوال) =====
+        rate_key = f'inquiry_fan_count:{request.user.id}'
+        count = cache.get(rate_key, 0)
+        if count >= 20:
+            return JsonResponse(
+                {'success': False, 'error': 'تعداد استعلام‌های شما زیاد است. چند دقیقه صبر کنید.'}, status=429
+            )
+        cache.set(rate_key, count + 1, timeout=600)  # ۱۰ دقیقه
+
+        name = request.POST.get('name')
+        famil = request.POST.get('famil')
+        kode_meli = request.POST.get('kodeMeli')
+        shomare_hamrah = request.POST.get('shomareyeHamrah')
+        tarikhe_tavallod = request.POST.get('tarikheTavallod')
+
+        if not all([name, famil, kode_meli, shomare_hamrah, tarikhe_tavallod]):
+            return JsonResponse({'success': False, 'error': 'تمام فیلدها الزامی است'}, status=400)
+
+        if len(kode_meli) != 10:
+            return JsonResponse({'success': False, 'error': 'کد ملی باید ۱۰ رقم باشد'}, status=400)
+
         token = get_access_token()
         if not token:
             return JsonResponse({'success': False, 'error': 'خطا در دریافت توکن'}, status=401)
