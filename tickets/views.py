@@ -20,7 +20,7 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.http import HttpResponse, JsonResponse, Http404
 from django.urls import reverse
 from django.utils import timezone
-from django.db.models import Count, Sum, Avg
+from django.db.models import Count, Sum, Avg, Q
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.cache import never_cache
 from openpyxl import Workbook
@@ -1229,25 +1229,26 @@ def bulk_issue_tickets(request):
 def manage_vip_users(request):
     match_id = request.GET.get('match_id')
     matches = Match.objects.filter(is_active=True).order_by('-date_time')
-    vip_users = User.objects.filter(user_type='vip').order_by('username')
 
-    user_data = [];
-    total_tickets = 0;
-    active_users = 0
+    ticket_filter = Q(ticket__is_admin_assigned=True, ticket__status='admin_assigned')
+    if match_id:
+        ticket_filter &= Q(ticket__match_id=match_id)
 
-    for user in vip_users:
-        tickets_qs = Ticket.objects.filter(user=user, is_admin_assigned=True, status='admin_assigned')
-        if match_id: tickets_qs = tickets_qs.filter(match_id=match_id)
-        count = tickets_qs.count();
-        total_tickets += count
-        if count > 0: active_users += 1
-        user_data.append({'user': user, 'ticket_count': count})
+    vip_users_qs = User.objects.filter(user_type='vip').annotate(
+        ticket_count=Count('ticket', filter=ticket_filter)
+    ).order_by('username')
 
-    avg_tickets = total_tickets / len(vip_users) if vip_users.exists() else 0
+    total_users = vip_users_qs.count()
+    total_tickets = vip_users_qs.aggregate(total=Sum('ticket_count'))['total'] or 0
+    active_users = vip_users_qs.filter(ticket_count__gt=0).count()
+    avg_tickets = total_tickets / total_users if total_users else 0
+
+    paginator = Paginator(vip_users_qs, 20)
+    page_obj = paginator.get_page(request.GET.get('page', 1))
 
     context = {
-        'user_data': user_data, 'matches': matches, 'selected_match_id': int(match_id) if match_id else None,
-        'total_tickets': total_tickets, 'active_users': active_users, 'avg_tickets': avg_tickets,
+        'page_obj': page_obj, 'matches': matches, 'selected_match_id': int(match_id) if match_id else None,
+        'total_users': total_users, 'total_tickets': total_tickets, 'active_users': active_users, 'avg_tickets': avg_tickets,
     }
     return render(request, 'tickets/manage_vip_users.html', context)
 

@@ -1,13 +1,16 @@
 # accounts/views.py
 from django.http import JsonResponse, HttpResponseRedirect
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.views.decorators.cache import never_cache
+from django.core.paginator import Paginator
+from django.db.models import Q
 
 from .forms import RegisterForm, LoginForm, PhoneLoginForm, OTPVerifyForm, PhoneRegisterForm
 from .models import OTP
@@ -370,3 +373,59 @@ def dashboard_redirect(request):
         return redirect('tickets:vip_dashboard')
     else:
         return redirect('matches:home')
+
+
+@login_required
+@staff_member_required
+def admin_user_list(request):
+    """لیست کاربران عادی (غیر VIP/ادمین) برای پنل ادمین اختصاصی سایت -- با جستجو و صفحه‌بندی"""
+    search = request.GET.get('q', '').strip()
+
+    users_qs = User.objects.filter(user_type='normal').order_by('-date_joined')
+    if search:
+        users_qs = users_qs.filter(
+            Q(phone_number__icontains=search) |
+            Q(national_code__icontains=search) |
+            Q(first_name__icontains=search) |
+            Q(last_name__icontains=search) |
+            Q(username__icontains=search)
+        )
+
+    paginator = Paginator(users_qs, 25)
+    page_obj = paginator.get_page(request.GET.get('page', 1))
+
+    context = {
+        'page_obj': page_obj,
+        'search': search,
+        'total_users': paginator.count,
+    }
+    return render(request, 'accounts/admin_user_list.html', context)
+
+
+@login_required
+@staff_member_required
+def admin_user_detail(request, user_id):
+    """اطلاعات کامل یک کاربر عادی + تاریخچه بلیط‌ها و کیف پول -- برای پنل ادمین"""
+    from tickets.models import Ticket
+
+    target_user = get_object_or_404(User, id=user_id, user_type='normal')
+
+    tickets_qs = Ticket.objects.filter(user=target_user).select_related(
+        'match', 'seat__row__block'
+    ).order_by('-purchase_date')
+
+    paginator = Paginator(tickets_qs, 20)
+    page_obj = paginator.get_page(request.GET.get('page', 1))
+
+    wallet = getattr(target_user, 'wallet', None)
+    recent_transactions = target_user.transactions.all()[:10] if hasattr(target_user, 'transactions') else []
+
+    context = {
+        'target_user': target_user,
+        'page_obj': page_obj,
+        'total_tickets': tickets_qs.count(),
+        'used_tickets': tickets_qs.filter(is_used=True).count(),
+        'wallet': wallet,
+        'recent_transactions': recent_transactions,
+    }
+    return render(request, 'accounts/admin_user_detail.html', context)

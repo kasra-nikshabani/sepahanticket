@@ -1,0 +1,497 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ target_user.get_full_name|default:target_user.username }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .manage-container {
+        max-width: 1100px;
+        margin: 30px auto;
+        padding: 0 15px;
+    }
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+    }
+    .page-header h2 {
+        font-weight: 700;
+        color: #1A1A2E;
+        margin: 0;
+        font-size: 26px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .page-header h2 i { color: #D4AF37; }
+    .btn-back {
+        background: #1A1A2E;
+        color: #fff;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-back:hover {
+        background: #2A2A4E;
+        color: #D4AF37;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    /* ===== کارت پروفایل ===== */
+    .profile-card {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e8eaed;
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+    .profile-header {
+        background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
+        padding: 24px 30px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        border-bottom: 3px solid #D4AF37;
+    }
+    .profile-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #D4AF37, #B8960F);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #1A1A2E;
+        font-weight: 700;
+        font-size: 26px;
+        flex-shrink: 0;
+    }
+    .profile-header h3 {
+        color: #fff;
+        margin: 0;
+        font-weight: 700;
+        font-size: 20px;
+    }
+    .profile-header .username {
+        color: #D4AF37;
+        font-size: 14px;
+        margin-top: 4px;
+    }
+    .profile-body {
+        padding: 24px 30px;
+    }
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 18px;
+    }
+    .info-item .label {
+        font-size: 12px;
+        color: #6c757d;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .info-item .label i { color: #D4AF37; }
+    .info-item .value {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1A1A2E;
+    }
+    .status-pill {
+        padding: 3px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .status-pill.active { background: #d4edda; color: #155724; }
+    .status-pill.inactive { background: #f8d7da; color: #721c24; }
+    .status-pill.verified { background: #d4edda; color: #155724; }
+    .status-pill.unverified { background: #fff3cd; color: #856404; }
+
+    /* ===== کارت‌های آمار ===== */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .stat-card {
+        background: #fff;
+        border-radius: 14px;
+        padding: 18px 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e8eaed;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0; right: 0; width: 100%; height: 3px;
+        background: linear-gradient(90deg, #D4AF37, #B8960F);
+    }
+    .stat-card .stat-number { font-size: 24px; font-weight: 700; color: #1A1A2E; }
+    .stat-card .stat-label { font-size: 13px; color: #6c757d; margin-top: 4px; }
+    .stat-card .stat-icon { font-size: 20px; margin-bottom: 6px; display: block; color: #D4AF37; }
+
+    /* ===== کارت اصلی (جدول‌ها) ===== */
+    .card-custom {
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e8eaed;
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+    .card-header-custom {
+        background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
+        padding: 18px 26px;
+        border-bottom: 3px solid #D4AF37;
+        color: white;
+    }
+    .card-header-custom h4 {
+        margin: 0;
+        font-weight: 700;
+        color: #D4AF37;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 16px;
+    }
+    .card-body-custom { padding: 24px; }
+
+    .table-responsive-custom { overflow-x: auto; }
+    .table-custom {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+    .table-custom thead th {
+        background: #f8f9fa;
+        color: #1A1A2E;
+        font-weight: 600;
+        padding: 10px 14px;
+        text-align: right;
+        border-bottom: 2px solid #D4AF37;
+        white-space: nowrap;
+    }
+    .table-custom tbody td {
+        padding: 10px 14px;
+        border-bottom: 1px solid #e8eaed;
+        vertical-align: middle;
+    }
+    .table-custom tbody tr:hover { background: #faf8f3; }
+    .table-custom tbody tr:last-child td { border-bottom: none; }
+
+    .badge-status {
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .badge-status.paid { background: #d4edda; color: #155724; }
+    .badge-status.admin_assigned { background: #fff3cd; color: #856404; }
+    .badge-status.vip_issued { background: #d1ecf1; color: #0c5460; }
+    .badge-status.cancelled { background: #f8d7da; color: #721c24; }
+    .badge-status.pending { background: #e2e3e5; color: #383d41; }
+
+    .badge-used { background: #dc3545; color: #fff; padding: 2px 10px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; }
+    .badge-unused { background: #28a745; color: #fff; padding: 2px 10px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; }
+
+    .btn-action {
+        background: #f1f3f4;
+        border: none;
+        color: #1A1A2E;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.8rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .btn-action:hover { background: #D4AF37; color: #1A1A2E; }
+
+    .empty-state { text-align: center; padding: 40px 20px; color: #6c757d; }
+    .empty-state i { font-size: 3rem; color: #D4AF37; margin-bottom: 12px; display: block; }
+
+    .table-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 12px 20px;
+        background: #fafafa;
+        border-top: 1px solid #e8eaed;
+        gap: 10px;
+    }
+    .table-pagination .info { font-size: 13px; color: #6c757d; }
+    .table-pagination .info strong { color: #1A1A2E; }
+    .pagination-custom { display: flex; gap: 4px; flex-wrap: wrap; }
+    .pagination-custom a, .pagination-custom .current {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 34px;
+        height: 34px;
+        padding: 0 10px;
+        border-radius: 6px;
+        border: 1px solid #e8eaed;
+        text-decoration: none;
+        color: #1A1A2E;
+        font-size: 13px;
+        font-weight: 500;
+        background: #fff;
+    }
+    .pagination-custom a:hover { border-color: #D4AF37; color: #D4AF37; }
+    .pagination-custom .current {
+        background: linear-gradient(135deg, #D4AF37, #B8960F);
+        border-color: #D4AF37;
+        color: #1A1A2E;
+        font-weight: 700;
+    }
+    .pagination-custom .disabled { opacity: 0.4; cursor: not-allowed; }
+
+    @media (max-width: 768px) {
+        .profile-header { flex-direction: column; text-align: center; }
+        .card-body-custom { padding: 16px; }
+        .table-custom { font-size: 0.78rem; }
+        .table-custom thead th, .table-custom tbody td { padding: 8px 10px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="manage-container">
+
+    <div class="page-header">
+        <h2><i class="fas fa-user"></i> اطلاعات کاربر</h2>
+        <a href="{% url 'accounts:admin_user_list' %}" class="btn-back">
+            <i class="fas fa-arrow-right"></i> بازگشت به لیست کاربران
+        </a>
+    </div>
+
+    <!-- ===== کارت پروفایل ===== -->
+    <div class="profile-card">
+        <div class="profile-header">
+            <span class="profile-avatar">{{ target_user.username|slice:":1"|upper }}</span>
+            <div>
+                <h3>{{ target_user.get_full_name|default:"بدون نام" }}</h3>
+                <div class="username">@{{ target_user.username }}</div>
+            </div>
+        </div>
+        <div class="profile-body">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="label"><i class="fas fa-mobile-alt"></i> شماره تلفن</div>
+                    <div class="value">{{ target_user.phone_number|default:"-" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label"><i class="fas fa-id-card"></i> کد ملی</div>
+                    <div class="value">{{ target_user.national_code|default:"-" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label"><i class="fas fa-envelope"></i> ایمیل</div>
+                    <div class="value">{{ target_user.email|default:"-" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label"><i class="fas fa-calendar-plus"></i> تاریخ عضویت</div>
+                    <div class="value">{{ target_user.date_joined|date:"Y/m/d H:i" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label"><i class="fas fa-clock"></i> آخرین ورود</div>
+                    <div class="value">{{ target_user.last_login|date:"Y/m/d H:i"|default:"-" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label"><i class="fas fa-toggle-on"></i> وضعیت حساب</div>
+                    <div class="value">
+                        <span class="status-pill {% if target_user.is_active %}active{% else %}inactive{% endif %}">
+                            {{ target_user.is_active|yesno:"فعال,غیرفعال" }}
+                        </span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="label"><i class="fas fa-shield-alt"></i> تأیید شماره تلفن</div>
+                    <div class="value">
+                        <span class="status-pill {% if target_user.is_phone_verified %}verified{% else %}unverified{% endif %}">
+                            {{ target_user.is_phone_verified|yesno:"تأییدشده,تأییدنشده" }}
+                        </span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="label"><i class="fas fa-wallet"></i> موجودی کیف پول</div>
+                    <div class="value">
+                        {% if wallet %}{{ wallet.balance|floatformat:0 }} ریال{% else %}-{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== آمار ===== -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-icon"><i class="fas fa-ticket-alt"></i></span>
+            <div class="stat-number">{{ total_tickets }}</div>
+            <div class="stat-label">کل بلیط‌ها</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon"><i class="fas fa-check-circle"></i></span>
+            <div class="stat-number">{{ used_tickets }}</div>
+            <div class="stat-label">استفاده‌شده</div>
+        </div>
+    </div>
+
+    <!-- ===== تاریخچه بلیط‌ها ===== -->
+    <div class="card-custom">
+        <div class="card-header-custom">
+            <h4><i class="fas fa-history"></i> تاریخچه بلیط‌ها</h4>
+        </div>
+        <div class="card-body-custom">
+            {% if page_obj %}
+                <div class="table-responsive-custom">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-hashtag"></i> شماره</th>
+                                <th><i class="fas fa-trophy"></i> مسابقه</th>
+                                <th><i class="fas fa-chair"></i> جایگاه</th>
+                                <th><i class="fas fa-money-bill"></i> قیمت</th>
+                                <th><i class="fas fa-info-circle"></i> وضعیت</th>
+                                <th><i class="fas fa-check"></i> استفاده</th>
+                                <th><i class="fas fa-calendar-day"></i> تاریخ خرید</th>
+                                <th><i class="fas fa-file-pdf"></i> PDF</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in page_obj %}
+                                <tr>
+                                    <td><strong>{{ ticket.ticket_number }}</strong></td>
+                                    <td>{{ ticket.match.home_team }} vs {{ ticket.match.away_team }}
+                                        <br><small class="text-muted">{{ ticket.match.date_time|date:"Y/m/d" }}</small>
+                                    </td>
+                                    <td>
+                                        {% if ticket.seat %}
+                                            {{ ticket.seat.row.block.name }} - ردیف {{ ticket.seat.row.number }} - صندلی {{ ticket.seat.number }}
+                                        {% else %}-{% endif %}
+                                    </td>
+                                    <td>{{ ticket.price|floatformat:0 }} ریال</td>
+                                    <td><span class="badge-status {{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
+                                    <td>
+                                        {% if ticket.is_used %}
+                                            <span class="badge-used">استفاده شده</span>
+                                        {% else %}
+                                            <span class="badge-unused">استفاده نشده</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
+                                    <td>
+                                        {% if ticket.pdf_file %}
+                                            <a href="{% url 'tickets:download_ticket_pdf' ticket.id %}" target="_blank" class="btn-action" title="دانلود PDF">
+                                                <i class="fas fa-file-pdf"></i>
+                                            </a>
+                                        {% else %}
+                                            <span class="btn-action disabled" title="در حال آماده‌سازی"><i class="fas fa-clock"></i></span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if page_obj.paginator.num_pages > 1 %}
+                    <div class="table-pagination">
+                        <div class="info">
+                            نمایش <strong>{{ page_obj.start_index }}</strong> تا <strong>{{ page_obj.end_index }}</strong>
+                            از <strong>{{ page_obj.paginator.count }}</strong> بلیط
+                        </div>
+                        <div class="pagination-custom">
+                            {% if page_obj.has_previous %}
+                                <a href="?page=1"><i class="fas fa-angle-double-right"></i></a>
+                                <a href="?page={{ page_obj.previous_page_number }}"><i class="fas fa-angle-right"></i></a>
+                            {% else %}
+                                <span class="disabled"><i class="fas fa-angle-double-right"></i></span>
+                                <span class="disabled"><i class="fas fa-angle-right"></i></span>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if num == page_obj.number %}
+                                    <span class="current">{{ num }}</span>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <a href="?page={{ num }}">{{ num }}</a>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <a href="?page={{ page_obj.next_page_number }}"><i class="fas fa-angle-left"></i></a>
+                                <a href="?page={{ page_obj.paginator.num_pages }}"><i class="fas fa-angle-double-left"></i></a>
+                            {% else %}
+                                <span class="disabled"><i class="fas fa-angle-left"></i></span>
+                                <span class="disabled"><i class="fas fa-angle-double-left"></i></span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-ticket-alt"></i>
+                    <p>این کاربر هنوز هیچ بلیطی خریداری نکرده است.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ===== آخرین تراکنش‌های کیف پول ===== -->
+    {% if recent_transactions %}
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <h4><i class="fas fa-wallet"></i> آخرین تراکنش‌های کیف پول</h4>
+            </div>
+            <div class="card-body-custom">
+                <div class="table-responsive-custom">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-tag"></i> نوع</th>
+                                <th><i class="fas fa-money-bill"></i> مبلغ</th>
+                                <th><i class="fas fa-align-right"></i> توضیحات</th>
+                                <th><i class="fas fa-wallet"></i> موجودی پس از تراکنش</th>
+                                <th><i class="fas fa-calendar-day"></i> تاریخ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tx in recent_transactions %}
+                                <tr>
+                                    <td>{{ tx.get_transaction_type_display }}</td>
+                                    <td>{{ tx.amount|floatformat:0 }} ریال</td>
+                                    <td>{{ tx.description|default:"-" }}</td>
+                                    <td>{{ tx.balance_after|floatformat:0 }} ریال</td>
+                                    <td>{{ tx.created_at|date:"Y/m/d H:i" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

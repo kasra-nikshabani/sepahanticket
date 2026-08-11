@@ -43,6 +43,11 @@
             <!-- ===== دسته‌بندی: کاربران ===== -->
             <li class="nav-header">کاربران</li>
             <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:admin_user_list' %}">
+                    <i class="fas fa-users"></i> کاربران عادی
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" href="{% url 'tickets:manage_vip_users' %}">
                     <i class="fas fa-users-cog"></i> مدیریت کاربران ویژه
                 </a>

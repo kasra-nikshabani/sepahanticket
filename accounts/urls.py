@@ -24,4 +24,8 @@ urlpatterns = [
     path('choose-login/', views.phone_login, name='choose_login'),  # ← اضافه کنید
     # ← اضافه کنید
 
+    # ===== پنل ادمین: مدیریت کاربران عادی =====
+    path('admin/users/', views.admin_user_list, name='admin_user_list'),
+    path('admin/users/<int:user_id>/', views.admin_user_detail, name='admin_user_detail'),
+
 ]

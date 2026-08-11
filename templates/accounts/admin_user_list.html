@@ -1,18 +1,14 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load currency_filters %}
-{% block title %}مدیریت کاربران ویژه{% endblock %}
+{% block title %}مدیریت کاربران عادی{% endblock %}
 
 {% block extra_css %}
 <style>
-    /* ===== تنظیمات کلی ===== */
     .manage-container {
         max-width: 1100px;
         margin: 30px auto;
         padding: 0 15px;
     }
-
-    /* ===== هدر ===== */
     .page-header {
         display: flex;
         justify-content: space-between;
@@ -57,78 +53,12 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     }
-
-    /* ===== کارت‌های آمار ===== */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 16px;
-        margin-bottom: 30px;
-    }
-    .stat-card {
-        background: #fff;
-        border-radius: 14px;
-        padding: 18px 20px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        border: 1px solid #e8eaed;
-        transition: all 0.3s ease;
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-    }
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 100%;
-        height: 3px;
-        background: linear-gradient(90deg, #D4AF37, #B8960F);
-    }
-    .stat-card:hover {
-        transform: translateY(-4px);
-        border-color: #D4AF37;
-        box-shadow: 0 8px 30px rgba(212, 175, 55, 0.12);
-    }
-    .stat-card .stat-number {
-        font-size: 26px;
-        font-weight: 700;
-        color: #1A1A2E;
-    }
-    .stat-card .stat-label {
-        font-size: 13px;
-        color: #6c757d;
-        margin-top: 4px;
-    }
-    .stat-card .stat-icon {
-        font-size: 22px;
-        margin-bottom: 6px;
-        display: block;
-    }
-    .stat-card.gold .stat-number {
-        color: #D4AF37;
-    }
-    .stat-card.blue .stat-number {
-        color: #17a2b8;
-    }
-    .stat-card.green .stat-number {
-        color: #28a745;
-    }
-    .stat-card.orange .stat-number {
-        color: #ffc107;
-    }
-
-    /* ===== کارت اصلی ===== */
     .card-custom {
         background: #ffffff;
         border-radius: 16px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
         border: 1px solid #e8eaed;
         overflow: hidden;
-        transition: all 0.2s ease;
-    }
-    .card-custom:hover {
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
     }
     .card-header-custom {
         background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
@@ -149,9 +79,6 @@
         align-items: center;
         gap: 10px;
     }
-    .card-header-custom h4 i {
-        color: #D4AF37;
-    }
     .card-header-custom .badge-count {
         background: rgba(212, 175, 55, 0.15);
         color: #D4AF37;
@@ -164,8 +91,6 @@
     .card-body-custom {
         padding: 30px;
     }
-
-    /* ===== فیلتر ===== */
     .filter-section {
         background: #f8f9fa;
         border-radius: 12px;
@@ -177,38 +102,27 @@
         align-items: center;
         gap: 12px;
     }
-    .filter-section .filter-label {
-        font-weight: 600;
-        color: #1A1A2E;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 14px;
-    }
-    .filter-section .filter-label i {
-        color: #D4AF37;
-    }
-    .filter-section select {
+    .filter-section input[type="text"] {
         flex: 1;
-        min-width: 200px;
+        min-width: 220px;
         padding: 8px 14px;
         border-radius: 8px;
         border: 1.5px solid #e8eaed;
-        background: #fff;
         font-size: 14px;
-        transition: all 0.3s ease;
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236c757d' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: left 12px center;
-        padding-left: 36px;
-        cursor: pointer;
-        color: #333;
     }
-    .filter-section select:focus {
+    .filter-section input[type="text"]:focus {
         border-color: #D4AF37;
         outline: none;
         box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.12);
+    }
+    .filter-section .btn-search {
+        background: linear-gradient(135deg, #D4AF37, #B8960F);
+        border: none;
+        color: #1A1A2E;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
     }
     .filter-section .btn-reset {
         padding: 8px 18px;
@@ -217,7 +131,6 @@
         background: #fff;
         color: #6c757d;
         font-weight: 500;
-        transition: all 0.3s ease;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
@@ -227,22 +140,6 @@
         border-color: #D4AF37;
         color: #1A1A2E;
     }
-    .filter-section .selected-info {
-        background: #fff9e6;
-        border-radius: 8px;
-        padding: 4px 14px;
-        font-size: 13px;
-        border: 1px solid #D4AF37;
-        color: #1A1A2E;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-    .filter-section .selected-info i {
-        color: #D4AF37;
-    }
-
-    /* ===== جدول ===== */
     .table-responsive-custom {
         overflow-x: auto;
     }
@@ -278,7 +175,6 @@
     .table-custom tbody tr:last-child td {
         border-bottom: none;
     }
-
     .user-avatar {
         width: 36px;
         height: 36px;
@@ -291,21 +187,20 @@
         font-weight: 700;
         font-size: 14px;
     }
-
-    .badge-ticket {
-        background: #D4AF37;
-        color: #1A1A2E;
-        padding: 4px 14px;
+    .status-pill {
+        padding: 3px 12px;
         border-radius: 20px;
-        font-weight: 700;
-        font-size: 0.9rem;
-        display: inline-block;
+        font-size: 0.8rem;
+        font-weight: 600;
     }
-    .badge-ticket.zero {
-        background: #e8eaed;
-        color: #6c757d;
+    .status-pill.active {
+        background: #d4edda;
+        color: #155724;
     }
-
+    .status-pill.inactive {
+        background: #f8d7da;
+        color: #721c24;
+    }
     .btn-primary-gold {
         background: linear-gradient(135deg, #D4AF37, #B8960F);
         border: none;
@@ -325,8 +220,6 @@
         box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
         color: #1A1A2E;
     }
-
-    /* ===== حالت خالی ===== */
     .empty-state {
         text-align: center;
         padding: 60px 20px;
@@ -338,13 +231,6 @@
         margin-bottom: 16px;
         display: block;
     }
-    .empty-state h5 {
-        color: #1A1A2E;
-        font-weight: 600;
-        margin-bottom: 8px;
-    }
-
-    /* ----- صفحه‌بندی داخل جداول ----- */
     .table-pagination {
         display: flex;
         justify-content: space-between;
@@ -398,62 +284,14 @@
         opacity: 0.4;
         cursor: not-allowed;
     }
-
-    /* ===== واکنش‌گرایی ===== */
     @media (max-width: 768px) {
-        .card-body-custom {
-            padding: 16px;
-        }
-        .card-header-custom {
-            padding: 16px 20px;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .card-header-custom h4 {
-            font-size: 1.1rem;
-        }
-        .page-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 12px;
-        }
-        .page-header h2 {
-            font-size: 22px;
-        }
-        .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-        .table-custom {
-            font-size: 0.8rem;
-        }
-        .table-custom thead th,
-        .table-custom tbody td {
-            padding: 8px 10px;
-        }
-        .filter-section {
-            flex-direction: column;
-            align-items: stretch;
-        }
-        .filter-section select {
-            min-width: 100%;
-        }
-        .btn-primary-gold {
-            padding: 6px 14px;
-            font-size: 0.75rem;
-        }
-        .user-avatar {
-            width: 28px;
-            height: 28px;
-            font-size: 11px;
-        }
-    }
-    @media (max-width: 480px) {
-        .stats-grid {
-            grid-template-columns: 1fr;
-        }
-        .page-header h2 {
-            font-size: 18px;
-        }
+        .card-body-custom { padding: 16px; }
+        .card-header-custom { padding: 16px 20px; flex-direction: column; align-items: flex-start; }
+        .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+        .page-header h2 { font-size: 22px; }
+        .table-custom { font-size: 0.8rem; }
+        .table-custom thead th, .table-custom tbody td { padding: 8px 10px; }
+        .filter-section { flex-direction: column; align-items: stretch; }
     }
 </style>
 {% endblock %}
@@ -461,77 +299,36 @@
 {% block content %}
 <div class="manage-container">
 
-    <!-- ===== هدر ===== -->
     <div class="page-header">
         <div>
-            <h2><i class="fas fa-star"></i> مدیریت کاربران ویژه</h2>
-            <div class="subtitle">مدیریت و مشاهده بلیط‌های تخصیص‌یافته به کاربران ویژه</div>
+            <h2><i class="fas fa-users"></i> مدیریت کاربران عادی</h2>
+            <div class="subtitle">لیست کاربران عادی سایت -- برای دیدن اطلاعات کامل و تاریخچه بلیط‌ها روی هر کاربر کلیک کنید</div>
         </div>
         <a href="{% url 'matches:admin_match_list' %}" class="btn-back">
             <i class="fas fa-arrow-right"></i> بازگشت به مدیریت مسابقات
         </a>
     </div>
 
-    <!-- ===== کارت‌های آمار ===== -->
-    <div class="stats-grid">
-        <div class="stat-card gold">
-            <span class="stat-icon"><i class="fas fa-users"></i></span>
-            <div class="stat-number">{{ total_users }}</div>
-            <div class="stat-label">کل کاربران ویژه</div>
-        </div>
-        <div class="stat-card blue">
-            <span class="stat-icon"><i class="fas fa-ticket-alt"></i></span>
-            <div class="stat-number">{{ total_tickets|default:"0" }}</div>
-            <div class="stat-label">کل بلیط‌های تخصیص‌یافته</div>
-        </div>
-        <div class="stat-card green">
-            <span class="stat-icon"><i class="fas fa-check-circle"></i></span>
-            <div class="stat-number">{{ active_users|default:"0" }}</div>
-            <div class="stat-label">کاربران دارای بلیط</div>
-        </div>
-        <div class="stat-card orange">
-            <span class="stat-icon"><i class="fas fa-clock"></i></span>
-            <div class="stat-number">{{ avg_tickets|floatformat:1|default:"0" }}</div>
-            <div class="stat-label">میانگین بلیط به ازای هر کاربر</div>
-        </div>
-    </div>
-
-    <!-- ===== کارت اصلی ===== -->
     <div class="card-custom">
         <div class="card-header-custom">
-            <h4><i class="fas fa-list"></i> لیست کاربران ویژه</h4>
+            <h4><i class="fas fa-list"></i> لیست کاربران عادی</h4>
             <span class="badge-count"><i class="fas fa-users"></i> {{ total_users }} کاربر</span>
         </div>
         <div class="card-body-custom">
 
-            <!-- ===== فیلتر مسابقه ===== -->
+            <!-- ===== جستجو ===== -->
             <div class="filter-section">
-                <span class="filter-label"><i class="fas fa-filter"></i> فیلتر مسابقه:</span>
                 <form method="get" style="flex:1; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                    <select name="match_id" onchange="this.form.submit()">
-                        <option value="">همه مسابقات</option>
-                        {% for match in matches %}
-                            <option value="{{ match.id }}" {% if selected_match_id == match.id %}selected{% endif %}>
-                                {{ match.home_team }} vs {{ match.away_team }}
-                                ({{ match.date_time|date:"Y/m/d" }})
-                            </option>
-                        {% endfor %}
-                    </select>
-                    {% if selected_match_id %}
-                        <a href="{% url 'tickets:manage_vip_users' %}" class="btn-reset">
-                            <i class="fas fa-times"></i> حذف فیلتر
+                    <input type="text" name="q" value="{{ search }}" placeholder="جستجو با شماره تلفن، کد ملی یا نام...">
+                    <button type="submit" class="btn-search"><i class="fas fa-search"></i> جستجو</button>
+                    {% if search %}
+                        <a href="{% url 'accounts:admin_user_list' %}" class="btn-reset">
+                            <i class="fas fa-times"></i> حذف جستجو
                         </a>
                     {% endif %}
                 </form>
-                {% if selected_match_id %}
-                    <span class="selected-info">
-                        <i class="fas fa-check-circle"></i>
-                        فیلتر شده: {{ selected_match_id|yesno:"فعال,غیرفعال" }}
-                    </span>
-                {% endif %}
             </div>
 
-            <!-- ===== جدول کاربران ===== -->
             {% if page_obj %}
                 <div class="table-responsive-custom">
                     <table class="table-custom">
@@ -540,33 +337,35 @@
                                 <th><i class="fas fa-hashtag"></i> #</th>
                                 <th><i class="fas fa-user"></i> کاربر</th>
                                 <th><i class="fas fa-user-tag"></i> نام کامل</th>
-                                <th><i class="fas fa-envelope"></i> ایمیل</th>
-                                <th><i class="fas fa-ticket-alt"></i> بلیط‌ها</th>
+                                <th><i class="fas fa-mobile-alt"></i> شماره تلفن</th>
+                                <th><i class="fas fa-id-card"></i> کد ملی</th>
+                                <th><i class="fas fa-calendar-plus"></i> تاریخ عضویت</th>
+                                <th><i class="fas fa-toggle-on"></i> وضعیت</th>
                                 <th style="text-align:center;"><i class="fas fa-cog"></i> عملیات</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for user in page_obj %}
+                            {% for u in page_obj %}
                                 <tr>
                                     <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
                                     <td>
                                         <div style="display:flex; align-items:center; gap:10px;">
-                                            <span class="user-avatar">{{ user.username|slice:":1"|upper }}</span>
-                                            <span style="font-weight:600;">{{ user.username }}</span>
+                                            <span class="user-avatar">{{ u.username|slice:":1"|upper }}</span>
+                                            <span style="font-weight:600;">{{ u.username }}</span>
                                         </div>
                                     </td>
-                                    <td>{{ user.get_full_name|default:"-" }}</td>
-                                    <td>{{ user.email|default:"-" }}</td>
+                                    <td>{{ u.get_full_name|default:"-" }}</td>
+                                    <td>{{ u.phone_number|default:"-" }}</td>
+                                    <td>{{ u.national_code|default:"-" }}</td>
+                                    <td>{{ u.date_joined|date:"Y/m/d H:i" }}</td>
                                     <td>
-                                        <span class="badge-ticket {% if user.ticket_count == 0 %}zero{% endif %}">
-                                            {{ user.ticket_count }}
+                                        <span class="status-pill {% if u.is_active %}active{% else %}inactive{% endif %}">
+                                            {{ u.is_active|yesno:"فعال,غیرفعال" }}
                                         </span>
                                     </td>
                                     <td style="text-align:center;">
-                                        <a href="{% url 'tickets:manage_user_tickets' user.id %}{% if selected_match_id %}?match_id={{ selected_match_id }}{% endif %}"
-                                           class="btn-primary-gold"
-                                           title="مشاهده و مدیریت بلیط‌های این کاربر">
-                                            <i class="fas fa-eye"></i> مدیریت
+                                        <a href="{% url 'accounts:admin_user_detail' u.id %}" class="btn-primary-gold" title="مشاهده اطلاعات کامل">
+                                            <i class="fas fa-eye"></i> مشاهده
                                         </a>
                                     </td>
                                 </tr>
@@ -583,10 +382,10 @@
                         </div>
                         <div class="pagination-custom">
                             {% if page_obj.has_previous %}
-                                <a href="?page=1{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}">
+                                <a href="?page=1{% if search %}&q={{ search }}{% endif %}">
                                     <i class="fas fa-angle-double-right"></i>
                                 </a>
-                                <a href="?page={{ page_obj.previous_page_number }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}">
+                                <a href="?page={{ page_obj.previous_page_number }}{% if search %}&q={{ search }}{% endif %}">
                                     <i class="fas fa-angle-right"></i>
                                 </a>
                             {% else %}
@@ -598,17 +397,17 @@
                                 {% if num == page_obj.number %}
                                     <span class="current">{{ num }}</span>
                                 {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                                    <a href="?page={{ num }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}">
+                                    <a href="?page={{ num }}{% if search %}&q={{ search }}{% endif %}">
                                         {{ num }}
                                     </a>
                                 {% endif %}
                             {% endfor %}
 
                             {% if page_obj.has_next %}
-                                <a href="?page={{ page_obj.next_page_number }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}">
+                                <a href="?page={{ page_obj.next_page_number }}{% if search %}&q={{ search }}{% endif %}">
                                     <i class="fas fa-angle-left"></i>
                                 </a>
-                                <a href="?page={{ page_obj.paginator.num_pages }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}">
+                                <a href="?page={{ page_obj.paginator.num_pages }}{% if search %}&q={{ search }}{% endif %}">
                                     <i class="fas fa-angle-double-left"></i>
                                 </a>
                             {% else %}
@@ -621,19 +420,14 @@
             {% else %}
                 <div class="empty-state">
                     <i class="fas fa-users"></i>
-                    <h5>هیچ کاربر ویژه‌ای یافت نشد</h5>
+                    <h5>هیچ کاربری یافت نشد</h5>
                     <p class="text-muted">
-                        {% if selected_match_id %}
-                            هیچ کاربری برای مسابقه انتخاب‌شده بلیط ندارد.
+                        {% if search %}
+                            هیچ کاربری با این مشخصات پیدا نشد.
                         {% else %}
-                            در حال حاضر هیچ کاربری با نقش کاربر ویژه در سیستم وجود ندارد.
+                            در حال حاضر هیچ کاربر عادی‌ای در سیستم ثبت‌نام نکرده است.
                         {% endif %}
                     </p>
-                    {% if not selected_match_id %}
-                        <a href="{% url 'admin:index' %}" class="btn-primary-gold" style="display:inline-flex; margin-top:12px;">
-                            <i class="fas fa-user-plus"></i> ایجاد کاربر ویژه در پنل ادمین
-                        </a>
-                    {% endif %}
                 </div>
             {% endif %}
         </div>
