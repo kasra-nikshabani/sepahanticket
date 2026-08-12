@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.utils.html import format_html
+from django.utils.html import format_html, escape
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
@@ -87,7 +87,7 @@ class PaymentAdmin(admin.ModelAdmin):
         if not obj.order_id:
             return '—'
         url = reverse('admin:tickets_order_change', args=[obj.order_id])
-        return mark_safe(f'<a href="{url}">{obj.order.order_number}</a>')
+        return format_html('<a href="{}">{}</a>', url, obj.order.order_number)
     order_link.short_description = 'سفارش'
 
     def buyer_info_display(self, obj):
@@ -111,15 +111,19 @@ class PaymentAdmin(admin.ModelAdmin):
 
         rows = []
         for pk in seat_pks:
-            name = obj.buyer_info.get(f'full_name_{pk}', '')
-            national_code = obj.buyer_info.get(f'national_code_{pk}', '')
-            dob = obj.buyer_info.get(f'tarikhe_tavallod_{pk}', '')
-            phone = obj.buyer_info.get(f'shomare_hamrah_{pk}', '')
+            # این مقادیر مستقیم از ورودی کاربر در فرم خرید بلیط می‌آیند
+            # (payments/views.py: payment_request) و بدون هیچ sanitize‌ای
+            # ذخیره می‌شوند -- باید قبل از قرار گرفتن در HTML escape شوند،
+            # وگرنه یک نام حاوی <script> با دسترسی ادمین در همین صفحه اجرا می‌شود.
+            name = escape(obj.buyer_info.get(f'full_name_{pk}', ''))
+            national_code = escape(obj.buyer_info.get(f'national_code_{pk}', ''))
+            dob = escape(obj.buyer_info.get(f'tarikhe_tavallod_{pk}', ''))
+            phone = escape(obj.buyer_info.get(f'shomare_hamrah_{pk}', ''))
 
             match_seat = match_seats.get(pk)
             if match_seat:
-                zone = match_seat.seat.row.zone_label
-                block = match_seat.seat.row.block.name
+                zone = escape(match_seat.seat.row.zone_label)
+                block = escape(match_seat.seat.row.block.name)
                 row_number = match_seat.seat.row.number
                 seat_number = match_seat.seat.number
             else:
