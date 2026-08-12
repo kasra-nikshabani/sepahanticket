@@ -1401,8 +1401,14 @@ def admin_match_cancel(request, match_id):
                     if ticket.order_id in orders_refunded:
                         continue  # این سفارش (با چند بلیط) قبلاً برگشت داده شده
                     orders_refunded.add(ticket.order_id)
-                    refund_amount = ticket.order.total_amount
-                    refund_user = ticket.order.user
+                    order = ticket.order
+                    # اگر total_amount به هر دلیلی ثبت نشده باشد (مثلاً سفارش‌های قدیمی
+                    # از مسیر خرید کاملاً با کیف پول که پیش‌تر total_amount را ۰ ثبت
+                    # می‌کرد)، از روی subtotal/discount_amount که همیشه درست ثبت
+                    # می‌شوند دوباره محاسبه می‌شود -- تا مبلغ بازگشتی مستقل از اینکه
+                    # خرید با درگاه بوده یا کیف پول یا ترکیبی، همیشه کامل و درست باشد.
+                    refund_amount = order.total_amount or (order.subtotal - order.discount_amount)
+                    refund_user = order.user
                 else:
                     # بلیط‌های قدیمی بدون سفارش ثبت‌شده -- برگشت بر اساس قیمت خودِ بلیط
                     refund_amount = ticket.price or 0

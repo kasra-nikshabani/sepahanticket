@@ -870,7 +870,13 @@ def ticket_info(request, match_id):
                     user=request.user, match=match, subtotal=actual_total_price,
                     discount_percent=discount_percent,
                     discount_amount=int(actual_total_price * discount_percent / 100),
-                    total_amount=0, wallet_balance_before=wallet.balance,
+                    # مبلغ نهایی سفارش (پس از تخفیف) -- قبلاً همیشه ۰ ثبت می‌شد چون این
+                    # مسیر خرید (کاملاً از کیف پول یا رایگان، بدون درگاه) از الگوی
+                    # دیگرِ خرید (payments/views.py) که total_amount را درست محاسبه
+                    # می‌کند پیروی نمی‌کرد. این باعث می‌شد جاهایی که برای بازگشت وجه یا
+                    # گزارش‌گیری به Order.total_amount اعتماد می‌کنند (مثل لغو مسابقه)،
+                    # برای بلیط‌های خریداری‌شده‌ی کاملاً با کیف پول مبلغ صفر ببینند.
+                    total_amount=discounted_total, wallet_balance_before=wallet.balance,
                     wallet_amount=wallet_amount_used, wallet_balance_after=wallet.balance - wallet_amount_used,
                     payment_method=payment_method, payment_status='paid',
                     discount_code=discount_obj.code if discount_obj else '',
