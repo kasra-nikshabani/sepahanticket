@@ -227,8 +227,21 @@ def payment_verify(request):
             if success:
                 messages.success(request, "✅ پرداخت با موفقیت انجام شد و بلیط‌های شما صادر شدند.")
             else:
-                logger.error(f"❌ Payment {payment.id} succeeded but ticket finalize failed: {error_msg}")
-                messages.error(request, "پرداخت شما با موفقیت انجام شد اما در صدور بلیط مشکلی پیش آمد. لطفاً با پشتیبانی تماس بگیرید و شماره تراکنش زیر را اعلام کنید: " f"{track_id}")
+                # صندلی‌ها را آزاد می‌کنیم (چه به‌خاطر عدم تطابق مبلغ، چه به هر
+                # دلیل دیگری) و تراکنش را ناموفق علامت می‌زنیم -- قبلاً در این
+                # حالت payment.status بدون قید و شرط 'success' ثبت می‌شد ولی
+                # هیچ بلیطی صادر نشده بود و صندلی‌ها هم هیچ‌وقت آزاد نمی‌شدند.
+                logger.error(f"❌ Ticket finalize failed for payment {payment.id}: {error_msg}")
+                _release_payment_seats(payment)
+                payment.status = 'failed'
+                payment.processed_at = timezone.now()
+                payment.save(update_fields=['status', 'processed_at', 'updated_at'])
+                messages.error(
+                    request,
+                    f"❌ در صدور بلیط مشکلی پیش آمد: {error_msg} "
+                    f"اگر مبلغی از حساب شما کسر شده، با پشتیبانی تماس بگیرید و شماره تراکنش {track_id} را اعلام کنید."
+                )
+                return redirect(next_url)
 
         payment.status = 'success'
         payment.processed_at = timezone.now()
@@ -288,20 +301,6 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             pass
 
     try:  # <--- این بلاک اضافه شد تا از کرش شدن Gunicorn جلوگیری کند
-        wallet_amount_used = payment.wallet_amount_used
-        if wallet_amount_used > 0:
-            if wallet.balance < wallet_amount_used:
-                wallet_amount_used = 0
-            else:
-                success = wallet.deduct_balance(
-                    amount=wallet_amount_used,
-                    description=f"پرداخت بخشی از خرید بلیط از کیف پول - مسابقه {match.home_team} vs {match.away_team}",
-                    reference_id=f"PAY-{payment.id}",
-                    tx_type='ticket_purchase',
-                )
-                if not success:
-                    wallet_amount_used = 0
-
         actual_total_price = 0
         processed_seats_data = []
 
@@ -345,7 +344,53 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             })
 
         discount_amount = int(float(actual_total_price) * (payment.discount_percent / 100))
-        total_amount = float(actual_total_price) - discount_amount
+        total_amount = actual_total_price - discount_amount
+
+        # ===== اعتبارسنجی ضدجعل مبلغ =====
+        # gateway_amount و wallet_amount هر دو موقع ثبت Payment مستقیم از یک
+        # فیلد hidden فرم خوانده می‌شوند (payments/views.py: payment_request)
+        # و کاملاً قابل دستکاری سمت کلاینت‌اند (مثلاً با DevTools). اینجا --
+        # بعد از قفل صندلی‌ها و محاسبه‌ی قیمت واقعی از روی block.price --
+        # باید مطمئن شویم مجموع مبلغ واقعاً تأییدشده از درگاه
+        # (gateway_amount_paid، برگرفته از پاسخ verify خودِ زیبال، نه از
+        # ورودی کاربر) به‌علاوه‌ی مبلغ واقعاً قابل‌کسر از کیف پول، کمتر از
+        # قیمت واقعی بلیط‌ها نباشد؛ وگرنه کاربر می‌توانست با تغییر مبلغ
+        # درخواستی (مثلاً به ۱ ریال) بلیط واقعی را تقریباً رایگان بگیرد.
+        wallet_amount_requested = min(payment.wallet_amount_used, wallet.balance)
+        total_covered = gateway_amount_paid + wallet_amount_requested
+        if total_covered < total_amount:
+            logger.error(
+                f"⚠️ PRICE MISMATCH on payment {payment.id} (user {user.id}): "
+                f"required={total_amount}, gateway_paid={gateway_amount_paid}, "
+                f"wallet_requested={wallet_amount_requested}, total_covered={total_covered}. "
+                f"Possible payment amount tampering."
+            )
+            return False, (
+                f"مبلغ پرداخت‌شده ({total_covered:,} ریال) با مبلغ واقعی بلیط‌ها "
+                f"({total_amount:,} ریال) مطابقت ندارد."
+            )
+
+        wallet_amount_used = 0
+        if wallet_amount_requested > 0:
+            success = wallet.deduct_balance(
+                amount=wallet_amount_requested,
+                description=f"پرداخت بخشی از خرید بلیط از کیف پول - مسابقه {match.home_team} vs {match.away_team}",
+                reference_id=f"PAY-{payment.id}",
+                tx_type='ticket_purchase',
+            )
+            if success:
+                wallet_amount_used = wallet_amount_requested
+
+        if wallet_amount_used < wallet_amount_requested and gateway_amount_paid < total_amount:
+            # کسر از کیف پول ناموفق بود (مثلاً موجودی هم‌زمان جای دیگری خرج
+            # شده) و مبلغ تأییدشده‌ی درگاه به‌تنهایی کافی نیست -- نباید بلیط
+            # صادر شود.
+            logger.error(
+                f"⚠️ Wallet deduction failed for payment {payment.id} and gateway amount alone "
+                f"({gateway_amount_paid}) is less than required ({total_amount})."
+            )
+            return False, "کسر از کیف پول ناموفق بود و مبلغ پرداختی درگاه به‌تنهایی کافی نیست."
+
         payment_method = 'mixed' if wallet_amount_used > 0 else 'zibal'
 
         order = Order.objects.create(
