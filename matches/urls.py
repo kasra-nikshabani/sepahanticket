@@ -40,6 +40,7 @@ urlpatterns = [
     path('admin/match/create/', views.admin_match_create, name='admin_match_create'),
     path('admin/match/edit/<int:match_id>/', views.admin_match_edit, name='admin_match_edit'),
     path('admin/match/delete/<int:match_id>/', views.admin_match_delete, name='admin_match_delete'),
+    path('admin/match/cancel/<int:match_id>/', views.admin_match_cancel, name='admin_match_cancel'),
 
     # ===== مدیریت ورزشگاه‌ها (فقط ادمین) =====
     path('admin/stadiums/', views.admin_stadium_list, name='admin_stadium_list'),

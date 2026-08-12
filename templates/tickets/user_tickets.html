@@ -96,22 +96,25 @@
                          {% if ticket.pdf_file %}data-pdf-url="{% url 'tickets:download_ticket_pdf' ticket.id %}"
                          data-share-url="{{ request.scheme }}://{{ request.get_host }}{% url 'tickets:shared_ticket_pdf' ticket.share_token %}"{% endif %}>
                         <div class="card ticket-card shadow-sm h-100
-                        {% if ticket.status == 'admin_assigned' %}border-warning
+                        {% if ticket.status == 'cancelled' %}border-danger
+                        {% elif ticket.status == 'admin_assigned' %}border-warning
                         {% elif ticket.status == 'vip_issued' %}border-info
                         {% else %}border-success{% endif %}">
 
                             <div class="card-header
-                            {% if ticket.status == 'admin_assigned' %}bg-warning text-dark
+                            {% if ticket.status == 'cancelled' %}bg-danger text-white
+                            {% elif ticket.status == 'admin_assigned' %}bg-warning text-dark
                             {% elif ticket.status == 'vip_issued' %}bg-info text-white
                             {% else %}bg-success text-white{% endif %}">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div class="d-flex align-items-center gap-2">
                                         <input type="checkbox" class="ticket-checkbox" value="{{ ticket.id }}"
-                                               data-ticket-id="{{ ticket.id }}">
+                                               data-ticket-id="{{ ticket.id }}" {% if ticket.status == 'cancelled' %}disabled{% endif %}>
                                         <span class="badge bg-light text-dark">{{ ticket.ticket_number }}</span>
                                     </div>
                                     <span class="badge
-                                    {% if ticket.status == 'admin_assigned' %}bg-dark
+                                    {% if ticket.status == 'cancelled' %}bg-dark
+                                    {% elif ticket.status == 'admin_assigned' %}bg-dark
                                     {% elif ticket.status == 'vip_issued' %}bg-primary
                                     {% else %}bg-light text-dark{% endif %}">
                                     {{ ticket.get_status_display }}
@@ -120,6 +123,12 @@
                             </div>
 
                             <div class="card-body">
+                                {% if ticket.status == 'cancelled' %}
+                                    <div class="alert alert-danger py-2 px-3 mb-2" style="font-size: 0.85rem;">
+                                        <i class="fas fa-info-circle"></i>
+                                        این مسابقه لغو شده است. مبلغ این بلیط به کیف پول شما بازگشت داده شد.
+                                    </div>
+                                {% endif %}
                                 <h5 class="card-title">
                                     {{ ticket.match.home_team }} <span
                                         class="text-muted">🆚</span> {{ ticket.match.away_team }}

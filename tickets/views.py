@@ -50,13 +50,17 @@ def user_tickets(request):
 
     if request.user.user_type == 'vip':
         tickets_qs = Ticket.objects.filter(
-            user=request.user, status__in=['paid', 'admin_assigned', 'vip_issued']
+            user=request.user, status__in=['paid', 'admin_assigned', 'vip_issued', 'cancelled']
         ).order_by('-purchase_date')
     else:
-        tickets_qs = Ticket.objects.filter(user=request.user, status='paid').order_by('-purchase_date')
+        # 'cancelled' هم نشان داده می‌شود -- وگرنه وقتی ادمین به‌خاطر لغو
+        # مسابقه بلیط را باطل و وجه را به کیف پول برمی‌گرداند، بلیط بدون هیچ
+        # توضیحی از لیست کاربر ناپدید می‌شود و تنها اطلاع‌رسانیِ این اتفاق
+        # همین صفحه است (فعلاً پیامکی برای این مورد ارسال نمی‌شود).
+        tickets_qs = Ticket.objects.filter(user=request.user, status__in=['paid', 'cancelled']).order_by('-purchase_date')
 
     if status_filter and request.user.user_type == 'vip':
-        if status_filter in ['paid', 'admin_assigned', 'vip_issued']:
+        if status_filter in ['paid', 'admin_assigned', 'vip_issued', 'cancelled']:
             tickets_qs = tickets_qs.filter(status=status_filter)
 
     # فیلتر «مسابقه» باید همه‌ی مسابقاتی که کاربر واقعاً برایشان بلیط دارد را

@@ -2,7 +2,7 @@ import json
 from django.urls import reverse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction, IntegrityError
-from django.db.models import Q, Count, Prefetch
+from django.db.models import Q, Count, Prefetch, Sum
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
@@ -1357,6 +1357,101 @@ def admin_match_delete(request, match_id):
         messages.success(request, f'مسابقه "{match_name}" با موفقیت حذف شد.')
         return redirect('matches:admin_match_list')
     return render(request, 'matches/admin_match_confirm_delete.html', {'match': match})
+
+
+@staff_member_required
+def admin_match_cancel(request, match_id):
+    """
+    لغو کامل یک مسابقه: تمام بلیط‌های آن (فروخته‌شده و ویژه) باطل می‌شوند و
+    مبلغ واقعی پرداختی هر خرید (Order.total_amount -- یعنی مبلغ نهایی پس از
+    تخفیف، نه Ticket.price که پیش از تخفیف است) به کیف پول همان خریدار
+    بازگردانده می‌شود. بلیط‌های ویژه (admin_assigned/vip_issued) چون از طریق
+    سهمیه صادر شده‌اند نه خرید واقعی، بدون بازگشت وجه فقط باطل می‌شوند.
+    """
+    from tickets.models import Order
+    from wallet.models import Wallet
+
+    match = get_object_or_404(Match, id=match_id)
+
+    if match.is_cancelled:
+        messages.info(request, 'این مسابقه قبلاً لغو شده است.')
+        return redirect('matches:admin_match_detail', match_id=match.id)
+
+    if request.method == 'POST':
+        with transaction.atomic():
+            # قفل مسابقه تا از لغو دوباره/هم‌زمان (و بازگشت وجه دوباره) جلوگیری شود
+            match = Match.objects.select_for_update().get(id=match_id)
+            if match.is_cancelled:
+                messages.info(request, 'این مسابقه قبلاً لغو شده است.')
+                return redirect('matches:admin_match_detail', match_id=match.id)
+
+            tickets = Ticket.objects.filter(
+                match=match, status__in=['paid', 'admin_assigned', 'vip_issued']
+            ).select_related('order', 'user')
+
+            orders_refunded = set()
+            affected_users = set()
+            total_refunded = 0
+
+            for ticket in tickets:
+                if ticket.status != 'paid':
+                    continue  # بلیط ویژه -- بدون بازگشت وجه
+
+                if ticket.order_id:
+                    if ticket.order_id in orders_refunded:
+                        continue  # این سفارش (با چند بلیط) قبلاً برگشت داده شده
+                    orders_refunded.add(ticket.order_id)
+                    refund_amount = ticket.order.total_amount
+                    refund_user = ticket.order.user
+                else:
+                    # بلیط‌های قدیمی بدون سفارش ثبت‌شده -- برگشت بر اساس قیمت خودِ بلیط
+                    refund_amount = ticket.price or 0
+                    refund_user = ticket.user
+
+                if refund_amount <= 0:
+                    continue
+
+                wallet, _ = Wallet.objects.get_or_create(user=refund_user)
+                wallet.add_balance(
+                    amount=refund_amount,
+                    description=f"بازگشت وجه به دلیل لغو مسابقه {match.home_team} vs {match.away_team}",
+                    reference_id=f"CANCEL-MATCH-{match.id}",
+                    tx_type='refund',
+                )
+                affected_users.add(refund_user.id)
+                total_refunded += refund_amount
+
+            cancelled_count = tickets.update(status='cancelled')
+
+            match.is_cancelled = True
+            match.is_active = False
+            match.ticket_sales_enabled = False
+            match.cancelled_at = timezone.now()
+            match.save(update_fields=['is_cancelled', 'is_active', 'ticket_sales_enabled', 'cancelled_at'])
+
+        messages.success(
+            request,
+            f'مسابقه لغو شد. {cancelled_count} بلیط باطل شد و مجموعاً {total_refunded:,} ریال '
+            f'به کیف پول {len(affected_users)} کاربر بازگشت داده شد.'
+        )
+        return redirect('matches:admin_match_detail', match_id=match.id)
+
+    # ===== GET: صفحه‌ی تأیید همراه با پیش‌نمایش مبلغ بازگشتی =====
+    paid_tickets_qs = Ticket.objects.filter(match=match, status='paid').select_related('order')
+    order_ids = paid_tickets_qs.exclude(order__isnull=True).values_list('order_id', flat=True).distinct()
+    estimated_refund = Order.objects.filter(id__in=order_ids).aggregate(total=Sum('total_amount'))['total'] or 0
+    no_order_total = sum(t.price or 0 for t in paid_tickets_qs.filter(order__isnull=True))
+    estimated_refund += no_order_total
+
+    vip_count = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued']).count()
+
+    context = {
+        'match': match,
+        'paid_count': paid_tickets_qs.count(),
+        'vip_count': vip_count,
+        'estimated_refund': estimated_refund,
+    }
+    return render(request, 'matches/admin_match_confirm_cancel.html', context)
 
 
 # ============================================================

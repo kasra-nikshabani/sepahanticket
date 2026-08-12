@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load currency_filters %}
+{% block title %}لغو مسابقه{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card shadow-lg border-danger">
+                <div class="card-header bg-danger text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> تأیید لغو مسابقه
+                    </h4>
+                </div>
+                <div class="card-body text-center">
+                    <h5>آیا از لغو مسابقه زیر اطمینان دارید؟</h5>
+                    <div class="alert alert-warning">
+                        <strong>{{ match.home_team }} vs {{ match.away_team }}</strong>
+                        <br>
+                        <span class="text-muted">{{ match.date_time|date:"Y/m/d - H:i" }}</span>
+                        <br>
+                        <span class="text-muted">{{ match.stadium.name }}</span>
+                    </div>
+
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <div class="border rounded p-2">
+                                <div class="fw-bold fs-5">{{ paid_count }}</div>
+                                <small class="text-muted">بلیط فروخته‌شده</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="border rounded p-2">
+                                <div class="fw-bold fs-5">{{ vip_count }}</div>
+                                <small class="text-muted">بلیط ویژه</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="border rounded p-2">
+                                <div class="fw-bold fs-5">{{ estimated_refund|floatformat:0 }}</div>
+                                <small class="text-muted">ریال بازگشتی</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-danger">
+                        ⚠️ با تأیید این عملیات:
+                    </p>
+                    <ul class="text-danger text-start" style="display:inline-block;">
+                        <li>تمام بلیط‌های این مسابقه (فروخته‌شده و ویژه) باطل و در گیت غیرقابل‌استفاده می‌شوند.</li>
+                        <li>مبلغ واقعی پرداختی هر بلیطِ فروخته‌شده به کیف پول همان خریدار بازگردانده می‌شود (بلیط‌های ویژه چون خرید نبوده‌اند، وجهی برایشان بازگشت داده نمی‌شود).</li>
+                        <li>مسابقه از سایت مخفی و فروش آن برای همیشه غیرفعال می‌شود.</li>
+                        <li>این عملیات غیرقابل بازگشت است.</li>
+                    </ul>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2 mt-3">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-ban"></i> بله، مسابقه را لغو و وجه را بازگردان
+                            </button>
+                            <a href="{% url 'matches:admin_match_detail' match.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i> انصراف و بازگشت
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

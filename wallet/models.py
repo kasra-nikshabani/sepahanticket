@@ -47,7 +47,7 @@ class Wallet(models.Model):
             )
         return True
 
-    def add_balance(self, amount, description="", reference_id=""):
+    def add_balance(self, amount, description="", reference_id="", tx_type="deposit"):
         """افزایش atomic موجودی کیف پول (همان دلیل deduct_balance) با ثبت تراکنش"""
         if amount <= 0:
             return False
@@ -59,7 +59,7 @@ class Wallet(models.Model):
             Transaction.objects.create(
                 user=self.user,
                 amount=amount,
-                transaction_type='deposit',
+                transaction_type=tx_type,
                 description=description,
                 reference_id=reference_id,
                 balance_after=self.balance,
