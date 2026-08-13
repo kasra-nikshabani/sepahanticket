@@ -149,6 +149,7 @@
 
 {% block content %}
     <div class="selection-container">
+        {% include 'includes/purchase_timeline.html' with current_step=1 %}
         <div class="text-center mb-4">
             <h2 style="color: white">{{ match.home_team }} 🆚 {{ match.away_team }}</h2>
             <p style="color: white">{{ match.date_time|date:"Y/m/d - H:i" }} | {{ match.stadium.name }}</p>

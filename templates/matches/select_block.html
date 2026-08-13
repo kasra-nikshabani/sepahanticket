@@ -390,6 +390,8 @@
 {% endblock %}
 
 {% block content %}
+    {% include 'includes/purchase_timeline.html' with current_step=2 %}
+
     <!-- ===== لایت‌باکس ===== -->
     <div class="lightbox-overlay" id="lightboxOverlay" onclick="closeLightbox()">
         <div class="lightbox-close" onclick="closeLightbox()">✕</div>
