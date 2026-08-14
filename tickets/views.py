@@ -742,12 +742,14 @@ def ticket_info(request, match_id):
 
     wallet, created = Wallet.objects.get_or_create(user=request.user)
 
+    from accounts.models import SiteSettings
     context = {
         'match': match,
         'seats_data': seats_data,
         'total_price': total_price,
         'remaining_time': remaining_time,
         'wallet_balance': wallet.balance,
+        'bypass_civil_registry_inquiry': SiteSettings.get_solo().bypass_civil_registry_inquiry,
     }
 
     if request.method == 'POST':

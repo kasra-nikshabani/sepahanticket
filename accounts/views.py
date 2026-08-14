@@ -429,3 +429,34 @@ def admin_user_detail(request, user_id):
         'recent_transactions': recent_transactions,
     }
     return render(request, 'accounts/admin_user_detail.html', context)
+
+
+@login_required
+@staff_member_required
+def admin_emergency_settings(request):
+    """
+    کلید اضطراری برای زمانی که سرویس استعلام ثبت‌احوال قطع/خراب است -- با
+    فعال‌سازی، فرم اطلاعات خریدار بدون تماس با آن سرویس (فقط با اعتبارسنجی
+    فرمت) پذیرفته می‌شود. عمداً یک صفحه‌ی جدا و واضح است، نه یک فیلد
+    گمشده در فرم تنظیمات عمومی، چون قرار است در لحظه‌ی نیاز واقعی سریع پیدا شود.
+    """
+    from .models import SiteSettings
+
+    settings_obj = SiteSettings.get_solo()
+
+    if request.method == 'POST':
+        new_value = 'bypass_inquiry' in request.POST
+        settings_obj.bypass_civil_registry_inquiry = new_value
+        settings_obj.save()
+        if new_value:
+            messages.warning(
+                request,
+                '⚠️ حالت اضطراری فعال شد: استعلام ثبت‌احوال دیگر برای خرید بلیط لازم نیست. '
+                'به محض رفع مشکل سرویس ثبت‌احوال، حتماً این گزینه را دوباره خاموش کنید.'
+            )
+        else:
+            messages.success(request, '✅ استعلام ثبت‌احوال دوباره برای خرید بلیط الزامی شد.')
+        return redirect('accounts:admin_emergency_settings')
+
+    context = {'settings_obj': settings_obj}
+    return render(request, 'accounts/admin_emergency_settings.html', context)

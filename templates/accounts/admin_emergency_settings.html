@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% block title %}تنظیمات اضطراری{% endblock %}
+
+{% block extra_css %}
+<style>
+    .emergency-container {
+        max-width: 720px;
+        margin: 30px auto;
+        padding: 0 15px;
+    }
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+    }
+    .page-header h2 {
+        font-weight: 700;
+        color: #1A1A2E;
+        margin: 0;
+        font-size: 26px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .page-header h2 i { color: #D4AF37; }
+    .btn-back {
+        background: #1A1A2E;
+        color: #fff;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 10px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-back:hover { background: #2A2A4E; color: #D4AF37; }
+
+    .card-custom {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e8eaed;
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+    .card-header-custom {
+        background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
+        padding: 20px 26px;
+        border-bottom: 3px solid #D4AF37;
+        color: white;
+    }
+    .card-header-custom h4 {
+        margin: 0;
+        font-weight: 700;
+        color: #D4AF37;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 17px;
+    }
+    .card-body-custom { padding: 26px; }
+
+    .status-badge-big {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 22px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 15px;
+        margin-bottom: 20px;
+    }
+    .status-badge-big.off {
+        background: #d4edda;
+        color: #155724;
+    }
+    .status-badge-big.on {
+        background: #f8d7da;
+        color: #721c24;
+        animation: pulse-warning 1.8s infinite;
+    }
+    @keyframes pulse-warning {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.35); }
+        50% { box-shadow: 0 0 0 8px rgba(220, 53, 69, 0); }
+    }
+
+    .explain-box {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 18px 20px;
+        border: 1px solid #e8eaed;
+        margin-bottom: 22px;
+        font-size: 0.92rem;
+        line-height: 1.9;
+        color: #333;
+    }
+    .explain-box ul { margin: 8px 0 0; padding-inline-start: 20px; }
+    .explain-box li { margin-bottom: 6px; }
+
+    .warning-strip {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        color: #7a5c00;
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-size: 0.88rem;
+        margin-bottom: 22px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .warning-strip i { color: #b58900; margin-top: 2px; }
+
+    .btn-toggle-emergency {
+        border: none;
+        padding: 12px 30px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 15px;
+        width: 100%;
+        transition: all 0.3s ease;
+    }
+    .btn-toggle-emergency.enable {
+        background: linear-gradient(135deg, #dc3545, #a52834);
+        color: #fff;
+    }
+    .btn-toggle-emergency.enable:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(220,53,69,0.35); }
+    .btn-toggle-emergency.disable {
+        background: linear-gradient(135deg, #28a745, #1e7e34);
+        color: #fff;
+    }
+    .btn-toggle-emergency.disable:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(40,167,69,0.35); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="emergency-container">
+    <div class="page-header">
+        <h2><i class="fas fa-first-aid"></i> تنظیمات اضطراری</h2>
+        <a href="{% url 'matches:admin_match_list' %}" class="btn-back">
+            <i class="fas fa-arrow-right"></i> بازگشت
+        </a>
+    </div>
+
+    <div class="card-custom">
+        <div class="card-header-custom">
+            <h4><i class="fas fa-id-card"></i> استعلام ثبت‌احوال هنگام خرید بلیط</h4>
+        </div>
+        <div class="card-body-custom">
+
+            {% if settings_obj.bypass_civil_registry_inquiry %}
+                <span class="status-badge-big on">
+                    <i class="fas fa-exclamation-triangle"></i> حالت اضطراری فعال است -- استعلام غیرفعال است
+                </span>
+            {% else %}
+                <span class="status-badge-big off">
+                    <i class="fas fa-check-circle"></i> وضعیت عادی -- استعلام ثبت‌احوال فعال است
+                </span>
+            {% endif %}
+
+            <div class="explain-box">
+                این گزینه فقط برای زمانی است که سرویس استعلام ثبت‌احوال (سامانه هواداری) قطع یا خراب شده و
+                کاربران نمی‌توانند خرید بلیط را تکمیل کنند.
+                <ul>
+                    <li>با <strong>فعال کردن</strong> این گزینه، فرم اطلاعات خریدار بدون تماس با ثبت‌احوال پذیرفته می‌شود -- فقط فرمت اطلاعات (نام فارسی، کد ملی ۱۰ رقمی) چک می‌شود، نه صحت آن‌ها نزد ثبت‌احوال.</li>
+                    <li>قیمت نهایی بلیط و تشخیص سن (برای بلیط رایگان زیر ۱۵ سال) هیچ‌وقت به این سرویس وابسته نیست و همیشه مستقل و سمت سرور محاسبه می‌شود -- پس این گزینه هیچ ریسک مالی ندارد.</li>
+                    <li>به محض رفع مشکل سرویس ثبت‌احوال، این گزینه را دوباره خاموش کنید تا تأیید هویت خریداران برقرار شود.</li>
+                </ul>
+            </div>
+
+            {% if not settings_obj.bypass_civil_registry_inquiry %}
+                <div class="warning-strip">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>این گزینه را فقط در مواقع بحرانی (قطعی واقعی سرویس ثبت‌احوال) فعال کنید، نه برای استفاده‌ی روزمره.</span>
+                </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                {% if settings_obj.bypass_civil_registry_inquiry %}
+                    <button type="submit" class="btn-toggle-emergency disable">
+                        <i class="fas fa-power-off"></i> غیرفعال کردن حالت اضطراری (بازگشت به حالت عادی)
+                    </button>
+                {% else %}
+                    <input type="hidden" name="bypass_inquiry" value="1">
+                    <button type="submit" class="btn-toggle-emergency enable"
+                            onclick="return confirm('آیا مطمئنید؟ با این کار، خرید بلیط بدون تأیید هویت از ثبت‌احوال امکان‌پذیر می‌شود. فقط در مواقع بحرانی این کار را انجام دهید.');">
+                        <i class="fas fa-triangle-exclamation"></i> فعال کردن حالت اضطراری
+                    </button>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

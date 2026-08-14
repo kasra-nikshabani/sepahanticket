@@ -255,6 +255,12 @@
 </div>
 
 <script>
+    // حالت اضطراری: وقتی از پنل ادمین فعال شده باشد، دکمه‌ی استعلام بدون تماس
+    // با سرویس ثبت‌احوال، فقط بر اساس فرمت اطلاعات تأیید می‌کند. قیمت و سن
+    // نهایی همیشه مستقل سمت سرور دوباره محاسبه می‌شوند، پس این حالت هیچ
+    // تأثیری روی صحت مالی ندارد.
+    window.BYPASS_CIVIL_REGISTRY = {{ bypass_civil_registry_inquiry|yesno:"true,false" }};
+
     document.addEventListener('DOMContentLoaded', function () {
         function toRial(amount) {
             if (amount === 0 || amount === null || amount === undefined) return '۰';
@@ -545,6 +551,41 @@
             return;
         }
 
+        // ===== حالت اضطراری: بدون تماس با ثبت‌احوال، فقط بر اساس فرمت تأیید می‌شود =====
+        if (window.BYPASS_CIVIL_REGISTRY) {
+            if (!isValidNationalCodeChecksum(kodeMeli)) {
+                card.classList.add('is-invalid');
+                showInquiryMessage(index, '❌ کد ملی وارد شده معتبر نیست.', 'danger');
+                return;
+            }
+
+            const age = estimateAgeFromJalali(tarikheTavallod);
+
+            card.classList.remove('is-invalid');
+            card.classList.add('is-valid');
+
+            document.getElementById('fan_id_' + index).value = 'BYPASS';
+            document.getElementById('fan_kodeMeli_' + index).value = kodeMeli;
+            document.getElementById('fan_name_' + index).value = name + ' ' + famil;
+            document.getElementById('fan_dob_' + index).value = tarikheTavallod;
+            document.getElementById('fan_mobile_' + index).value = shomareyeHamrah;
+
+            btn.innerHTML = '<i class="fas fa-check-circle"></i> ثبت شد (بدون استعلام)';
+            btn.classList.add('btn-inquiry-verified');
+
+            if (age < 15) {
+                window.freeSeats[index] = true;
+                showInquiryMessage(index, `⚠️ حالت اضطراری فعال است -- بدون استعلام از ثبت‌احوال ثبت شد. سن تقریبی: ${age} سال (زیر ۱۵ سال) - این بلیط رایگان است!`, 'warning');
+            } else {
+                window.freeSeats[index] = false;
+                showInquiryMessage(index, `⚠️ حالت اضطراری فعال است -- بدون استعلام از ثبت‌احوال ثبت شد. سن تقریبی: ${age} سال`, 'warning');
+            }
+
+            window.updateAll();
+            checkAllInquired();
+            return;
+        }
+
         loadingDiv.style.display = 'block';
         btn.disabled = true;
 
@@ -604,6 +645,29 @@
         messageDiv.style.display = 'block';
         messageDiv.className = 'alert alert-' + type + ' py-2 px-3';
         messageDiv.textContent = text;
+    }
+
+    // ===== فقط برای حالت اضطراری (بدون استعلام ثبت‌احوال) =====
+    function isValidNationalCodeChecksum(code) {
+        if (!/^\d{10}$/.test(code)) return false;
+        if (new Set(code.split('')).size === 1) return false; // مثل 0000000000
+        const check = parseInt(code[9], 10);
+        let sum = 0;
+        for (let i = 0; i < 9; i++) sum += parseInt(code[i], 10) * (10 - i);
+        const remainder = sum % 11;
+        return remainder < 2 ? check === remainder : check === (11 - remainder);
+    }
+
+    function estimateAgeFromJalali(dateStr) {
+        // برآورد تقریبی سن فقط برای نمایش آنی به کاربر؛ محاسبه‌ی نهایی و
+        // قطعیِ سن (برای تعیین بلیط رایگان) همیشه سمت سرور با jdatetime واقعی
+        // دوباره انجام می‌شود، پس دقتِ این تابع تأثیری روی مبلغ نهایی ندارد.
+        const parts = dateStr.split('/');
+        if (parts.length !== 3) return 0;
+        const birthYear = parseInt(parts[0], 10);
+        const currentJalaliYearApprox = new Date().getFullYear() - 621;
+        const age = currentJalaliYearApprox - birthYear;
+        return age > 0 ? age : 0;
     }
 
     function checkAllInquired() {

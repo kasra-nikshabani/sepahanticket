@@ -91,7 +91,7 @@ class SiteSettingsAdmin(admin.ModelAdmin):
     فقط یک ردیف (singleton) وجود داره؛ کلیک روی این آیتم توی سایدبار
     مستقیم می‌بره به همون یک فرم ویرایش، بدون نیاز به رفتن توی یه لیست.
     """
-    fields = ('block_foreign_ips', 'updated_at')
+    fields = ('block_foreign_ips', 'bypass_civil_registry_inquiry', 'updated_at')
     readonly_fields = ('updated_at',)
 
     def has_add_permission(self, request):

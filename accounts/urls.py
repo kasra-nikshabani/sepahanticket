@@ -28,4 +28,7 @@ urlpatterns = [
     path('admin/users/', views.admin_user_list, name='admin_user_list'),
     path('admin/users/<int:user_id>/', views.admin_user_detail, name='admin_user_detail'),
 
+    # ===== پنل ادمین: تنظیمات اضطراری =====
+    path('admin/emergency-settings/', views.admin_emergency_settings, name='admin_emergency_settings'),
+
 ]
