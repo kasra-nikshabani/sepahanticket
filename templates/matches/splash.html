@@ -6,8 +6,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>سپاهان تیکت</title>
-    <!-- فونت وزیرمتن -->
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+    <!-- فونت وزیرمتن (لوکال) -->
+    <link href="{% static 'vendor/vazirmatn/Vazirmatn-font-face.css' %}" rel="stylesheet">
     <style>
         /* ===== تنظیمات کلی ===== */
         * {
@@ -21,7 +21,7 @@
             direction: rtl;
             height: 100vh;
             overflow: hidden;
-            background: url('https://static.footba11.net/images/contents/728882.jpg') no-repeat center center fixed;
+            background: url('{% static "vendor/img/splash-728882.webp" %}') no-repeat center center fixed;
             background-size: cover;
             display: flex;
             justify-content: center;

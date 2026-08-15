@@ -1,4 +1,5 @@
 import json
+import os
 from django.urls import reverse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction, IntegrityError
@@ -1978,6 +1979,7 @@ def export_financial_report_pdf(request, match_id):
         'revenues': revenues,
         'total_tickets': tickets.count() + vip_tickets.count(),
         'today': timezone.now(),
+        'vazirmatn_dir': os.path.join(settings.BASE_DIR, 'static', 'vendor', 'vazirmatn', 'webfonts'),
     }
 
     # ===== تنظیم base_url برای دسترسی به تصاویر =====

@@ -6,7 +6,36 @@
     <meta charset="UTF-8">
     <title>گزارش مالی {{ match.home_team }} vs {{ match.away_team }}</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800;900&display=swap');
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('file://{{ vazirmatn_dir }}/Vazirmatn-Regular.woff2') format('woff2');
+            font-weight: 400;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('file://{{ vazirmatn_dir }}/Vazirmatn-Medium.woff2') format('woff2');
+            font-weight: 500;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('file://{{ vazirmatn_dir }}/Vazirmatn-Bold.woff2') format('woff2');
+            font-weight: 700;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('file://{{ vazirmatn_dir }}/Vazirmatn-ExtraBold.woff2') format('woff2');
+            font-weight: 800;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('file://{{ vazirmatn_dir }}/Vazirmatn-Black.woff2') format('woff2');
+            font-weight: 900;
+            font-style: normal;
+        }
 
         * {
             margin: 0;

@@ -10,12 +10,12 @@
     <meta http-equiv="Expires" content="0">
     <title>{% block title %}فروش بلیط سپاهان{% endblock %}</title>
 
-    <!-- Bootstrap 5 RTL -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css"/>
-    <!-- Font Awesome 6 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-    <!-- فونت وزیرمتن -->
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"/>
+    <!-- Bootstrap 5 RTL (لوکال -- در صورت قطعی اینترنت خارج هم کار کند) -->
+    <link rel="stylesheet" href="{% static 'vendor/bootstrap/css/bootstrap.rtl.min.css' %}"/>
+    <!-- Font Awesome 6 (لوکال) -->
+    <link rel="stylesheet" href="{% static 'vendor/fontawesome/css/all.min.css' %}"/>
+    <!-- فونت وزیرمتن (لوکال) -->
+    <link href="{% static 'vendor/vazirmatn/Vazirmatn-font-face.css' %}" rel="stylesheet"/>
     <!-- استایل سفارشی -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}"/>
     <link rel="icon" type="image/png" href="{% static 'img/sepahan-logo.png' %}"/>
@@ -915,8 +915,8 @@
 <!-- ============================================================ -->
 <!--  اسکریپت‌های مشترک                                           -->
 <!-- ============================================================ -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'vendor/jquery/jquery-3.6.0.min.js' %}"></script>
+<script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'js/script.js' %}"></script>
 
 <script>

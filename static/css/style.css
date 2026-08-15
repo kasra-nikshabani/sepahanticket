@@ -3,7 +3,7 @@
    رنگ‌ها: طلایی (D4AF37) و مشکی (1A1A2E)
    ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&display=swap');
+/* فونت وزیرمتن از طریق فایل vendor/vazirmatn/Vazirmatn-font-face.css در base.html لود می‌شود */
 .team-type-badge.vip {
     background: #9b59b6;  /* بنفش */
     color: white;
