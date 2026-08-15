@@ -1217,7 +1217,12 @@ def bulk_issue_tickets(request):
                         ticket = Ticket.objects.create(
                             user=user, match=match, seat=match_seat.seat, match_seat=match_seat,
                             full_name=user.get_full_name() or user.username,
-                            national_code=getattr(user, 'national_code', ''),  # <--- اصلاح شد
+                            # Ticket.national_code یک ستون NOT NULL است، ولی کاربران ویژه معمولاً
+                            # کد ملی ثبت‌شده ندارند (این فیلد فقط برای ثبت‌نام کاربران عادی
+                            # اجباری است) -- getattr به‌تنهایی None را برنمی‌گرداند به رشته‌ی
+                            # خالی، چون خودِ فیلد وجود دارد و فقط مقدارش None است؛ همین باعث
+                            # خطای IntegrityError/500 هنگام صدور گروهی می‌شد.
+                            national_code=getattr(user, 'national_code', '') or '',
                             status='admin_assigned', is_admin_assigned=True, price=match_seat.seat.row.block.price or 0,
                         )
                         ticket.save()
