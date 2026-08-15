@@ -463,7 +463,10 @@ def vip_issue_excel(request, match_id):
                         user=request.user, match=match, seat=match_seat.seat, match_seat=match_seat,
                         full_name=full_name, national_code=national_code, status='vip_issued', is_admin_assigned=False,
                     )
-                    ticket.save()
+                    # .create() قبلاً خودش save() را صدا زده -- یک save() اضافه اینجا
+                    # چون pdf_file هنوز خالیه (تولید PDF async و صف‌بندی‌شده است)،
+                    # باعث می‌شد Ticket.save() دوباره enqueue_pdf_generation را صدا بزند
+                    # و همان بلیط دوبار در صف PDF قرار بگیرد.
 
                     match_seat.is_available = False
                     match_seat.save()
@@ -1225,7 +1228,10 @@ def bulk_issue_tickets(request):
                             national_code=getattr(user, 'national_code', '') or '',
                             status='admin_assigned', is_admin_assigned=True, price=match_seat.seat.row.block.price or 0,
                         )
-                        ticket.save()
+                        # .create() قبلاً خودش save() را صدا زده -- یک save() اضافه اینجا چون
+                        # pdf_file هنوز خالیه، Ticket.save() را وادار می‌کرد enqueue_pdf_generation
+                        # را دوباره صدا بزند و همان بلیط را دوبار در صف PDF قرار بدهد (این دقیقاً
+                        # همان چیزی بود که صف تولید PDF را با ده‌ها هزار job تکراری پر کرده بود).
                         match_seat.is_available = False
                         match_seat.save()
                         created_count += 1
