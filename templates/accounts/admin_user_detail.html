@@ -307,6 +307,10 @@
                     <div class="value">{{ target_user.national_code|default:"-" }}</div>
                 </div>
                 <div class="info-item">
+                    <div class="label"><i class="fas fa-venus-mars"></i> جنسیت</div>
+                    <div class="value">{{ target_user.get_gender_display|default:"-" }}</div>
+                </div>
+                <div class="info-item">
                     <div class="label"><i class="fas fa-envelope"></i> ایمیل</div>
                     <div class="value">{{ target_user.email|default:"-" }}</div>
                 </div>

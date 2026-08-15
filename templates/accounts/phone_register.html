@@ -173,6 +173,46 @@
         font-size: 14px;
     }
 
+    .gender-options {
+        display: flex;
+        gap: 12px;
+    }
+
+    .gender-option {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 10px;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        background: #fafbfc;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        color: #6c7a8a;
+        transition: all 0.3s ease;
+        margin: 0;
+    }
+
+    .gender-option input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .gender-option:has(input:checked) {
+        border-color: #D4AF37;
+        background: rgba(212, 175, 55, 0.08);
+        color: #1A1A2E;
+    }
+
+    .gender-option:has(input:checked) i {
+        color: #D4AF37;
+    }
+
     .btn-register-phone {
         background: linear-gradient(135deg, #D4AF37, #B8960F);
         border: none;
@@ -359,6 +399,29 @@
                     {% endif %}
                 </div>
 
+                <!-- جنسیت -->
+                <div class="form-group">
+                    <label><i class="fas fa-venus-mars label-icon"></i> جنسیت</label>
+                    <div class="gender-options">
+                        <label class="gender-option">
+                            <input type="radio" name="gender" value="male"
+                                   {% if form.gender.value == 'male' %}checked{% endif %} required>
+                            <span><i class="fas fa-mars"></i> مرد</span>
+                        </label>
+                        <label class="gender-option">
+                            <input type="radio" name="gender" value="female"
+                                   {% if form.gender.value == 'female' %}checked{% endif %} required>
+                            <span><i class="fas fa-venus"></i> زن</span>
+                        </label>
+                    </div>
+                    {% if form.gender.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {% for error in form.gender.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
                 <button type="submit" class="btn-register-phone">
                     <i class="fas fa-paper-plane"></i> دریافت کد تأیید
                 </button>
@@ -453,8 +516,15 @@
                 e.preventDefault();
                 nationalCodeInput.classList.add('is-invalid');
                 alert('⚠️ کد ملی وارد شده معتبر نیست.');
+                return;
             } else {
                 nationalCodeInput.classList.remove('is-invalid');
+            }
+
+            const genderChecked = document.querySelector('input[name="gender"]:checked');
+            if (!genderChecked) {
+                e.preventDefault();
+                alert('⚠️ لطفاً جنسیت را انتخاب کنید.');
             }
         });
 

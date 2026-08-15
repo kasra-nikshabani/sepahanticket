@@ -339,6 +339,7 @@
                                 <th><i class="fas fa-user-tag"></i> نام کامل</th>
                                 <th><i class="fas fa-mobile-alt"></i> شماره تلفن</th>
                                 <th><i class="fas fa-id-card"></i> کد ملی</th>
+                                <th><i class="fas fa-venus-mars"></i> جنسیت</th>
                                 <th><i class="fas fa-calendar-plus"></i> تاریخ عضویت</th>
                                 <th><i class="fas fa-toggle-on"></i> وضعیت</th>
                                 <th style="text-align:center;"><i class="fas fa-cog"></i> عملیات</th>
@@ -357,6 +358,7 @@
                                     <td>{{ u.get_full_name|default:"-" }}</td>
                                     <td>{{ u.phone_number|default:"-" }}</td>
                                     <td>{{ u.national_code|default:"-" }}</td>
+                                    <td>{{ u.get_gender_display|default:"-" }}</td>
                                     <td>{{ u.date_joined|date:"Y/m/d H:i" }}</td>
                                     <td>
                                         <span class="status-pill {% if u.is_active %}active{% else %}inactive{% endif %}">

@@ -203,6 +203,12 @@ class PhoneRegisterForm(forms.Form):
         }),
         label="کد ملی"
     )
+    gender = forms.ChoiceField(
+        choices=User.GENDER_CHOICES,
+        required=True,
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        label="جنسیت"
+    )
 
     def _clean_persian_name(self, field_name, label):
         value = (self.cleaned_data.get(field_name) or '').strip()
