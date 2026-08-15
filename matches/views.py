@@ -1235,7 +1235,12 @@ def admin_block_list(request):
 
     selected_match = None
     selected_stadium = None
-    blocks = Block.objects.filter(is_active=True).order_by('order')
+    # عمداً is_active فیلتر نمی‌شود -- این لیست خودِ صفحه‌ی مدیریت بلوک‌هاست
+    # (نه صفحه‌ی عمومی انتخاب سکو)، پس باید بلوک‌های غیرفعال را هم نشان
+    # بدهد، وگرنه بعد از غیرفعال کردن یک بلوک، ادمین دیگر هیچ راهی برای
+    # پیدا کردن و دوباره فعال کردنش از همین صفحه نداشت (قالب همین حالا هم
+    # badge وضعیت و دکمه‌ی فعال/غیرفعال برای هر دو حالت را نمایش می‌دهد).
+    blocks = Block.objects.all().order_by('order')
 
     if match_id:
         selected_match = get_object_or_404(Match, id=match_id)
