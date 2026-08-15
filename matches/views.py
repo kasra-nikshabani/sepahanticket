@@ -176,18 +176,13 @@ def select_block(request, match_id):
     selected_floor = request.session.get('selected_floor', 'ground')
     selected_team_type = request.session.get('selected_team_type', 'home')  # <--- دریافت انتخاب کاربر از سشن
 
-    # فیلتر بر اساس طبقه
-    if selected_floor == 'second':
-        blocks = Block.objects.filter(
-            stadium=stadium,
-            is_active=True,
-            name__contains='طبقه دوم'
-        ).order_by('order')
-    else:
-        blocks = Block.objects.filter(
-            stadium=stadium,
-            is_active=True
-        ).exclude(name__contains='طبقه دوم').order_by('order')
+    # فیلتر بر اساس طبقه -- selected_floor مقادیر 'ground'/'second' دارد که
+    # دقیقاً با choices فیلد Block.floor یکی است
+    blocks = Block.objects.filter(
+        stadium=stadium,
+        is_active=True,
+        floor=selected_floor,
+    ).order_by('order')
 
     # ===== فیلتر بر اساس میزبان یا میهمان بودن =====
     if selected_team_type == 'away':
@@ -1259,6 +1254,7 @@ def admin_block_list(request):
         'stadiums': stadiums,
         'selected_match': selected_match,
         'selected_stadium': selected_stadium,
+        'floor_choices': Block.FLOOR_CHOICES,
     }
     return render(request, 'matches/admin_block_list.html', context)
 
@@ -1302,6 +1298,26 @@ def toggle_block_status(request, block_id):
     status = 'فعال' if block.is_active else 'غیرفعال'
     messages.success(request, f'بلوک "{block.name}" {status} شد.')
     return redirect('matches:admin_block_list')
+
+
+@staff_member_required
+def admin_bulk_toggle_floor(request, stadium_id, floor):
+    """فعال/غیرفعال کردن یک‌جای تمام سکوهای یک طبقه در یک ورزشگاه"""
+    if request.method != 'POST':
+        return redirect('matches:admin_block_list')
+
+    stadium = get_object_or_404(Stadium, id=stadium_id)
+    if floor not in dict(Block.FLOOR_CHOICES):
+        messages.error(request, 'طبقه نامعتبر است.')
+        return redirect('matches:admin_block_list')
+
+    new_state = request.POST.get('action') == 'activate'
+    updated = Block.objects.filter(stadium=stadium, floor=floor).update(is_active=new_state)
+
+    floor_label = dict(Block.FLOOR_CHOICES)[floor]
+    status_label = 'فعال' if new_state else 'غیرفعال'
+    messages.success(request, f'{updated} سکوی «{floor_label}» در ورزشگاه «{stadium.name}» {status_label} شد.')
+    return redirect(f"{reverse('matches:admin_block_list')}?stadium_id={stadium.id}")
 
 
 @staff_member_required

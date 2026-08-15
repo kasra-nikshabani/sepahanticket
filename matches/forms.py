@@ -7,10 +7,11 @@ from .models import MatchCost, MatchRevenue
 class BlockForm(forms.ModelForm):
     class Meta:
         model = Block
-        fields = ['name', 'order', 'zone_type', 'price', 'is_vip', 'is_class1', 'is_active']
+        fields = ['name', 'order', 'floor', 'zone_type', 'price', 'is_vip', 'is_class1', 'is_active']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'order': forms.NumberInput(attrs={'class': 'form-control'}),
+            'floor': forms.Select(attrs={'class': 'form-select'}),
             'zone_type': forms.Select(attrs={'class': 'form-select'}),
             'price': forms.NumberInput(attrs={'class': 'form-control'}),
             'is_vip': forms.CheckboxInput(attrs={'class': 'form-check-input'}),

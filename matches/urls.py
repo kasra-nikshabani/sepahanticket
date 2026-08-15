@@ -34,6 +34,7 @@ urlpatterns = [
     path('admin/blocks/edit/', views.admin_block_edit, name='admin_block_edit'),
     path('admin/blocks/delete/<int:block_id>/', views.admin_block_delete, name='admin_block_delete'),
     path('admin/blocks/toggle/<int:block_id>/', views.toggle_block_status, name='toggle_block_status'),
+    path('admin/blocks/bulk-toggle-floor/<int:stadium_id>/<str:floor>/', views.admin_bulk_toggle_floor, name='admin_bulk_toggle_floor'),
     path('admin/blocks/manage-seats/<int:block_id>/', views.manage_block_seats, name='manage_block_seats'),
 
     # ===== مدیریت مسابقات (فقط ادمین) =====

@@ -159,6 +159,10 @@ ZONE_CHOICES = (
 #  مدل Block
 # ============================================================
 class Block(models.Model):
+    FLOOR_CHOICES = (
+        ('ground', 'طبقه پایین'),
+        ('second', 'طبقه دوم'),
+    )
     stadium = models.ForeignKey(
         'Stadium',
         on_delete=models.CASCADE,
@@ -169,6 +173,7 @@ class Block(models.Model):
     )
     name = models.CharField(max_length=50, verbose_name="نام سکو")
     order = models.IntegerField(default=0, verbose_name="ترتیب")
+    floor = models.CharField(max_length=10, choices=FLOOR_CHOICES, default='ground', verbose_name="طبقه")
     is_vip = models.BooleanField(default=False, verbose_name="VIP")
     is_class1 = models.BooleanField(default=False, verbose_name="کلاس ۱")
     is_active = models.BooleanField(default=True, verbose_name="فعال")
