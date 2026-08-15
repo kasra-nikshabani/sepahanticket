@@ -214,6 +214,19 @@
         }
 
         @media (max-width: 768px) {
+            .tickets-container {
+                margin: 16px auto;
+                padding: 0 10px;
+            }
+
+            .card-header-custom {
+                padding: 16px 20px;
+            }
+
+            .card-header-custom h4 {
+                font-size: 1.05rem;
+            }
+
             .filter-form {
                 flex-direction: column;
                 align-items: stretch;
@@ -221,18 +234,11 @@
 
             .filter-form select {
                 min-width: auto;
+                width: 100%;
             }
 
             .card-body-custom {
                 padding: 16px;
-            }
-
-            .table-custom {
-                font-size: 0.8rem;
-            }
-
-            .table-custom th, .table-custom td {
-                padding: 8px 10px;
             }
 
             .bulk-actions {
@@ -240,8 +246,64 @@
                 align-items: stretch;
             }
 
-            .bulk-actions .btn {
+            .bulk-actions .btn, .bulk-actions .btn-download, .bulk-actions .btn-share {
+                width: 100%;
                 text-align: center;
+            }
+
+            .selected-count {
+                text-align: center;
+            }
+
+            /* جدول روی موبایل به‌صورت کارت‌های عمودی نمایش داده می‌شود */
+            .table-custom thead {
+                display: none;
+            }
+
+            .table-custom, .table-custom tbody, .table-custom tr, .table-custom td {
+                display: block;
+                width: 100%;
+            }
+
+            .table-custom {
+                font-size: 0.85rem;
+            }
+
+            .table-custom tr {
+                margin-bottom: 14px;
+                border: 1px solid #e8eaed;
+                border-radius: 12px;
+                padding: 4px 12px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            }
+
+            .table-custom td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+                text-align: left;
+                padding: 10px 0;
+                border-bottom: 1px solid #f1f3f4;
+            }
+
+            .table-custom tr td:last-child {
+                border-bottom: none;
+            }
+
+            .table-custom td::before {
+                content: attr(data-label);
+                font-weight: 700;
+                color: #1A1A2E;
+                flex-shrink: 0;
+            }
+
+            .table-custom td.checkbox-column {
+                justify-content: flex-end;
+            }
+
+            .table-custom td.checkbox-column::before {
+                content: 'انتخاب';
             }
         }
     </style>
@@ -310,12 +372,12 @@
                                         <input type="checkbox" name="ticket_ids" value="{{ ticket.id }}"
                                                class="ticket-checkbox">
                                     </td>
-                                    <td><strong>{{ ticket.ticket_number }}</strong></td>
-                                    <td>{{ ticket.match.home_team }} vs {{ ticket.match.away_team }}</td>
-                                    <td>{{ ticket.full_name }}</td>
-                                    <td>{{ ticket.national_code }}</td>
-                                    <td>{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
-                                    <td>
+                                    <td data-label="شماره بلیط"><strong>{{ ticket.ticket_number }}</strong></td>
+                                    <td data-label="مسابقه">{{ ticket.match.home_team }} vs {{ ticket.match.away_team }}</td>
+                                    <td data-label="نام خریدار">{{ ticket.full_name }}</td>
+                                    <td data-label="کد ملی">{{ ticket.national_code }}</td>
+                                    <td data-label="تاریخ دریافت">{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
+                                    <td data-label="فایل PDF">
                                         {% if ticket.pdf_file %}
                                         <a href="{% url 'tickets:download_ticket_pdf' ticket.id %}" target="_blank" class="btn-action pdf-slot" download>
                                             <i class="fas fa-file-pdf"></i> دانلود
