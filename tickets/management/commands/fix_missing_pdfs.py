@@ -26,7 +26,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         cutoff = timezone.now() - timedelta(minutes=options['older_than_minutes'])
-        stuck = Ticket.objects.filter(pdf_file='', created_at__lt=cutoff)
+        stuck = Ticket.objects.filter(pdf_file='', purchase_date__lt=cutoff)
         count = stuck.count()
 
         if count == 0:
