@@ -1115,8 +1115,8 @@ def admin_match_list(request):
 
         sold_count = sold_tickets.count()
         vip_count = vip_tickets.count()
-        revenue = sum(t.seat.row.block.price for t in sold_tickets if t.seat and t.seat.row and t.seat.row.block)
-        vip_revenue = sum(t.seat.row.block.price for t in vip_tickets if t.seat and t.seat.row and t.seat.row.block)
+        revenue = sum(t.price or 0 for t in sold_tickets)
+        vip_revenue = sum(t.price or 0 for t in vip_tickets)
         total_revenue_match = revenue
 
         sold_seats = MatchSeat.objects.filter(match=match, is_available=False).count()
@@ -1163,8 +1163,8 @@ def admin_match_detail(request, match_id):
     vip_tickets_qs = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued']).order_by(
         '-purchase_date')
 
-    sold_total = sum(t.seat.row.block.price for t in sold_tickets_qs if t.seat and t.seat.row and t.seat.row.block)
-    vip_total = sum(t.seat.row.block.price for t in vip_tickets_qs if t.seat and t.seat.row and t.seat.row.block)
+    sold_total = sum(t.price or 0 for t in sold_tickets_qs)
+    vip_total = sum(t.price or 0 for t in vip_tickets_qs)
 
     per_page = 10
     sold_page_num = request.GET.get('sold_page', 1)
@@ -1187,11 +1187,13 @@ def admin_match_detail(request, match_id):
 
     blocks = Block.objects.filter(stadium=match.stadium, is_active=True).order_by('order')
     blocks_data = []
+    block_price_map = get_block_price_map(match)
     for block in blocks:
         total_seats = Seat.objects.filter(row__block=block, row__is_active=True).count()
         occupied_seats = MatchSeat.objects.filter(match=match, seat__row__block=block, is_available=False).count()
         available_seats = total_seats - occupied_seats
         occupancy = round((occupied_seats / total_seats * 100) if total_seats > 0 else 0, 1)
+        block.price = block_price_map.get(block.id, block.price)
         blocks_data.append({
             'block': block, 'total_seats': total_seats, 'occupied_seats': occupied_seats,
             'available_seats': available_seats, 'occupancy': occupancy,

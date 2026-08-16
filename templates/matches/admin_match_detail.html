@@ -782,7 +782,7 @@
                             <td>{{ ticket.seat.row.block.name|default:"—" }}</td>
                             <td>{{ ticket.seat.row.number|default:"—" }}</td>
                             <td>{{ ticket.seat.number|default:"—" }}</td>
-                            <td>{{ ticket.seat.row.block.price|default:"0" }}</td>
+                            <td>{{ ticket.price|default:"0" }}</td>
                             <td>{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
                         </tr>
                     {% empty %}
@@ -885,7 +885,7 @@
                             <td>{{ ticket.seat.row.block.name|default:"—" }}</td>
                             <td>{{ ticket.seat.row.number|default:"—" }}</td>
                             <td>{{ ticket.seat.number|default:"—" }}</td>
-                            <td>{{ ticket.seat.row.block.price|default:"0" }}</td>
+                            <td>{{ ticket.price|default:"0" }}</td>
                             <td>{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
                         </tr>
                     {% empty %}

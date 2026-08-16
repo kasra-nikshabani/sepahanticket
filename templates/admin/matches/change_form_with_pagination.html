@@ -62,7 +62,7 @@
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.seat.row.block.name|default:"—" }}</td>
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.seat.row.number|default:"—" }}</td>
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.seat.number|default:"—" }}</td>
-                        <td style="padding:8px; border:1px solid #ddd;">{{ ticket.seat.row.block.price|default:0 }}</td>
+                        <td style="padding:8px; border:1px solid #ddd;">{{ ticket.price|default:0 }}</td>
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
                     </tr>
                     {% empty %}
@@ -120,7 +120,7 @@
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.seat.row.block.name|default:"—" }}</td>
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.seat.row.number|default:"—" }}</td>
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.seat.number|default:"—" }}</td>
-                        <td style="padding:8px; border:1px solid #ddd;">{{ ticket.seat.row.block.price|default:0 }}</td>
+                        <td style="padding:8px; border:1px solid #ddd;">{{ ticket.price|default:0 }}</td>
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
                     </tr>
                     {% empty %}

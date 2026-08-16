@@ -273,7 +273,7 @@ def _release_payment_seats(payment):
 
 def _finalize_ticket_purchase(payment, gateway_amount_paid):
     from tickets.models import Ticket, Order, DiscountCode
-    from matches.models import Match, MatchSeat
+    from matches.models import Match, MatchSeat, get_block_price_map
     from tickets.reservation import SeatReservation
     from wallet.models import Wallet
     from tickets.views import get_age_from_jalali
@@ -321,6 +321,8 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             )
         }
 
+        block_price_map = get_block_price_map(match)
+
         for pk in match_seat_pks:
             pk_str = str(pk)
             full_name = payment.buyer_info.get(f'full_name_{pk_str}', '')
@@ -332,7 +334,8 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
                 continue
 
             age = get_age_from_jalali(tarikhe_tavallod)
-            base_price = match_seat.seat.row.block.price if match_seat.seat.row.block else 0
+            block = match_seat.seat.row.block
+            base_price = block_price_map.get(block.id, block.price) if block else 0
             seat_price = 0 if age < 15 else base_price
 
             actual_total_price += seat_price
@@ -350,7 +353,8 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
         # gateway_amount و wallet_amount هر دو موقع ثبت Payment مستقیم از یک
         # فیلد hidden فرم خوانده می‌شوند (payments/views.py: payment_request)
         # و کاملاً قابل دستکاری سمت کلاینت‌اند (مثلاً با DevTools). اینجا --
-        # بعد از قفل صندلی‌ها و محاسبه‌ی قیمت واقعی از روی block.price --
+        # بعد از قفل صندلی‌ها و محاسبه‌ی قیمت واقعی از روی block_price_map
+        # (قیمت اختصاصی این مسابقه در صورت وجود، در غیر این صورت قیمت پیش‌فرض بلوک) --
         # باید مطمئن شویم مجموع مبلغ واقعاً تأییدشده از درگاه
         # (gateway_amount_paid، برگرفته از پاسخ verify خودِ زیبال، نه از
         # ورودی کاربر) به‌علاوه‌ی مبلغ واقعاً قابل‌کسر از کیف پول، کمتر از

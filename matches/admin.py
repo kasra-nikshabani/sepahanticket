@@ -17,7 +17,7 @@ from tickets.models import Ticket
 def _write_ticket_sheet(wb, sheet_title, report_title, amount_label, qs):
     """یک شیت اکسل با عنوان، خلاصه (مجموع مبلغ + تعداد کل) و جدول بلیط‌ها می‌سازد."""
     ws = wb.create_sheet(sheet_title[:31])
-    total_amount = sum(t.seat.row.block.price for t in qs if t.seat and t.seat.row and t.seat.row.block)
+    total_amount = sum(t.price or 0 for t in qs)
     total_count = qs.count()
 
     ws.append([report_title])
@@ -41,7 +41,7 @@ def _write_ticket_sheet(wb, sheet_title, report_title, amount_label, qs):
     for t in qs:
         ws.append([
             t.ticket_number, t.user.username, t.full_name, t.national_code,
-            t.seat.row.block.price if t.seat and t.seat.row and t.seat.row.block else 0,
+            t.price or 0,
             t.purchase_date.strftime('%Y/%m/%d %H:%M') if t.purchase_date else '',
         ])
 
@@ -135,14 +135,8 @@ class MatchAdmin(admin.ModelAdmin):
             vip_tickets = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued'])
             total_tickets = sold_tickets.count() + vip_tickets.count()
 
-            total_revenue = sum(
-                t.seat.row.block.price for t in sold_tickets
-                if t.seat and t.seat.row and t.seat.row.block
-            )
-            vip_revenue = sum(
-                t.seat.row.block.price for t in vip_tickets
-                if t.seat and t.seat.row and t.seat.row.block
-            )
+            total_revenue = sum(t.price or 0 for t in sold_tickets)
+            vip_revenue = sum(t.price or 0 for t in vip_tickets)
 
             occupied_seats = MatchSeat.objects.filter(match=match, is_available=False).count()
             total_seats = Seat.objects.filter(
@@ -177,14 +171,8 @@ class MatchAdmin(admin.ModelAdmin):
         total_vip = vip_tickets.count()
         total_tickets = total_sold + total_vip
 
-        sold_revenue = sum(
-            t.seat.row.block.price for t in sold_tickets
-            if t.seat and t.seat.row and t.seat.row.block
-        )
-        vip_revenue = sum(
-            t.seat.row.block.price for t in vip_tickets
-            if t.seat and t.seat.row and t.seat.row.block
-        )
+        sold_revenue = sum(t.price or 0 for t in sold_tickets)
+        vip_revenue = sum(t.price or 0 for t in vip_tickets)
 
         match_seats = MatchSeat.objects.filter(match=match)
         total_match_seats = match_seats.count()
@@ -244,14 +232,8 @@ class MatchAdmin(admin.ModelAdmin):
         vip_tickets_qs = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued']).order_by(
             '-purchase_date')
 
-        sold_total = sum(
-            t.seat.row.block.price for t in sold_tickets_qs
-            if t.seat and t.seat.row and t.seat.row.block
-        )
-        vip_total = sum(
-            t.seat.row.block.price for t in vip_tickets_qs
-            if t.seat and t.seat.row and t.seat.row.block
-        )
+        sold_total = sum(t.price or 0 for t in sold_tickets_qs)
+        vip_total = sum(t.price or 0 for t in vip_tickets_qs)
 
         per_page = 10
         sold_page_num = request.GET.get('sold_page', 1)

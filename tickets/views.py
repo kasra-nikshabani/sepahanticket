@@ -1146,8 +1146,8 @@ def sales_report(request):
         sold_count = sold_tickets.count()
         vip_count = vip_tickets.count()
 
-        revenue = sum(t.seat.row.block.price for t in sold_tickets if t.seat and t.seat.row and t.seat.row.block)
-        vip_revenue = sum(t.seat.row.block.price for t in vip_tickets if t.seat and t.seat.row and t.seat.row.block)
+        revenue = sum(t.price or 0 for t in sold_tickets)
+        vip_revenue = sum(t.price or 0 for t in vip_tickets)
 
         occupied = MatchSeat.objects.filter(match=match, is_available=False).count()
         total = MatchSeat.objects.filter(match=match).count()
@@ -1656,8 +1656,8 @@ def export_sales_report_excel(request):
         vip_count = vip_tickets.count()
         total_tickets = sold_count + vip_count
 
-        revenue = sum(t.seat.row.block.price for t in sold_tickets if t.seat and t.seat.row and t.seat.row.block)
-        vip_revenue = sum(t.seat.row.block.price for t in vip_tickets if t.seat and t.seat.row and t.seat.row.block)
+        revenue = sum(t.price or 0 for t in sold_tickets)
+        vip_revenue = sum(t.price or 0 for t in vip_tickets)
         total_revenue = revenue
 
         total_seats = Seat.objects.filter(row__block__stadium=match.stadium, row__block__is_active=True,
@@ -1700,7 +1700,7 @@ def export_sales_report_excel(request):
         for t in all_tickets[:100]:
             ws.append([
                 t.ticket_number, t.user.username, t.full_name, t.national_code,
-                t.seat.row.block.price if t.seat and t.seat.row and t.seat.row.block else 0, t.get_status_display(),
+                t.price or 0, t.get_status_display(),
             ])
 
         for col in ['A', 'B', 'C', 'D', 'E', 'F']: ws.column_dimensions[col].width = 18
