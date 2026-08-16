@@ -664,6 +664,10 @@
                 <span class="stat-icon"><i class="fas fa-money-bill-wave"></i></span>
                 <div class="stat-number">{{ total_revenue|floatformat:0|default:"0" }}</div>
                 <p class="stat-label">درآمد کل (ریال)</p>
+                <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">
+                    شامل {{ free_age_count }} بلیط رایگان (زیر ۱۵ سال) و {{ basa_discount_count }} بلیط با تخفیف باسا —
+                    برای همین ممکن است از مبلغ واقعاً دریافتی زیبال کمتر باشد
+                </small>
             </div>
 
             <!-- ===== تفکیک بلیط‌های فروخته‌شده: قیمت کامل / رایگان (سن) / تخفیف باسا ===== -->
