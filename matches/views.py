@@ -1215,7 +1215,12 @@ def admin_match_detail(request, match_id):
         free_age_count=Count('id', filter=Q(price=0)),
         basa_discount_count=Count('id', filter=Q(basa_discount_amount__gt=0)),
         basa_discount_total=Sum('basa_discount_amount', filter=Q(basa_discount_amount__gt=0)),
+        # مبلغی که واقعاً از بلیط‌های باسا دریافت شده (بعد از کسر تخفیف) -- با
+        # basa_discount_total اشتباه گرفته نشود: آن مبلغِ تخفیف داده‌شده است،
+        # نه مبلغ دریافتی. برای هم‌خوانی با درآمد کل باید همین فیلد را جمع زد.
+        basa_revenue=Sum('price', filter=Q(basa_discount_amount__gt=0)),
         full_price_count=Count('id', filter=~Q(price=0) & Q(basa_discount_amount=0)),
+        full_price_revenue=Sum('price', filter=~Q(price=0) & Q(basa_discount_amount=0)),
     )
 
     per_page = 10
@@ -1279,7 +1284,9 @@ def admin_match_detail(request, match_id):
         'free_age_count': category_stats['free_age_count'],
         'basa_discount_count': category_stats['basa_discount_count'],
         'basa_discount_total': category_stats['basa_discount_total'] or 0,
+        'basa_revenue': category_stats['basa_revenue'] or 0,
         'full_price_count': category_stats['full_price_count'],
+        'full_price_revenue': category_stats['full_price_revenue'] or 0,
     }
     return render(request, 'matches/admin_match_detail.html', context)
 

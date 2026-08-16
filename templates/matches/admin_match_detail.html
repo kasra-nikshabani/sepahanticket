@@ -665,31 +665,44 @@
                 <div class="stat-number">{{ total_revenue|floatformat:0|default:"0" }}</div>
                 <p class="stat-label">درآمد کل (ریال)</p>
                 <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">
-                    شامل {{ free_age_count }} بلیط رایگان (زیر ۱۵ سال) و {{ basa_discount_count }} بلیط با تخفیف باسا —
-                    برای همین ممکن است از مبلغ واقعاً دریافتی زیبال کمتر باشد
+                    = {{ full_price_revenue|floatformat:0 }} (قیمت کامل) + {{ basa_revenue|floatformat:0 }} (باسا، بعد از تخفیف) + ۰ (رایگان)
                 </small>
             </div>
 
             <!-- ===== تفکیک بلیط‌های فروخته‌شده: قیمت کامل / رایگان (سن) / تخفیف باسا ===== -->
+            <!-- توجه: basa_revenue مبلغیه که واقعاً از بلیط باسا دریافت شده
+                 (بعد از کسر تخفیف)، نه مبلغ تخفیف. برای همینه که این عدد رو
+                 باید با full_price_revenue جمع زد تا با درآمد کل یکی بشه --
+                 نه basa_discount_total که فقط مقدار تخفیفه. -->
             <div class="stat-card green">
                 <span class="stat-icon"><i class="fas fa-tag"></i></span>
                 <div class="stat-number">{{ full_price_count }}</div>
                 <p class="stat-label">بلیط با قیمت کامل</p>
+                <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">
+                    {{ full_price_revenue|floatformat:0 }} ریال
+                </small>
             </div>
             <div class="stat-card blue">
                 <span class="stat-icon"><i class="fas fa-child"></i></span>
                 <div class="stat-number">{{ free_age_count }}</div>
                 <p class="stat-label">بلیط رایگان (زیر ۱۵ سال)</p>
+                <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">۰ ریال</small>
             </div>
             <div class="stat-card purple">
                 <span class="stat-icon"><i class="fas fa-percentage"></i></span>
                 <div class="stat-number">{{ basa_discount_count }}</div>
                 <p class="stat-label">بلیط تخفیف باسا</p>
+                <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">
+                    دریافتی: {{ basa_revenue|floatformat:0 }} ریال
+                </small>
             </div>
             <div class="stat-card orange">
                 <span class="stat-icon"><i class="fas fa-hand-holding-usd"></i></span>
                 <div class="stat-number">{{ basa_discount_total|floatformat:0 }}</div>
                 <p class="stat-label">مبلغ تخفیف باسا (ریال)</p>
+                <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">
+                    این مبلغِ تخفیفه، نه مبلغ دریافتی — جزو درآمد کل نیست
+                </small>
             </div>
             <!-- ===== پایان تفکیک درآمد ===== -->
 
