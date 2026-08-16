@@ -31,7 +31,7 @@ import matches
 from .models import Ticket, VIPQuota, DiscountCode, Order
 from .forms import BulkTicketForm, VIPQuotaForm, DiscountCodeForm
 from .reservation import SeatReservation
-from matches.models import Match, Seat, Row, MatchSeat, Block, get_block_price_map
+from matches.models import Match, Seat, Row, MatchSeat, Block, get_block_price_map, get_basa_discount_percent
 from accounts.models import User
 from wallet.models import Wallet
 from .utils import get_access_token
@@ -783,6 +783,10 @@ def ticket_info(request, match_id):
 
         actual_total_price = 0
         processed_tickets_data = []
+        basa_discount_percent = get_basa_discount_percent(match)
+        basa_national_codes = set()
+        if basa_discount_percent > 0:
+            basa_national_codes = set(User.objects.filter(is_basa_member=True).values_list('national_code', flat=True))
 
         for seat_data in seats_data:
             match_seat_id = seat_data['id']
@@ -823,6 +827,12 @@ def ticket_info(request, match_id):
                 seat_price = 0
             else:
                 seat_price = seat_data['price']
+                # ===== تخفیف باسا -- فقط روی همین بلیط، نه کل سبد خرید =====
+                # اگر کد ملیِ همین بلیط عضو باسا باشد و برای این مسابقه تخفیف
+                # باسا تعیین شده باشد، فقط قیمت همین بلیط تخفیف می‌خورد؛ سایر
+                # بلیط‌های همین سفارش (برای کدملی‌های دیگر) دست‌نخورده می‌مانند.
+                if basa_discount_percent > 0 and national_code in basa_national_codes:
+                    seat_price = seat_price - int(seat_price * basa_discount_percent / 100)
 
             actual_total_price += seat_price
             processed_tickets_data.append({

@@ -41,6 +41,7 @@ urlpatterns = [
     path('admin/match/create/', views.admin_match_create, name='admin_match_create'),
     path('admin/match/edit/<int:match_id>/', views.admin_match_edit, name='admin_match_edit'),
     path('admin/match/<int:match_id>/block-prices/', views.admin_match_block_prices, name='admin_match_block_prices'),
+    path('admin/match/<int:match_id>/basa-discount/', views.admin_match_basa_discount, name='admin_match_basa_discount'),
     path('admin/match/delete/<int:match_id>/', views.admin_match_delete, name='admin_match_delete'),
     path('admin/match/cancel/<int:match_id>/', views.admin_match_cancel, name='admin_match_cancel'),
 

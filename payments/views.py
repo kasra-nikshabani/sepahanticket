@@ -273,10 +273,11 @@ def _release_payment_seats(payment):
 
 def _finalize_ticket_purchase(payment, gateway_amount_paid):
     from tickets.models import Ticket, Order, DiscountCode
-    from matches.models import Match, MatchSeat, get_block_price_map
+    from matches.models import Match, MatchSeat, get_block_price_map, get_basa_discount_percent
     from tickets.reservation import SeatReservation
     from wallet.models import Wallet
     from tickets.views import get_age_from_jalali
+    from accounts.models import User
 
     try:
         match = Match.objects.select_for_update().get(id=payment.match_id)
@@ -322,6 +323,10 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
         }
 
         block_price_map = get_block_price_map(match)
+        basa_discount_percent = get_basa_discount_percent(match)
+        basa_national_codes = set()
+        if basa_discount_percent > 0:
+            basa_national_codes = set(User.objects.filter(is_basa_member=True).values_list('national_code', flat=True))
 
         for pk in match_seat_pks:
             pk_str = str(pk)
@@ -337,6 +342,8 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             block = match_seat.seat.row.block
             base_price = block_price_map.get(block.id, block.price) if block else 0
             seat_price = 0 if age < 15 else base_price
+            if seat_price and basa_discount_percent > 0 and national_code in basa_national_codes:
+                seat_price = seat_price - int(seat_price * basa_discount_percent / 100)
 
             actual_total_price += seat_price
             processed_seats_data.append({

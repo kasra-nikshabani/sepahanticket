@@ -172,6 +172,38 @@
                         </script>
                     </div>
                 </div>
+
+                <div class="card shadow-lg mt-4">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="fas fa-percentage"></i> تخفیف اعضای باسا برای این مسابقه</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">
+                            اگر عددی وارد کنید، هر بلیطی که کد ملی‌اش متعلق به یک عضو باسا باشد، فقط همان
+                            بلیط (نه کل سبد خرید) به همین درصد تخفیف می‌خورد -- مستقل از کد تخفیف عادی و
+                            جمع‌شونده با آن. فیلد را خالی بگذارید تا تخفیف باسا برای این مسابقه غیرفعال شود.
+                        </p>
+                        <form method="post" action="{% url 'matches:admin_match_basa_discount' match.id %}"
+                              class="d-flex flex-wrap align-items-center gap-2">
+                            {% csrf_token %}
+                            <label for="id_basa_discount_percent" class="form-label mb-0 fw-bold">درصد تخفیف:</label>
+                            <input type="number" min="0" max="100" step="1" class="form-control"
+                                   id="id_basa_discount_percent" name="basa_discount_percent"
+                                   style="max-width:150px;" placeholder="مثلاً 30"
+                                   {% if basa_discount %}value="{{ basa_discount.discount_percent }}"{% endif %}>
+                            <button type="submit" class="btn btn-dark">
+                                <i class="fas fa-save"></i> ذخیره
+                            </button>
+                            {% if basa_discount %}
+                                <span class="text-success small">
+                                    <i class="fas fa-check-circle"></i> در حال حاضر {{ basa_discount.discount_percent }}٪ فعال است
+                                </span>
+                            {% else %}
+                                <span class="text-muted small">در حال حاضر تخفیف باسا برای این مسابقه غیرفعال است</span>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
                 {% endif %}
             </div>
         </div>

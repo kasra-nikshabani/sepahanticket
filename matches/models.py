@@ -338,6 +338,25 @@ def get_block_price_for_match(match, block):
     return override if override is not None else block.price
 
 
+class MatchBasaDiscount(models.Model):
+    """درصد تخفیف اعضای باسا برای یک مسابقهٔ خاص. اگر برای مسابقه‌ای رکوردی
+    اینجا نباشد یعنی تخفیف باسا برای آن مسابقه فعال نیست."""
+    match = models.OneToOneField(Match, on_delete=models.CASCADE, related_name='basa_discount')
+    discount_percent = models.PositiveSmallIntegerField(verbose_name="درصد تخفیف باسا")
+
+    class Meta:
+        verbose_name = "تخفیف باسا برای مسابقه"
+        verbose_name_plural = "تخفیف‌های باسا برای مسابقات"
+
+    def __str__(self):
+        return f"{self.match} - {self.discount_percent}٪ باسا"
+
+
+def get_basa_discount_percent(match):
+    """درصد تخفیف باسای این مسابقه، یا صفر اگر برای این مسابقه تعیین نشده باشد."""
+    return MatchBasaDiscount.objects.filter(match=match).values_list('discount_percent', flat=True).first() or 0
+
+
 class MatchSeat(models.Model):
     """وضعیت یک صندلی برای یک مسابقه خاص"""
     match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='match_seats')

@@ -20,6 +20,11 @@ class User(AbstractUser):
     national_code = models.CharField(max_length=10, unique=True, null=True, blank=True, verbose_name="کد ملی")
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, null=True, blank=True, verbose_name="جنسیت")
     is_phone_verified = models.BooleanField(default=False)
+    # عمداً user_type جدید (مثلاً 'basa') نساختیم -- ورود با OTP همین الان فقط
+    # برای user_type='normal' مجازه (accounts/backends.py) و اضافه‌کردن یک
+    # user_type جدید یعنی دست‌زدن به مسیر احراز هویت. عضو باسا بودن فقط یک
+    # فلگ روی کاربر عادیه، رفتار لاگین/خریدش هیچ فرقی با بقیه ندارد.
+    is_basa_member = models.BooleanField(default=False, verbose_name="عضو باسا")
 
     class Meta:
         verbose_name = "کاربر"

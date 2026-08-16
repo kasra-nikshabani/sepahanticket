@@ -28,7 +28,7 @@ from weasyprint import HTML
 import tempfile
 import os
 from django.conf import settings
-from .models import Match, MatchCost, MatchRevenue, MatchFinancialReport, MatchBlockPrice, get_block_price_map
+from .models import Match, MatchCost, MatchRevenue, MatchFinancialReport, MatchBlockPrice, get_block_price_map, MatchBasaDiscount
 from .forms import MatchCostForm, MatchRevenueForm
 from tickets.models import Ticket
 from django.views.decorators.cache import cache_page
@@ -1379,8 +1379,11 @@ def admin_match_edit(request, match_id):
     for block in price_blocks:
         block.override_price = price_overrides.get(block.id)
 
+    basa_discount = MatchBasaDiscount.objects.filter(match=match).first()
+
     return render(request, 'matches/admin_match_form.html', {
         'form': form, 'match': match, 'is_edit': True, 'price_blocks': price_blocks,
+        'basa_discount': basa_discount,
     })
 
 
@@ -1422,6 +1425,35 @@ def admin_match_block_prices(request, match_id):
 
     if changed:
         messages.success(request, 'قیمت بلیط‌های اختصاصی این مسابقه ذخیره شد.')
+    return redirect('matches:admin_match_edit', match_id=match.id)
+
+
+@staff_member_required
+def admin_match_basa_discount(request, match_id):
+    """ذخیره‌ی درصد تخفیف اعضای باسا برای این مسابقه -- خالی گذاشتن یعنی
+    غیرفعال کردن تخفیف باسا برای این مسابقه."""
+    match = get_object_or_404(Match, id=match_id)
+    if request.method != 'POST':
+        return redirect('matches:admin_match_edit', match_id=match.id)
+
+    raw = request.POST.get('basa_discount_percent', '').strip()
+    if raw == '':
+        MatchBasaDiscount.objects.filter(match=match).delete()
+        messages.success(request, 'تخفیف باسا برای این مسابقه غیرفعال شد.')
+        return redirect('matches:admin_match_edit', match_id=match.id)
+
+    try:
+        percent = int(raw)
+    except ValueError:
+        messages.error(request, 'درصد تخفیف باسا باید عدد باشد.')
+        return redirect('matches:admin_match_edit', match_id=match.id)
+
+    if not (0 <= percent <= 100):
+        messages.error(request, 'درصد تخفیف باسا باید بین ۰ تا ۱۰۰ باشد.')
+        return redirect('matches:admin_match_edit', match_id=match.id)
+
+    MatchBasaDiscount.objects.update_or_create(match=match, defaults={'discount_percent': percent})
+    messages.success(request, f'تخفیف {percent}٪ برای اعضای باسا در این مسابقه فعال شد.')
     return redirect('matches:admin_match_edit', match_id=match.id)
 
 
