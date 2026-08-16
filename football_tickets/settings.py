@@ -139,6 +139,48 @@ SEAT_RESERVATION_TIMEOUT = int(os.getenv('SEAT_RESERVATION_TIMEOUT', '600'))
 # (۱۰۰۰ فیلد) با آن‌ها 400 Bad Request برمی‌گرداند.
 DATA_UPLOAD_MAX_NUMBER_FIELDS = int(os.getenv('DATA_UPLOAD_MAX_NUMBER_FIELDS', '20000'))
 
+# بدون این تنظیم، جنگو خطاهای رخ‌نداده در ویوها (django.request) را فقط با
+# ایمیل به ADMINS گزارش می‌کند -- که چون ADMINS/SMTP تنظیم نشده، این خطاها
+# عملاً به‌جایی گزارش نمی‌شدند و ما موقع بررسی خطای 500 هیچ traceback ای
+# در لاگ‌ها پیدا نمی‌کردیم. اینجا صراحتاً همه‌ی خطاها (django.request و بقیه‌ی
+# logger های اپ) را به همان فایلی می‌فرستیم که از قبل هم دستی چک می‌شد.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{asctime} [{levelname}] {name}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'django-errors.log'),
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['file'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'django.security': {
+            'handlers': ['file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
+}
+
 AUTH_PASSWORD_VALIDATORS = []
 
 LANGUAGE_CODE = 'en-us'
