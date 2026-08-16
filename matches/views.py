@@ -800,7 +800,6 @@ def manage_seats(request, row_id):
 #  ویوهای API
 # ============================================================
 
-@staff_member_required
 def _reactivate_block_if_needed(block):
     """اگر بلوک غیرفعال است ولی الان حداقل یک صندلی فعال دارد، خودِ بلوک را
     هم فعال می‌کند -- چون فعال‌کردن دستی یک صندلی داخل بلوک غیرفعال یعنی
@@ -813,6 +812,7 @@ def _reactivate_block_if_needed(block):
     return False
 
 
+@staff_member_required
 def manage_block_seats(request, block_id=None):
     """
     مدیریت صندلی‌های یک بلوک با نمایش وضعیت بلیط‌ها و قابلیت:
