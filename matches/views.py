@@ -1387,7 +1387,12 @@ def admin_match_edit(request, match_id):
 @staff_member_required
 def admin_match_block_prices(request, match_id):
     """ذخیره‌ی قیمت اختصاصی هر بلوک برای این مسابقه -- خالی گذاشتن فیلد یعنی
-    برگشت به قیمت پیش‌فرض بلوک (مشترک بین همه‌ی مسابقات آن ورزشگاه)."""
+    برگشت به قیمت پیش‌فرض بلوک. وارد کردن قیمت، هم override این مسابقه را
+    ثبت می‌کند و هم قیمت پایه‌ی خود بلوک (Block.price) را همان مقدار
+    می‌کند -- طبق درخواست ادمین، تا صفحه‌ی «مدیریت سکوها» هم قیمت تازه را
+    نشان بدهد. نکته: چون Block.price بین همه‌ی مسابقات یک ورزشگاه مشترک
+    است، این کار قیمت پیش‌فرض مسابقات دیگر آن ورزشگاه را هم عوض می‌کند
+    مگر برای آن‌ها هم جداگانه قیمت اختصاصی تعیین شده باشد."""
     match = get_object_or_404(Match, id=match_id)
     if request.method != 'POST':
         return redirect('matches:admin_match_edit', match_id=match.id)
@@ -1410,6 +1415,9 @@ def admin_match_block_prices(request, match_id):
             messages.error(request, f'قیمت بلوک «{block.name}» نمی‌تواند منفی باشد.')
             continue
         MatchBlockPrice.objects.update_or_create(match=match, block=block, defaults={'price': price})
+        if block.price != price:
+            block.price = price
+            block.save(update_fields=['price'])
         changed += 1
 
     if changed:
