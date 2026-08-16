@@ -113,6 +113,18 @@
                             بگذارید (یا خالی کنید)، قیمت پیش‌فرض همان بلوک -- که بین همه‌ی مسابقات این
                             ورزشگاه مشترک است -- استفاده می‌شود.
                         </p>
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-3 p-3" style="background:#f8f9fa; border-radius:8px;">
+                            <label for="id_bulk_price" class="form-label mb-0 fw-bold">تعیین یک قیمت برای همه‌ی بلوک‌ها:</label>
+                            <input type="number" min="0" step="1" class="form-control" id="id_bulk_price"
+                                   style="max-width:200px;" placeholder="مثلاً 500000">
+                            <button type="button" id="id_apply_bulk_price" class="btn btn-outline-dark btn-sm">
+                                <i class="fas fa-fill-drip"></i> اعمال به همه
+                            </button>
+                            <small class="text-muted d-block w-100">
+                                بعد از اعمال، هنوز می‌توانید قیمت هر بلوک را جداگانه تغییر بدهید؛ فقط پس از زدن
+                                «ذخیره قیمت‌های اختصاصی» ثبت می‌شود.
+                            </small>
+                        </div>
                         <form method="post" action="{% url 'matches:admin_match_block_prices' match.id %}">
                             {% csrf_token %}
                             <div class="table-responsive">
@@ -130,7 +142,7 @@
                                             <td>{{ block.name }}</td>
                                             <td class="text-muted">{{ block.price|floatformat:0 }}</td>
                                             <td>
-                                                <input type="number" min="0" step="1" class="form-control"
+                                                <input type="number" min="0" step="1" class="form-control block-price-input"
                                                        name="price_{{ block.id }}"
                                                        placeholder="{{ block.price|floatformat:0 }}"
                                                        {% if block.override_price is not None %}value="{{ block.override_price|floatformat:0 }}"{% endif %}>
@@ -144,6 +156,18 @@
                                 <i class="fas fa-save"></i> ذخیره قیمت‌های اختصاصی
                             </button>
                         </form>
+                        <script>
+                            document.getElementById('id_apply_bulk_price').addEventListener('click', function () {
+                                var val = document.getElementById('id_bulk_price').value;
+                                if (val === '') {
+                                    alert('یک قیمت وارد کنید.');
+                                    return;
+                                }
+                                document.querySelectorAll('.block-price-input').forEach(function (input) {
+                                    input.value = val;
+                                });
+                            });
+                        </script>
                     </div>
                 </div>
                 {% endif %}
