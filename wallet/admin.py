@@ -1,5 +1,6 @@
 # wallet/admin.py
 from django.contrib import admin
+from django.db.models import Sum
 from .models import Wallet, Transaction
 
 @admin.register(Transaction)
@@ -56,6 +57,22 @@ class TransactionAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user')
+
+    def changelist_view(self, request, extra_context=None):
+        """جمع کل واریز و برداشت کیف‌پول‌ها -- روی همان فهرست فیلترشده/جستجوشده
+        فعلی محاسبه می‌شود، نه لزوماً کل جدول."""
+        response = super().changelist_view(request, extra_context=extra_context)
+        try:
+            qs = response.context_data['cl'].queryset
+        except (AttributeError, KeyError):
+            return response
+
+        total_deposit = qs.filter(amount__gt=0).aggregate(s=Sum('amount'))['s'] or 0
+        total_withdraw = qs.filter(amount__lt=0).aggregate(s=Sum('amount'))['s'] or 0
+        response.context_data['total_deposit'] = total_deposit
+        response.context_data['total_withdraw'] = abs(total_withdraw)
+        response.context_data['net_total'] = total_deposit + total_withdraw
+        return response
 
 
 # ===== تغییر نام کلاس ادمین از WalletAdmin به WalletModelAdmin =====
