@@ -1205,13 +1205,17 @@ def admin_match_detail(request, match_id):
     vip_total = sum(t.price or 0 for t in vip_tickets_qs)
 
     # ===== تفکیک بلیط‌های فروخته‌شده: رایگان (زیر ۱۵ سال) / تخفیف باسا / قیمت کامل =====
-    # فقط sold_tickets_qs (status='paid') سن و تخفیف باسا ثبت دارد؛ بلیط‌های
-    # ادمین/VIP از این مسیر عبور نمی‌کنند و سنشان همیشه خالی می‌ماند.
+    # عمداً بر اساس price/basa_discount_amount دسته‌بندی می‌شود، نه فیلد age --
+    # چون age امروز اضافه شد و بلیط‌های قدیمی‌تر (قبل از امروز) مقدار age
+    # ندارند؛ اگر بر اساس age فیلتر می‌کردیم، آن بلیط‌های قدیمی در هیچ‌کدام
+    # از سه دسته نمی‌افتادند در حالی که هنوز در «درآمد کل» حساب می‌شوند --
+    # یعنی جمع سه دسته با درآمد کل نمی‌خواند. price=0 در این پروژه فقط به
+    # یک دلیل ممکن است (سن زیر ۱۵)، پس معادل قابل‌اعتماد همان قانون است.
     category_stats = sold_tickets_qs.aggregate(
-        free_age_count=Count('id', filter=Q(age__lt=15)),
+        free_age_count=Count('id', filter=Q(price=0)),
         basa_discount_count=Count('id', filter=Q(basa_discount_amount__gt=0)),
         basa_discount_total=Sum('basa_discount_amount', filter=Q(basa_discount_amount__gt=0)),
-        full_price_count=Count('id', filter=Q(age__gte=15) & Q(basa_discount_amount=0)),
+        full_price_count=Count('id', filter=~Q(price=0) & Q(basa_discount_amount=0)),
     )
 
     per_page = 10
