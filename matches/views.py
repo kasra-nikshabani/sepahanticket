@@ -1298,11 +1298,22 @@ def admin_block_delete(request, block_id):
     return render(request, 'matches/admin_block_confirm_delete.html', {'block': block})
 
 
+def _sync_seats_to_blocks_status(block_ids, is_active):
+    """وقتی یک بلوک فعال/غیرفعال می‌شود، صندلی‌های خودش (Seat.is_available)
+    را هم هماهنگ می‌کند -- وگرنه صفحه‌ی «مدیریت صندلی‌ها» با وضعیت بلوک
+    ناهماهنگ می‌ماند (بلوک غیرفعال ولی صندلی‌هایش هنوز «فعال» نشان داده
+    می‌شوند). صندلی‌های دارای بلیط واقعی دست‌نخورده می‌مانند."""
+    Seat.objects.filter(row__block_id__in=block_ids).exclude(
+        ticket__status__in=['paid', 'admin_assigned', 'vip_issued']
+    ).update(is_available=is_active)
+
+
 @staff_member_required
 def toggle_block_status(request, block_id):
     block = get_object_or_404(Block, id=block_id)
     block.is_active = not block.is_active
     block.save()
+    _sync_seats_to_blocks_status([block.id], block.is_active)
     status = 'فعال' if block.is_active else 'غیرفعال'
     messages.success(request, f'بلوک "{block.name}" {status} شد.')
     return redirect('matches:admin_block_list')
@@ -1320,7 +1331,9 @@ def admin_bulk_toggle_floor(request, stadium_id, floor):
         return redirect('matches:admin_block_list')
 
     new_state = request.POST.get('action') == 'activate'
-    updated = Block.objects.filter(stadium=stadium, floor=floor).update(is_active=new_state)
+    floor_block_ids = list(Block.objects.filter(stadium=stadium, floor=floor).values_list('id', flat=True))
+    updated = Block.objects.filter(id__in=floor_block_ids).update(is_active=new_state)
+    _sync_seats_to_blocks_status(floor_block_ids, new_state)
 
     floor_label = dict(Block.FLOOR_CHOICES)[floor]
     status_label = 'فعال' if new_state else 'غیرفعال'
