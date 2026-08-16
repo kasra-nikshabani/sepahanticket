@@ -1,4 +1,11 @@
-# football_tickets/tickets/templatetags/currency_filters.py
+# football_tickets/wallet/templatetags/currency_filters.py
+#
+# این تنها ماژول currency_filters توی کل پروژه‌ست -- قبلاً ۴ نسخه‌ی هم‌نام
+# (accounts, matches, payments, tickets) با فیلترهای مختلف وجود داشت که
+# جنگو به‌صورت ضمنی (بر اساس ترتیب لود اپ‌ها) فقط یکی‌شون رو انتخاب می‌کرد؛
+# اگر آن ترتیب عوض می‌شد، هر صفحه‌ای که از rial_display استفاده می‌کرد
+# می‌توانست ناگهان با TemplateSyntaxError خراب شود. الان فقط همین یک نسخه
+# هست، پس ابهامی در بارگذاری {% load currency_filters %} وجود ندارد.
 from django import template
 
 register = template.Library()
