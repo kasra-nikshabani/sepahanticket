@@ -801,6 +801,18 @@ def manage_seats(request, row_id):
 # ============================================================
 
 @staff_member_required
+def _reactivate_block_if_needed(block):
+    """اگر بلوک غیرفعال است ولی الان حداقل یک صندلی فعال دارد، خودِ بلوک را
+    هم فعال می‌کند -- چون فعال‌کردن دستی یک صندلی داخل بلوک غیرفعال یعنی
+    ادمین می‌خواهد آن بخش دوباره در دسترس باشد (وگرنه توی «مدیریت بلوک‌ها»
+    همچنان به‌عنوان غیرفعال دیده می‌شد با اینکه صندلی فعال دارد)."""
+    if not block.is_active and Seat.objects.filter(row__block=block, is_available=True).exists():
+        block.is_active = True
+        block.save(update_fields=['is_active'])
+        return True
+    return False
+
+
 def manage_block_seats(request, block_id=None):
     """
     مدیریت صندلی‌های یک بلوک با نمایش وضعیت بلیط‌ها و قابلیت:
@@ -894,7 +906,11 @@ def manage_block_seats(request, block_id=None):
                 )
                 count = seats_without_ticket.update(is_available=True)
                 if count > 0:
-                    messages.success(request, f'{count} صندلی فعال شدند.')
+                    reactivated = _reactivate_block_if_needed(selected_block)
+                    msg = f'{count} صندلی فعال شدند.'
+                    if reactivated:
+                        msg += ' بلوک هم به‌صورت خودکار فعال شد.'
+                    messages.success(request, msg)
                 else:
                     messages.info(request, 'صندلی‌های انتخاب‌شده دارای بلیط هستند یا قبلاً فعال هستند.')
             return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
@@ -918,10 +934,15 @@ def manage_block_seats(request, block_id=None):
                         f'صندلی‌های {", ".join(str(s.number) for s in seats_with_ticket)} دارای بلیط هستند و تغییر نکردند.'
                     )
                 if seats_without_ticket.exists():
+                    count = seats_without_ticket.count()
                     for seat in seats_without_ticket:
                         seat.is_available = not seat.is_available
                         seat.save()
-                    messages.success(request, f'{seats_without_ticket.count()} صندلی تغییر وضعیت یافتند.')
+                    reactivated = _reactivate_block_if_needed(selected_block)
+                    msg = f'{count} صندلی تغییر وضعیت یافتند.'
+                    if reactivated:
+                        msg += ' بلوک هم به‌صورت خودکار فعال شد.'
+                    messages.success(request, msg)
                 if not seats_with_ticket.exists() and not seats_without_ticket.exists():
                     messages.info(request, 'هیچ صندلی قابل تغییری انتخاب نشده است.')
             return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
@@ -947,7 +968,11 @@ def manage_block_seats(request, block_id=None):
                     )
                     count = seats_without_ticket.update(is_available=True)
                     if count > 0:
-                        messages.success(request, f'{count} صندلی در ردیف {row_num} فعال شدند.')
+                        reactivated = _reactivate_block_if_needed(selected_block)
+                        msg = f'{count} صندلی در ردیف {row_num} فعال شدند.'
+                        if reactivated:
+                            msg += ' بلوک هم به‌صورت خودکار فعال شد.'
+                        messages.success(request, msg)
                     else:
                         messages.info(request, f'همه صندلی‌های ردیف {row_num} قبلاً فعال یا دارای بلیط هستند.')
                 else:
@@ -998,7 +1023,11 @@ def manage_block_seats(request, block_id=None):
             )
             count = seats_without_ticket.update(is_available=True)
             if count > 0:
-                messages.success(request, f'{count} صندلی از کل بلوک فعال شدند.')
+                reactivated = _reactivate_block_if_needed(selected_block)
+                msg = f'{count} صندلی از کل بلوک فعال شدند.'
+                if reactivated:
+                    msg += ' بلوک هم به‌صورت خودکار فعال شد.'
+                messages.success(request, msg)
             else:
                 messages.info(request, 'همه صندلی‌های این بلوک قبلاً فعال یا دارای بلیط هستند.')
             return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
@@ -1346,7 +1375,10 @@ def toggle_seat_status(request, seat_id):
     seat = get_object_or_404(Seat, id=seat_id)
     seat.is_available = not seat.is_available
     seat.save()
-    messages.success(request, f'وضعیت صندلی {seat.number} در ردیف {seat.row.number} تغییر کرد.')
+    msg = f'وضعیت صندلی {seat.number} در ردیف {seat.row.number} تغییر کرد.'
+    if seat.is_available and _reactivate_block_if_needed(seat.row.block):
+        msg += ' بلوک هم به‌صورت خودکار فعال شد.'
+    messages.success(request, msg)
     return redirect('matches:manage_block_seats', block_id=seat.row.block.id)
 
 
