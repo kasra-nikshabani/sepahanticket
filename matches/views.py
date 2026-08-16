@@ -1195,7 +1195,16 @@ def admin_match_list(request):
 @staff_member_required
 def admin_match_detail(request, match_id):
     """صفحه جزئیات مسابقه برای ادمین با نمایش بلوک‌های ورزشگاه و آمار تفکیکی سکوها"""
+    from tickets.models import Order
+
     match = get_object_or_404(Match, id=match_id)
+
+    # مبلغی که از کیف پول کاربران برای این مسابقه پرداخت شده -- wallet_amount
+    # روی سطح Order ثبت می‌شود (نه هر بلیط)، چون یک سفارش می‌تواند چند بلیط
+    # داشته باشد و پرداخت کیف‌پول برای کل سفارش یکجا کسر می‌شود.
+    wallet_paid_total = Order.objects.filter(
+        match=match, payment_status='paid'
+    ).aggregate(s=Sum('wallet_amount'))['s'] or 0
 
     sold_tickets_qs = Ticket.objects.filter(match=match, status='paid').order_by('-purchase_date')
     vip_tickets_qs = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued']).order_by(
@@ -1287,6 +1296,7 @@ def admin_match_detail(request, match_id):
         'basa_revenue': category_stats['basa_revenue'] or 0,
         'full_price_count': category_stats['full_price_count'],
         'full_price_revenue': category_stats['full_price_revenue'] or 0,
+        'wallet_paid_total': wallet_paid_total,
     }
     return render(request, 'matches/admin_match_detail.html', context)
 

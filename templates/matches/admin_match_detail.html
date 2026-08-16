@@ -704,6 +704,14 @@
                     این مبلغِ تخفیفه، نه مبلغ دریافتی — جزو درآمد کل نیست
                 </small>
             </div>
+            <div class="stat-card purple">
+                <span class="stat-icon"><i class="fas fa-wallet"></i></span>
+                <div class="stat-number">{{ wallet_paid_total|floatformat:0 }}</div>
+                <p class="stat-label">پرداخت‌شده از کیف پول (ریال)</p>
+                <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">
+                    از کل {{ total_revenue|floatformat:0 }} ریال درآمد این مسابقه، این مقدار از کیف پول کاربران کسر شده
+                </small>
+            </div>
             <!-- ===== پایان تفکیک درآمد ===== -->
 
             <!-- ===== آمار تفکیکی سکوها ===== -->
