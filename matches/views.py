@@ -1204,6 +1204,16 @@ def admin_match_detail(request, match_id):
     sold_total = sum(t.price or 0 for t in sold_tickets_qs)
     vip_total = sum(t.price or 0 for t in vip_tickets_qs)
 
+    # ===== تفکیک بلیط‌های فروخته‌شده: رایگان (زیر ۱۵ سال) / تخفیف باسا / قیمت کامل =====
+    # فقط sold_tickets_qs (status='paid') سن و تخفیف باسا ثبت دارد؛ بلیط‌های
+    # ادمین/VIP از این مسیر عبور نمی‌کنند و سنشان همیشه خالی می‌ماند.
+    category_stats = sold_tickets_qs.aggregate(
+        free_age_count=Count('id', filter=Q(age__lt=15)),
+        basa_discount_count=Count('id', filter=Q(basa_discount_amount__gt=0)),
+        basa_discount_total=Sum('basa_discount_amount', filter=Q(basa_discount_amount__gt=0)),
+        full_price_count=Count('id', filter=Q(age__gte=15) & Q(basa_discount_amount=0)),
+    )
+
     per_page = 10
     sold_page_num = request.GET.get('sold_page', 1)
     vip_page_num = request.GET.get('vip_page', 1)
@@ -1261,6 +1271,11 @@ def admin_match_detail(request, match_id):
         # ===== متغیرهای جدید تفکیکی =====
         'home_sold': home_sold, 'away_sold': away_sold, 'women_sold': women_sold,
         'class1_sold': class1_sold, 'vip_sold': vip_sold,
+        # ===== تفکیک درآمد: رایگان/تخفیف باسا/قیمت کامل =====
+        'free_age_count': category_stats['free_age_count'],
+        'basa_discount_count': category_stats['basa_discount_count'],
+        'basa_discount_total': category_stats['basa_discount_total'] or 0,
+        'full_price_count': category_stats['full_price_count'],
     }
     return render(request, 'matches/admin_match_detail.html', context)
 

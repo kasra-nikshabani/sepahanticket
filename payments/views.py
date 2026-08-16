@@ -342,8 +342,11 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             block = match_seat.seat.row.block
             base_price = block_price_map.get(block.id, block.price) if block else 0
             seat_price = 0 if age < 15 else base_price
+            basa_discount_amount = 0
             if seat_price and basa_discount_percent > 0 and national_code in basa_national_codes:
-                seat_price = seat_price - int(seat_price * basa_discount_percent / 100)
+                discounted_price = seat_price - int(seat_price * basa_discount_percent / 100)
+                basa_discount_amount = seat_price - discounted_price
+                seat_price = discounted_price
 
             actual_total_price += seat_price
             processed_seats_data.append({
@@ -352,6 +355,7 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
                 'national_code': national_code,
                 'price': seat_price,
                 'age': age,
+                'basa_discount_amount': basa_discount_amount,
             })
 
         discount_amount = int(float(actual_total_price) * (payment.discount_percent / 100))
@@ -429,6 +433,7 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             national_code = seat_data['national_code']
             seat_price = seat_data['price']
             seat_age = seat_data['age']
+            seat_basa_discount = seat_data['basa_discount_amount']
 
             if user.user_type != 'vip':
                 if national_code in processed_national_codes:
@@ -449,6 +454,7 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
                 user=user, match=match, seat=match_seat.seat, match_seat=match_seat,
                 full_name=full_name, national_code=national_code, status='paid',
                 is_admin_assigned=False, order=order, price=seat_price, age=seat_age,
+                basa_discount_amount=seat_basa_discount,
             )
             tickets_created.append(ticket)
 

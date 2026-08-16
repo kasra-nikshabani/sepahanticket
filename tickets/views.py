@@ -830,6 +830,7 @@ def ticket_info(request, match_id):
                     return render(request, 'tickets/ticket_info.html', context)
 
             age = get_age_from_jalali(tarikhe_tavallod)
+            basa_discount_amount = 0
             if age < 15:
                 seat_price = 0
             else:
@@ -839,7 +840,9 @@ def ticket_info(request, match_id):
                 # باسا تعیین شده باشد، فقط قیمت همین بلیط تخفیف می‌خورد؛ سایر
                 # بلیط‌های همین سفارش (برای کدملی‌های دیگر) دست‌نخورده می‌مانند.
                 if basa_discount_percent > 0 and national_code in basa_national_codes:
-                    seat_price = seat_price - int(seat_price * basa_discount_percent / 100)
+                    discounted_price = seat_price - int(seat_price * basa_discount_percent / 100)
+                    basa_discount_amount = seat_price - discounted_price
+                    seat_price = discounted_price
 
             actual_total_price += seat_price
             processed_tickets_data.append({
@@ -848,6 +851,7 @@ def ticket_info(request, match_id):
                 'national_code': national_code,
                 'price': seat_price,
                 'age': age,
+                'basa_discount_amount': basa_discount_amount,
             })
 
         if not processed_tickets_data:
@@ -936,6 +940,7 @@ def ticket_info(request, match_id):
                         status='paid', is_admin_assigned=False, order=order,
                         price=ticket_data['price'],  # ذخیره قیمت نهایی (0 برای زیر 15 سال)
                         age=ticket_data['age'],
+                        basa_discount_amount=ticket_data['basa_discount_amount'],
                     )
                     tickets.append(ticket)
 

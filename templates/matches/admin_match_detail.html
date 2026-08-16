@@ -666,6 +666,29 @@
                 <p class="stat-label">درآمد کل (ریال)</p>
             </div>
 
+            <!-- ===== تفکیک بلیط‌های فروخته‌شده: قیمت کامل / رایگان (سن) / تخفیف باسا ===== -->
+            <div class="stat-card green">
+                <span class="stat-icon"><i class="fas fa-tag"></i></span>
+                <div class="stat-number">{{ full_price_count }}</div>
+                <p class="stat-label">بلیط با قیمت کامل</p>
+            </div>
+            <div class="stat-card blue">
+                <span class="stat-icon"><i class="fas fa-child"></i></span>
+                <div class="stat-number">{{ free_age_count }}</div>
+                <p class="stat-label">بلیط رایگان (زیر ۱۵ سال)</p>
+            </div>
+            <div class="stat-card purple">
+                <span class="stat-icon"><i class="fas fa-percentage"></i></span>
+                <div class="stat-number">{{ basa_discount_count }}</div>
+                <p class="stat-label">بلیط تخفیف باسا</p>
+            </div>
+            <div class="stat-card orange">
+                <span class="stat-icon"><i class="fas fa-hand-holding-usd"></i></span>
+                <div class="stat-number">{{ basa_discount_total|floatformat:0 }}</div>
+                <p class="stat-label">مبلغ تخفیف باسا (ریال)</p>
+            </div>
+            <!-- ===== پایان تفکیک درآمد ===== -->
+
             <!-- ===== آمار تفکیکی سکوها ===== -->
             <div class="stat-card green">
                 <span class="stat-icon"><i class="fas fa-home"></i></span>

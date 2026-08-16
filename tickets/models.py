@@ -58,6 +58,10 @@ class Ticket(models.Model):
     # می‌شود محاسبه می‌شود؛ برای بلیط‌های تخصیصی/ویژه که تاریخ تولد
     # نمی‌گیرند (VIP، صدور دستی/گروهی ادمین) خالی می‌ماند.
     age = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="سن")
+    # مبلغ تخفیفی که فقط به همین بلیط (نه کل سبد خرید) به‌خاطر عضویت باسا
+    # تعلق گرفته -- صفر یعنی این بلیط تخفیف باسا نخورده. برای گزارش‌گیری
+    # (چند تا بلیط رایگان/سن زیر ۱۵، چند تا تخفیف باسا) لازم است.
+    basa_discount_amount = models.PositiveIntegerField(default=0, verbose_name="مبلغ تخفیف باسا (ریال)")
 
     # ===== وضعیت و زمان =====
     status = models.CharField(max_length=20, choices=TICKET_STATUS, default='paid')
