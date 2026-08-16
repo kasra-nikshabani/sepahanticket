@@ -134,6 +134,11 @@ SESSION_SAVE_EVERY_REQUEST = False
 
 SEAT_RESERVATION_TIMEOUT = int(os.getenv('SEAT_RESERVATION_TIMEOUT', '600'))
 
+# فرم‌های تیک‌باکس گروهی (مثلاً دانلود دسته‌جمعی PDF بلیط‌های کانون هواداران)
+# می‌توانند هزاران فیلد ticket_ids در یک POST داشته باشند -- پیش‌فرض جنگو
+# (۱۰۰۰ فیلد) با آن‌ها 400 Bad Request برمی‌گرداند.
+DATA_UPLOAD_MAX_NUMBER_FIELDS = int(os.getenv('DATA_UPLOAD_MAX_NUMBER_FIELDS', '20000'))
+
 AUTH_PASSWORD_VALIDATORS = []
 
 LANGUAGE_CODE = 'en-us'
