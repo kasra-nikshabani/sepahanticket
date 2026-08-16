@@ -184,6 +184,12 @@
             <span class="label">کد ملی</span>
             <span class="value">{{ ticket.national_code }}</span>
         </div>
+        {% if ticket.age is not None %}
+        <div class="info-row">
+            <span class="label">سن</span>
+            <span class="value">{{ ticket.age }}</span>
+        </div>
+        {% endif %}
         <div class="info-row">
             <span class="label">سکو / ردیف</span>
             <span class="value">{{ ticket.seat.row.name }}</span>

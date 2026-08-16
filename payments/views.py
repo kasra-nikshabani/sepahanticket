@@ -350,7 +350,8 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
                 'match_seat': match_seat,
                 'full_name': full_name,
                 'national_code': national_code,
-                'price': seat_price
+                'price': seat_price,
+                'age': age,
             })
 
         discount_amount = int(float(actual_total_price) * (payment.discount_percent / 100))
@@ -427,6 +428,7 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             full_name = seat_data['full_name']
             national_code = seat_data['national_code']
             seat_price = seat_data['price']
+            seat_age = seat_data['age']
 
             if user.user_type != 'vip':
                 if national_code in processed_national_codes:
@@ -446,7 +448,7 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             ticket = Ticket.objects.create(
                 user=user, match=match, seat=match_seat.seat, match_seat=match_seat,
                 full_name=full_name, national_code=national_code, status='paid',
-                is_admin_assigned=False, order=order, price=seat_price,
+                is_admin_assigned=False, order=order, price=seat_price, age=seat_age,
             )
             tickets_created.append(ticket)
 

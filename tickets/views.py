@@ -847,6 +847,7 @@ def ticket_info(request, match_id):
                 'full_name': full_name,
                 'national_code': national_code,
                 'price': seat_price,
+                'age': age,
             })
 
         if not processed_tickets_data:
@@ -934,6 +935,7 @@ def ticket_info(request, match_id):
                         full_name=ticket_data['full_name'], national_code=ticket_data['national_code'],
                         status='paid', is_admin_assigned=False, order=order,
                         price=ticket_data['price'],  # ذخیره قیمت نهایی (0 برای زیر 15 سال)
+                        age=ticket_data['age'],
                     )
                     tickets.append(ticket)
 

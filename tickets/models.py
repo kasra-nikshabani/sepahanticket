@@ -54,6 +54,10 @@ class Ticket(models.Model):
     # ===== اطلاعات خریدار =====
     full_name = models.CharField(max_length=200, verbose_name="نام و نام خانوادگی")
     national_code = models.CharField(max_length=10, verbose_name="کد ملی")
+    # سن خریدار در لحظه‌ی صدور بلیط -- از تاریخ تولدی که موقع خرید وارد
+    # می‌شود محاسبه می‌شود؛ برای بلیط‌های تخصیصی/ویژه که تاریخ تولد
+    # نمی‌گیرند (VIP، صدور دستی/گروهی ادمین) خالی می‌ماند.
+    age = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="سن")
 
     # ===== وضعیت و زمان =====
     status = models.CharField(max_length=20, choices=TICKET_STATUS, default='paid')
