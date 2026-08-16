@@ -1,5 +1,6 @@
 import json
 import os
+from decimal import Decimal, InvalidOperation
 from django.urls import reverse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction, IntegrityError
@@ -27,7 +28,7 @@ from weasyprint import HTML
 import tempfile
 import os
 from django.conf import settings
-from .models import Match, MatchCost, MatchRevenue, MatchFinancialReport
+from .models import Match, MatchCost, MatchRevenue, MatchFinancialReport, MatchBlockPrice, get_block_price_map
 from .forms import MatchCostForm, MatchRevenueForm
 from tickets.models import Ticket
 from django.views.decorators.cache import cache_page
@@ -236,6 +237,8 @@ def select_block(request, match_id):
         )
     }
 
+    block_price_map = get_block_price_map(match)
+
     for block in blocks:
         total_seats = total_map.get(block.id, 0)
         stats = ms_stats.get(block.id, {})
@@ -247,6 +250,8 @@ def select_block(request, match_id):
 
         block.total_seats = total_seats
         block.available_seats = available_seats
+        # قیمت اختصاصی این مسابقه در صورت وجود، در غیر این صورت قیمت پیش‌فرض بلوک
+        block.price = block_price_map.get(block.id, block.price)
         block.occupancy = round(
             ((total_seats - available_seats) / total_seats * 100) if total_seats > 0 else 0,
             1
@@ -1367,7 +1372,47 @@ def admin_match_edit(request, match_id):
     else:
         form = MatchForm(instance=match)
 
-    return render(request, 'matches/admin_match_form.html', {'form': form, 'match': match, 'is_edit': True})
+    price_blocks = Block.objects.filter(stadium=match.stadium).order_by('order')
+    price_overrides = dict(MatchBlockPrice.objects.filter(match=match).values_list('block_id', 'price'))
+    for block in price_blocks:
+        block.override_price = price_overrides.get(block.id)
+
+    return render(request, 'matches/admin_match_form.html', {
+        'form': form, 'match': match, 'is_edit': True, 'price_blocks': price_blocks,
+    })
+
+
+@staff_member_required
+def admin_match_block_prices(request, match_id):
+    """ذخیره‌ی قیمت اختصاصی هر بلوک برای این مسابقه -- خالی گذاشتن فیلد یعنی
+    برگشت به قیمت پیش‌فرض بلوک (مشترک بین همه‌ی مسابقات آن ورزشگاه)."""
+    match = get_object_or_404(Match, id=match_id)
+    if request.method != 'POST':
+        return redirect('matches:admin_match_edit', match_id=match.id)
+
+    blocks = Block.objects.filter(stadium=match.stadium)
+    changed = 0
+    for block in blocks:
+        raw = request.POST.get(f'price_{block.id}', '').strip()
+        if raw == '':
+            deleted, _ = MatchBlockPrice.objects.filter(match=match, block=block).delete()
+            if deleted:
+                changed += 1
+            continue
+        try:
+            price = Decimal(raw)
+        except (InvalidOperation, ValueError):
+            messages.error(request, f'قیمت وارد‌شده برای بلوک «{block.name}» معتبر نیست.')
+            continue
+        if price < 0:
+            messages.error(request, f'قیمت بلوک «{block.name}» نمی‌تواند منفی باشد.')
+            continue
+        MatchBlockPrice.objects.update_or_create(match=match, block=block, defaults={'price': price})
+        changed += 1
+
+    if changed:
+        messages.success(request, 'قیمت بلیط‌های اختصاصی این مسابقه ذخیره شد.')
+    return redirect('matches:admin_match_edit', match_id=match.id)
 
 
 @staff_member_required

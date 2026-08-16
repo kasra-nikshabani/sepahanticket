@@ -300,6 +300,44 @@ class Match(models.Model):
         return f"{self.home_team} vs {self.away_team} - {self.date_time}"
 
 
+class MatchBlockPrice(models.Model):
+    """
+    قیمت اختصاصی یک بلوک برای یک مسابقهٔ خاص. اگر برای جفت (مسابقه، بلوک)
+    رکوردی اینجا نباشد، قیمت پیش‌فرض همان Block.price استفاده می‌شود که بین
+    همهٔ مسابقات آن ورزشگاه مشترک است.
+    """
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='block_price_overrides')
+    block = models.ForeignKey(Block, on_delete=models.CASCADE, related_name='match_price_overrides')
+    price = models.DecimalField(max_digits=10, decimal_places=0, verbose_name="قیمت (ریال)")
+
+    class Meta:
+        unique_together = ('match', 'block')
+        verbose_name = "قیمت اختصاصی بلوک برای مسابقه"
+        verbose_name_plural = "قیمت‌های اختصاصی بلوک برای مسابقات"
+
+    def __str__(self):
+        return f"{self.match} - {self.block.name}: {self.price}"
+
+
+def get_block_price_map(match):
+    """قیمت هر بلوک برای این مسابقه: {block_id: price} -- قیمت اختصاصی مسابقه
+    در صورت وجود، در غیر این صورت Block.price. یک کوئری برای همهٔ بلوک‌های
+    آن ورزشگاه + یک کوئری برای override های همین مسابقه (بدون N+1)."""
+    prices = {
+        block_id: price
+        for block_id, price in Block.objects.filter(stadium=match.stadium_id).values_list('id', 'price')
+    }
+    overrides = MatchBlockPrice.objects.filter(match=match).values_list('block_id', 'price')
+    prices.update(dict(overrides))
+    return prices
+
+
+def get_block_price_for_match(match, block):
+    """قیمت یک بلوک مشخص برای یک مسابقهٔ مشخص (قیمت اختصاصی در صورت وجود)."""
+    override = MatchBlockPrice.objects.filter(match=match, block=block).values_list('price', flat=True).first()
+    return override if override is not None else block.price
+
+
 class MatchSeat(models.Model):
     """وضعیت یک صندلی برای یک مسابقه خاص"""
     match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='match_seats')

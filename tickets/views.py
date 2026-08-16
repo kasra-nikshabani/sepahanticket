@@ -31,7 +31,7 @@ import matches
 from .models import Ticket, VIPQuota, DiscountCode, Order
 from .forms import BulkTicketForm, VIPQuotaForm, DiscountCodeForm
 from .reservation import SeatReservation
-from matches.models import Match, Seat, Row, MatchSeat, Block
+from matches.models import Match, Seat, Row, MatchSeat, Block, get_block_price_map
 from accounts.models import User
 from wallet.models import Wallet
 from .utils import get_access_token
@@ -723,13 +723,16 @@ def ticket_info(request, match_id):
     if remaining_time <= 0 and reserved_at:
         return redirect('tickets:cancel_reservation', match_id=match_id)
 
+    block_price_map = get_block_price_map(match)
+
     seats_data = []
     total_price = 0
     for seat_id in selected_seats:
         try:
             match_seat = MatchSeat.objects.select_related('seat__row__block').get(id=seat_id, match=match)
             block = match_seat.seat.row.block
-            price = int(block.price) if block.price else 0
+            block_price = block_price_map.get(block.id, block.price)
+            price = int(block_price) if block_price else 0
             seats_data.append({
                 'id': match_seat.id,
                 'number': match_seat.seat.number,
@@ -1205,6 +1208,9 @@ def bulk_issue_tickets(request):
                                f'تعداد صندلی‌های موجود در بلوک "{block.name}" ({len(available_match_seats)}) کافی نیست. به {total_needed} صندلی نیاز است.')
                 return render(request, 'tickets/bulk_issue.html', {'form': form})
 
+            from matches.models import get_block_price_for_match
+            block_price = get_block_price_for_match(match, block) or 0
+
             with transaction.atomic():
                 ticket_index = 0
                 created_count = 0
@@ -1226,7 +1232,7 @@ def bulk_issue_tickets(request):
                             # خالی، چون خودِ فیلد وجود دارد و فقط مقدارش None است؛ همین باعث
                             # خطای IntegrityError/500 هنگام صدور گروهی می‌شد.
                             national_code=getattr(user, 'national_code', '') or '',
-                            status='admin_assigned', is_admin_assigned=True, price=match_seat.seat.row.block.price or 0,
+                            status='admin_assigned', is_admin_assigned=True, price=block_price,
                         )
                         # .create() قبلاً خودش save() را صدا زده -- یک save() اضافه اینجا چون
                         # pdf_file هنوز خالیه، Ticket.save() را وادار می‌کرد enqueue_pdf_generation

@@ -188,9 +188,10 @@ class Ticket(models.Model):
         if not self.ticket_number:
             self.ticket_number = self.generate_ticket_number()
 
-        # ===== ۲. محاسبه قیمت از بلوک صندلی =====
+        # ===== ۲. محاسبه قیمت از بلوک صندلی (با در نظر گرفتن قیمت اختصاصی مسابقه) =====
         if not self.price and self.seat and self.seat.row and self.seat.row.block:
-            self.price = self.seat.row.block.price or 0
+            from matches.models import get_block_price_for_match
+            self.price = get_block_price_for_match(self.match, self.seat.row.block) or 0
 
         is_new = self.pk is None
 
