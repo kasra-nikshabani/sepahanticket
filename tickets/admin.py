@@ -38,6 +38,11 @@ class TicketAdmin(admin.ModelAdmin):
     list_filter = ('match', 'status', 'is_admin_assigned', 'is_used')
     search_fields = ('ticket_number', 'user__username', 'user__phone_number', 'full_name', 'national_code')
     actions = [assign_to_vip]
+    # بدون این، فیلدهای user/seat/match توی صفحه‌ی جزئیات بلیط به‌صورت
+    # <select> ساده رندر می‌شدند -- یعنی همه‌ی ردیف‌های اون جدول (الان
+    # ۹۰۰۰+ کاربر و ۵۹۰۰۰+ صندلی) باید توی HTML لود می‌شد و صفحه عملاً هنگ
+    # می‌کرد. raw_id_fields به‌جاش یه ورودی متنی + جستجوی پاپ‌آپ می‌ده.
+    raw_id_fields = ('user', 'match', 'seat')
     readonly_fields = ('ticket_number', 'qr_code', 'pdf_file_display', 'used_at', 'purchase_date')
     fieldsets = (
         ('اطلاعات اصلی', {
@@ -79,6 +84,7 @@ class VIPQuotaAdmin(admin.ModelAdmin):
     list_filter = ('match',)
     search_fields = ('user__username', 'user__first_name', 'match__home_team')
     fields = ('user', 'match', 'quota')
+    raw_id_fields = ('user', 'match')
 
 
 @admin.register(DiscountCode)

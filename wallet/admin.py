@@ -28,6 +28,7 @@ class TransactionAdmin(admin.ModelAdmin):
     ordering = ['-created_at']
     date_hierarchy = 'created_at'
     readonly_fields = ['created_at', 'balance_after']
+    raw_id_fields = ['user']
     list_per_page = 25
 
     fieldsets = (
@@ -63,6 +64,7 @@ class WalletModelAdmin(admin.ModelAdmin):  # ← نام را تغییر دادی
     list_display = ['user', 'balance_display', 'created_at', 'updated_at']
     search_fields = ['user__username', 'user__phone_number']
     readonly_fields = ['created_at', 'updated_at']
+    raw_id_fields = ['user']
 
     def balance_display(self, obj):
         return f"{obj.balance:,} ریال"

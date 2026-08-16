@@ -366,6 +366,7 @@ class SeatAdmin(admin.ModelAdmin):
     list_display = ('row', 'number', 'is_available')
     list_filter = ('row__block', 'is_available')
     search_fields = ('row__block__name',)
+    raw_id_fields = ('row',)
 
 
 @admin.register(MatchSeat)
@@ -373,6 +374,7 @@ class MatchSeatAdmin(admin.ModelAdmin):
     list_display = ('match', 'seat', 'is_available', 'reserved_until')
     list_filter = ('match', 'is_available')
     search_fields = ('match__home_team', 'seat__row__block__name')
+    raw_id_fields = ('match', 'seat')
 
 
 # matches/admin.py
