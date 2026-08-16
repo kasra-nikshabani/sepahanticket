@@ -35,7 +35,12 @@ class Ticket(models.Model):
         related_name='tickets',
         help_text='سفارش مربوط به این بلیط'
     )
-    price = models.BigIntegerField(default=0, verbose_name="قیمت (ریال)")
+    # عمداً null=True (نه default=0): توی save() پایین باید بین «قیمت هنوز
+    # تعیین نشده» و «بلیط واقعاً رایگانه (سن زیر ۱۵)» فرق بذاریم. وقتی
+    # default مقدار ۰ بود، چون ۰ در پایتون falsy است، «not self.price» هر دو
+    # حالت رو یکی می‌دید و با هر save بعدی (مثلاً موقع تولید PDF) قیمتِ
+    # صفرِ بلیط‌های رایگان رو دوباره با قیمت بلوک جایگزین می‌کرد.
+    price = models.BigIntegerField(null=True, blank=True, default=None, verbose_name="قیمت (ریال)")
 
     # ===== فیلدهای ارتباطی =====
     user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, verbose_name="کاربر")
@@ -197,7 +202,10 @@ class Ticket(models.Model):
             self.ticket_number = self.generate_ticket_number()
 
         # ===== ۲. محاسبه قیمت از بلوک صندلی (با در نظر گرفتن قیمت اختصاصی مسابقه) =====
-        if not self.price and self.seat and self.seat.row and self.seat.row.block:
+        # فقط وقتی قیمت اصلاً تعیین نشده (None) -- نه وقتی صفر است، چون صفر
+        # یعنی بلیط واقعاً رایگان (سن زیر ۱۵) و نباید با save بعدی دوباره با
+        # قیمت بلوک جایگزین شود.
+        if self.price is None and self.seat and self.seat.row and self.seat.row.block:
             from matches.models import get_block_price_for_match
             self.price = get_block_price_for_match(self.match, self.seat.row.block) or 0
 
