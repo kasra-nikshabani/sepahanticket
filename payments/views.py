@@ -424,6 +424,30 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
         payment.order = order
         payment.save(update_fields=['order'])
 
+        # ===== بازگشت مابه‌التفاوت پرداخت اضافی به کیف پول =====
+        # gateway_amount_paid روی مبلغی قفل شده که موقع باز کردن صفحه‌ی
+        # پرداخت به زیبال فرستاده شده بود؛ اگر بین آن لحظه و همین‌جا (بعد از
+        # برگشت از درگاه) قیمت بلوک عوض شده باشد، total_amount که همین بالا
+        # از روی block_price_map محاسبه شد می‌تواند از چیزی که کاربر واقعاً
+        # پرداخت کرده کمتر باشد. آن پول واقعاً از کاربر گرفته شده، پس باید
+        # مابه‌التفاوتش را به کیف پولش برگردانیم، نه اینکه بی‌صدا گم شود.
+        overpaid_amount = (gateway_amount_paid + wallet_amount_used) - total_amount
+        if overpaid_amount > 0:
+            wallet.add_balance(
+                amount=overpaid_amount,
+                description=(
+                    f"بازگشت مابه‌التفاوت قیمت بلیط (تغییر قیمت حین پرداخت) - "
+                    f"سفارش #{order.order_number} - مسابقه {match.home_team} vs {match.away_team}"
+                ),
+                reference_id=f"OVERPAY-{order.id}",
+                tx_type='refund',
+            )
+            logger.warning(
+                f"Overpayment refunded to wallet for order {order.id} (payment {payment.id}): "
+                f"charged={gateway_amount_paid + wallet_amount_used}, required={total_amount}, "
+                f"refunded={overpaid_amount}"
+            )
+
         tickets_created = []
         processed_national_codes = set()
 

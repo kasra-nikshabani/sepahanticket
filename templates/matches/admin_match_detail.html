@@ -662,10 +662,10 @@
             </div>
             <div class="stat-card blue">
                 <span class="stat-icon"><i class="fas fa-money-bill-wave"></i></span>
-                <div class="stat-number">{{ total_revenue|floatformat:0|default:"0" }}</div>
+                <div class="stat-number">{{ total_revenue|rial_display }}</div>
                 <p class="stat-label">درآمد کل (ریال)</p>
                 <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">
-                    = {{ full_price_revenue|floatformat:0 }} (قیمت کامل) + {{ basa_revenue|floatformat:0 }} (باسا، بعد از تخفیف) + ۰ (رایگان)
+                    = {{ full_price_revenue|rial_display }} (قیمت کامل) + {{ basa_revenue|rial_display }} (باسا، بعد از تخفیف) + ۰ (رایگان)
                 </small>
             </div>
 
@@ -679,7 +679,7 @@
                 <div class="stat-number">{{ full_price_count }}</div>
                 <p class="stat-label">بلیط با قیمت کامل</p>
                 <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">
-                    {{ full_price_revenue|floatformat:0 }} ریال
+                    {{ full_price_revenue|rial_display }} ریال
                 </small>
             </div>
             <div class="stat-card blue">
@@ -693,12 +693,12 @@
                 <div class="stat-number">{{ basa_discount_count }}</div>
                 <p class="stat-label">بلیط تخفیف باسا</p>
                 <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">
-                    دریافتی: {{ basa_revenue|floatformat:0 }} ریال
+                    دریافتی: {{ basa_revenue|rial_display }} ریال
                 </small>
             </div>
             <div class="stat-card orange">
                 <span class="stat-icon"><i class="fas fa-hand-holding-usd"></i></span>
-                <div class="stat-number">{{ basa_discount_total|floatformat:0 }}</div>
+                <div class="stat-number">{{ basa_discount_total|rial_display }}</div>
                 <p class="stat-label">مبلغ تخفیف باسا (ریال)</p>
                 <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">
                     این مبلغِ تخفیفه، نه مبلغ دریافتی — جزو درآمد کل نیست
@@ -706,10 +706,10 @@
             </div>
             <div class="stat-card purple">
                 <span class="stat-icon"><i class="fas fa-wallet"></i></span>
-                <div class="stat-number">{{ wallet_paid_total|floatformat:0 }}</div>
+                <div class="stat-number">{{ wallet_paid_total|rial_display }}</div>
                 <p class="stat-label">پرداخت‌شده از کیف پول (ریال)</p>
                 <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">
-                    از کل {{ total_revenue|floatformat:0 }} ریال درآمد این مسابقه، این مقدار از کیف پول کاربران کسر شده
+                    از کل {{ total_revenue|rial_display }} ریال درآمد این مسابقه، این مقدار از کیف پول کاربران کسر شده
                 </small>
             </div>
             <!-- ===== پایان تفکیک درآمد ===== -->
@@ -810,7 +810,7 @@
                                     <!-- قیمت -->
                                     <div class="block-info-row">
                                         <span class="info-label"><i class="fas fa-money-bill-wave"></i> قیمت</span>
-                                        <span class="info-value price">{{ block_data.block.price|floatformat:0 }} ریال</span>
+                                        <span class="info-value price">{{ block_data.block.price|rial_display }} ریال</span>
                                     </div>
 
                                     <!-- ردیف‌ها -->
@@ -929,7 +929,7 @@
                             <td>{{ ticket.seat.row.block.name|default:"—" }}</td>
                             <td>{{ ticket.seat.row.number|default:"—" }}</td>
                             <td>{{ ticket.seat.number|default:"—" }}</td>
-                            <td>{{ ticket.price|default:"0" }}</td>
+                            <td>{{ ticket.price|rial_display }}</td>
                             <td>{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
                         </tr>
                     {% empty %}
@@ -1032,7 +1032,7 @@
                             <td>{{ ticket.seat.row.block.name|default:"—" }}</td>
                             <td>{{ ticket.seat.row.number|default:"—" }}</td>
                             <td>{{ ticket.seat.number|default:"—" }}</td>
-                            <td>{{ ticket.price|default:"0" }}</td>
+                            <td>{{ ticket.price|rial_display }}</td>
                             <td>{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
                         </tr>
                     {% empty %}
