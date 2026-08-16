@@ -217,7 +217,7 @@ def select_block(request, match_id):
         row['row__block']: row['c']
         for row in (
             Seat.objects
-            .filter(row__block_id__in=block_ids)
+            .filter(row__block_id__in=block_ids, is_available=True)
             .values('row__block')
             .annotate(c=Count('id'))
         )
@@ -352,6 +352,15 @@ def show_block_map(request, match_id):
         for seat in row_seats:
             ms = existing_ms.get(seat.id)
             if not ms:
+                continue
+            # صندلی‌ای که خودش (نه فقط برای این مسابقه) غیرفعال شده هیچ‌وقت
+            # سبز نشان داده نمی‌شود -- مستقل از وضعیت رزرو/فروش این مسابقه
+            if not seat.is_available:
+                seat_list.append({
+                    'number': seat.number,
+                    'is_available': False,
+                    'id': ms.id,
+                })
                 continue
             # اگر در Redis رزرو شده و هنوز is_available در DB True مانده، غیرفعال نشان بده
             is_avail = ms.is_available and not reserved_map.get(ms.id)

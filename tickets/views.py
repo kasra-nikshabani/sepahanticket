@@ -591,12 +591,19 @@ def reserve_seats(request, match_id):
             locked = (
                 MatchSeat.objects
                 .select_for_update()
+                .select_related('seat')
                 .filter(id__in=selected_seats, match=match)
             )
             locked_map = {ms.id: ms for ms in locked}
 
             if len(locked_map) != len(set(selected_seats)):
                 messages.error(request, 'یکی از صندلی‌های انتخاب‌شده معتبر نیست.')
+                return redirect('matches:block_map', match_id=match_id)
+
+            # صندلی‌ای که خودش (سطح Seat، نه فقط MatchSeat این مسابقه) غیرفعال
+            # شده هیچ‌وقت قابل رزرو نیست -- حتی اگر از یک لینک/درخواست قدیمی باشد
+            if any(not ms.seat.is_available for ms in locked_map.values()):
+                messages.error(request, 'یکی از صندلی‌های انتخاب‌شده در دسترس نیست.')
                 return redirect('matches:block_map', match_id=match_id)
 
             for seat_id in selected_seats:
