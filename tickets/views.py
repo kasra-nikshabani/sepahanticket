@@ -1084,6 +1084,7 @@ def inquiry_fan(request):
         kode_meli = request.POST.get('kodeMeli')
         shomare_hamrah = request.POST.get('shomareyeHamrah')
         tarikhe_tavallod = request.POST.get('tarikheTavallod')
+        match_id = request.POST.get('match_id')
 
         if not all([name, famil, kode_meli, shomare_hamrah, tarikhe_tavallod]):
             return JsonResponse({'success': False, 'error': 'تمام فیلدها الزامی است'}, status=400)
@@ -1130,11 +1131,28 @@ def inquiry_fan(request):
             age = get_age_from_jalali(tarikhe_tavallod)
             is_free = age < 15
 
+            # ===== تخفیف باسا -- باید همینجا (قبل از پرداخت) به کاربر نشون
+            # داده بشه، وگرنه قیمتی که سمت مرورگر محاسبه و به درگاه فرستاده
+            # می‌شه با قیمت نهایی بلیط (که سمت سرور با تخفیف باسا حساب می‌شه)
+            # یکی نیست و کاربر باسایی مبلغ کامل (بدون تخفیف) پرداخت می‌کنه.
+            is_basa = False
+            basa_discount_percent = 0
+            if not is_free and match_id:
+                try:
+                    match = Match.objects.get(id=match_id)
+                    basa_discount_percent = get_basa_discount_percent(match)
+                    if basa_discount_percent > 0:
+                        is_basa = User.objects.filter(national_code=kode_meli, is_basa_member=True).exists()
+                except Match.DoesNotExist:
+                    pass
+
             return JsonResponse({
                 'success': True,
                 'id': data.get('id', ''),
                 'is_free': is_free,
-                'age': age
+                'age': age,
+                'is_basa': is_basa,
+                'basa_discount_percent': basa_discount_percent if is_basa else 0,
             })
         else:
             error_msg = data.get('message', data.get('error', 'اطلاعات با ثبت احوال تطابق ندارد.'))

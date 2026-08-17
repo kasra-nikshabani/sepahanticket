@@ -278,6 +278,7 @@
 
         window.freeSeats = {};
         window.removedSeats = {};
+        window.basaSeats = {}; // {seatIndex: basa_discount_percent}
 
         // ===== ساخت Dropdown های تاریخ تولد =====
         const startYear = new Date().getFullYear() - 621; // تقریبی سال شمسی
@@ -400,8 +401,10 @@
                     el.classList.add('text-success');
                     currentTotal += 0;
                 } else {
-                    const final = Math.round(base * (1 - (window.discountPercent || 0) / 100));
-                    el.textContent = toRial(final) + ' ریال';
+                    const basaPercent = window.basaSeats[seatIndex] || 0;
+                    const afterBasa = Math.round(base * (1 - basaPercent / 100));
+                    const final = Math.round(afterBasa * (1 - (window.discountPercent || 0) / 100));
+                    el.textContent = toRial(final) + ' ریال' + (basaPercent > 0 ? ' (با تخفیف باسا)' : '');
                     el.classList.remove('text-success');
                     currentTotal += final;
                 }
@@ -592,7 +595,7 @@
         fetch('/tickets/inquiry-fan/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCookie('csrftoken') },
-            body: `name=${encodeURIComponent(name)}&famil=${encodeURIComponent(famil)}&kodeMeli=${encodeURIComponent(kodeMeli)}&shomareyeHamrah=${encodeURIComponent(shomareyeHamrah)}&tarikheTavallod=${encodeURIComponent(tarikheTavallod)}&seat_index=${index}`
+            body: `name=${encodeURIComponent(name)}&famil=${encodeURIComponent(famil)}&kodeMeli=${encodeURIComponent(kodeMeli)}&shomareyeHamrah=${encodeURIComponent(shomareyeHamrah)}&tarikheTavallod=${encodeURIComponent(tarikheTavallod)}&seat_index=${index}&match_id={{ match.id }}`
         })
         .then(response => response.json())
         .then(data => {
@@ -614,10 +617,16 @@
 
                 if (data.is_free) {
                     window.freeSeats[index] = true;
+                    window.basaSeats[index] = 0;
                     showInquiryMessage(index, `✅ تایید شد. سن: ${data.age} سال (زیر ۱۵ سال) - این بلیط رایگان است!`, 'success');
                 } else {
                     window.freeSeats[index] = false;
-                    showInquiryMessage(index, `✅ اطلاعات با ثبت احوال تطابق دارد. سن: ${data.age} سال`, 'success');
+                    window.basaSeats[index] = data.basa_discount_percent || 0;
+                    if (data.is_basa) {
+                        showInquiryMessage(index, `✅ اطلاعات با ثبت احوال تطابق دارد. سن: ${data.age} سال - عضو باسا (${data.basa_discount_percent}% تخفیف)`, 'success');
+                    } else {
+                        showInquiryMessage(index, `✅ اطلاعات با ثبت احوال تطابق دارد. سن: ${data.age} سال`, 'success');
+                    }
                 }
 
                 window.updateAll();
