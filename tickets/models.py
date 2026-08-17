@@ -6,6 +6,7 @@ import string  # ← اصلاح
 import uuid
 from io import BytesIO
 from django.core.files import File
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils import timezone
@@ -275,7 +276,9 @@ class DiscountCode(models.Model):
         null=True, blank=True,
         verbose_name="بلوک (اختیاری)"
     )
-    discount_percent = models.IntegerField(verbose_name="درصد تخفیف")
+    discount_percent = models.IntegerField(
+        verbose_name="درصد تخفیف", validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
     max_uses = models.IntegerField(default=1, verbose_name="حداکثر استفاده")
     used_count = models.IntegerField(default=0, verbose_name="تعداد استفاده شده")
     is_active = models.BooleanField(default=True, verbose_name="فعال")
