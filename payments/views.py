@@ -319,6 +319,7 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
 
     try:  # <--- این بلاک اضافه شد تا از کرش شدن Gunicorn جلوگیری کند
         actual_total_price = 0
+        pre_code_discount_total = 0  # جمع قیمت‌ها بعد از تخفیف باسا، قبل از کد تخفیف -- برای subtotal سفارش
         processed_seats_data = []
 
         match_seat_pks = [
@@ -376,6 +377,17 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
                 basa_discount_amount = seat_price - discounted_price
                 seat_price = discounted_price
 
+            pre_code_discount_total += seat_price
+
+            # ===== کد تخفیف هم مثل تخفیف باسا روی قیمت خودِ همین بلیط اعمال
+            # می‌شود، نه فقط روی مجموع در انتها -- وگرنه Ticket.price هیچ‌وقت
+            # این تخفیف را نشان نمی‌داد (مثلاً با کد ۱۰۰٪ بلیط رایگان بود ولی
+            # قیمت ثبت‌شده‌ی خودِ بلیط هنوز قیمت کامل را نشان می‌داد) و جمع
+            # قیمت بلیط‌ها که برای «درآمد کل» در گزارش مالی استفاده می‌شود، از
+            # مبلغ واقعاً دریافتی بیشتر می‌شد. =====
+            if seat_price and payment.discount_percent > 0:
+                seat_price = seat_price - int(seat_price * payment.discount_percent / 100)
+
             actual_total_price += seat_price
             processed_seats_data.append({
                 'match_seat': match_seat,
@@ -386,8 +398,8 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
                 'basa_discount_amount': basa_discount_amount,
             })
 
-        discount_amount = int(float(actual_total_price) * (payment.discount_percent / 100))
-        total_amount = actual_total_price - discount_amount
+        discount_amount = pre_code_discount_total - actual_total_price
+        total_amount = actual_total_price
 
         # ===== اعتبارسنجی ضدجعل مبلغ =====
         # gateway_amount و wallet_amount هر دو موقع ثبت Payment مستقیم از یک
@@ -438,7 +450,7 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
         payment_method = 'mixed' if wallet_amount_used > 0 else 'zibal'
 
         order = Order.objects.create(
-            user=user, match=match, subtotal=actual_total_price,
+            user=user, match=match, subtotal=pre_code_discount_total,
             discount_percent=payment.discount_percent, discount_amount=discount_amount,
             total_amount=total_amount, wallet_balance_before=wallet.balance + wallet_amount_used,
             wallet_amount=wallet_amount_used, wallet_balance_after=wallet.balance,

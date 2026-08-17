@@ -815,6 +815,7 @@ def ticket_info(request, match_id):
                 return render(request, 'tickets/ticket_info.html', context)
 
         actual_total_price = 0
+        pre_code_discount_total = 0  # جمع قیمت‌ها بعد از تخفیف باسا، قبل از کد تخفیف -- برای subtotal سفارش
         processed_tickets_data = []
         basa_discount_percent = get_basa_discount_percent(match)
         basa_national_codes = set()
@@ -881,6 +882,17 @@ def ticket_info(request, match_id):
                     basa_discount_amount = seat_price - discounted_price
                     seat_price = discounted_price
 
+            pre_code_discount_total += seat_price
+
+            # ===== کد تخفیف هم مثل تخفیف باسا روی قیمت خودِ همین بلیط اعمال
+            # می‌شود، نه فقط روی مجموع در انتها -- وگرنه Ticket.price هیچ‌وقت
+            # این تخفیف را نشان نمی‌داد (مثلاً با کد ۱۰۰٪ بلیط رایگان بود ولی
+            # قیمت ثبت‌شده‌ی خودِ بلیط هنوز قیمت کامل را نشان می‌داد) و جمع
+            # قیمت بلیط‌ها که برای «درآمد کل» در گزارش مالی استفاده می‌شود، از
+            # مبلغ واقعاً دریافتی بیشتر می‌شد. =====
+            if seat_price and discount_percent > 0:
+                seat_price = seat_price - int(seat_price * discount_percent / 100)
+
             actual_total_price += seat_price
             processed_tickets_data.append({
                 'match_seat_id': match_seat_id,
@@ -895,7 +907,7 @@ def ticket_info(request, match_id):
             messages.error(request, 'شما هیچ صندلی‌ای برای خرید انتخاب نکرده‌اید.')
             return render(request, 'tickets/ticket_info.html', context)
 
-        discounted_total = actual_total_price - int(actual_total_price * discount_percent / 100)
+        discounted_total = actual_total_price
 
         wallet_amount_used = 0
         if use_wallet and wallet_amount > 0:
@@ -934,9 +946,9 @@ def ticket_info(request, match_id):
                     payment_method = 'wallet'
 
                 order = Order.objects.create(
-                    user=request.user, match=match, subtotal=actual_total_price,
+                    user=request.user, match=match, subtotal=pre_code_discount_total,
                     discount_percent=discount_percent,
-                    discount_amount=int(actual_total_price * discount_percent / 100),
+                    discount_amount=pre_code_discount_total - actual_total_price,
                     # مبلغ نهایی سفارش (پس از تخفیف) -- قبلاً همیشه ۰ ثبت می‌شد چون این
                     # مسیر خرید (کاملاً از کیف پول یا رایگان، بدون درگاه) از الگوی
                     # دیگرِ خرید (payments/views.py) که total_amount را درست محاسبه
