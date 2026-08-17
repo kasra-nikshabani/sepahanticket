@@ -692,19 +692,22 @@ def manage_seats(request, row_id):
                 messages.warning(request, 'هیچ صندلی انتخاب نشده است.')
                 return redirect(f'{request.path}?match_id={match_id}')
 
+            # ===== قفل ردیف‌ها قبل از فعال‌سازی (جلوگیری از race condition) =====
+            # seats_data/match_seat_dict بالای ویو، یک بار در ابتدای همین
+            # ریکوئست خوانده شده -- اگر دقیقاً همون لحظه یک مشتری واقعی همین
+            # صندلی را بخرد (تراکنش خرید هم با select_for_update قفل می‌کند)،
+            # بدون قفل اینجا ممکن بود صندلیِ تازه‌فروخته‌شده دوباره is_available
+            # شود و قابل رزرو دوباره باشد. با select_for_update + بررسی
+            # لحظه‌ای has_ticket، دو تراکنش به‌درستی سریالایز می‌شوند.
             with transaction.atomic():
-                activated = 0
-                for seat_id in seat_ids:
-                    ms = match_seat_dict.get(seat_id)
-                    if ms and not ms.is_available:
-                        has_ticket = Ticket.objects.filter(
-                            match_seat=ms,
-                            status__in=['paid', 'admin_assigned', 'vip_issued']
-                        ).exists()
-                        if not has_ticket:
-                            ms.is_available = True
-                            ms.save()
-                            activated += 1
+                candidate_ids = [match_seat_dict[sid].id for sid in seat_ids if sid in match_seat_dict]
+                activated = MatchSeat.objects.filter(
+                    id__in=candidate_ids, is_available=False
+                ).exclude(
+                    id__in=Ticket.objects.filter(
+                        match_seat_id__in=candidate_ids, status__in=['paid', 'admin_assigned', 'vip_issued']
+                    ).values_list('match_seat_id', flat=True)
+                ).update(is_available=True)
                 messages.success(request, f'{activated} صندلی با موفقیت فعال شدند.')
             return redirect(f'{request.path}?match_id={match_id}')
 
@@ -744,27 +747,47 @@ def manage_seats(request, row_id):
                 messages.error(request, 'تعداد باید بزرگتر از صفر باشد.')
                 return redirect(f'{request.path}?match_id={match_id}')
 
-            inactive_seat_ids = [
-                s['seat'].id for s in seats_data
-                if not s['is_available'] and not s['has_ticket']
-            ]
-            ids_to_activate = inactive_seat_ids[:count]
-            if ids_to_activate:
-                MatchSeat.objects.filter(id__in=ids_to_activate).update(is_available=True)
-                messages.success(request, f'{len(ids_to_activate)} صندلی با موفقیت فعال شدند.')
-            else:
-                messages.info(request, 'هیچ صندلی غیرفعالی برای فعال‌سازی وجود ندارد.')
+            # ===== بازبینی has_ticket لحظه‌ای، نه از seats_data (که ممکنه با
+            # یک خرید هم‌زمان واقعی قدیمی شده باشه) -- همون دلیل activate_selected.
+            # نکته: قبلاً اینجا به‌جای id خودِ MatchSeat، id مدل Seat استفاده
+            # می‌شد (candidate_ids از s['seat'].id) و بعد مستقیم روی
+            # MatchSeat.objects.filter(id__in=...) اعمال می‌شد -- چون این دو
+            # id کاملاً در دو فضای عددی متفاوتند، این عمل عملاً هیچ‌وقت هیچ
+            # صندلی‌ای را فعال نمی‌کرد. الان از id درستِ MatchSeat استفاده می‌شود. =====
+            with transaction.atomic():
+                candidate_ids = [s['match_seat'].id for s in seats_data if s['match_seat'] and not s['is_available']]
+                fresh_ids = list(
+                    MatchSeat.objects.filter(id__in=candidate_ids, is_available=False)
+                    .exclude(
+                        id__in=Ticket.objects.filter(
+                            match_seat_id__in=candidate_ids, status__in=['paid', 'admin_assigned', 'vip_issued']
+                        ).values_list('match_seat_id', flat=True)
+                    )
+                    .values_list('id', flat=True)
+                )
+                ids_to_activate = fresh_ids[:count]
+                if ids_to_activate:
+                    MatchSeat.objects.filter(id__in=ids_to_activate).update(is_available=True)
+                    messages.success(request, f'{len(ids_to_activate)} صندلی با موفقیت فعال شدند.')
+                else:
+                    messages.info(request, 'هیچ صندلی غیرفعالی برای فعال‌سازی وجود ندارد.')
             return redirect(f'{request.path}?match_id={match_id}')
 
         elif action == 'activate_all':
             with transaction.atomic():
-                inactive_seat_ids = [
-                    s['seat'].id for s in seats_data
-                    if not s['is_available'] and not s['has_ticket']
-                ]
-                if inactive_seat_ids:
-                    MatchSeat.objects.filter(id__in=inactive_seat_ids).update(is_available=True)
-                    messages.success(request, f'{len(inactive_seat_ids)} صندلی با موفقیت فعال شدند.')
+                candidate_ids = [s['match_seat'].id for s in seats_data if s['match_seat'] and not s['is_available']]
+                ids_to_activate = list(
+                    MatchSeat.objects.filter(id__in=candidate_ids, is_available=False)
+                    .exclude(
+                        id__in=Ticket.objects.filter(
+                            match_seat_id__in=candidate_ids, status__in=['paid', 'admin_assigned', 'vip_issued']
+                        ).values_list('match_seat_id', flat=True)
+                    )
+                    .values_list('id', flat=True)
+                )
+                if ids_to_activate:
+                    MatchSeat.objects.filter(id__in=ids_to_activate).update(is_available=True)
+                    messages.success(request, f'{len(ids_to_activate)} صندلی با موفقیت فعال شدند.')
                 else:
                     messages.info(request, 'هیچ صندلی قابل فعال‌سازی وجود ندارد.')
             return redirect(f'{request.path}?match_id={match_id}')
@@ -1247,11 +1270,28 @@ def admin_match_detail(request, match_id):
 
     total_match_seats = Seat.objects.filter(row__block__stadium=match.stadium, row__block__is_active=True,
                                             row__is_active=True).count()
-    occupied = MatchSeat.objects.filter(match=match, is_available=False).count()
+    # ===== occupied باید فقط صندلی‌های بلوک‌های فعال را بشمارد، هماهنگ با
+    # total_match_seats -- وگرنه اگر بلوکی بعد از فروش بلیط غیرفعال بشه،
+    # صندلی‌های فروخته‌شده‌ی همون بلوک از مخرج (total_match_seats) کم می‌شن
+    # ولی هنوز از صورت (occupied) کم نمی‌شن و available منفی/نادرست می‌شه.
+    # فروش بلوک‌های غیرفعال هنوز جای دیگه (کارت‌های بلوک پایین‌تر) دیده می‌شه.
+    occupied = MatchSeat.objects.filter(
+        match=match, is_available=False, seat__row__block__is_active=True, seat__row__is_active=True
+    ).count()
     available = total_match_seats - occupied
     occupancy_percent = round((occupied / total_match_seats * 100) if total_match_seats > 0 else 0, 1)
 
-    blocks = Block.objects.filter(stadium=match.stadium, is_active=True).order_by('order')
+    # ===== بلوک‌های فعال + هر بلوک غیرفعالی که برای همین مسابقه صندلی
+    # فروخته‌شده دارد -- وگرنه اگر بلوکی بعد از فروش بلیط غیرفعال بشه،
+    # کارتش کلاً از این صفحه محو می‌شد در حالی که صندلی‌هاش هنوز جزو
+    # آمار کلی مسابقه (تعداد بلیط/درآمد) حساب می‌شن؛ این یعنی جمع کارت‌های
+    # بلوک با اعداد کلی بالای صفحه هماهنگ نبود. =====
+    blocks_with_sales = MatchSeat.objects.filter(match=match, is_available=False).values_list(
+        'seat__row__block_id', flat=True
+    ).distinct()
+    blocks = Block.objects.filter(stadium=match.stadium).filter(
+        Q(is_active=True) | Q(id__in=blocks_with_sales)
+    ).order_by('order')
     blocks_data = []
     block_price_map = get_block_price_map(match)
     for block in blocks:
