@@ -1229,6 +1229,19 @@ def admin_match_detail(request, match_id):
         match=match, payment_status='paid'
     ).aggregate(s=Sum('wallet_amount'))['s'] or 0
 
+    # ===== تعداد استفاده از کد تخفیف و مبلغ واقعاً دریافتی از سفارش‌هایی که
+    # کد تخفیف داشتن -- discount_code روی سطح Order ثبت می‌شه (نه هر بلیط)،
+    # چون یک کد برای کل سفارش اعمال می‌شه. total_amount هر Order از این
+    # سبقت (بعد از فیکس امروز که تخفیف کد رو روی خودِ Ticket.price هم اعمال
+    # می‌کنه) دقیقاً با جمع قیمت بلیط‌های همون سفارش یکی‌ست. =====
+    discount_code_orders = Order.objects.filter(match=match, payment_status='paid').exclude(discount_code='')
+    discount_code_stats = discount_code_orders.aggregate(
+        usage_count=Count('id'), total_paid=Sum('total_amount'), total_given=Sum('discount_amount')
+    )
+    discount_code_usage_count = discount_code_stats['usage_count'] or 0
+    discount_code_total_paid = discount_code_stats['total_paid'] or 0
+    discount_code_total_given = discount_code_stats['total_given'] or 0
+
     sold_tickets_qs = Ticket.objects.filter(match=match, status='paid').order_by('-purchase_date')
     vip_tickets_qs = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued']).order_by(
         '-purchase_date')
@@ -1337,6 +1350,9 @@ def admin_match_detail(request, match_id):
         'full_price_count': category_stats['full_price_count'],
         'full_price_revenue': category_stats['full_price_revenue'] or 0,
         'wallet_paid_total': wallet_paid_total,
+        'discount_code_usage_count': discount_code_usage_count,
+        'discount_code_total_paid': discount_code_total_paid,
+        'discount_code_total_given': discount_code_total_given,
     }
     return render(request, 'matches/admin_match_detail.html', context)
 

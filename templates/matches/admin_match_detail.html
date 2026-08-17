@@ -712,6 +712,19 @@
                     از کل {{ total_revenue|rial_display }} ریال درآمد این مسابقه، این مقدار از کیف پول کاربران کسر شده
                 </small>
             </div>
+            <div class="stat-card orange">
+                <span class="stat-icon"><i class="fas fa-ticket-alt"></i></span>
+                <div class="stat-number">{{ discount_code_usage_count }}</div>
+                <p class="stat-label">تعداد استفاده از کد تخفیف</p>
+            </div>
+            <div class="stat-card green">
+                <span class="stat-icon"><i class="fas fa-hand-holding-usd"></i></span>
+                <div class="stat-number">{{ discount_code_total_paid|rial_display }}</div>
+                <p class="stat-label">مبلغ پرداختی با کد تخفیف (ریال)</p>
+                <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">
+                    مبلغی که این سفارش‌ها واقعاً پرداخت کردن، بعد از کسر تخفیف — {{ discount_code_total_given|rial_display }} ریال هم مجموعِ تخفیفِ اعمال‌شده بوده
+                </small>
+            </div>
             <!-- ===== پایان تفکیک درآمد ===== -->
 
             <!-- ===== آمار تفکیکی سکوها ===== -->
