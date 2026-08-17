@@ -1055,6 +1055,20 @@ def release_reservation(request):
 PERSIAN_NAME_RE = re.compile(r'^[؀-ۿ‌ ]+$')
 
 
+def _is_valid_national_code_checksum(code):
+    """اعتبارسنجی رقم کنترلی کد ملی ایران -- معادل سرورِ همون تابع سمت
+    کلاینت (ticket_info.html) که فقط برای حالت اضطراری (بدون ثبت‌احوال)
+    لازمه؛ در حالت عادی خودِ ثبت‌احوال این اعتبارسنجی رو انجام می‌ده."""
+    if not re.match(r'^\d{10}$', code):
+        return False
+    if len(set(code)) == 1:
+        return False
+    check = int(code[9])
+    total = sum(int(code[i]) * (10 - i) for i in range(9))
+    remainder = total % 11
+    return check == remainder if remainder < 2 else check == (11 - remainder)
+
+
 # ============================================================
 #  استعلام از ثبت احوال
 # ============================================================
@@ -1096,6 +1110,41 @@ def inquiry_fan(request):
 
         if len(kode_meli) != 10:
             return JsonResponse({'success': False, 'error': 'کد ملی باید ۱۰ رقم باشد'}, status=400)
+
+        # ===== حالت اضطراری: سرویس ثبت‌احوال (fans.footballeticket.ir) قطع
+        # است -- بدون تماس با اون سرویس، فقط بر اساس فرمت/رقم‌کنترلیِ کد ملی
+        # تأیید می‌شود. سن و تخفیف باسا هم مثل مسیر عادی، از منابع محلیِ خودِ
+        # سایت (jdatetime واقعی + جدول کاربران) محاسبه می‌شن -- نه از روی
+        # تخمین سمت مرورگر -- تا عضو باسا حتی توی این حالت هم تخفیفش رو
+        # درست ببینه. =====
+        from accounts.models import SiteSettings
+        if SiteSettings.get_solo().bypass_civil_registry_inquiry:
+            if not _is_valid_national_code_checksum(kode_meli):
+                return JsonResponse({'success': False, 'error': 'کد ملی وارد شده معتبر نیست.'}, status=400)
+
+            age = get_age_from_jalali(tarikhe_tavallod)
+            is_free = age < 15
+
+            is_basa = False
+            basa_discount_percent = 0
+            if not is_free and match_id:
+                try:
+                    match = Match.objects.get(id=match_id)
+                    basa_discount_percent = get_basa_discount_percent(match)
+                    if basa_discount_percent > 0:
+                        is_basa = User.objects.filter(national_code=kode_meli, is_basa_member=True).exists()
+                except Match.DoesNotExist:
+                    pass
+
+            return JsonResponse({
+                'success': True,
+                'id': 'BYPASS',
+                'is_free': is_free,
+                'age': age,
+                'is_basa': is_basa,
+                'basa_discount_percent': basa_discount_percent if is_basa else 0,
+                'bypass': True,
+            })
 
         token = get_access_token()
         if not token:
