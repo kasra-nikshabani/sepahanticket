@@ -151,6 +151,15 @@ def scan_ticket(request):
                     'message': f'این بلیط متعلق به جایگاه {ZONE_LABELS.get(ticket_zone, ticket_zone)} است'
                 })
 
+            # سن و مبلغ پرداختی فقط برای بلیط‌های خریداری‌شده‌ی واقعی (عادی یا
+            # باسایی) نمایش داده می‌شود، نه برای بلیط‌های ویژه/سهمیه‌ای
+            # (admin_assigned/vip_issued) که اصلاً سن/قیمتِ معنادار ندارند.
+            extra_fields = {}
+            if ticket.status == 'paid':
+                extra_fields['price'] = ticket.price if ticket.price is not None else 0
+                if ticket.age is not None:
+                    extra_fields['age'] = ticket.age
+
             # چک استفاده شده
             if ticket.is_used:
                 return JsonResponse({
@@ -160,6 +169,7 @@ def scan_ticket(request):
                     'full_name': ticket.full_name,
                     'national_code': ticket.national_code,
                     'seat': f'بلوک {ticket.seat.row.block.name} - ردیف {ticket.seat.row.number} - صندلی {ticket.seat.number}',
+                    **extra_fields,
                 })
 
             # بلیط معتبر — علامت‌گذاری به عنوان استفاده شده
@@ -176,4 +186,5 @@ def scan_ticket(request):
         'national_code': ticket.national_code,
         'match': f'{ticket.match.home_team} - {ticket.match.away_team}',
         'seat': f'بلوک {ticket.seat.row.block.name} - ردیف {ticket.seat.row.number} - صندلی {ticket.seat.number}',
+        **extra_fields,
     })
