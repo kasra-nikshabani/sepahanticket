@@ -8,7 +8,7 @@ from django.db import transaction
 from zibal_payment.client import ZibalClient
 
 from .models import Payment
-from tickets.views import get_age_from_jalali  # ایمپورت تابع محاسبه سن از tickets
+from tickets.views import get_age_from_jalali, get_verified_age  # ایمپورت تابع محاسبه سن از tickets
 from matches.models import Match
 from tickets.models import Ticket
 logger = logging.getLogger(__name__)
@@ -95,11 +95,28 @@ def payment_request(request):
                     key.startswith('match_seat_id_'):
                 buyer_info[key] = value
 
+        # ===== درصد تخفیف هرگز از ورودی کاربر خوانده نمی‌شود =====
+        # discount_percent قبلاً مستقیم از یک فیلد hidden فرم خوانده می‌شد که
+        # با DevTools کاملاً قابل دستکاریه -- یعنی کاربر می‌تونست هر عددی
+        # (مثلاً ۹۹) بذاره و چون _finalize_ticket_purchase هم همین مقدار رو
+        # (نه درصد واقعیِ ثبت‌شده روی خودِ DiscountCode) برای محاسبه‌ی مبلغ
+        # نهایی استفاده می‌کرد، بلیط تقریباً رایگان صادر می‌شد. الان درصد
+        # همیشه از روی خودِ رکورد DiscountCode (با همون is_valid که مسیر
+        # کیف‌پول هم استفاده می‌کنه) خونده می‌شه؛ ورودی کاربر فقط کد رو تعیین می‌کنه.
+        from tickets.models import DiscountCode
+
         discount_code = request.POST.get('discount_code', '').strip()
-        try:
-            discount_percent = int(request.POST.get('discount_percent', 0) or 0)
-        except (TypeError, ValueError):
-            discount_percent = 0
+        discount_percent = 0
+        if discount_code:
+            try:
+                discount_obj = DiscountCode.objects.get(code=discount_code)
+                valid, _msg = discount_obj.is_valid(match=match_obj)
+                if valid:
+                    discount_percent = discount_obj.discount_percent
+                else:
+                    discount_code = ''
+            except DiscountCode.DoesNotExist:
+                discount_code = ''
 
         payment = Payment.objects.create(
             user=request.user,
@@ -276,7 +293,6 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
     from matches.models import Match, MatchSeat, get_block_price_map, get_basa_discount_percent
     from tickets.reservation import SeatReservation
     from wallet.models import Wallet
-    from tickets.views import get_age_from_jalali
     from accounts.models import User
 
     try:
@@ -338,10 +354,22 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             if not match_seat:
                 continue
 
-            age = get_age_from_jalali(tarikhe_tavallod)
+            # ===== تصمیم «رایگانه یا نه» فقط از روی سنِ تأییدشده‌ی کش‌شده در
+            # inquiry_fan گرفته می‌شود -- نه از tarikhe_tavallod که همینجا از
+            # buyer_info خونده می‌شه و اون هم چیزی جز یک فیلد فرم که کاربر
+            # موقع submit فرستاده نیست (کاملاً سمت کلاینت قابل‌دستکاریه؛ کاربر
+            # می‌توانست بعد از یک استعلام موفق برای خودش، این فیلد مخفی را با
+            # DevTools به یک سال اخیر تغییر دهد و بلیط بزرگسال را رایگان
+            # بگیرد). اگر استعلام تأییدشده‌ای موجود نباشد (پیش‌فرض امن)، رایگان
+            # محسوب نمی‌شود. raw_age فقط برای نمایش روی خودِ بلیط استفاده می‌شود.
+            raw_age = get_age_from_jalali(tarikhe_tavallod)
+            verified_age = get_verified_age(user.id, national_code)
+            is_free = verified_age is not None and verified_age < 15
+            age = verified_age if verified_age is not None else raw_age
+
             block = match_seat.seat.row.block
             base_price = block_price_map.get(block.id, block.price) if block else 0
-            seat_price = 0 if age < 15 else base_price
+            seat_price = 0 if is_free else base_price
             basa_discount_amount = 0
             if seat_price and basa_discount_percent > 0 and national_code in basa_national_codes:
                 discounted_price = seat_price - int(seat_price * basa_discount_percent / 100)

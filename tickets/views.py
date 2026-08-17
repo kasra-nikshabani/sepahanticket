@@ -676,6 +676,32 @@ def get_age_from_jalali(dob_str):
 
 
 # ============================================================
+#  سن تأییدشده‌ی هر (کاربر، کد ملی) -- برای جلوگیری از دستکاری تاریخ تولد
+# ============================================================
+# سنی که در inquiry_fan محاسبه و به کاربر نشون داده می‌شه، اینجا به‌طور
+# جداگانه کش می‌شه. موقع نهایی‌سازی خرید (چه مسیر زیبال چه کیف‌پول)، تصمیم
+# «این بلیط رایگانه یا نه» باید از روی همین سنِ تأییدشده گرفته بشه -- نه از
+# روی tarikhe_tavallod که دوباره توی فرم پرداخت پست می‌شه و کاملاً سمت کلاینت
+# قابل‌دستکاریه (کاربر می‌تونست بعد از یک استعلام موفق برای خودش، فیلد
+# مخفی تاریخ تولد رو با DevTools به یه سال اخیر تغییر بده و بلیط بزرگسال رو
+# رایگان بگیره). عمر کش ۱ ساعته چون بین استعلام و نهایی‌شدن پرداخت (رفتن به
+# درگاه و برگشت) معمولاً چند دقیقه بیشتر طول نمی‌کشد.
+def _verified_age_cache_key(user_id, national_code):
+    return f'verified_age:{user_id}:{national_code}'
+
+
+def cache_verified_age(user_id, national_code, age):
+    cache.set(_verified_age_cache_key(user_id, national_code), age, timeout=3600)
+
+
+def get_verified_age(user_id, national_code):
+    """سن تأییدشده را برمی‌گرداند؛ اگر هیچ استعلام موفقی برای این (کاربر،
+    کد ملی) ثبت نشده باشد None برمی‌گرداند -- یعنی نباید بلیط رایگان در نظر
+    گرفته شود (پیش‌فرض امن)."""
+    return cache.get(_verified_age_cache_key(user_id, national_code))
+
+
+# ============================================================
 #  ویو اطلاعات خریدار و پرداخت
 # ============================================================
 @never_cache
@@ -829,9 +855,20 @@ def ticket_info(request, match_id):
                     messages.error(request, f'کد ملی {national_code} قبلاً برای این مسابقه بلیط خریداری کرده است.')
                     return render(request, 'tickets/ticket_info.html', context)
 
-            age = get_age_from_jalali(tarikhe_tavallod)
+            # ===== تصمیم «رایگانه یا نه» فقط از روی سنِ تأییدشده‌ی کش‌شده در
+            # inquiry_fan گرفته می‌شود -- نه از tarikhe_tavallod که همینجا
+            # دوباره پست شده و کاملاً سمت کلاینت قابل‌دستکاریست (وگرنه کاربر
+            # می‌توانست بعد از یک استعلام موفق برای خودش، این فیلد مخفی را
+            # با DevTools به یک سال اخیر تغییر دهد و بلیط بزرگسال را رایگان
+            # بگیرد). اگر استعلام تأییدشده‌ای موجود نباشد (پیش‌فرض امن)، رایگان
+            # محسوب نمی‌شود. raw_age فقط برای نمایش روی خودِ بلیط استفاده می‌شود. =====
+            raw_age = get_age_from_jalali(tarikhe_tavallod)
+            verified_age = get_verified_age(request.user.id, national_code)
+            is_free = verified_age is not None and verified_age < 15
+            age = verified_age if verified_age is not None else raw_age
+
             basa_discount_amount = 0
-            if age < 15:
+            if is_free:
                 seat_price = 0
             else:
                 seat_price = seat_data['price']
@@ -1136,6 +1173,8 @@ def inquiry_fan(request):
                 except Match.DoesNotExist:
                     pass
 
+            cache_verified_age(request.user.id, kode_meli, age)
+
             return JsonResponse({
                 'success': True,
                 'id': 'BYPASS',
@@ -1194,6 +1233,8 @@ def inquiry_fan(request):
                         is_basa = User.objects.filter(national_code=kode_meli, is_basa_member=True).exists()
                 except Match.DoesNotExist:
                     pass
+
+            cache_verified_age(request.user.id, kode_meli, age)
 
             return JsonResponse({
                 'success': True,
