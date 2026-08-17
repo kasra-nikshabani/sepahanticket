@@ -3,6 +3,7 @@ import json
 import secrets
 from django.conf import settings
 from django.core.cache import cache
+from django.db import transaction
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -123,41 +124,50 @@ def scan_ticket(request):
         return JsonResponse({'status': 'invalid', 'message': 'بلیط نامعتبر است'})
 
     try:
-        ticket = Ticket.objects.select_related(
-            'seat__row__block', 'match', 'user'
-        ).get(ticket_number=ticket_number)
+        # ===== قفل ردیف بلیط قبل از چک is_used (جلوگیری از race condition) =====
+        # اگر دو گیت (یا دو اسکن سریع پشت‌سرهم روی همون بلیط -- مثلاً یک نفر
+        # از عکس صفحه‌ی گوشی یک بار دیگه‌ای QR رو نشون بده) دقیقاً همزمان
+        # برسن، بدون قفل هر دو ممکنه is_used=False رو ببینن و هر دو 'valid'
+        # برگردونن -- یعنی با یک بلیط دو نفر وارد بشن. با select_for_update
+        # تراکنش دوم منتظر اولی می‌مونه و درست 'used' می‌بینه.
+        with transaction.atomic():
+            ticket = Ticket.objects.select_for_update().select_related(
+                'seat__row__block', 'match', 'user'
+            ).get(ticket_number=ticket_number)
+
+            # چک وضعیت بلیط
+            if ticket.status not in ['paid', 'admin_assigned', 'vip_issued']:
+                return JsonResponse({'status': 'invalid', 'message': f'وضعیت بلیط: {ticket.get_status_display()}'})
+
+            # چک جایگاه
+            ticket_zone = get_ticket_zone(ticket)
+            if ticket_zone is None:
+                return JsonResponse(
+                    {'status': 'invalid', 'message': 'جایگاه این بلیط قابل تشخیص نیست؛ با مدیر تماس بگیرید'}
+                )
+            if ticket_zone != zone:
+                return JsonResponse({
+                    'status': 'invalid',
+                    'message': f'این بلیط متعلق به جایگاه {ZONE_LABELS.get(ticket_zone, ticket_zone)} است'
+                })
+
+            # چک استفاده شده
+            if ticket.is_used:
+                return JsonResponse({
+                    'status': 'used',
+                    'message': 'این بلیط قبلاً استفاده شده است',
+                    'used_at': ticket.used_at.strftime('%H:%M:%S') if ticket.used_at else '',
+                    'full_name': ticket.full_name,
+                    'national_code': ticket.national_code,
+                    'seat': f'بلوک {ticket.seat.row.block.name} - ردیف {ticket.seat.row.number} - صندلی {ticket.seat.number}',
+                })
+
+            # بلیط معتبر — علامت‌گذاری به عنوان استفاده شده
+            ticket.is_used = True
+            ticket.used_at = timezone.now()
+            ticket.save(update_fields=['is_used', 'used_at'])
     except Ticket.DoesNotExist:
         return JsonResponse({'status': 'invalid', 'message': 'بلیط در سیستم یافت نشد'})
-
-    # چک وضعیت بلیط
-    if ticket.status not in ['paid', 'admin_assigned', 'vip_issued']:
-        return JsonResponse({'status': 'invalid', 'message': f'وضعیت بلیط: {ticket.get_status_display()}'})
-
-    # چک جایگاه
-    ticket_zone = get_ticket_zone(ticket)
-    if ticket_zone is None:
-        return JsonResponse({'status': 'invalid', 'message': 'جایگاه این بلیط قابل تشخیص نیست؛ با مدیر تماس بگیرید'})
-    if ticket_zone != zone:
-        return JsonResponse({
-            'status': 'invalid',
-            'message': f'این بلیط متعلق به جایگاه {ZONE_LABELS.get(ticket_zone, ticket_zone)} است'
-        })
-
-    # چک استفاده شده
-    if ticket.is_used:
-        return JsonResponse({
-            'status': 'used',
-            'message': 'این بلیط قبلاً استفاده شده است',
-            'used_at': ticket.used_at.strftime('%H:%M:%S') if ticket.used_at else '',
-            'full_name': ticket.full_name,
-            'national_code': ticket.national_code,
-            'seat': f'بلوک {ticket.seat.row.block.name} - ردیف {ticket.seat.row.number} - صندلی {ticket.seat.number}',
-        })
-
-    # بلیط معتبر — علامت‌گذاری به عنوان استفاده شده
-    ticket.is_used = True
-    ticket.used_at = timezone.now()
-    ticket.save(update_fields=['is_used', 'used_at'])
 
     return JsonResponse({
         'status': 'valid',
