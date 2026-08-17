@@ -55,7 +55,7 @@ default_admin_site.get_app_list = types.MethodType(_pinned_get_app_list, default
 
 
 # ============================================================
-#  شمارنده‌ی «کاربران آنلاین» و «بازدید ۲۴ ساعت گذشته» در صفحه‌ی اصلی ادمین
+#  شمارنده‌ی «کاربران آنلاین» و «بازدید ۷۲ ساعت گذشته» در صفحه‌ی اصلی ادمین
 # ============================================================
 _original_index = default_admin_site.__class__.index
 
@@ -83,7 +83,7 @@ def _count_online_visitors():
         return None
 
 
-def _count_visits_24h():
+def _count_visits_72h():
     from datetime import timedelta
 
     from django.utils import timezone
@@ -91,7 +91,7 @@ def _count_visits_24h():
     from accounts.models import SiteVisit
 
     try:
-        return SiteVisit.objects.filter(visited_at__gte=timezone.now() - timedelta(hours=24)).count()
+        return SiteVisit.objects.filter(visited_at__gte=timezone.now() - timedelta(hours=72)).count()
     except Exception:
         return None
 
@@ -99,7 +99,7 @@ def _count_visits_24h():
 def _custom_index(self, request, extra_context=None):
     extra_context = extra_context or {}
     extra_context['online_visitors_count'] = _count_online_visitors()
-    extra_context['visits_24h_count'] = _count_visits_24h()
+    extra_context['visits_72h_count'] = _count_visits_72h()
     return _original_index(self, request, extra_context)
 
 
