@@ -108,6 +108,20 @@
     }
     .info-badge i { color: #D4AF37; font-size: 1.3rem; }
     .block-option-full { color: #c62828; }
+    .btn-inquiry {
+        background: #1A1A2E;
+        border: none;
+        color: #D4AF37;
+        font-weight: 700;
+        padding: 12px 20px;
+        border-radius: 12px;
+        width: 100%;
+    }
+    .btn-inquiry:hover { background: #16213E; color: #D4AF37; }
+    .btn-inquiry:disabled { opacity: 0.6; }
+    .btn-inquiry-verified { background: #1E8E3E !important; color: #fff !important; }
+    .inquiry-message { margin-top: 10px; display: none; }
+    .btn-issue:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
     @media (max-width: 768px) {
         .card-body-custom { padding: 20px; }
         .btn-issue, .btn-secondary-custom { width: 100%; margin-bottom: 10px; }
@@ -124,7 +138,7 @@
         <div class="card-body-custom">
             <div class="info-badge">
                 <i class="fas fa-info-circle"></i>
-                <span>ابتدا مسابقه را انتخاب کنید تا بلوک‌های آن نمایش داده شود. با وارد کردن نام، نام‌خانوادگی و کد ملی، بلیط از اولین صندلی خالیِ بلوکِ انتخاب‌شده صادر می‌شود.</span>
+                <span>ابتدا مسابقه را انتخاب کنید. بعد از پر کردن اطلاعات، حتماً روی «استعلام و تأیید هویت» بزنید -- بلیط فقط بعد از تأیید ثبت‌احوال صادر می‌شود.</span>
             </div>
 
             <form method="get" id="matchSelectForm" class="mb-4">
@@ -145,19 +159,62 @@
                 <form method="post" id="issueTicketForm">
                     {% csrf_token %}
                     <input type="hidden" name="match_id" value="{{ selected_match.id }}">
+                    <input type="hidden" name="name" id="id_name_hidden">
+                    <input type="hidden" name="famil" id="id_famil_hidden">
+                    <input type="hidden" name="tarikhe_tavallod" id="id_tarikhe_tavallod">
 
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group-custom">
-                                <label for="id_full_name"><i class="fas fa-user"></i> نام و نام خانوادگی</label>
-                                <input type="text" name="full_name" id="id_full_name" class="form-control-custom" dir="rtl" required>
+                                <label for="id_name"><i class="fas fa-user"></i> نام</label>
+                                <input type="text" id="id_name" class="form-control-custom" dir="rtl"
+                                       oninput="this.value = this.value.replace(/[^؀-ۿ‌ ]/g, ''); window.resetVerification();" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group-custom">
+                                <label for="id_famil"><i class="fas fa-user"></i> نام خانوادگی</label>
+                                <input type="text" id="id_famil" class="form-control-custom" dir="rtl"
+                                       oninput="this.value = this.value.replace(/[^؀-ۿ‌ ]/g, ''); window.resetVerification();" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group-custom">
                                 <label for="id_national_code"><i class="fas fa-id-card"></i> کد ملی</label>
                                 <input type="text" name="national_code" id="id_national_code" class="form-control-custom"
-                                       maxlength="10" pattern="\d{10}" inputmode="numeric" dir="ltr" required>
+                                       maxlength="10" pattern="\d{10}" inputmode="numeric" dir="ltr"
+                                       oninput="this.value = this.value.replace(/[^0-9]/g, ''); window.resetVerification();" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-custom">
+                                <label for="id_shomare_hamrah"><i class="fas fa-mobile-alt"></i> شماره موبایل</label>
+                                <input type="tel" name="shomare_hamrah" id="id_shomare_hamrah" class="form-control-custom"
+                                       maxlength="11" inputmode="numeric" pattern="09[0-9]{9}" dir="ltr"
+                                       oninput="this.value = this.value.replace(/[^0-9]/g, ''); window.resetVerification();" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group-custom">
+                        <label><i class="fas fa-calendar-alt"></i> تاریخ تولد</label>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <select id="dob_day" class="form-control-custom" onchange="window.updateDob(); window.resetVerification();" required></select>
+                            </div>
+                            <div class="col-4">
+                                <select id="dob_month" class="form-control-custom" onchange="window.updateDob(); window.resetVerification();" required>
+                                    <option value="01">فروردین</option><option value="02">اردیبهشت</option><option value="03">خرداد</option>
+                                    <option value="04">تیر</option><option value="05">مرداد</option><option value="06">شهریور</option>
+                                    <option value="07">مهر</option><option value="08">آبان</option><option value="09">آذر</option>
+                                    <option value="10">دی</option><option value="11">بهمن</option><option value="12">اسفند</option>
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <select id="dob_year" class="form-control-custom" onchange="window.updateDob(); window.resetVerification();" required></select>
                             </div>
                         </div>
                     </div>
@@ -177,8 +234,18 @@
                         {% endif %}
                     </div>
 
+                    <div class="form-group-custom">
+                        <button type="button" id="inquiryBtn" class="btn-inquiry">
+                            <i class="fas fa-check-double"></i> استعلام و تأیید هویت
+                        </button>
+                        <div id="inquiryLoading" style="display:none; margin-top:8px;">
+                            <i class="fas fa-spinner fa-spin"></i> در حال استعلام از ثبت‌احوال...
+                        </div>
+                        <div id="inquiryMessage" class="alert inquiry-message"></div>
+                    </div>
+
                     <div class="mt-4">
-                        <button type="submit" class="btn-issue">
+                        <button type="submit" id="issueBtn" class="btn-issue" disabled>
                             <i class="fas fa-check-circle"></i> صدور بلیط
                         </button>
                         <a href="{% url 'matches:home' %}" class="btn-secondary-custom">
@@ -190,4 +257,109 @@
         </div>
     </div>
 </div>
+
+{% if selected_match %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const startYear = new Date().getFullYear() - 621; // تقریبی سال شمسی
+    const yearSel = document.getElementById('dob_year');
+    const daySel = document.getElementById('dob_day');
+    for (let y = startYear; y >= startYear - 80; y--) {
+        const opt = document.createElement('option');
+        opt.value = y; opt.textContent = y;
+        yearSel.appendChild(opt);
+    }
+    for (let d = 1; d <= 31; d++) {
+        const opt = document.createElement('option');
+        opt.value = String(d).padStart(2, '0');
+        opt.textContent = d.toLocaleString('fa-IR');
+        daySel.appendChild(opt);
+    }
+
+    window.updateDob = function () {
+        const y = yearSel.value, m = document.getElementById('dob_month').value, d = daySel.value;
+        document.getElementById('id_tarikhe_tavallod').value = (y && d) ? `${y}/${m}/${d}` : '';
+    };
+
+    const issueBtn = document.getElementById('issueBtn');
+    const inquiryBtn = document.getElementById('inquiryBtn');
+
+    window.resetVerification = function () {
+        issueBtn.disabled = true;
+        inquiryBtn.classList.remove('btn-inquiry-verified');
+        inquiryBtn.innerHTML = '<i class="fas fa-check-double"></i> استعلام و تأیید هویت';
+    };
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function showMessage(text, type) {
+        const box = document.getElementById('inquiryMessage');
+        box.className = 'alert inquiry-message alert-' + type;
+        box.style.display = 'block';
+        box.textContent = text;
+    }
+
+    inquiryBtn.addEventListener('click', function () {
+        const name = document.getElementById('id_name').value.trim();
+        const famil = document.getElementById('id_famil').value.trim();
+        const kodeMeli = document.getElementById('id_national_code').value.trim();
+        const shomareyeHamrah = document.getElementById('id_shomare_hamrah').value.trim();
+        const tarikheTavallod = document.getElementById('id_tarikhe_tavallod').value.trim();
+
+        if (!name || !famil || !kodeMeli || !shomareyeHamrah || !tarikheTavallod) {
+            showMessage('لطفاً تمام فیلدها (نام، نام‌خانوادگی، کد ملی، موبایل، تاریخ تولد) را پر کنید.', 'danger');
+            return;
+        }
+        if (kodeMeli.length !== 10) {
+            showMessage('کد ملی باید ۱۰ رقم باشد.', 'danger');
+            return;
+        }
+
+        document.getElementById('inquiryLoading').style.display = 'block';
+        inquiryBtn.disabled = true;
+
+        fetch('/tickets/inquiry-fan/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCookie('csrftoken') },
+            body: `name=${encodeURIComponent(name)}&famil=${encodeURIComponent(famil)}&kodeMeli=${encodeURIComponent(kodeMeli)}&shomareyeHamrah=${encodeURIComponent(shomareyeHamrah)}&tarikheTavallod=${encodeURIComponent(tarikheTavallod)}&match_id={{ selected_match.id }}`,
+        })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('inquiryLoading').style.display = 'none';
+            inquiryBtn.disabled = false;
+            if (data.success) {
+                document.getElementById('id_name_hidden').value = name;
+                document.getElementById('id_famil_hidden').value = famil;
+                inquiryBtn.classList.add('btn-inquiry-verified');
+                inquiryBtn.innerHTML = '<i class="fas fa-check-circle"></i> ' + (data.bypass ? 'ثبت شد (بدون استعلام)' : 'تأیید شد');
+                issueBtn.disabled = false;
+                showMessage(`✅ سن: ${data.age} سال` + (data.bypass ? ' — حالت اضطراری (بدون تماس با ثبت‌احوال)' : ' — اطلاعات با ثبت‌احوال تطابق دارد'), data.bypass ? 'warning' : 'success');
+            } else {
+                issueBtn.disabled = true;
+                showMessage('❌ ' + (data.error || 'اطلاعات نامعتبر است'), 'danger');
+            }
+        })
+        .catch(function (error) {
+            document.getElementById('inquiryLoading').style.display = 'none';
+            inquiryBtn.disabled = false;
+            issueBtn.disabled = true;
+            showMessage('❌ خطا در ارتباط با سرور: ' + error.message, 'danger');
+        });
+    });
+});
+</script>
+{% endif %}
 {% endblock %}
