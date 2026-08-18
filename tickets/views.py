@@ -1403,6 +1403,7 @@ def bulk_issue_tickets(request):
     return render(request, 'tickets/bulk_issue.html', {'form': form})
 
 
+@never_cache
 @staff_member_required
 def admin_issue_ticket(request):
     """
