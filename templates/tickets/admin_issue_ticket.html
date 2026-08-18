@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+{% block title %}صدور دستی بلیط{% endblock %}
+
+{% block extra_css %}
+<style>
+    .bulk-issue-container {
+        max-width: 900px;
+        margin: 30px auto;
+    }
+    .card-custom {
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e8eaed;
+        overflow: hidden;
+    }
+    .card-header-custom {
+        background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
+        padding: 20px 30px;
+        border-bottom: 3px solid #D4AF37;
+        color: white;
+    }
+    .card-header-custom h4 {
+        margin: 0;
+        font-weight: 700;
+        color: #D4AF37;
+    }
+    .card-header-custom h4 i {
+        margin-left: 10px;
+        color: #D4AF37;
+    }
+    .card-body-custom {
+        padding: 30px;
+    }
+    .form-group-custom {
+        margin-bottom: 24px;
+    }
+    .form-group-custom label {
+        font-weight: 600;
+        color: #1A1A2E;
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.95rem;
+    }
+    .form-group-custom label i {
+        color: #D4AF37;
+        margin-left: 8px;
+        width: 20px;
+    }
+    .form-control-custom {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1.5px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        background: #fafafa;
+    }
+    .form-control-custom:focus {
+        border-color: #D4AF37;
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+        background: #fff;
+        outline: none;
+    }
+    .form-text-custom {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 4px;
+    }
+    .btn-issue {
+        background: linear-gradient(135deg, #D4AF37, #B8960F);
+        border: none;
+        color: #1A1A2E;
+        font-weight: 700;
+        padding: 12px 36px;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    }
+    .btn-issue:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
+        color: #1A1A2E;
+        background: linear-gradient(135deg, #E8D58A, #D4AF37);
+    }
+    .btn-issue i { margin-left: 8px; }
+    .btn-secondary-custom {
+        background: #f1f3f4;
+        border: none;
+        color: #1A1A2E;
+        padding: 12px 28px;
+        border-radius: 12px;
+        font-weight: 500;
+    }
+    .btn-secondary-custom:hover { background: #e8eaed; color: #1A1A2E; }
+    .info-badge {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 12px 16px;
+        border-right: 4px solid #D4AF37;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #1A1A2E;
+    }
+    .info-badge i { color: #D4AF37; font-size: 1.3rem; }
+    .block-option-full { color: #c62828; }
+    @media (max-width: 768px) {
+        .card-body-custom { padding: 20px; }
+        .btn-issue, .btn-secondary-custom { width: 100%; margin-bottom: 10px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bulk-issue-container">
+    <div class="card-custom">
+        <div class="card-header-custom">
+            <h4><i class="fas fa-ticket-alt"></i> صدور دستی بلیط (هر مسابقه، هر بلوک)</h4>
+        </div>
+        <div class="card-body-custom">
+            <div class="info-badge">
+                <i class="fas fa-info-circle"></i>
+                <span>ابتدا مسابقه را انتخاب کنید تا بلوک‌های آن نمایش داده شود. با وارد کردن نام، نام‌خانوادگی و کد ملی، بلیط از اولین صندلی خالیِ بلوکِ انتخاب‌شده صادر می‌شود.</span>
+            </div>
+
+            <form method="get" id="matchSelectForm" class="mb-4">
+                <div class="form-group-custom">
+                    <label for="id_match_id"><i class="fas fa-futbol"></i> مسابقه</label>
+                    <select name="match_id" id="id_match_id" class="form-control-custom" onchange="this.form.submit()">
+                        <option value="">— انتخاب مسابقه —</option>
+                        {% for m in matches %}
+                            <option value="{{ m.id }}" {% if selected_match and selected_match.id == m.id %}selected{% endif %}>
+                                {{ m.home_team }} vs {{ m.away_team }} — {{ m.date_time|date:"Y/m/d H:i" }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+
+            {% if selected_match %}
+                <form method="post" id="issueTicketForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="match_id" value="{{ selected_match.id }}">
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group-custom">
+                                <label for="id_full_name"><i class="fas fa-user"></i> نام و نام خانوادگی</label>
+                                <input type="text" name="full_name" id="id_full_name" class="form-control-custom" dir="rtl" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-custom">
+                                <label for="id_national_code"><i class="fas fa-id-card"></i> کد ملی</label>
+                                <input type="text" name="national_code" id="id_national_code" class="form-control-custom"
+                                       maxlength="10" pattern="\d{10}" inputmode="numeric" dir="ltr" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group-custom">
+                        <label for="id_block_id"><i class="fas fa-layer-group"></i> بلوک</label>
+                        <select name="block_id" id="id_block_id" class="form-control-custom" required>
+                            <option value="">— انتخاب بلوک —</option>
+                            {% for row in blocks_data %}
+                                <option value="{{ row.block.id }}" {% if row.available == 0 %}disabled class="block-option-full"{% endif %}>
+                                    {{ row.block.name }} — {{ row.available }} صندلی خالی — {{ row.price|rial_display }} ریال
+                                </option>
+                            {% endfor %}
+                        </select>
+                        {% if not blocks_data %}
+                            <div class="form-text-custom">هیچ بلوک فعالی برای این مسابقه یافت نشد.</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn-issue">
+                            <i class="fas fa-check-circle"></i> صدور بلیط
+                        </button>
+                        <a href="{% url 'matches:home' %}" class="btn-secondary-custom">
+                            <i class="fas fa-times"></i> انصراف
+                        </a>
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

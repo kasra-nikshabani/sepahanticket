@@ -1399,6 +1399,102 @@ def bulk_issue_tickets(request):
 
 
 @staff_member_required
+def admin_issue_ticket(request):
+    """
+    صدور دستی بلیط برای هر مسابقه و هر بلوکی، فقط با نام و کد ملی -- بدون
+    نیاز به یک اکانت کاربری از قبل ثبت‌شده (برخلاف bulk_issue_tickets که
+    فقط برای کاربران VIP از قبل موجود کار می‌کند). بلیط زیر user خودِ ادمین
+    ثبت می‌شود (همان الگویی که در کل سایت برای full_name/national_code به‌کار
+    می‌رود: این دو، صاحبِ واقعیِ بلیط را نشان می‌دهند، نه Ticket.user که فقط
+    نشان می‌دهد چه کسی/چه مسیری بلیط را صادر کرده).
+    """
+    matches = Match.objects.filter(is_active=True).order_by('-date_time')
+    match_id = request.POST.get('match_id') or request.GET.get('match_id')
+    selected_match = None
+    blocks_data = []
+
+    if match_id:
+        selected_match = get_object_or_404(Match, id=match_id)
+        block_price_map = get_block_price_map(selected_match)
+        blocks = Block.objects.filter(stadium=selected_match.stadium, is_active=True).order_by('order')
+        for block in blocks:
+            total_seats = Seat.objects.filter(row__block=block, row__is_active=True, is_available=True).count()
+            sold_seats = MatchSeat.objects.filter(
+                match=selected_match, seat__row__block=block, is_available=False
+            ).count()
+            blocks_data.append({
+                'block': block,
+                'available': max(total_seats - sold_seats, 0),
+                'price': block_price_map.get(block.id, block.price),
+            })
+
+    if request.method == 'POST':
+        full_name = request.POST.get('full_name', '').strip()
+        national_code = request.POST.get('national_code', '').strip()
+        block_id = request.POST.get('block_id')
+
+        if not selected_match:
+            messages.error(request, 'ابتدا یک مسابقه انتخاب کنید.')
+        elif not full_name or not PERSIAN_NAME_RE.match(full_name):
+            messages.error(request, 'نام و نام خانوادگی باید فقط با حروف فارسی نوشته شود.')
+        elif len(national_code) != 10 or not national_code.isdigit():
+            messages.error(request, 'کد ملی باید ۱۰ رقم باشد.')
+        elif not block_id:
+            messages.error(request, 'یک بلوک انتخاب کنید.')
+        elif Ticket.objects.filter(
+            national_code=national_code, match=selected_match,
+            status__in=['paid', 'admin_assigned', 'vip_issued']
+        ).exists():
+            messages.error(request, f'برای کد ملی {national_code} قبلاً بلیطی برای این مسابقه صادر شده است.')
+        else:
+            block = get_object_or_404(Block, id=block_id, stadium=selected_match.stadium)
+            from matches.models import get_block_price_for_match
+
+            with transaction.atomic():
+                # همون منطق پیدا کردن اولین صندلی خالی که bulk_issue_tickets
+                # استفاده می‌کند، ولی اینجا با select_for_update روی خودِ
+                # MatchSeat -- تا اگر دقیقاً همون لحظه یک مشتری واقعی هم در
+                # حال خرید از همین بلوک باشد، دو تراکنش به‌درستی سریالایز
+                # بشوند و یک صندلی دوبار صادر نشود.
+                seats_in_block = Seat.objects.filter(
+                    row__block=block, row__is_active=True, is_available=True
+                ).order_by('row__number', 'number')
+
+                chosen_match_seat = None
+                for seat in seats_in_block:
+                    match_seat, _ = MatchSeat.objects.select_for_update().get_or_create(
+                        match=selected_match, seat=seat, defaults={'is_available': True}
+                    )
+                    if match_seat.is_available:
+                        chosen_match_seat = match_seat
+                        break
+
+                if not chosen_match_seat:
+                    messages.error(request, f'صندلی خالی در بلوک «{block.name}» وجود ندارد.')
+                else:
+                    block_price = get_block_price_for_match(selected_match, block) or 0
+                    ticket = Ticket.objects.create(
+                        user=request.user, match=selected_match, seat=chosen_match_seat.seat,
+                        match_seat=chosen_match_seat, full_name=full_name, national_code=national_code,
+                        status='admin_assigned', is_admin_assigned=True, price=block_price,
+                    )
+                    chosen_match_seat.is_available = False
+                    chosen_match_seat.save()
+                    messages.success(
+                        request,
+                        f'بلیط شماره {ticket.ticket_number} برای «{full_name}» از بلوک «{block.name}» صادر شد.'
+                    )
+                    return redirect(f'{reverse("tickets:admin_issue_ticket")}?match_id={selected_match.id}')
+
+    context = {
+        'matches': matches,
+        'selected_match': selected_match,
+        'blocks_data': blocks_data,
+    }
+    return render(request, 'tickets/admin_issue_ticket.html', context)
+
+
+@staff_member_required
 def manage_vip_users(request):
     match_id = request.GET.get('match_id')
     matches = Match.objects.filter(is_active=True).order_by('-date_time')

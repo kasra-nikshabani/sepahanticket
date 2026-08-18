@@ -19,6 +19,7 @@ urlpatterns = [
     path('vip-issue-excel/<int:match_id>/', views.vip_issue_excel, name='vip_issue_excel'),
     path('sales-report/', views.sales_report, name='sales_report'),
     path('bulk-issue/', views.bulk_issue_tickets, name='bulk_issue'),
+    path('admin/issue-ticket/', views.admin_issue_ticket, name='admin_issue_ticket'),
     path('manage-vip-users/', views.manage_vip_users, name='manage_vip_users'),
     path('manage-user-tickets/<int:user_id>/', views.manage_user_tickets, name='manage_user_tickets'),
     path('row-occupancy/', views.row_occupancy_report, name='row_occupancy'),
