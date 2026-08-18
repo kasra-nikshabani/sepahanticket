@@ -1242,6 +1242,14 @@ def admin_match_detail(request, match_id):
     discount_code_total_paid = discount_code_stats['total_paid'] or 0
     discount_code_total_given = discount_code_stats['total_given'] or 0
 
+    # ===== تعداد بلیط‌هایی که خودِ ادمین از طریق «صدور دستی بلیط» صادر کرده --
+    # این بلیط‌ها زیر user خودِ ادمین (نه کاربرِ گیرنده‌ی بلیط) ثبت می‌شن، پس
+    # user__is_staff=True دقیقاً همین‌ها رو از بلیط‌های سهمیه‌ی VIP (که همیشه
+    # زیر خودِ کاربر VIP گیرنده ثبت می‌شن، نه ادمین) جدا می‌کنه.
+    admin_issued_count = Ticket.objects.filter(
+        match=match, status='admin_assigned', user__is_staff=True
+    ).count()
+
     sold_tickets_qs = Ticket.objects.filter(match=match, status='paid').order_by('-purchase_date')
     vip_tickets_qs = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued']).order_by(
         '-purchase_date')
@@ -1353,6 +1361,7 @@ def admin_match_detail(request, match_id):
         'discount_code_usage_count': discount_code_usage_count,
         'discount_code_total_paid': discount_code_total_paid,
         'discount_code_total_given': discount_code_total_given,
+        'admin_issued_count': admin_issued_count,
     }
     return render(request, 'matches/admin_match_detail.html', context)
 
