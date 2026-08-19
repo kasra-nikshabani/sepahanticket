@@ -1238,13 +1238,29 @@ def _compute_match_report_stats(match):
     discount_code_total_paid = discount_code_stats['total_paid'] or 0
     discount_code_total_given = discount_code_stats['total_given'] or 0
 
-    admin_issued_count = Ticket.objects.filter(
-        match=match, status='admin_assigned', user__is_staff=True
-    ).count()
+    # ===== بلیط‌های صادرشده توسط ادمین (سهمیه‌ی VIP در برابر «صدور دستی») =====
+    # status='admin_assigned'/'vip_issued' هر دو زیرِ یک user ثبت می‌شن؛ برای
+    # VIP quota (bulk_issue_tickets/vip_issue_*) آن user خودِ کاربر VIP
+    # گیرنده‌ست، ولی برای «صدور دستی بلیط» (admin_issue_ticket) آن user خودِ
+    # ادمینِ staff است -- همین تفاوت، این دو دسته را کاملاً از هم جدا می‌کند.
+    admin_issued_tickets_qs = Ticket.objects.filter(match=match, status='admin_assigned', user__is_staff=True)
+    admin_issued_count = admin_issued_tickets_qs.count()
+    admin_issued_used_count = admin_issued_tickets_qs.filter(is_used=True).count()
+    admin_issued_not_used_count = admin_issued_count - admin_issued_used_count
+    admin_issued_used_percent = round(
+        (admin_issued_used_count / admin_issued_count * 100) if admin_issued_count > 0 else 0, 1
+    )
 
     sold_tickets_qs = Ticket.objects.filter(match=match, status='paid').order_by('-purchase_date')
     vip_tickets_qs = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued']).order_by(
         '-purchase_date')
+    vip_quota_tickets_qs = vip_tickets_qs.exclude(user__is_staff=True)
+    vip_quota_count = vip_quota_tickets_qs.count()
+    vip_quota_used_count = vip_quota_tickets_qs.filter(is_used=True).count()
+    vip_quota_not_used_count = vip_quota_count - vip_quota_used_count
+    vip_quota_used_percent = round(
+        (vip_quota_used_count / vip_quota_count * 100) if vip_quota_count > 0 else 0, 1
+    )
 
     sold_total = sum(t.price or 0 for t in sold_tickets_qs)
     vip_total = sum(t.price or 0 for t in vip_tickets_qs)
@@ -1347,6 +1363,15 @@ def _compute_match_report_stats(match):
         'discount_code_total_paid': discount_code_total_paid,
         'discount_code_total_given': discount_code_total_given,
         'admin_issued_count': admin_issued_count,
+        'admin_issued_used_count': admin_issued_used_count,
+        'vip_quota_count': vip_quota_count,
+        'vip_quota_used_count': vip_quota_used_count,
+        'vip_quota_not_used_count': vip_quota_not_used_count,
+        'vip_quota_used_percent': vip_quota_used_percent,
+        'admin_issued_not_used_count': admin_issued_not_used_count,
+        'admin_issued_used_percent': admin_issued_used_percent,
+        'vip_total_not_used_count': vip_quota_not_used_count + admin_issued_not_used_count,
+        'vip_total_used_count': vip_quota_used_count + admin_issued_used_count,
     }
 
 
@@ -1421,10 +1446,10 @@ def admin_match_full_report_excel(request, match_id):
     ws.append([])
     overview_rows = [
         ('کل بلیط صادرشده', stats['total_tickets']),
+        ('تعداد بلیط فروخته‌شده', stats['sold_count']),
         ('درآمد کل (ریال)', stats['total_revenue']),
         ('درصد اشغال ورزشگاه', f"{stats['occupancy_percent']}٪"),
         ('صندلی اشغال‌شده', stats['occupied']),
-        ('صندلی خالی', stats['available']),
         ('اسکن‌شده دم گیت (حاضر شدند)', stats['used_tickets']),
         ('اسکن‌نشده (حاضر نشدند)', stats['not_used_tickets']),
         ('نرخ حضور واقعی', f"{stats['attendance_percent']}٪"),
@@ -1434,9 +1459,6 @@ def admin_match_full_report_excel(request, match_id):
         ('درآمد باسا دریافتی (ریال)', stats['basa_revenue']),
         ('مبلغ تخفیف باسا داده‌شده (ریال)', stats['basa_discount_total']),
         ('بلیط رایگان (زیر ۱۵ سال)', stats['free_age_count']),
-        ('بلیط ویژه/سهمیه', stats['vip_count']),
-        ('درآمد ویژه/سهمیه (ریال)', stats['vip_total']),
-        ('صادرشده توسط ادمین', stats['admin_issued_count']),
         ('پرداخت‌شده از کیف پول (ریال)', stats['wallet_paid_total']),
         ('تعداد استفاده از کد تخفیف', stats['discount_code_usage_count']),
         ('پرداختی با کد تخفیف (ریال)', stats['discount_code_total_paid']),
@@ -1449,7 +1471,28 @@ def admin_match_full_report_excel(request, match_id):
     ws.column_dimensions['A'].width = 34
     ws.column_dimensions['B'].width = 20
 
-    # ===== شیت ۲: حضور از هر گیت (دقیقاً همون چیزی که خواسته شده) =====
+    # ===== شیت ۲: بلیط‌های ویژه/سهمیه و صادرشده‌ی دستی (صادرشده در برابر چک‌شده) =====
+    ws_vip = wb.create_sheet("بلیط‌های ویژه و دستی")
+    ws_vip.append(['دسته', 'تعداد صادرشده', 'چک‌شده (عبور از گیت)', 'چک‌نشده', 'نرخ چک'])
+    style_header_row(ws_vip)
+    ws_vip.append([
+        'سهمیه‌ی کاربران ویژه (VIP)', stats['vip_quota_count'], stats['vip_quota_used_count'],
+        stats['vip_quota_not_used_count'], f"{stats['vip_quota_used_percent']}٪",
+    ])
+    ws_vip.append([
+        'صادرشده‌ی دستی توسط ادمین', stats['admin_issued_count'], stats['admin_issued_used_count'],
+        stats['admin_issued_not_used_count'], f"{stats['admin_issued_used_percent']}٪",
+    ])
+    ws_vip.append([
+        'جمع کل', stats['vip_count'], stats['vip_total_used_count'],
+        stats['vip_total_not_used_count'], f"{stats['vip_total']} ریال درآمد",
+    ])
+    for cell in ws_vip[ws_vip.max_row]:
+        cell.font = header_font
+    for col in ['A', 'B', 'C', 'D', 'E']:
+        ws_vip.column_dimensions[col].width = 26
+
+    # ===== شیت ۳: حضور از هر گیت (دقیقاً همون چیزی که خواسته شده) =====
     ws2 = wb.create_sheet("حضور از هر گیت")
     ws2.append(['گیت / جایگاه', 'بلیط صادرشده', 'عبور کرده از گیت (اسکن‌شده)', 'عبورنکرده', 'نرخ حضور'])
     style_header_row(ws2)
