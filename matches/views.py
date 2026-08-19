@@ -1559,6 +1559,30 @@ def admin_match_full_report_excel(request, match_id):
     return response
 
 
+@staff_member_required
+def admin_match_full_report_pdf(request, match_id):
+    """نسخه‌ی PDF گزارش کامل مسابقه -- همون قالب/فونتی که برای PDF بلیط و
+    گزارش مالی قبلی استفاده شده (WeasyPrint + فونت Vazirmatn محلی)."""
+    match = get_object_or_404(Match, id=match_id)
+    stats = _compute_match_report_stats(match)
+
+    context = dict(stats)
+    context.pop('sold_tickets_qs')
+    context.pop('vip_tickets_qs')
+    context['match'] = match
+    context['today'] = timezone.now()
+    context['vazirmatn_dir'] = os.path.join(settings.BASE_DIR, 'static', 'vendor', 'vazirmatn', 'webfonts')
+
+    html_string = render_to_string('matches/admin_match_full_report_pdf.html', context)
+    html = HTML(string=html_string, base_url=settings.MEDIA_ROOT)
+
+    response = HttpResponse(content_type='application/pdf')
+    filename = f"گزارش_مسابقه_{match.home_team}_vs_{match.away_team}_{timezone.now().strftime('%Y%m%d')}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    html.write_pdf(target=response)
+    return response
+
+
 # ============================================================
 #  مدیریت بلوک‌ها (فقط ادمین)
 # ============================================================

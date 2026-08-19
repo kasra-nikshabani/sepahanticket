@@ -1,0 +1,166 @@
+{% load currency_filters %}
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>گزارش کامل مسابقه {{ match.home_team }} vs {{ match.away_team }}</title>
+    <style>
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('file://{{ vazirmatn_dir }}/Vazirmatn-Regular.woff2') format('woff2');
+            font-weight: 400; font-style: normal;
+        }
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('file://{{ vazirmatn_dir }}/Vazirmatn-Medium.woff2') format('woff2');
+            font-weight: 500; font-style: normal;
+        }
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('file://{{ vazirmatn_dir }}/Vazirmatn-Bold.woff2') format('woff2');
+            font-weight: 700; font-style: normal;
+        }
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('file://{{ vazirmatn_dir }}/Vazirmatn-ExtraBold.woff2') format('woff2');
+            font-weight: 800; font-style: normal;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Vazirmatn', 'IRANSans', 'Arial', sans-serif;
+            padding: 24px;
+            direction: rtl;
+            background: #fff;
+            color: #1A1A2E;
+            line-height: 1.6;
+            font-size: 12px;
+        }
+
+        .header {
+            background: #1A1A2E;
+            color: #fff;
+            padding: 16px 20px;
+            border-radius: 10px;
+            border-bottom: 3px solid #D4AF37;
+            margin-bottom: 16px;
+        }
+        .header h1 { color: #D4AF37; font-size: 18px; font-weight: 800; }
+        .header .meta { font-size: 11px; opacity: 0.85; margin-top: 4px; }
+
+        .section { margin-bottom: 14px; page-break-inside: avoid; }
+        .section h2 {
+            font-size: 13px; font-weight: 700; color: #1A1A2E;
+            border-bottom: 2px solid #D4AF37; padding-bottom: 4px; margin-bottom: 8px;
+        }
+
+        .kpi-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .kpi-box {
+            background: #f8f9fa; border: 1px solid #eee; border-radius: 8px;
+            padding: 8px 12px; text-align: center; flex: 1; min-width: 100px;
+        }
+        .kpi-box .num { font-size: 15px; font-weight: 800; }
+        .kpi-box .lbl { font-size: 9.5px; color: #555; margin-top: 2px; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th, td { padding: 5px 8px; text-align: center; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: 700; }
+        tr.total-row { font-weight: 700; background: #fafafa; }
+
+        .note { font-size: 9.5px; color: #666; margin-top: 6px; }
+        .footer { margin-top: 16px; font-size: 9px; color: #999; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>گزارش کامل مسابقه</h1>
+        <div class="meta">{{ match.home_team }} vs {{ match.away_team }} — {{ match.date_time|date:"Y/m/d H:i" }} — {{ match.stadium.name }}</div>
+    </div>
+
+    <div class="section">
+        <h2>نمای کلی</h2>
+        <div class="kpi-grid">
+            <div class="kpi-box"><div class="num">{{ total_tickets }}</div><div class="lbl">کل بلیط صادرشده</div></div>
+            <div class="kpi-box"><div class="num">{{ sold_count }}</div><div class="lbl">بلیط فروخته‌شده</div></div>
+            <div class="kpi-box"><div class="num">{{ total_revenue|rial_display }}</div><div class="lbl">درآمد کل (ریال)</div></div>
+            <div class="kpi-box"><div class="num">{{ occupancy_percent }}٪</div><div class="lbl">درصد اشغال</div></div>
+            <div class="kpi-box"><div class="num">{{ attendance_percent }}٪</div><div class="lbl">نرخ حضور</div></div>
+            <div class="kpi-box"><div class="num">{{ free_age_count }}</div><div class="lbl">رایگان (زیر ۱۵ سال)</div></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>تفکیک درآمد</h2>
+        <table>
+            <tr><th>دسته</th><th>تعداد</th><th>مبلغ (ریال)</th></tr>
+            <tr><td>قیمت کامل</td><td>{{ full_price_count }}</td><td>{{ full_price_revenue|rial_display }}</td></tr>
+            <tr><td>باسا (دریافتی بعد از تخفیف)</td><td>{{ basa_discount_count }}</td><td>{{ basa_revenue|rial_display }}</td></tr>
+            <tr><td>رایگان (زیر ۱۵ سال)</td><td>{{ free_age_count }}</td><td>۰</td></tr>
+            <tr class="total-row"><td>درآمد کل</td><td>{{ sold_count }}</td><td>{{ total_revenue|rial_display }}</td></tr>
+        </table>
+        <div class="note">مبلغ تخفیف باسا داده‌شده (نه دریافتی): {{ basa_discount_total|rial_display }} ریال — پرداخت‌شده از کیف پول: {{ wallet_paid_total|rial_display }} ریال — پرداختی با کد تخفیف: {{ discount_code_total_paid|rial_display }} ریال ({{ discount_code_usage_count }} استفاده)</div>
+    </div>
+
+    <div class="section">
+        <h2>مقایسه‌ی حضور: خریداری‌شده در برابر ویژه</h2>
+        <table>
+            <tr><th>دسته</th><th>تعداد</th><th>حاضر شدند</th><th>حاضر نشدند</th><th>نرخ حضور</th></tr>
+            <tr>
+                <td>خریداری‌شده (پرداخت‌شده)</td><td>{{ sold_count }}</td><td>{{ sold_used_count }}</td>
+                <td>{{ sold_not_used_count }}</td><td>{{ sold_used_percent }}٪</td>
+            </tr>
+            <tr>
+                <td>&nbsp;&nbsp;└ رایگان (زیر ۱۵ سال)</td><td>{{ free_age_count }}</td><td>{{ free_age_used_count }}</td>
+                <td>{{ free_age_not_used_count }}</td><td>{{ free_age_used_percent }}٪</td>
+            </tr>
+            <tr>
+                <td>سهمیه‌ی کاربران ویژه (VIP)</td><td>{{ vip_quota_count }}</td><td>{{ vip_quota_used_count }}</td>
+                <td>{{ vip_quota_not_used_count }}</td><td>{{ vip_quota_used_percent }}٪</td>
+            </tr>
+            <tr>
+                <td>صادرشده‌ی دستی توسط ادمین</td><td>{{ admin_issued_count }}</td><td>{{ admin_issued_used_count }}</td>
+                <td>{{ admin_issued_not_used_count }}</td><td>{{ admin_issued_used_percent }}٪</td>
+            </tr>
+            <tr class="total-row">
+                <td>جمع کل</td><td>{{ total_issued_tickets }}</td><td>{{ used_tickets }}</td>
+                <td>{{ not_used_tickets }}</td><td>{{ attendance_percent }}٪</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>عبور از هر گیت</h2>
+        <table>
+            <tr><th>گیت / جایگاه</th><th>بلیط صادرشده</th><th>عبور کرده</th><th>عبورنکرده</th><th>نرخ حضور</th></tr>
+            {% for zone in zones_data %}
+            <tr>
+                <td>{{ zone.label }}</td><td>{{ zone.sold }}</td><td>{{ zone.used }}</td>
+                <td>{{ zone.not_used }}</td><td>{{ zone.attendance_percent }}٪</td>
+            </tr>
+            {% endfor %}
+            <tr class="total-row">
+                <td>جمع کل</td><td>{{ total_issued_tickets }}</td><td>{{ used_tickets }}</td>
+                <td>{{ not_used_tickets }}</td><td>{{ attendance_percent }}٪</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>تفکیک بلوک‌ها</h2>
+        <table>
+            <tr><th>بلوک</th><th>وضعیت</th><th>ظرفیت</th><th>فروخته‌شده</th><th>خالی</th><th>اشغال</th><th>عبور کرده</th><th>درآمد (ریال)</th></tr>
+            {% for row in blocks_data %}
+            <tr>
+                <td>{{ row.block.name }}</td>
+                <td>{% if row.block.is_active %}فعال{% else %}غیرفعال{% endif %}</td>
+                <td>{{ row.total_seats }}</td><td>{{ row.occupied_seats }}</td><td>{{ row.available_seats }}</td>
+                <td>{{ row.occupancy }}٪</td><td>{{ row.used }}</td><td>{{ row.revenue|rial_display }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div class="footer">تولید شده در {{ today|date:"Y/m/d H:i" }} — سامانه فروش بلیط سپاهان</div>
+</body>
+</html>

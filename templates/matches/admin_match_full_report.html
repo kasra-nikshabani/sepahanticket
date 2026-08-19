@@ -67,6 +67,9 @@
             <a href="{% url 'matches:admin_match_full_report_excel' match.id %}" class="btn-print" style="background:#1E8E3E; color:#fff;">
                 <i class="fas fa-file-excel"></i> دانلود Excel
             </a>
+            <a href="{% url 'matches:admin_match_full_report_pdf' match.id %}" class="btn-print" style="background:#D93025; color:#fff;">
+                <i class="fas fa-file-pdf"></i> دانلود PDF
+            </a>
             <button class="btn-print" onclick="window.print()"><i class="fas fa-print"></i> چاپ گزارش</button>
             <a href="{% url 'matches:admin_match_detail' match.id %}" class="btn-print" style="background:#f1f3f4; color:#1A1A2E;">
                 <i class="fas fa-arrow-right"></i> بازگشت
