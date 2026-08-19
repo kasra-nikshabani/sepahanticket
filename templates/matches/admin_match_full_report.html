@@ -64,6 +64,9 @@
             </div>
         </div>
         <div class="no-print">
+            <a href="{% url 'matches:admin_match_full_report_excel' match.id %}" class="btn-print" style="background:#1E8E3E; color:#fff;">
+                <i class="fas fa-file-excel"></i> دانلود Excel
+            </a>
             <button class="btn-print" onclick="window.print()"><i class="fas fa-print"></i> چاپ گزارش</button>
             <a href="{% url 'matches:admin_match_detail' match.id %}" class="btn-print" style="background:#f1f3f4; color:#1A1A2E;">
                 <i class="fas fa-arrow-right"></i> بازگشت
@@ -122,14 +125,14 @@
         </div>
     </div>
 
-    <!-- ===== تفکیک سکوها ===== -->
+    <!-- ===== تفکیک سکوها / گیت‌ها ===== -->
     <div class="report-section">
-        <h4><i class="fas fa-users"></i> تفکیک سکوها (فروش و حضور)</h4>
+        <h4><i class="fas fa-door-open"></i> عبور از هر گیت (تفکیک جایگاه)</h4>
         <div style="overflow-x:auto;">
             <table class="report-table">
                 <thead>
                     <tr>
-                        <th>جایگاه</th><th>بلیط صادرشده</th><th>اسکن‌شده</th><th>نرخ حضور</th>
+                        <th>گیت / جایگاه</th><th>بلیط صادرشده</th><th>عبور کرده از گیت</th><th>عبورنکرده</th><th>نرخ حضور</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -138,6 +141,7 @@
                         <td>{{ zone.label }}</td>
                         <td>{{ zone.sold }}</td>
                         <td>{{ zone.used }}</td>
+                        <td>{{ zone.not_used }}</td>
                         <td>{{ zone.attendance_percent }}٪</td>
                     </tr>
                     {% endfor %}

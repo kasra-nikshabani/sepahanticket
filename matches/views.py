@@ -25,6 +25,8 @@ from django.db import models
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from weasyprint import HTML
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
 import tempfile
 import os
 from django.conf import settings
@@ -1314,6 +1316,7 @@ def _compute_match_report_stats(match):
         zone_used = zone_tickets.filter(is_used=True).count()
         zones_data.append({
             'key': key, 'label': label, 'sold': zone_sold, 'used': zone_used,
+            'not_used': zone_sold - zone_used,
             'attendance_percent': round((zone_used / zone_sold * 100) if zone_sold > 0 else 0, 1),
         })
     home_sold = next(z['sold'] for z in zones_data if z['key'] == 'home')
@@ -1386,6 +1389,101 @@ def admin_match_full_report(request, match_id):
     context.pop('vip_tickets_qs')
     context['match'] = match
     return render(request, 'matches/admin_match_full_report.html', context)
+
+
+@staff_member_required
+def admin_match_full_report_excel(request, match_id):
+    """نسخه‌ی اکسل همان گزارش کامل مسابقه -- شیت جدا برای حضور از هر گیت،
+    چون این دقیقاً همون چیزیه که برای گزارش‌گیری/آرشیو بعد از مسابقه لازمه."""
+    match = get_object_or_404(Match, id=match_id)
+    stats = _compute_match_report_stats(match)
+
+    gold_fill = PatternFill(start_color="D4AF37", end_color="D4AF37", fill_type="solid")
+    header_font = Font(bold=True)
+    center = Alignment(horizontal='center')
+
+    def style_header_row(ws):
+        for cell in ws[ws.max_row]:
+            cell.font = header_font
+            cell.alignment = center
+            cell.fill = gold_fill
+
+    wb = Workbook()
+    wb.remove(wb.active)
+
+    # ===== شیت ۱: نمای کلی =====
+    ws = wb.create_sheet("نمای کلی")
+    ws.append([f"گزارش کامل مسابقه: {match.home_team} vs {match.away_team}"])
+    ws.merge_cells('A1:B1')
+    ws['A1'].font = Font(bold=True, size=14)
+    ws.append([f"تاریخ: {match.date_time.strftime('%Y/%m/%d %H:%M')} — ورزشگاه: {match.stadium.name}"])
+    ws.merge_cells('A2:B2')
+    ws.append([])
+    overview_rows = [
+        ('کل بلیط صادرشده', stats['total_tickets']),
+        ('درآمد کل (ریال)', stats['total_revenue']),
+        ('درصد اشغال ورزشگاه', f"{stats['occupancy_percent']}٪"),
+        ('صندلی اشغال‌شده', stats['occupied']),
+        ('صندلی خالی', stats['available']),
+        ('اسکن‌شده دم گیت (حاضر شدند)', stats['used_tickets']),
+        ('اسکن‌نشده (حاضر نشدند)', stats['not_used_tickets']),
+        ('نرخ حضور واقعی', f"{stats['attendance_percent']}٪"),
+        ('بلیط قیمت کامل', stats['full_price_count']),
+        ('درآمد قیمت کامل (ریال)', stats['full_price_revenue']),
+        ('بلیط باسا', stats['basa_discount_count']),
+        ('درآمد باسا دریافتی (ریال)', stats['basa_revenue']),
+        ('مبلغ تخفیف باسا داده‌شده (ریال)', stats['basa_discount_total']),
+        ('بلیط رایگان (زیر ۱۵ سال)', stats['free_age_count']),
+        ('بلیط ویژه/سهمیه', stats['vip_count']),
+        ('درآمد ویژه/سهمیه (ریال)', stats['vip_total']),
+        ('صادرشده توسط ادمین', stats['admin_issued_count']),
+        ('پرداخت‌شده از کیف پول (ریال)', stats['wallet_paid_total']),
+        ('تعداد استفاده از کد تخفیف', stats['discount_code_usage_count']),
+        ('پرداختی با کد تخفیف (ریال)', stats['discount_code_total_paid']),
+        ('مجموع تخفیفِ کد داده‌شده (ریال)', stats['discount_code_total_given']),
+    ]
+    ws.append(['شاخص', 'مقدار'])
+    style_header_row(ws)
+    for label, value in overview_rows:
+        ws.append([label, value])
+    ws.column_dimensions['A'].width = 34
+    ws.column_dimensions['B'].width = 20
+
+    # ===== شیت ۲: حضور از هر گیت (دقیقاً همون چیزی که خواسته شده) =====
+    ws2 = wb.create_sheet("حضور از هر گیت")
+    ws2.append(['گیت / جایگاه', 'بلیط صادرشده', 'عبور کرده از گیت (اسکن‌شده)', 'عبورنکرده', 'نرخ حضور'])
+    style_header_row(ws2)
+    for zone in stats['zones_data']:
+        ws2.append([
+            zone['label'], zone['sold'], zone['used'], zone['not_used'],
+            f"{zone['attendance_percent']}٪",
+        ])
+    ws2.append([])
+    ws2.append(['جمع کل', stats['total_issued_tickets'], stats['used_tickets'], stats['not_used_tickets'],
+                f"{stats['attendance_percent']}٪"])
+    for cell in ws2[ws2.max_row]:
+        cell.font = header_font
+    for col in ['A', 'B', 'C', 'D', 'E']:
+        ws2.column_dimensions[col].width = 24
+
+    # ===== شیت ۳: تفکیک بلوک‌ها =====
+    ws3 = wb.create_sheet("تفکیک بلوک‌ها")
+    ws3.append(['بلوک', 'وضعیت', 'ظرفیت', 'فروخته‌شده', 'خالی', 'درصد اشغال', 'عبور کرده از گیت', 'درآمد (ریال)'])
+    style_header_row(ws3)
+    for row in stats['blocks_data']:
+        ws3.append([
+            row['block'].name, 'فعال' if row['block'].is_active else 'غیرفعال',
+            row['total_seats'], row['occupied_seats'], row['available_seats'],
+            f"{row['occupancy']}٪", row['used'], row['revenue'],
+        ])
+    for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']:
+        ws3.column_dimensions[col].width = 20
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    filename = f"گزارش_مسابقه_{match.home_team}_vs_{match.away_team}_{timezone.now().strftime('%Y%m%d')}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response
 
 
 # ============================================================
