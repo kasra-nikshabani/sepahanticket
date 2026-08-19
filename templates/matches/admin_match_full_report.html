@@ -156,6 +156,46 @@
         </div>
     </div>
 
+    <!-- ===== لیست کاربران ویژه (VIP) ===== -->
+    <div class="report-section">
+        <h4><i class="fas fa-users"></i> لیست کاربران ویژه (VIP)</h4>
+        <div style="overflow-x:auto;">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>نام و نام خانوادگی</th><th>شماره تماس</th><th>تعداد بلیط صادرشده</th>
+                        <th>عبور کرده از گیت</th><th>عبورنکرده</th><th>نرخ حضور</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for vu in vip_users_data %}
+                    <tr>
+                        <td>{{ vu.full_name }}</td>
+                        <td>{{ vu.phone_number }}</td>
+                        <td>{{ vu.issued_count }}</td>
+                        <td>{{ vu.used_count }}</td>
+                        <td>{{ vu.not_used_count }}</td>
+                        <td>{{ vu.used_percent }}٪</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6">هیچ کاربر ویژه‌ای برای این مسابقه بلیط ندارد.</td></tr>
+                    {% endfor %}
+                </tbody>
+                {% if vip_users_data %}
+                <tfoot>
+                    <tr style="font-weight:700;">
+                        <td colspan="2">جمع کل</td>
+                        <td>{{ vip_quota_count }}</td>
+                        <td>{{ vip_quota_used_count }}</td>
+                        <td>{{ vip_quota_not_used_count }}</td>
+                        <td>{{ vip_quota_used_percent }}٪</td>
+                    </tr>
+                </tfoot>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+
     <!-- ===== مقایسه‌ی حضور: خریداری‌شده در برابر ویژه ===== -->
     <div class="report-section">
         <h4><i class="fas fa-user-check"></i> مقایسه‌ی حضور: بلیط خریداری‌شده در برابر بلیط ویژه</h4>

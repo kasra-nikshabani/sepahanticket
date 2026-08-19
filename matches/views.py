@@ -1262,6 +1262,27 @@ def _compute_match_report_stats(match):
         (vip_quota_used_count / vip_quota_count * 100) if vip_quota_count > 0 else 0, 1
     )
 
+    # ===== ریز به‌ازای هر کاربر ویژه: چند بلیط براش صادر شده و چندتاش از گیت
+    # عبور کرده -- برخلاف admin_issued_tickets_qs (که زیرِ اکانتِ خودِ ادمینه)
+    # این بلیط‌ها زیرِ اکانتِ خودِ کاربر VIP گیرنده ثبت می‌شن. =====
+    vip_users_data = list(
+        vip_quota_tickets_qs
+        .values('user_id', 'user__first_name', 'user__last_name', 'user__username', 'user__phone_number')
+        .annotate(
+            issued_count=Count('id'),
+            used_count=Count('id', filter=Q(is_used=True)),
+        )
+        .order_by('-issued_count')
+    )
+    for row in vip_users_data:
+        full_name = f"{row['user__first_name']} {row['user__last_name']}".strip()
+        row['full_name'] = full_name or row['user__username']
+        row['phone_number'] = row['user__phone_number'] or '—'
+        row['not_used_count'] = row['issued_count'] - row['used_count']
+        row['used_percent'] = round(
+            (row['used_count'] / row['issued_count'] * 100) if row['issued_count'] > 0 else 0, 1
+        )
+
     sold_total = sum(t.price or 0 for t in sold_tickets_qs)
     vip_total = sum(t.price or 0 for t in vip_tickets_qs)
 
@@ -1408,6 +1429,7 @@ def _compute_match_report_stats(match):
         'admin_issued_used_percent': admin_issued_used_percent,
         'vip_total_not_used_count': vip_quota_not_used_count + admin_issued_not_used_count,
         'vip_total_used_count': vip_quota_used_count + admin_issued_used_count,
+        'vip_users_data': vip_users_data,
     }
 
 
@@ -1554,7 +1576,27 @@ def admin_match_full_report_excel(request, match_id):
     for col in ['A', 'B', 'C', 'D', 'E']:
         ws2.column_dimensions[col].width = 24
 
-    # ===== شیت ۳: تفکیک بلوک‌ها =====
+    # ===== شیت ۴: کاربران ویژه (VIP) -- به ازای هر کاربر، چند بلیط براش صادر
+    # شده و چندتاش از گیت عبور کرده =====
+    ws_vipusers = wb.create_sheet("کاربران ویژه")
+    ws_vipusers.append(['نام و نام خانوادگی', 'شماره تماس', 'تعداد بلیط صادرشده', 'عبور کرده از گیت', 'عبورنکرده', 'نرخ حضور'])
+    style_header_row(ws_vipusers)
+    for vu in stats['vip_users_data']:
+        ws_vipusers.append([
+            vu['full_name'], vu['phone_number'], vu['issued_count'],
+            vu['used_count'], vu['not_used_count'], f"{vu['used_percent']}٪",
+        ])
+    ws_vipusers.append([])
+    ws_vipusers.append([
+        'جمع کل', '', stats['vip_quota_count'], stats['vip_quota_used_count'],
+        stats['vip_quota_not_used_count'], f"{stats['vip_quota_used_percent']}٪",
+    ])
+    for cell in ws_vipusers[ws_vipusers.max_row]:
+        cell.font = header_font
+    for col in ['A', 'B', 'C', 'D', 'E', 'F']:
+        ws_vipusers.column_dimensions[col].width = 26
+
+    # ===== شیت ۵: تفکیک بلوک‌ها =====
     ws3 = wb.create_sheet("تفکیک بلوک‌ها")
     ws3.append(['بلوک', 'وضعیت', 'ظرفیت', 'فروخته‌شده', 'خالی', 'درصد اشغال', 'عبور کرده از گیت', 'درآمد (ریال)'])
     style_header_row(ws3)
