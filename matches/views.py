@@ -1267,17 +1267,32 @@ def _compute_match_report_stats(match):
 
     category_stats = sold_tickets_qs.aggregate(
         free_age_count=Count('id', filter=Q(price=0)),
+        free_age_used_count=Count('id', filter=Q(price=0) & Q(is_used=True)),
         basa_discount_count=Count('id', filter=Q(basa_discount_amount__gt=0)),
         basa_discount_total=Sum('basa_discount_amount', filter=Q(basa_discount_amount__gt=0)),
         basa_revenue=Sum('price', filter=Q(basa_discount_amount__gt=0)),
         full_price_count=Count('id', filter=~Q(price=0) & Q(basa_discount_amount=0)),
         full_price_revenue=Sum('price', filter=~Q(price=0) & Q(basa_discount_amount=0)),
     )
+    free_age_not_used_count = category_stats['free_age_count'] - category_stats['free_age_used_count']
+    free_age_used_percent = round(
+        (category_stats['free_age_used_count'] / category_stats['free_age_count'] * 100)
+        if category_stats['free_age_count'] > 0 else 0, 1
+    )
 
     used_tickets = Ticket.objects.filter(match=match, is_used=True).count()
     not_used_tickets = Ticket.objects.filter(match=match, is_used=False,
                                              status__in=['paid', 'admin_assigned', 'vip_issued']).count()
     total_issued_tickets = used_tickets + not_used_tickets
+
+    # ===== حضور واقعی «بلیط خریداری‌شده» (status='paid') به‌تنهایی -- جدا از
+    # حضور بلیط‌های ویژه/سهمیه، چون کاربر می‌خواد این دو گروه رو مستقل از هم
+    # مقایسه کنه: چندنفر از خریدارها اومدن، چندنفر از سهمیه‌ی VIP اومدن. =====
+    sold_used_count = sold_tickets_qs.filter(is_used=True).count()
+    sold_not_used_count = sold_tickets_qs.count() - sold_used_count
+    sold_used_percent = round(
+        (sold_used_count / sold_tickets_qs.count() * 100) if sold_tickets_qs.count() > 0 else 0, 1
+    )
     attendance_percent = round((used_tickets / total_issued_tickets * 100) if total_issued_tickets > 0 else 0, 1)
 
     total_match_seats = Seat.objects.filter(row__block__stadium=match.stadium, row__block__is_active=True,
@@ -1353,6 +1368,12 @@ def _compute_match_report_stats(match):
         'home_sold': home_sold, 'away_sold': away_sold, 'women_sold': women_sold,
         'class1_sold': class1_sold, 'vip_sold': vip_sold, 'zones_data': zones_data,
         'free_age_count': category_stats['free_age_count'],
+        'free_age_used_count': category_stats['free_age_used_count'],
+        'free_age_not_used_count': free_age_not_used_count,
+        'free_age_used_percent': free_age_used_percent,
+        'sold_used_count': sold_used_count,
+        'sold_not_used_count': sold_not_used_count,
+        'sold_used_percent': sold_used_percent,
         'basa_discount_count': category_stats['basa_discount_count'],
         'basa_discount_total': category_stats['basa_discount_total'] or 0,
         'basa_revenue': category_stats['basa_revenue'] or 0,
@@ -1471,10 +1492,19 @@ def admin_match_full_report_excel(request, match_id):
     ws.column_dimensions['A'].width = 34
     ws.column_dimensions['B'].width = 20
 
-    # ===== شیت ۲: بلیط‌های ویژه/سهمیه و صادرشده‌ی دستی (صادرشده در برابر چک‌شده) =====
-    ws_vip = wb.create_sheet("بلیط‌های ویژه و دستی")
-    ws_vip.append(['دسته', 'تعداد صادرشده', 'چک‌شده (عبور از گیت)', 'چک‌نشده', 'نرخ چک'])
+    # ===== شیت ۲: مقایسه‌ی حضور -- خریداری‌شده در برابر ویژه (دقیقاً همون
+    # چیزی که خواسته شده: چندنفر از خریدارها اومدن، چندنفر از سهمیه‌ی VIP) =====
+    ws_vip = wb.create_sheet("مقایسه حضور")
+    ws_vip.append(['دسته', 'تعداد', 'حاضر شدند', 'حاضر نشدند', 'نرخ حضور'])
     style_header_row(ws_vip)
+    ws_vip.append([
+        'خریداری‌شده (پرداخت‌شده)', stats['sold_count'], stats['sold_used_count'],
+        stats['sold_not_used_count'], f"{stats['sold_used_percent']}٪",
+    ])
+    ws_vip.append([
+        '   از همین‌ها، رایگان (زیر ۱۵ سال)', stats['free_age_count'], stats['free_age_used_count'],
+        stats['free_age_not_used_count'], f"{stats['free_age_used_percent']}٪",
+    ])
     ws_vip.append([
         'سهمیه‌ی کاربران ویژه (VIP)', stats['vip_quota_count'], stats['vip_quota_used_count'],
         stats['vip_quota_not_used_count'], f"{stats['vip_quota_used_percent']}٪",
@@ -1484,13 +1514,13 @@ def admin_match_full_report_excel(request, match_id):
         stats['admin_issued_not_used_count'], f"{stats['admin_issued_used_percent']}٪",
     ])
     ws_vip.append([
-        'جمع کل', stats['vip_count'], stats['vip_total_used_count'],
-        stats['vip_total_not_used_count'], f"{stats['vip_total']:,} ریال درآمد",
+        'جمع کل', stats['total_issued_tickets'], stats['used_tickets'],
+        stats['not_used_tickets'], f"{stats['attendance_percent']}٪",
     ])
     for cell in ws_vip[ws_vip.max_row]:
         cell.font = header_font
     for col in ['A', 'B', 'C', 'D', 'E']:
-        ws_vip.column_dimensions[col].width = 26
+        ws_vip.column_dimensions[col].width = 30
 
     # ===== شیت ۳: حضور از هر گیت (دقیقاً همون چیزی که خواسته شده) =====
     ws2 = wb.create_sheet("حضور از هر گیت")
