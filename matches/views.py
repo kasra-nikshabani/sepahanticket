@@ -1485,7 +1485,7 @@ def admin_match_full_report_excel(request, match_id):
     ])
     ws_vip.append([
         'جمع کل', stats['vip_count'], stats['vip_total_used_count'],
-        stats['vip_total_not_used_count'], f"{stats['vip_total']} ریال درآمد",
+        stats['vip_total_not_used_count'], f"{stats['vip_total']:,} ریال درآمد",
     ])
     for cell in ws_vip[ws_vip.max_row]:
         cell.font = header_font
