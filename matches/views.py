@@ -1350,11 +1350,21 @@ def _compute_match_report_stats(match):
             'not_used': zone_sold - zone_used,
             'attendance_percent': round((zone_used / zone_sold * 100) if zone_sold > 0 else 0, 1),
         })
+        zones_data[-1]['not_used_percent'] = round(100 - zones_data[-1]['attendance_percent'], 1) if zone_sold > 0 else 0
     home_sold = next(z['sold'] for z in zones_data if z['key'] == 'home')
     away_sold = next(z['sold'] for z in zones_data if z['key'] == 'away')
     women_sold = next(z['sold'] for z in zones_data if z['key'] == 'women')
     class1_sold = next(z['sold'] for z in zones_data if z['key'] == 'class1')
     vip_sold = next(z['sold'] for z in zones_data if z['key'] == 'vip')
+
+    # ===== درصدهای مکملِ «حاضر نشدند»، برای نمودارهای میله‌ای CSS در PDF
+    # (WeasyPrint جاوااسکریپت اجرا نمی‌کند، پس Chart.js کار نمی‌کند؛ به‌جاش
+    # عرض دو تکه از یک نوار را از روی همین درصدها با CSS تعیین می‌کنیم). =====
+    sold_not_used_percent = round(100 - sold_used_percent, 1) if sold_tickets_qs.count() > 0 else 0
+    vip_quota_not_used_percent = round(100 - vip_quota_used_percent, 1) if vip_quota_count > 0 else 0
+    admin_issued_not_used_percent = round(100 - admin_issued_used_percent, 1) if admin_issued_count > 0 else 0
+    attendance_not_used_percent = round(100 - attendance_percent, 1) if total_issued_tickets > 0 else 0
+    free_age_not_used_percent = round(100 - free_age_used_percent, 1) if category_stats['free_age_count'] > 0 else 0
 
     return {
         'sold_tickets_qs': sold_tickets_qs, 'vip_tickets_qs': vip_tickets_qs,
@@ -1374,6 +1384,11 @@ def _compute_match_report_stats(match):
         'sold_used_count': sold_used_count,
         'sold_not_used_count': sold_not_used_count,
         'sold_used_percent': sold_used_percent,
+        'sold_not_used_percent': sold_not_used_percent,
+        'vip_quota_not_used_percent': vip_quota_not_used_percent,
+        'admin_issued_not_used_percent': admin_issued_not_used_percent,
+        'attendance_not_used_percent': attendance_not_used_percent,
+        'free_age_not_used_percent': free_age_not_used_percent,
         'basa_discount_count': category_stats['basa_discount_count'],
         'basa_discount_total': category_stats['basa_discount_total'] or 0,
         'basa_revenue': category_stats['basa_revenue'] or 0,

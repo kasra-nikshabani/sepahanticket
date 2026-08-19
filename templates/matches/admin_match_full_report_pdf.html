@@ -39,37 +39,109 @@
         }
 
         .header {
-            background: #1A1A2E;
+            background: linear-gradient(135deg, #1A1A2E 0%, #232345 100%);
             color: #fff;
-            padding: 16px 20px;
-            border-radius: 10px;
-            border-bottom: 3px solid #D4AF37;
-            margin-bottom: 16px;
+            padding: 18px 22px;
+            border-radius: 12px;
+            border-bottom: 4px solid #D4AF37;
+            margin-bottom: 18px;
         }
-        .header h1 { color: #D4AF37; font-size: 18px; font-weight: 800; }
-        .header .meta { font-size: 11px; opacity: 0.85; margin-top: 4px; }
+        .header h1 { color: #D4AF37; font-size: 19px; font-weight: 800; }
+        .header .meta { font-size: 11px; opacity: 0.88; margin-top: 5px; }
 
-        .section { margin-bottom: 14px; page-break-inside: avoid; }
-        .section h2 {
-            font-size: 13px; font-weight: 700; color: #1A1A2E;
-            border-bottom: 2px solid #D4AF37; padding-bottom: 4px; margin-bottom: 8px;
+        .section {
+            margin-bottom: 16px;
+            page-break-inside: avoid;
+            background: #fff;
+            border: 1px solid #ececec;
+            border-radius: 10px;
+            padding: 12px 14px;
         }
+        .section h2 {
+            font-size: 13px; font-weight: 800; color: #1A1A2E;
+            padding-bottom: 6px; margin-bottom: 10px;
+            border-bottom: 2px solid #D4AF37;
+            position: relative;
+            padding-right: 10px;
+            border-right: 4px solid #D4AF37;
+            padding-top: 2px;
+            padding-bottom: 2px;
+            margin-bottom: 10px;
+        }
+        .section h2 { border-bottom: none; }
+        .section .h2-wrap { display: flex; align-items: center; margin-bottom: 10px; }
 
         .kpi-grid { display: flex; flex-wrap: wrap; gap: 8px; }
         .kpi-box {
-            background: #f8f9fa; border: 1px solid #eee; border-radius: 8px;
-            padding: 8px 12px; text-align: center; flex: 1; min-width: 100px;
+            background: #f8f9fb;
+            border: 1px solid #ececec;
+            border-radius: 9px;
+            padding: 10px 12px;
+            text-align: center;
+            flex: 1;
+            min-width: 100px;
+            border-top: 3px solid #D4AF37;
         }
-        .kpi-box .num { font-size: 15px; font-weight: 800; }
-        .kpi-box .lbl { font-size: 9.5px; color: #555; margin-top: 2px; }
+        .kpi-box .num { font-size: 16px; font-weight: 800; color: #1A1A2E; }
+        .kpi-box .lbl { font-size: 9.5px; color: #666; margin-top: 3px; }
 
-        table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        th, td { padding: 5px 8px; text-align: center; border-bottom: 1px solid #eee; }
-        th { background: #f8f9fa; font-weight: 700; }
-        tr.total-row { font-weight: 700; background: #fafafa; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 7px 8px; text-align: center; }
+        th {
+            background: #1A1A2E; color: #fff; font-weight: 700; font-size: 10.5px;
+        }
+        tbody tr { border-bottom: 1px solid #eee; }
+        tbody tr:nth-child(even) { background: #f8f9fb; }
+        tr.total-row { font-weight: 800; background: #fdf6e3 !important; color: #7a5c00; border-top: 2px solid #D4AF37; }
 
-        .note { font-size: 9.5px; color: #666; margin-top: 6px; }
-        .footer { margin-top: 16px; font-size: 9px; color: #999; text-align: center; }
+        .note {
+            font-size: 9.5px; color: #666; margin-top: 8px;
+            background: #f8f9fb; border-radius: 6px; padding: 6px 10px;
+            border-right: 3px solid #D4AF37;
+        }
+        .footer { margin-top: 18px; font-size: 9px; color: #999; text-align: center; }
+
+        /* ===== نمودار میله‌ای CSS (چون WeasyPrint جاوااسکریپت اجرا نمی‌کند و Chart.js کار نمی‌کند) ===== */
+        .bar-chart { margin-top: 4px; }
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 7px;
+        }
+        .bar-label {
+            width: 130px;
+            flex-shrink: 0;
+            font-size: 10px;
+            font-weight: 600;
+            text-align: right;
+        }
+        .bar-track {
+            flex: 1;
+            display: flex;
+            height: 14px;
+            border-radius: 7px;
+            overflow: hidden;
+            background: #f0f0f0;
+            border: 1px solid #e4e4e4;
+        }
+        .bar-seg { height: 100%; }
+        .bar-seg.used { background: linear-gradient(90deg, #2e9e5b, #43c274); }
+        .bar-seg.not-used { background: #e2665a; }
+        .bar-pct {
+            width: 74px;
+            flex-shrink: 0;
+            font-size: 9.5px;
+            text-align: left;
+            color: #444;
+        }
+        .bar-pct b { color: #2e9e5b; }
+        .bar-pct span.nu { color: #c0392b; }
+
+        .legend { display: flex; gap: 14px; margin-top: 6px; font-size: 9.5px; color: #555; }
+        .legend .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-left: 4px; vertical-align: middle; }
+        .legend .dot.used { background: #43c274; }
+        .legend .dot.not-used { background: #e2665a; }
     </style>
 </head>
 <body>
@@ -93,19 +165,67 @@
     <div class="section">
         <h2>تفکیک درآمد</h2>
         <table>
-            <tr><th>دسته</th><th>تعداد</th><th>مبلغ (ریال)</th></tr>
+            <thead><tr><th>دسته</th><th>تعداد</th><th>مبلغ (ریال)</th></tr></thead>
+            <tbody>
             <tr><td>قیمت کامل</td><td>{{ full_price_count }}</td><td>{{ full_price_revenue|rial_display }}</td></tr>
             <tr><td>باسا (دریافتی بعد از تخفیف)</td><td>{{ basa_discount_count }}</td><td>{{ basa_revenue|rial_display }}</td></tr>
             <tr><td>رایگان (زیر ۱۵ سال)</td><td>{{ free_age_count }}</td><td>۰</td></tr>
             <tr class="total-row"><td>درآمد کل</td><td>{{ sold_count }}</td><td>{{ total_revenue|rial_display }}</td></tr>
+            </tbody>
         </table>
         <div class="note">مبلغ تخفیف باسا داده‌شده (نه دریافتی): {{ basa_discount_total|rial_display }} ریال — پرداخت‌شده از کیف پول: {{ wallet_paid_total|rial_display }} ریال — پرداختی با کد تخفیف: {{ discount_code_total_paid|rial_display }} ریال ({{ discount_code_usage_count }} استفاده)</div>
     </div>
 
     <div class="section">
         <h2>مقایسه‌ی حضور: خریداری‌شده در برابر ویژه</h2>
-        <table>
-            <tr><th>دسته</th><th>تعداد</th><th>حاضر شدند</th><th>حاضر نشدند</th><th>نرخ حضور</th></tr>
+
+        <div class="bar-chart">
+            <div class="bar-row">
+                <div class="bar-label">خریداری‌شده</div>
+                <div class="bar-track">
+                    <div class="bar-seg used" style="width: {{ sold_used_percent }}%;"></div>
+                    <div class="bar-seg not-used" style="width: {{ sold_not_used_percent }}%;"></div>
+                </div>
+                <div class="bar-pct"><b>{{ sold_used_percent }}٪</b> / <span class="nu">{{ sold_not_used_percent }}٪</span></div>
+            </div>
+            <div class="bar-row">
+                <div class="bar-label">└ رایگان زیر ۱۵ سال</div>
+                <div class="bar-track">
+                    <div class="bar-seg used" style="width: {{ free_age_used_percent }}%;"></div>
+                    <div class="bar-seg not-used" style="width: {{ free_age_not_used_percent }}%;"></div>
+                </div>
+                <div class="bar-pct"><b>{{ free_age_used_percent }}٪</b> / <span class="nu">{{ free_age_not_used_percent }}٪</span></div>
+            </div>
+            <div class="bar-row">
+                <div class="bar-label">سهمیه‌ی VIP</div>
+                <div class="bar-track">
+                    <div class="bar-seg used" style="width: {{ vip_quota_used_percent }}%;"></div>
+                    <div class="bar-seg not-used" style="width: {{ vip_quota_not_used_percent }}%;"></div>
+                </div>
+                <div class="bar-pct"><b>{{ vip_quota_used_percent }}٪</b> / <span class="nu">{{ vip_quota_not_used_percent }}٪</span></div>
+            </div>
+            <div class="bar-row">
+                <div class="bar-label">صادرشده‌ی دستی ادمین</div>
+                <div class="bar-track">
+                    <div class="bar-seg used" style="width: {{ admin_issued_used_percent }}%;"></div>
+                    <div class="bar-seg not-used" style="width: {{ admin_issued_not_used_percent }}%;"></div>
+                </div>
+                <div class="bar-pct"><b>{{ admin_issued_used_percent }}٪</b> / <span class="nu">{{ admin_issued_not_used_percent }}٪</span></div>
+            </div>
+            <div class="bar-row">
+                <div class="bar-label">جمع کل</div>
+                <div class="bar-track">
+                    <div class="bar-seg used" style="width: {{ attendance_percent }}%;"></div>
+                    <div class="bar-seg not-used" style="width: {{ attendance_not_used_percent }}%;"></div>
+                </div>
+                <div class="bar-pct"><b>{{ attendance_percent }}٪</b> / <span class="nu">{{ attendance_not_used_percent }}٪</span></div>
+            </div>
+            <div class="legend"><span><span class="dot used"></span>حاضر شدند</span><span><span class="dot not-used"></span>حاضر نشدند</span></div>
+        </div>
+
+        <table style="margin-top: 12px;">
+            <thead><tr><th>دسته</th><th>تعداد</th><th>حاضر شدند</th><th>حاضر نشدند</th><th>نرخ حضور</th></tr></thead>
+            <tbody>
             <tr>
                 <td>خریداری‌شده (پرداخت‌شده)</td><td>{{ sold_count }}</td><td>{{ sold_used_count }}</td>
                 <td>{{ sold_not_used_count }}</td><td>{{ sold_used_percent }}٪</td>
@@ -126,13 +246,30 @@
                 <td>جمع کل</td><td>{{ total_issued_tickets }}</td><td>{{ used_tickets }}</td>
                 <td>{{ not_used_tickets }}</td><td>{{ attendance_percent }}٪</td>
             </tr>
+            </tbody>
         </table>
     </div>
 
     <div class="section">
         <h2>عبور از هر گیت</h2>
-        <table>
-            <tr><th>گیت / جایگاه</th><th>بلیط صادرشده</th><th>عبور کرده</th><th>عبورنکرده</th><th>نرخ حضور</th></tr>
+
+        <div class="bar-chart">
+            {% for zone in zones_data %}
+            <div class="bar-row">
+                <div class="bar-label">{{ zone.label }}</div>
+                <div class="bar-track">
+                    <div class="bar-seg used" style="width: {{ zone.attendance_percent }}%;"></div>
+                    <div class="bar-seg not-used" style="width: {{ zone.not_used_percent }}%;"></div>
+                </div>
+                <div class="bar-pct"><b>{{ zone.attendance_percent }}٪</b> / <span class="nu">{{ zone.not_used_percent }}٪</span></div>
+            </div>
+            {% endfor %}
+            <div class="legend"><span><span class="dot used"></span>عبور کرده</span><span><span class="dot not-used"></span>عبور نکرده</span></div>
+        </div>
+
+        <table style="margin-top: 12px;">
+            <thead><tr><th>گیت / جایگاه</th><th>بلیط صادرشده</th><th>عبور کرده</th><th>عبورنکرده</th><th>نرخ حضور</th></tr></thead>
+            <tbody>
             {% for zone in zones_data %}
             <tr>
                 <td>{{ zone.label }}</td><td>{{ zone.sold }}</td><td>{{ zone.used }}</td>
@@ -143,13 +280,15 @@
                 <td>جمع کل</td><td>{{ total_issued_tickets }}</td><td>{{ used_tickets }}</td>
                 <td>{{ not_used_tickets }}</td><td>{{ attendance_percent }}٪</td>
             </tr>
+            </tbody>
         </table>
     </div>
 
     <div class="section">
         <h2>تفکیک بلوک‌ها</h2>
         <table>
-            <tr><th>بلوک</th><th>وضعیت</th><th>ظرفیت</th><th>فروخته‌شده</th><th>خالی</th><th>اشغال</th><th>عبور کرده</th><th>درآمد (ریال)</th></tr>
+            <thead><tr><th>بلوک</th><th>وضعیت</th><th>ظرفیت</th><th>فروخته‌شده</th><th>خالی</th><th>اشغال</th><th>عبور کرده</th><th>درآمد (ریال)</th></tr></thead>
+            <tbody>
             {% for row in blocks_data %}
             <tr>
                 <td>{{ row.block.name }}</td>
@@ -158,6 +297,7 @@
                 <td>{{ row.occupancy }}٪</td><td>{{ row.used }}</td><td>{{ row.revenue|rial_display }}</td>
             </tr>
             {% endfor %}
+            </tbody>
         </table>
     </div>
 
