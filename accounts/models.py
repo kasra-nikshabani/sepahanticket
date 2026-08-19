@@ -25,6 +25,13 @@ class User(AbstractUser):
     # user_type جدید یعنی دست‌زدن به مسیر احراز هویت. عضو باسا بودن فقط یک
     # فلگ روی کاربر عادیه، رفتار لاگین/خریدش هیچ فرقی با بقیه ندارد.
     is_basa_member = models.BooleanField(default=False, verbose_name="عضو باسا")
+    # شناسه‌ی Subject کاربر در Keycloak (Fan ID مرکزی سوپراپ -- ریپوی جدا sepapp).
+    # Nullable و Backward-compatible: کاربران قدیمی/موجود این مقدار را ندارند و
+    # چیزی برایشان تغییر نمی‌کند. فقط وقتی یک کاربر برای اولین‌بار با توکن
+    # Fan ID وارد شود پر می‌شود (JIT Provisioning در accounts/keycloak_auth.py).
+    # هدف: از Lookup مکرر بر اساس national_code جلوگیری و Audit/Revoke دقیق‌تر
+    # در آینده -- نه جایگزین national_code/phone_number به‌عنوان شناسه‌ی اصلی.
+    fan_id_subject = models.CharField(max_length=36, unique=True, null=True, blank=True, verbose_name="Fan ID Subject")
 
     class Meta:
         verbose_name = "کاربر"

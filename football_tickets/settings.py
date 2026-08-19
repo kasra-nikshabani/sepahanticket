@@ -81,6 +81,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'accounts.middleware.KeycloakBearerAuthenticationMiddleware',  # افزودنی -- Phase 7، جزئیات در accounts/keycloak_auth.py
     'accounts.middleware.VisitTrackingMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -310,4 +311,16 @@ LOGIN_URL = 'accounts:choose_login'
 LOGIN_REDIRECT_URL = 'matches:home'
 LOGOUT_REDIRECT_URL = 'accounts:choose_login'
 OTP_ENABLED = True
+
+# ============================================================
+#  Fan ID (Keycloak) -- Bearer Token Authentication، افزودنی (Phase 7)
+# ============================================================
+# جزئیات کامل و دلایل معماری: ریپوی sepapp، docs/adr/0004 و docs/adr/0008.
+# ورود فعلی (بالا: OTP/رمز عبور) دست‌نخورده می‌ماند؛ این فقط یک مسیر اضافه
+# است که در accounts/middleware.py و accounts/keycloak_auth.py پیاده شده.
+KEYCLOAK_ISSUER = os.getenv('KEYCLOAK_ISSUER', 'http://localhost:8080/realms/sepahan')
+KEYCLOAK_JWKS_URL = os.getenv('KEYCLOAK_JWKS_URL', f'{KEYCLOAK_ISSUER}/protocol/openid-connect/certs')
+# فقط توکن‌های صادرشده برای این Clientها (بر اساس Claim azp) پذیرفته می‌شوند --
+# یک اپ ناشناس داخل همان Realm نباید بتواند مستقیم کاربر Django بسازد/جا بزند.
+KEYCLOAK_TRUSTED_CLIENTS = [c.strip() for c in os.getenv('KEYCLOAK_TRUSTED_CLIENTS', 'mobile-app,admin-panel').split(',') if c.strip()]
 

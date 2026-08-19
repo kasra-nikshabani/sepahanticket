@@ -109,3 +109,23 @@ class GeoAccessMiddleware:
                 return render(request, 'accounts/geo_blocked.html', status=403)
 
         return self.get_response(request)
+
+
+# ============================================================
+#  Fan ID (Keycloak) Bearer Authentication -- افزودنی، نه جایگزین (Phase 7)
+# ============================================================
+# جزئیات کامل و دلایل معماری در accounts/keycloak_auth.py و ریپوی sepapp
+# (docs/adr/0004، docs/adr/0008). این Middleware باید در settings.py بعد از
+# django.contrib.auth.middleware.AuthenticationMiddleware ثبت شود تا
+# request.user از قبل از Session پر شده باشد.
+class KeycloakBearerAuthenticationMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if not request.user.is_authenticated:
+            from .keycloak_auth import try_authenticate_keycloak
+            user = try_authenticate_keycloak(request)
+            if user is not None:
+                request.user = user
+        return self.get_response(request)
