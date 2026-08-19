@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% load currency_filters %}
+{% load static %}
+
+{% block title %}گزارش کامل مسابقه {{ match.home_team }} vs {{ match.away_team }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-container { max-width: 1100px; margin: 30px auto; padding: 0 16px; }
+    .report-header {
+        background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
+        border-radius: 16px; padding: 24px 30px; color: #fff; margin-bottom: 24px;
+        border-bottom: 3px solid #D4AF37; display: flex; justify-content: space-between;
+        align-items: center; flex-wrap: wrap; gap: 12px;
+    }
+    .report-header h2 { margin: 0; color: #D4AF37; font-weight: 800; }
+    .report-header .meta { font-size: 0.9rem; opacity: 0.85; margin-top: 6px; }
+    .btn-print {
+        background: #D4AF37; color: #1A1A2E; border: none; font-weight: 700;
+        padding: 10px 24px; border-radius: 10px;
+    }
+    .btn-print:hover { background: #E8D58A; color: #1A1A2E; }
+    .report-section {
+        background: #fff; border-radius: 14px; padding: 22px 26px; margin-bottom: 20px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1px solid #e8eaed;
+    }
+    .report-section h4 {
+        color: #1A1A2E; font-weight: 800; margin-bottom: 16px; padding-bottom: 10px;
+        border-bottom: 2px solid #D4AF37; display: flex; align-items: center; gap: 8px;
+    }
+    .report-section h4 i { color: #D4AF37; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
+    .kpi-box {
+        background: #f8f9fa; border-radius: 12px; padding: 16px; text-align: center;
+        border: 1px solid #eee;
+    }
+    .kpi-box .num { font-size: 1.6rem; font-weight: 800; color: #1A1A2E; }
+    .kpi-box .lbl { font-size: 0.82rem; color: #6c757d; margin-top: 4px; }
+    table.report-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+    table.report-table th, table.report-table td {
+        padding: 10px 12px; text-align: center; border-bottom: 1px solid #eee;
+    }
+    table.report-table th { background: #f8f9fa; color: #1A1A2E; font-weight: 700; }
+    table.report-table tr:hover { background: #fafafa; }
+    .note-box {
+        background: #f8f9fa; border-right: 4px solid #D4AF37; border-radius: 8px;
+        padding: 10px 14px; font-size: 0.85rem; color: #555; margin-top: 12px;
+    }
+    @media print {
+        .no-print { display: none !important; }
+        .report-section { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+        body { background: #fff; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+    <div class="report-header">
+        <div>
+            <h2>گزارش کامل مسابقه</h2>
+            <div class="meta">
+                {{ match.home_team }} vs {{ match.away_team }} — {{ match.date_time|date:"Y/m/d H:i" }} — {{ match.stadium.name }}
+            </div>
+        </div>
+        <div class="no-print">
+            <button class="btn-print" onclick="window.print()"><i class="fas fa-print"></i> چاپ گزارش</button>
+            <a href="{% url 'matches:admin_match_detail' match.id %}" class="btn-print" style="background:#f1f3f4; color:#1A1A2E;">
+                <i class="fas fa-arrow-right"></i> بازگشت
+            </a>
+        </div>
+    </div>
+
+    <!-- ===== نمای کلی ===== -->
+    <div class="report-section">
+        <h4><i class="fas fa-chart-pie"></i> نمای کلی</h4>
+        <div class="kpi-grid">
+            <div class="kpi-box"><div class="num">{{ total_tickets }}</div><div class="lbl">کل بلیط صادرشده</div></div>
+            <div class="kpi-box"><div class="num">{{ total_revenue|rial_display }}</div><div class="lbl">درآمد کل (ریال)</div></div>
+            <div class="kpi-box"><div class="num">{{ occupancy_percent }}٪</div><div class="lbl">درصد اشغال ورزشگاه</div></div>
+            <div class="kpi-box"><div class="num">{{ attendance_percent }}٪</div><div class="lbl">درصد حضور واقعی دم گیت</div></div>
+            <div class="kpi-box"><div class="num">{{ occupied }}</div><div class="lbl">صندلی اشغال‌شده</div></div>
+            <div class="kpi-box"><div class="num">{{ available }}</div><div class="lbl">صندلی خالی</div></div>
+        </div>
+    </div>
+
+    <!-- ===== حضور واقعی دم گیت ===== -->
+    <div class="report-section">
+        <h4><i class="fas fa-door-open"></i> حضور واقعی دم گیت (اسکن بلیط)</h4>
+        <div class="kpi-grid">
+            <div class="kpi-box"><div class="num">{{ used_tickets }}</div><div class="lbl">اسکن‌شده (حاضر شدند)</div></div>
+            <div class="kpi-box"><div class="num">{{ not_used_tickets }}</div><div class="lbl">اسکن‌نشده (حاضر نشدند)</div></div>
+            <div class="kpi-box"><div class="num">{{ total_issued_tickets }}</div><div class="lbl">مجموع بلیط معتبر</div></div>
+            <div class="kpi-box"><div class="num">{{ attendance_percent }}٪</div><div class="lbl">نرخ حضور</div></div>
+        </div>
+    </div>
+
+    <!-- ===== تفکیک درآمد ===== -->
+    <div class="report-section">
+        <h4><i class="fas fa-coins"></i> تفکیک درآمد</h4>
+        <div class="kpi-grid">
+            <div class="kpi-box"><div class="num">{{ full_price_count }}</div><div class="lbl">بلیط قیمت کامل ({{ full_price_revenue|rial_display }} ریال)</div></div>
+            <div class="kpi-box"><div class="num">{{ basa_discount_count }}</div><div class="lbl">بلیط باسا ({{ basa_revenue|rial_display }} ریال دریافتی)</div></div>
+            <div class="kpi-box"><div class="num">{{ free_age_count }}</div><div class="lbl">بلیط رایگان (زیر ۱۵ سال)</div></div>
+            <div class="kpi-box"><div class="num">{{ vip_count }}</div><div class="lbl">بلیط ویژه/سهمیه ({{ vip_total|rial_display }} ریال)</div></div>
+            <div class="kpi-box"><div class="num">{{ admin_issued_count }}</div><div class="lbl">صادرشده توسط ادمین</div></div>
+        </div>
+        <div class="note-box">
+            درآمد کل = بلیط قیمت کامل + بلیط باسا (بعد از تخفیف) + ۰ (رایگان) = {{ full_price_revenue|rial_display }} + {{ basa_revenue|rial_display }} + ۰ = {{ total_revenue|rial_display }} ریال.
+            مبلغ تخفیف باسا داده‌شده (نه دریافتی): {{ basa_discount_total|rial_display }} ریال.
+        </div>
+    </div>
+
+    <!-- ===== روش پرداخت ===== -->
+    <div class="report-section">
+        <h4><i class="fas fa-wallet"></i> روش پرداخت</h4>
+        <div class="kpi-grid">
+            <div class="kpi-box"><div class="num">{{ wallet_paid_total|rial_display }}</div><div class="lbl">پرداخت‌شده از کیف پول (ریال)</div></div>
+            <div class="kpi-box"><div class="num">{{ discount_code_usage_count }}</div><div class="lbl">تعداد استفاده از کد تخفیف</div></div>
+            <div class="kpi-box"><div class="num">{{ discount_code_total_paid|rial_display }}</div><div class="lbl">پرداختی با کد تخفیف (ریال)</div></div>
+            <div class="kpi-box"><div class="num">{{ discount_code_total_given|rial_display }}</div><div class="lbl">مجموع تخفیفِ کد داده‌شده (ریال)</div></div>
+        </div>
+    </div>
+
+    <!-- ===== تفکیک سکوها ===== -->
+    <div class="report-section">
+        <h4><i class="fas fa-users"></i> تفکیک سکوها (فروش و حضور)</h4>
+        <div style="overflow-x:auto;">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>جایگاه</th><th>بلیط صادرشده</th><th>اسکن‌شده</th><th>نرخ حضور</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for zone in zones_data %}
+                    <tr>
+                        <td>{{ zone.label }}</td>
+                        <td>{{ zone.sold }}</td>
+                        <td>{{ zone.used }}</td>
+                        <td>{{ zone.attendance_percent }}٪</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== تفکیک بلوک‌ها ===== -->
+    <div class="report-section">
+        <h4><i class="fas fa-layer-group"></i> تفکیک بلوک‌ها</h4>
+        <div style="overflow-x:auto;">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>بلوک</th><th>ظرفیت</th><th>فروخته‌شده</th><th>خالی</th>
+                        <th>درصد اشغال</th><th>اسکن‌شده</th><th>درآمد (ریال)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in blocks_data %}
+                    <tr {% if not row.block.is_active %}style="color:#c62828;"{% endif %}>
+                        <td>{{ row.block.name }}{% if not row.block.is_active %} (غیرفعال){% endif %}</td>
+                        <td>{{ row.total_seats }}</td>
+                        <td>{{ row.occupied_seats }}</td>
+                        <td>{{ row.available_seats }}</td>
+                        <td>{{ row.occupancy }}٪</td>
+                        <td>{{ row.used }}</td>
+                        <td>{{ row.revenue|rial_display }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

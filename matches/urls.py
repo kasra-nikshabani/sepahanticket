@@ -20,6 +20,7 @@ urlpatterns = [
     # ===== مدیریت ادمین (سایت) =====
     path('admin-matches/', views.admin_match_list, name='admin_match_list'),
     path('admin-matches/<int:match_id>/', views.admin_match_detail, name='admin_match_detail'),
+    path('admin-matches/<int:match_id>/full-report/', views.admin_match_full_report, name='admin_match_full_report'),
 
     # ===== آموزش =====
     path('tutorial/', TemplateView.as_view(template_name='pages/tutorial.html'), name='tutorial'),

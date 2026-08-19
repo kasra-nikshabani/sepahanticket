@@ -1215,25 +1215,19 @@ def admin_match_list(request):
     return render(request, 'matches/admin_match_list.html', context)
 
 
-@staff_member_required
-def admin_match_detail(request, match_id):
-    """صفحه جزئیات مسابقه برای ادمین با نمایش بلوک‌های ورزشگاه و آمار تفکیکی سکوها"""
+def _compute_match_report_stats(match):
+    """
+    همه‌ی آمار/گزارش‌های یک مسابقه (درآمد، تفکیک بلیط، اشغال بلوک‌ها، حضور
+    واقعی دم گیت و ...) -- هم توسط admin_match_detail (صفحه‌ی مدیریت روزمره)
+    و هم admin_match_full_report (گزارش کامل تک‌صفحه‌ای بعد از برگزاری
+    مسابقه) استفاده می‌شود، تا منطق محاسبه یک‌جا و هماهنگ بماند.
+    """
     from tickets.models import Order
 
-    match = get_object_or_404(Match, id=match_id)
-
-    # مبلغی که از کیف پول کاربران برای این مسابقه پرداخت شده -- wallet_amount
-    # روی سطح Order ثبت می‌شود (نه هر بلیط)، چون یک سفارش می‌تواند چند بلیط
-    # داشته باشد و پرداخت کیف‌پول برای کل سفارش یکجا کسر می‌شود.
     wallet_paid_total = Order.objects.filter(
         match=match, payment_status='paid'
     ).aggregate(s=Sum('wallet_amount'))['s'] or 0
 
-    # ===== تعداد استفاده از کد تخفیف و مبلغ واقعاً دریافتی از سفارش‌هایی که
-    # کد تخفیف داشتن -- discount_code روی سطح Order ثبت می‌شه (نه هر بلیط)،
-    # چون یک کد برای کل سفارش اعمال می‌شه. total_amount هر Order از این
-    # سبقت (بعد از فیکس امروز که تخفیف کد رو روی خودِ Ticket.price هم اعمال
-    # می‌کنه) دقیقاً با جمع قیمت بلیط‌های همون سفارش یکی‌ست. =====
     discount_code_orders = Order.objects.filter(match=match, payment_status='paid').exclude(discount_code='')
     discount_code_stats = discount_code_orders.aggregate(
         usage_count=Count('id'), total_paid=Sum('total_amount'), total_given=Sum('discount_amount')
@@ -1242,10 +1236,6 @@ def admin_match_detail(request, match_id):
     discount_code_total_paid = discount_code_stats['total_paid'] or 0
     discount_code_total_given = discount_code_stats['total_given'] or 0
 
-    # ===== تعداد بلیط‌هایی که خودِ ادمین از طریق «صدور دستی بلیط» صادر کرده --
-    # این بلیط‌ها زیر user خودِ ادمین (نه کاربرِ گیرنده‌ی بلیط) ثبت می‌شن، پس
-    # user__is_staff=True دقیقاً همین‌ها رو از بلیط‌های سهمیه‌ی VIP (که همیشه
-    # زیر خودِ کاربر VIP گیرنده ثبت می‌شن، نه ادمین) جدا می‌کنه.
     admin_issued_count = Ticket.objects.filter(
         match=match, status='admin_assigned', user__is_staff=True
     ).count()
@@ -1257,56 +1247,29 @@ def admin_match_detail(request, match_id):
     sold_total = sum(t.price or 0 for t in sold_tickets_qs)
     vip_total = sum(t.price or 0 for t in vip_tickets_qs)
 
-    # ===== تفکیک بلیط‌های فروخته‌شده: رایگان (زیر ۱۵ سال) / تخفیف باسا / قیمت کامل =====
-    # عمداً بر اساس price/basa_discount_amount دسته‌بندی می‌شود، نه فیلد age --
-    # چون age امروز اضافه شد و بلیط‌های قدیمی‌تر (قبل از امروز) مقدار age
-    # ندارند؛ اگر بر اساس age فیلتر می‌کردیم، آن بلیط‌های قدیمی در هیچ‌کدام
-    # از سه دسته نمی‌افتادند در حالی که هنوز در «درآمد کل» حساب می‌شوند --
-    # یعنی جمع سه دسته با درآمد کل نمی‌خواند. price=0 در این پروژه فقط به
-    # یک دلیل ممکن است (سن زیر ۱۵)، پس معادل قابل‌اعتماد همان قانون است.
     category_stats = sold_tickets_qs.aggregate(
         free_age_count=Count('id', filter=Q(price=0)),
         basa_discount_count=Count('id', filter=Q(basa_discount_amount__gt=0)),
         basa_discount_total=Sum('basa_discount_amount', filter=Q(basa_discount_amount__gt=0)),
-        # مبلغی که واقعاً از بلیط‌های باسا دریافت شده (بعد از کسر تخفیف) -- با
-        # basa_discount_total اشتباه گرفته نشود: آن مبلغِ تخفیف داده‌شده است،
-        # نه مبلغ دریافتی. برای هم‌خوانی با درآمد کل باید همین فیلد را جمع زد.
         basa_revenue=Sum('price', filter=Q(basa_discount_amount__gt=0)),
         full_price_count=Count('id', filter=~Q(price=0) & Q(basa_discount_amount=0)),
         full_price_revenue=Sum('price', filter=~Q(price=0) & Q(basa_discount_amount=0)),
     )
 
-    per_page = 10
-    sold_page_num = request.GET.get('sold_page', 1)
-    vip_page_num = request.GET.get('vip_page', 1)
-
-    sold_paginator = Paginator(sold_tickets_qs, per_page)
-    sold_page = sold_paginator.get_page(sold_page_num)
     used_tickets = Ticket.objects.filter(match=match, is_used=True).count()
     not_used_tickets = Ticket.objects.filter(match=match, is_used=False,
                                              status__in=['paid', 'admin_assigned', 'vip_issued']).count()
-
-    vip_paginator = Paginator(vip_tickets_qs, per_page)
-    vip_page = vip_paginator.get_page(vip_page_num)
+    total_issued_tickets = used_tickets + not_used_tickets
+    attendance_percent = round((used_tickets / total_issued_tickets * 100) if total_issued_tickets > 0 else 0, 1)
 
     total_match_seats = Seat.objects.filter(row__block__stadium=match.stadium, row__block__is_active=True,
                                             row__is_active=True).count()
-    # ===== occupied باید فقط صندلی‌های بلوک‌های فعال را بشمارد، هماهنگ با
-    # total_match_seats -- وگرنه اگر بلوکی بعد از فروش بلیط غیرفعال بشه،
-    # صندلی‌های فروخته‌شده‌ی همون بلوک از مخرج (total_match_seats) کم می‌شن
-    # ولی هنوز از صورت (occupied) کم نمی‌شن و available منفی/نادرست می‌شه.
-    # فروش بلوک‌های غیرفعال هنوز جای دیگه (کارت‌های بلوک پایین‌تر) دیده می‌شه.
     occupied = MatchSeat.objects.filter(
         match=match, is_available=False, seat__row__block__is_active=True, seat__row__is_active=True
     ).count()
     available = total_match_seats - occupied
     occupancy_percent = round((occupied / total_match_seats * 100) if total_match_seats > 0 else 0, 1)
 
-    # ===== بلوک‌های فعال + هر بلوک غیرفعالی که برای همین مسابقه صندلی
-    # فروخته‌شده دارد -- وگرنه اگر بلوکی بعد از فروش بلیط غیرفعال بشه،
-    # کارتش کلاً از این صفحه محو می‌شد در حالی که صندلی‌هاش هنوز جزو
-    # آمار کلی مسابقه (تعداد بلیط/درآمد) حساب می‌شن؛ این یعنی جمع کارت‌های
-    # بلوک با اعداد کلی بالای صفحه هماهنگ نبود. =====
     blocks_with_sales = MatchSeat.objects.filter(match=match, is_available=False).values_list(
         'seat__row__block_id', flat=True
     ).distinct()
@@ -1320,37 +1283,56 @@ def admin_match_detail(request, match_id):
         occupied_seats = MatchSeat.objects.filter(match=match, seat__row__block=block, is_available=False).count()
         available_seats = total_seats - occupied_seats
         occupancy = round((occupied_seats / total_seats * 100) if total_seats > 0 else 0, 1)
+        block_revenue = sum(
+            t.price or 0 for t in Ticket.objects.filter(
+                match=match, seat__row__block=block, status__in=['paid', 'admin_assigned', 'vip_issued']
+            )
+        )
+        block_used = Ticket.objects.filter(
+            match=match, seat__row__block=block, is_used=True
+        ).count()
         block.price = block_price_map.get(block.id, block.price)
         blocks_data.append({
             'block': block, 'total_seats': total_seats, 'occupied_seats': occupied_seats,
             'available_seats': available_seats, 'occupancy': occupancy,
             'row_count': Row.objects.filter(block=block, is_active=True).count(),
+            'revenue': block_revenue, 'used': block_used,
         })
 
-    # ===== محاسبه آمار تفکیکی سکوها =====
     all_issued_tickets = sold_tickets_qs | vip_tickets_qs
-    home_sold = all_issued_tickets.filter(seat__row__block__zone_type='home').count()
-    away_sold = all_issued_tickets.filter(seat__row__block__zone_type='away').count()
-    women_sold = all_issued_tickets.filter(seat__row__block__zone_type='women').count()
-    class1_sold = all_issued_tickets.filter(
-        Q(seat__row__block__zone_type='class1') | Q(seat__row__block__is_class1=True)).count()
-    vip_sold = all_issued_tickets.filter(
-        Q(seat__row__block__zone_type='vip') | Q(seat__row__block__is_vip=True)).count()
+    zone_defs = [
+        ('home', 'میزبان', Q(seat__row__block__zone_type='home')),
+        ('away', 'میهمان', Q(seat__row__block__zone_type='away')),
+        ('women', 'بانوان', Q(seat__row__block__zone_type='women')),
+        ('class1', 'کلاس ۱', Q(seat__row__block__zone_type='class1') | Q(seat__row__block__is_class1=True)),
+        ('vip', 'VIP', Q(seat__row__block__zone_type='vip') | Q(seat__row__block__is_vip=True)),
+    ]
+    zones_data = []
+    for key, label, zone_q in zone_defs:
+        zone_tickets = all_issued_tickets.filter(zone_q)
+        zone_sold = zone_tickets.count()
+        zone_used = zone_tickets.filter(is_used=True).count()
+        zones_data.append({
+            'key': key, 'label': label, 'sold': zone_sold, 'used': zone_used,
+            'attendance_percent': round((zone_used / zone_sold * 100) if zone_sold > 0 else 0, 1),
+        })
+    home_sold = next(z['sold'] for z in zones_data if z['key'] == 'home')
+    away_sold = next(z['sold'] for z in zones_data if z['key'] == 'away')
+    women_sold = next(z['sold'] for z in zones_data if z['key'] == 'women')
+    class1_sold = next(z['sold'] for z in zones_data if z['key'] == 'class1')
+    vip_sold = next(z['sold'] for z in zones_data if z['key'] == 'vip')
 
-    context = {
-        'match': match, 'sold_page': sold_page, 'vip_page': vip_page,
+    return {
+        'sold_tickets_qs': sold_tickets_qs, 'vip_tickets_qs': vip_tickets_qs,
         'sold_total': sold_total, 'vip_total': vip_total, 'total_revenue': sold_total,
         'sold_count': sold_tickets_qs.count(), 'vip_count': vip_tickets_qs.count(),
         'total_tickets': sold_tickets_qs.count() + vip_tickets_qs.count(),
         'total_match_seats': total_match_seats, 'occupied': occupied, 'available': available,
         'occupancy_percent': occupancy_percent, 'blocks_data': blocks_data,
-        'current_sold_page': sold_page.number, 'current_vip_page': vip_page.number,
-        'sold_page_range': sold_paginator.page_range, 'vip_page_range': vip_paginator.page_range,
         'used_tickets': used_tickets, 'not_used_tickets': not_used_tickets,
-        # ===== متغیرهای جدید تفکیکی =====
+        'total_issued_tickets': total_issued_tickets, 'attendance_percent': attendance_percent,
         'home_sold': home_sold, 'away_sold': away_sold, 'women_sold': women_sold,
-        'class1_sold': class1_sold, 'vip_sold': vip_sold,
-        # ===== تفکیک درآمد: رایگان/تخفیف باسا/قیمت کامل =====
+        'class1_sold': class1_sold, 'vip_sold': vip_sold, 'zones_data': zones_data,
         'free_age_count': category_stats['free_age_count'],
         'basa_discount_count': category_stats['basa_discount_count'],
         'basa_discount_total': category_stats['basa_discount_total'] or 0,
@@ -1363,7 +1345,47 @@ def admin_match_detail(request, match_id):
         'discount_code_total_given': discount_code_total_given,
         'admin_issued_count': admin_issued_count,
     }
+
+
+@staff_member_required
+def admin_match_detail(request, match_id):
+    """صفحه جزئیات مسابقه برای ادمین با نمایش بلوک‌های ورزشگاه و آمار تفکیکی سکوها"""
+    match = get_object_or_404(Match, id=match_id)
+    stats = _compute_match_report_stats(match)
+
+    per_page = 10
+    sold_page_num = request.GET.get('sold_page', 1)
+    vip_page_num = request.GET.get('vip_page', 1)
+
+    sold_paginator = Paginator(stats['sold_tickets_qs'], per_page)
+    sold_page = sold_paginator.get_page(sold_page_num)
+    vip_paginator = Paginator(stats['vip_tickets_qs'], per_page)
+    vip_page = vip_paginator.get_page(vip_page_num)
+
+    context = dict(stats)
+    context.pop('sold_tickets_qs')
+    context.pop('vip_tickets_qs')
+    context.update({
+        'match': match, 'sold_page': sold_page, 'vip_page': vip_page,
+        'current_sold_page': sold_page.number, 'current_vip_page': vip_page.number,
+        'sold_page_range': sold_paginator.page_range, 'vip_page_range': vip_paginator.page_range,
+    })
     return render(request, 'matches/admin_match_detail.html', context)
+
+
+@staff_member_required
+def admin_match_full_report(request, match_id):
+    """گزارش کامل و یک‌صفحه‌ای مسابقه (برای بعد از برگزاری مسابقه) -- همه‌ی
+    آمار مالی، اشغال بلوک‌ها، تفکیک سکوها و حضور واقعی دم گیت را یکجا و
+    قابل‌چاپ نشان می‌دهد."""
+    match = get_object_or_404(Match, id=match_id)
+    stats = _compute_match_report_stats(match)
+
+    context = dict(stats)
+    context.pop('sold_tickets_qs')
+    context.pop('vip_tickets_qs')
+    context['match'] = match
+    return render(request, 'matches/admin_match_full_report.html', context)
 
 
 # ============================================================
