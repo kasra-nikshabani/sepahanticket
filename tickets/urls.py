@@ -2,10 +2,13 @@
 from django.urls import path
 from . import views
 from . import api
+from . import api_loyalty
 
 app_name = 'tickets'
 
 urlpatterns = [
+    # فقط-خواندنی، برای Polling سرویس Loyalty در sepapp (Phase 12، ADR-0014)
+    path('api/loyalty/completed-orders/', api_loyalty.completed_orders, name='loyalty_completed_orders'),
     path('admin-reports/', views.sales_report, name='admin_reports'),  # ← اضافه کنید
 
     path('select/<int:match_id>/', views.select_seats, name='select_seats'),

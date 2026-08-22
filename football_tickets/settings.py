@@ -324,3 +324,14 @@ KEYCLOAK_JWKS_URL = os.getenv('KEYCLOAK_JWKS_URL', f'{KEYCLOAK_ISSUER}/protocol/
 # یک اپ ناشناس داخل همان Realm نباید بتواند مستقیم کاربر Django بسازد/جا بزند.
 KEYCLOAK_TRUSTED_CLIENTS = [c.strip() for c in os.getenv('KEYCLOAK_TRUSTED_CLIENTS', 'mobile-app,admin-panel').split(',') if c.strip()]
 
+# ============================================================
+#  Loyalty polling service token، افزودنی (Phase 12 در sepapp)
+# ============================================================
+# جزئیات کامل: ریپوی sepapp، docs/adr/0014. یک Endpoint فقط-خواندنی جدید
+# (tickets/api_loyalty.py) به سرویس Loyalty در Backend جدید (Spring Boot) اجازه
+# می‌دهد سفارش‌های پرداخت‌شده را Poll کند تا امتیاز وفاداری بدهد -- منطق خرید/پرداخت
+# این پروژه کاملاً دست‌نخورده می‌ماند. این مکانیزم Keycloak نیست (Middleware فعلی
+# فقط کاربر Fan را احراز هویت می‌کند، نه یک سرویس)؛ یک راز مشترک ساده و مجزا است،
+# هم‌الگوی GATE_USERS بالا. بدون مقدار (رشته‌ی خالی)، این Endpoint همیشه ۴۰۱ می‌دهد.
+LOYALTY_POLL_SERVICE_TOKEN = os.getenv('LOYALTY_POLL_SERVICE_TOKEN', '')
+

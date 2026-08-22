@@ -92,7 +92,15 @@ class VisitTrackingMiddleware:
 # 0.0.0.0)، وگرنه یه کلاینت می‌تونست مستقیم به gunicorn وصل بشه و این هدر رو
 # جعل کنه. تصمیم مسدودسازی/عدم مسدودسازی از روی SiteSettings.block_foreign_ips
 # گرفته می‌شه که ادمین از پنل جنگو (بدون نیاز به دسترسی سرور) روشن/خاموشش می‌کنه.
-GEO_EXEMPT_PREFIXES = ('/admin/',)
+GEO_EXEMPT_PREFIXES = (
+    '/admin/',
+    # Endpoint فقط-خواندنی Polling سرویس Loyalty در sepapp (Phase 12، ADR-0014) --
+    # یک تماس سرویس-به-سرویس است، نه بازدید عمومی؛ با راز مشترک جداگانه
+    # (LOYALTY_POLL_SERVICE_TOKEN در tickets/api_loyalty.py) احراز هویت می‌شود، نه
+    # با IP کاربر. بدون این استثنا، این تماس در Production هم با ۴۰۳ رد می‌شد چون
+    # هدر X-Iran-IP فقط برای بازدید از طریق nginx تنظیم می‌شود، نه تماس مستقیم Backend.
+    '/tickets/api/loyalty/',
+)
 
 
 class GeoAccessMiddleware:
