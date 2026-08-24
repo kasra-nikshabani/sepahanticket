@@ -385,8 +385,11 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             # قیمت ثبت‌شده‌ی خودِ بلیط هنوز قیمت کامل را نشان می‌داد) و جمع
             # قیمت بلیط‌ها که برای «درآمد کل» در گزارش مالی استفاده می‌شود، از
             # مبلغ واقعاً دریافتی بیشتر می‌شد. =====
+            seat_discount_code_amount = 0
             if seat_price and payment.discount_percent > 0:
-                seat_price = seat_price - int(seat_price * payment.discount_percent / 100)
+                discounted_price = seat_price - int(seat_price * payment.discount_percent / 100)
+                seat_discount_code_amount = seat_price - discounted_price
+                seat_price = discounted_price
 
             actual_total_price += seat_price
             processed_seats_data.append({
@@ -396,6 +399,7 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
                 'price': seat_price,
                 'age': age,
                 'basa_discount_amount': basa_discount_amount,
+                'discount_code_amount': seat_discount_code_amount,
             })
 
         discount_amount = pre_code_discount_total - actual_total_price
@@ -498,6 +502,7 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             seat_price = seat_data['price']
             seat_age = seat_data['age']
             seat_basa_discount = seat_data['basa_discount_amount']
+            seat_discount_code_amount = seat_data['discount_code_amount']
 
             if user.user_type != 'vip':
                 if national_code in processed_national_codes:
@@ -519,6 +524,8 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
                 full_name=full_name, national_code=national_code, status='paid',
                 is_admin_assigned=False, order=order, price=seat_price, age=seat_age,
                 basa_discount_amount=seat_basa_discount,
+                discount_code=discount_obj if seat_discount_code_amount > 0 else None,
+                discount_code_amount=seat_discount_code_amount,
             )
             tickets_created.append(ticket)
 

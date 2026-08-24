@@ -895,8 +895,11 @@ def ticket_info(request, match_id):
             # قیمت ثبت‌شده‌ی خودِ بلیط هنوز قیمت کامل را نشان می‌داد) و جمع
             # قیمت بلیط‌ها که برای «درآمد کل» در گزارش مالی استفاده می‌شود، از
             # مبلغ واقعاً دریافتی بیشتر می‌شد. =====
+            ticket_discount_code_amount = 0
             if seat_price and discount_percent > 0:
-                seat_price = seat_price - int(seat_price * discount_percent / 100)
+                discounted_price = seat_price - int(seat_price * discount_percent / 100)
+                ticket_discount_code_amount = seat_price - discounted_price
+                seat_price = discounted_price
 
             actual_total_price += seat_price
             processed_tickets_data.append({
@@ -906,6 +909,7 @@ def ticket_info(request, match_id):
                 'price': seat_price,
                 'age': age,
                 'basa_discount_amount': basa_discount_amount,
+                'discount_code_amount': ticket_discount_code_amount,
             })
 
         if not processed_tickets_data:
@@ -995,6 +999,8 @@ def ticket_info(request, match_id):
                         price=ticket_data['price'],  # ذخیره قیمت نهایی (0 برای زیر 15 سال)
                         age=ticket_data['age'],
                         basa_discount_amount=ticket_data['basa_discount_amount'],
+                        discount_code=discount_obj if ticket_data['discount_code_amount'] > 0 else None,
+                        discount_code_amount=ticket_data['discount_code_amount'],
                     )
                     tickets.append(ticket)
 

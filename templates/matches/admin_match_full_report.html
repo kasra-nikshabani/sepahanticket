@@ -109,10 +109,11 @@
             <div class="kpi-box"><div class="num">{{ full_price_count }}</div><div class="lbl">بلیط قیمت کامل ({{ full_price_revenue|rial_display }} ریال)</div></div>
             <div class="kpi-box"><div class="num">{{ basa_discount_count }}</div><div class="lbl">بلیط باسا ({{ basa_revenue|rial_display }} ریال دریافتی)</div></div>
             <div class="kpi-box"><div class="num">{{ free_age_count }}</div><div class="lbl">بلیط رایگان (زیر ۱۵ سال)</div></div>
+            <div class="kpi-box"><div class="num">{{ discount_code_count }}</div><div class="lbl">بلیط تخفیف ویژه ({{ discount_code_total_paid|rial_display }} ریال دریافتی)</div></div>
         </div>
         <div class="note-box">
-            درآمد کل = بلیط قیمت کامل + بلیط باسا (بعد از تخفیف) + ۰ (رایگان) = {{ full_price_revenue|rial_display }} + {{ basa_revenue|rial_display }} + ۰ = {{ total_revenue|rial_display }} ریال.
-            مبلغ تخفیف باسا داده‌شده (نه دریافتی): {{ basa_discount_total|rial_display }} ریال.
+            درآمد کل = بلیط قیمت کامل + بلیط باسا (بعد از تخفیف) + بلیط تخفیف ویژه (بعد از تخفیف) + ۰ (رایگان) = {{ full_price_revenue|rial_display }} + {{ basa_revenue|rial_display }} + {{ discount_code_total_paid|rial_display }} + ۰ = {{ total_revenue|rial_display }} ریال.
+            مبلغ تخفیف باسا داده‌شده (نه دریافتی): {{ basa_discount_total|rial_display }} ریال — مبلغ تخفیفِ کد داده‌شده: {{ discount_code_total_given|rial_display }} ریال.
         </div>
     </div>
 
@@ -235,6 +236,13 @@
                         <td>{{ admin_issued_not_used_count }}</td>
                         <td>{{ admin_issued_used_percent }}٪</td>
                     </tr>
+                    <tr>
+                        <td>تخفیف ویژه (با کد تخفیف)</td>
+                        <td>{{ discount_code_count }}</td>
+                        <td>{{ discount_code_used_count }}</td>
+                        <td>{{ discount_code_not_used_count }}</td>
+                        <td>{{ discount_code_used_percent }}٪</td>
+                    </tr>
                     <tr style="font-weight:700;">
                         <td>جمع کل</td>
                         <td>{{ total_issued_tickets }}</td>
@@ -246,7 +254,7 @@
             </table>
         </div>
         <div class="note-box">
-            هر بلیطی که اسکن نشده باشد، یعنی صاحبش به ورزشگاه نیامده — «حاضر نشدند» دقیقاً همان تعداد «چک‌نشده» است، چه برای بلیط خریداری‌شده چه برای بلیط ویژه.
+            هر بلیطی که اسکن نشده باشد، یعنی صاحبش به ورزشگاه نیامده — «حاضر نشدند» دقیقاً همان تعداد «چک‌نشده» است، چه برای بلیط خریداری‌شده چه برای بلیط ویژه. «تخفیف ویژه» بلیط‌هایی هستند که با یک کد تخفیف خریداری شده‌اند -- جدا از «خریداری‌شده»ی عادی و «رایگان زیر ۱۵ سال» شمرده می‌شوند.
         </div>
         <div style="max-width:600px; margin:20px auto 0;">
             <canvas id="attendanceChart"></canvas>
@@ -329,16 +337,16 @@ document.addEventListener('DOMContentLoaded', function () {
     new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['خریداری‌شده', 'سهمیه VIP', 'صادرشده دستی ادمین', 'جمع کل'],
+            labels: ['خریداری‌شده', 'سهمیه VIP', 'صادرشده دستی ادمین', 'تخفیف ویژه', 'جمع کل'],
             datasets: [
                 {
                     label: 'حاضر شدند',
-                    data: [{{ sold_used_count }}, {{ vip_quota_used_count }}, {{ admin_issued_used_count }}, {{ used_tickets }}],
+                    data: [{{ sold_used_count }}, {{ vip_quota_used_count }}, {{ admin_issued_used_count }}, {{ discount_code_used_count }}, {{ used_tickets }}],
                     backgroundColor: '#1E8E3E',
                 },
                 {
                     label: 'حاضر نشدند',
-                    data: [{{ sold_not_used_count }}, {{ vip_quota_not_used_count }}, {{ admin_issued_not_used_count }}, {{ not_used_tickets }}],
+                    data: [{{ sold_not_used_count }}, {{ vip_quota_not_used_count }}, {{ admin_issued_not_used_count }}, {{ discount_code_not_used_count }}, {{ not_used_tickets }}],
                     backgroundColor: '#D93025',
                 },
             ],

@@ -68,6 +68,17 @@ class Ticket(models.Model):
     # تعلق گرفته -- صفر یعنی این بلیط تخفیف باسا نخورده. برای گزارش‌گیری
     # (چند تا بلیط رایگان/سن زیر ۱۵، چند تا تخفیف باسا) لازم است.
     basa_discount_amount = models.PositiveIntegerField(default=0, verbose_name="مبلغ تخفیف باسا (ریال)")
+    # اگر قیمت همین بلیط با یک کد تخفیف (DiscountCode) کم شده باشد، این دو
+    # فیلد پر می‌شوند -- درست مثل basa_discount_amount بالا، اما مخصوص کد
+    # تخفیف. بدون این، امکان نداشت در گزارش تشخیص داد کدام بلیطِ status='paid'
+    # واقعاً «خرید عادی» بوده و کدام با کد تخفیف (و در نتیجه باید توی یک
+    # دسته‌ی جدا از «فروخته‌شده»/«رایگان زیر ۱۵» شمرده شود؛ چون هر دو حالت
+    # می‌توانند price=0 داشته باشند و از هم غیرقابل‌تشخیص بودند).
+    discount_code = models.ForeignKey(
+        'DiscountCode', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='tickets', verbose_name="کد تخفیف اعمال‌شده",
+    )
+    discount_code_amount = models.PositiveIntegerField(default=0, verbose_name="مبلغ تخفیفِ کد (ریال)")
 
     # ===== وضعیت و زمان =====
     status = models.CharField(max_length=20, choices=TICKET_STATUS, default='paid')

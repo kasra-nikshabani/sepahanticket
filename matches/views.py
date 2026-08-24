@@ -1249,14 +1249,6 @@ def _compute_match_report_stats(match):
         match=match, payment_status='paid'
     ).aggregate(s=Sum('wallet_amount'))['s'] or 0
 
-    discount_code_orders = Order.objects.filter(match=match, payment_status='paid').exclude(discount_code='')
-    discount_code_stats = discount_code_orders.aggregate(
-        usage_count=Count('id'), total_paid=Sum('total_amount'), total_given=Sum('discount_amount')
-    )
-    discount_code_usage_count = discount_code_stats['usage_count'] or 0
-    discount_code_total_paid = discount_code_stats['total_paid'] or 0
-    discount_code_total_given = discount_code_stats['total_given'] or 0
-
     # ===== بلیط‌های صادرشده توسط ادمین (سهمیه‌ی VIP در برابر «صدور دستی») =====
     # status='admin_assigned'/'vip_issued' هر دو زیرِ یک user ثبت می‌شن؛ برای
     # VIP quota (bulk_issue_tickets/vip_issue_*) آن user خودِ کاربر VIP
@@ -1271,6 +1263,13 @@ def _compute_match_report_stats(match):
     )
 
     sold_tickets_qs = Ticket.objects.filter(match=match, status='paid').order_by('-purchase_date')
+    # ===== بلیط‌هایی که با یک کد تخفیف (DiscountCode) خریداری شدن -- اینها هم
+    # status='paid' هستن (چون واقعاً خریداری‌شدن) ولی چون قیمتشون با کد کم
+    # شده (گاهی حتی صفر، برای کد ۱۰۰٪) باید در یک دسته‌ی جدا و مجزا از
+    # «فروخته‌شده»ی عادی و از «رایگان زیر ۱۵ سال» شمرده بشن -- وگرنه هم توی
+    # بلیط فروخته‌شده و هم (اگر قیمت صفر شده باشه) اشتباهی توی رایگان زیر ۱۵
+    # حساب می‌شدن، در حالی که این دو مقوله‌ی کاملاً متفاوتن. =====
+    organic_sold_qs = sold_tickets_qs.filter(discount_code__isnull=True)
     vip_tickets_qs = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued']).order_by(
         '-purchase_date')
     vip_quota_tickets_qs = vip_tickets_qs.exclude(user__is_staff=True)
@@ -1305,20 +1304,42 @@ def _compute_match_report_stats(match):
     sold_total = sum(t.price or 0 for t in sold_tickets_qs)
     vip_total = sum(t.price or 0 for t in vip_tickets_qs)
 
+    # ===== توجه: هر ۴ دسته‌ی زیر (قیمت کامل/باسا/رایگان‌زیر۱۵/تخفیف‌ویژه)
+    # با هم کاملاً مانع‌الجمع (mutually exclusive) و جمعشون برابرِ
+    # sold_tickets_qs.count() هست -- یعنی هر بلیطِ خریداری‌شده دقیقاً توی
+    # یکی از این ۴ دسته می‌افته، نه بیشتر. =====
     category_stats = sold_tickets_qs.aggregate(
-        free_age_count=Count('id', filter=Q(price=0)),
-        free_age_used_count=Count('id', filter=Q(price=0) & Q(is_used=True)),
-        basa_discount_count=Count('id', filter=Q(basa_discount_amount__gt=0)),
-        basa_discount_total=Sum('basa_discount_amount', filter=Q(basa_discount_amount__gt=0)),
-        basa_revenue=Sum('price', filter=Q(basa_discount_amount__gt=0)),
-        full_price_count=Count('id', filter=~Q(price=0) & Q(basa_discount_amount=0)),
-        full_price_revenue=Sum('price', filter=~Q(price=0) & Q(basa_discount_amount=0)),
+        free_age_count=Count('id', filter=Q(price=0) & Q(discount_code__isnull=True)),
+        free_age_used_count=Count('id', filter=Q(price=0) & Q(discount_code__isnull=True) & Q(is_used=True)),
+        basa_discount_count=Count('id', filter=Q(basa_discount_amount__gt=0) & Q(discount_code__isnull=True)),
+        basa_discount_total=Sum('basa_discount_amount', filter=Q(basa_discount_amount__gt=0) & Q(discount_code__isnull=True)),
+        basa_revenue=Sum('price', filter=Q(basa_discount_amount__gt=0) & Q(discount_code__isnull=True)),
+        full_price_count=Count('id', filter=~Q(price=0) & Q(basa_discount_amount=0) & Q(discount_code__isnull=True)),
+        full_price_revenue=Sum('price', filter=~Q(price=0) & Q(basa_discount_amount=0) & Q(discount_code__isnull=True)),
+        discount_code_count=Count('id', filter=Q(discount_code__isnull=False)),
+        discount_code_used_count=Count('id', filter=Q(discount_code__isnull=False) & Q(is_used=True)),
+        discount_code_revenue=Sum('price', filter=Q(discount_code__isnull=False)),
+        discount_code_amount_given=Sum('discount_code_amount', filter=Q(discount_code__isnull=False)),
     )
     free_age_not_used_count = category_stats['free_age_count'] - category_stats['free_age_used_count']
     free_age_used_percent = round(
         (category_stats['free_age_used_count'] / category_stats['free_age_count'] * 100)
         if category_stats['free_age_count'] > 0 else 0, 1
     )
+
+    # ===== باکس مجزا برای بلیط‌هایی که با کد تخفیف خریداری شدن («تخفیف
+    # ویژه») -- دیگه نه جزو «فروخته‌شده»ی عادی حساب می‌شن نه جزو «رایگان
+    # زیر ۱۵ سال»، چون این‌ها مفهوماً کاملاً فرق دارن. =====
+    discount_code_count = category_stats['discount_code_count']
+    discount_code_used_count = category_stats['discount_code_used_count']
+    discount_code_not_used_count = discount_code_count - discount_code_used_count
+    discount_code_used_percent = round(
+        (discount_code_used_count / discount_code_count * 100) if discount_code_count > 0 else 0, 1
+    )
+    discount_code_not_used_percent = round(100 - discount_code_used_percent, 1) if discount_code_count > 0 else 0
+    discount_code_usage_count = discount_code_count
+    discount_code_total_paid = category_stats['discount_code_revenue'] or 0
+    discount_code_total_given = category_stats['discount_code_amount_given'] or 0
 
     used_tickets = Ticket.objects.filter(match=match, is_used=True).count()
     not_used_tickets = Ticket.objects.filter(match=match, is_used=False,
@@ -1328,10 +1349,10 @@ def _compute_match_report_stats(match):
     # ===== حضور واقعی «بلیط خریداری‌شده» (status='paid') به‌تنهایی -- جدا از
     # حضور بلیط‌های ویژه/سهمیه، چون کاربر می‌خواد این دو گروه رو مستقل از هم
     # مقایسه کنه: چندنفر از خریدارها اومدن، چندنفر از سهمیه‌ی VIP اومدن. =====
-    sold_used_count = sold_tickets_qs.filter(is_used=True).count()
-    sold_not_used_count = sold_tickets_qs.count() - sold_used_count
+    sold_used_count = organic_sold_qs.filter(is_used=True).count()
+    sold_not_used_count = organic_sold_qs.count() - sold_used_count
     sold_used_percent = round(
-        (sold_used_count / sold_tickets_qs.count() * 100) if sold_tickets_qs.count() > 0 else 0, 1
+        (sold_used_count / organic_sold_qs.count() * 100) if organic_sold_qs.count() > 0 else 0, 1
     )
     attendance_percent = round((used_tickets / total_issued_tickets * 100) if total_issued_tickets > 0 else 0, 1)
 
@@ -1400,7 +1421,7 @@ def _compute_match_report_stats(match):
     # ===== درصدهای مکملِ «حاضر نشدند»، برای نمودارهای میله‌ای CSS در PDF
     # (WeasyPrint جاوااسکریپت اجرا نمی‌کند، پس Chart.js کار نمی‌کند؛ به‌جاش
     # عرض دو تکه از یک نوار را از روی همین درصدها با CSS تعیین می‌کنیم). =====
-    sold_not_used_percent = round(100 - sold_used_percent, 1) if sold_tickets_qs.count() > 0 else 0
+    sold_not_used_percent = round(100 - sold_used_percent, 1) if organic_sold_qs.count() > 0 else 0
     vip_quota_not_used_percent = round(100 - vip_quota_used_percent, 1) if vip_quota_count > 0 else 0
     admin_issued_not_used_percent = round(100 - admin_issued_used_percent, 1) if admin_issued_count > 0 else 0
     attendance_not_used_percent = round(100 - attendance_percent, 1) if total_issued_tickets > 0 else 0
@@ -1409,7 +1430,8 @@ def _compute_match_report_stats(match):
     return {
         'sold_tickets_qs': sold_tickets_qs, 'vip_tickets_qs': vip_tickets_qs,
         'sold_total': sold_total, 'vip_total': vip_total, 'total_revenue': sold_total,
-        'sold_count': sold_tickets_qs.count(), 'vip_count': vip_tickets_qs.count(),
+        'sold_count': organic_sold_qs.count(), 'vip_count': vip_tickets_qs.count(),
+        'total_paid_tickets_count': sold_tickets_qs.count(),
         'total_tickets': sold_tickets_qs.count() + vip_tickets_qs.count(),
         'total_match_seats': total_match_seats, 'occupied': occupied, 'available': available,
         'occupancy_percent': occupancy_percent, 'blocks_data': blocks_data,
@@ -1438,6 +1460,11 @@ def _compute_match_report_stats(match):
         'discount_code_usage_count': discount_code_usage_count,
         'discount_code_total_paid': discount_code_total_paid,
         'discount_code_total_given': discount_code_total_given,
+        'discount_code_count': discount_code_count,
+        'discount_code_used_count': discount_code_used_count,
+        'discount_code_not_used_count': discount_code_not_used_count,
+        'discount_code_used_percent': discount_code_used_percent,
+        'discount_code_not_used_percent': discount_code_not_used_percent,
         'admin_issued_count': admin_issued_count,
         'admin_issued_used_count': admin_issued_used_count,
         'vip_quota_count': vip_quota_count,
@@ -1538,6 +1565,7 @@ def admin_match_full_report_excel(request, match_id):
         ('درآمد باسا دریافتی (ریال)', stats['basa_revenue']),
         ('مبلغ تخفیف باسا داده‌شده (ریال)', stats['basa_discount_total']),
         ('بلیط رایگان (زیر ۱۵ سال)', stats['free_age_count']),
+        ('بلیط تخفیف ویژه (با کد تخفیف)', stats['discount_code_count']),
         ('پرداخت‌شده از کیف پول (ریال)', stats['wallet_paid_total']),
         ('تعداد استفاده از کد تخفیف', stats['discount_code_usage_count']),
         ('پرداختی با کد تخفیف (ریال)', stats['discount_code_total_paid']),
@@ -1570,6 +1598,10 @@ def admin_match_full_report_excel(request, match_id):
     ws_vip.append([
         'صادرشده‌ی دستی توسط ادمین', stats['admin_issued_count'], stats['admin_issued_used_count'],
         stats['admin_issued_not_used_count'], f"{stats['admin_issued_used_percent']}٪",
+    ])
+    ws_vip.append([
+        'تخفیف ویژه (با کد تخفیف)', stats['discount_code_count'], stats['discount_code_used_count'],
+        stats['discount_code_not_used_count'], f"{stats['discount_code_used_percent']}٪",
     ])
     ws_vip.append([
         'جمع کل', stats['total_issued_tickets'], stats['used_tickets'],
