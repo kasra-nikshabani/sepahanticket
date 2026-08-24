@@ -1578,7 +1578,23 @@ def admin_match_full_report_excel(request, match_id):
     ws.column_dimensions['A'].width = 34
     ws.column_dimensions['B'].width = 20
 
-    # ===== شیت ۲: مقایسه‌ی حضور -- خریداری‌شده در برابر ویژه (دقیقاً همون
+    # ===== شیت ۲: تعداد کل بلیط‌های صادرشده (تفکیک کامل همه‌ی دسته‌ها) =====
+    ws_total = wb.create_sheet("تفکیک کل بلیط‌ها")
+    ws_total.append(['دسته', 'تعداد'])
+    style_header_row(ws_total)
+    ws_total.append(['بلیط قیمت کامل', stats['full_price_count']])
+    ws_total.append(['بلیط باسا', stats['basa_discount_count']])
+    ws_total.append(['بلیط رایگان (زیر ۱۵ سال)', stats['free_age_count']])
+    ws_total.append(['تخفیف ویژه (با کد تخفیف)', stats['discount_code_count']])
+    ws_total.append(['سهمیه‌ی کاربران ویژه (VIP)', stats['vip_quota_count']])
+    ws_total.append(['صادرشده‌ی دستی توسط ادمین', stats['admin_issued_count']])
+    ws_total.append(['جمع کل بلیط‌های صادرشده', stats['total_tickets']])
+    for cell in ws_total[ws_total.max_row]:
+        cell.font = header_font
+    ws_total.column_dimensions['A'].width = 34
+    ws_total.column_dimensions['B'].width = 20
+
+    # ===== شیت ۳: مقایسه‌ی حضور -- خریداری‌شده در برابر ویژه (دقیقاً همون
     # چیزی که خواسته شده: چندنفر از خریدارها اومدن، چندنفر از سهمیه‌ی VIP) =====
     ws_vip = wb.create_sheet("مقایسه حضور")
     ws_vip.append(['دسته', 'تعداد', 'حاضر شدند', 'حاضر نشدند', 'نرخ حضور'])
@@ -1612,7 +1628,7 @@ def admin_match_full_report_excel(request, match_id):
     for col in ['A', 'B', 'C', 'D', 'E']:
         ws_vip.column_dimensions[col].width = 30
 
-    # ===== شیت ۳: حضور از هر گیت (دقیقاً همون چیزی که خواسته شده) =====
+    # ===== شیت ۴: حضور از هر گیت (دقیقاً همون چیزی که خواسته شده) =====
     ws2 = wb.create_sheet("حضور از هر گیت")
     ws2.append(['گیت / جایگاه', 'بلیط صادرشده', 'عبور کرده از گیت (اسکن‌شده)', 'عبورنکرده', 'نرخ حضور'])
     style_header_row(ws2)
@@ -1629,7 +1645,7 @@ def admin_match_full_report_excel(request, match_id):
     for col in ['A', 'B', 'C', 'D', 'E']:
         ws2.column_dimensions[col].width = 24
 
-    # ===== شیت ۴: کاربران ویژه (VIP) -- به ازای هر کاربر، چند بلیط براش صادر
+    # ===== شیت ۵: کاربران ویژه (VIP) -- به ازای هر کاربر، چند بلیط براش صادر
     # شده و چندتاش از گیت عبور کرده =====
     ws_vipusers = wb.create_sheet("کاربران ویژه")
     ws_vipusers.append(['نام و نام خانوادگی', 'شماره تماس', 'تعداد بلیط صادرشده', 'عبور کرده از گیت', 'عبورنکرده', 'نرخ حضور'])
@@ -1649,7 +1665,7 @@ def admin_match_full_report_excel(request, match_id):
     for col in ['A', 'B', 'C', 'D', 'E', 'F']:
         ws_vipusers.column_dimensions[col].width = 26
 
-    # ===== شیت ۵: تفکیک بلوک‌ها =====
+    # ===== شیت ۶: تفکیک بلوک‌ها =====
     ws3 = wb.create_sheet("تفکیک بلوک‌ها")
     ws3.append(['بلوک', 'وضعیت', 'ظرفیت', 'فروخته‌شده', 'خالی', 'درصد اشغال', 'عبور کرده از گیت', 'درآمد (ریال)'])
     style_header_row(ws3)

@@ -91,6 +91,50 @@
         </div>
     </div>
 
+    <!-- ===== تعداد کل بلیط‌های صادرشده (تفکیک کامل) ===== -->
+    <div class="report-section">
+        <h4><i class="fas fa-ticket-alt"></i> تعداد کل بلیط‌های صادرشده (تفکیک کامل)</h4>
+        <div style="overflow-x:auto;">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>دسته</th><th>تعداد</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>بلیط قیمت کامل</td>
+                        <td>{{ full_price_count }}</td>
+                    </tr>
+                    <tr>
+                        <td>بلیط باسا</td>
+                        <td>{{ basa_discount_count }}</td>
+                    </tr>
+                    <tr>
+                        <td>بلیط رایگان (زیر ۱۵ سال)</td>
+                        <td>{{ free_age_count }}</td>
+                    </tr>
+                    <tr>
+                        <td>تخفیف ویژه (با کد تخفیف)</td>
+                        <td>{{ discount_code_count }}</td>
+                    </tr>
+                    <tr>
+                        <td>سهمیه‌ی کاربران ویژه (VIP)</td>
+                        <td>{{ vip_quota_count }}</td>
+                    </tr>
+                    <tr>
+                        <td>صادرشده‌ی دستی توسط ادمین</td>
+                        <td>{{ admin_issued_count }}</td>
+                    </tr>
+                    <tr style="font-weight:700; background:#fdf6e3;">
+                        <td>جمع کل بلیط‌های صادرشده</td>
+                        <td>{{ total_tickets }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <!-- ===== حضور واقعی دم گیت ===== -->
     <div class="report-section">
         <h4><i class="fas fa-door-open"></i> حضور واقعی دم گیت (اسکن بلیط)</h4>

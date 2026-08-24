@@ -164,6 +164,22 @@
     </div>
 
     <div class="section">
+        <h2>تعداد کل بلیط‌های صادرشده (تفکیک کامل)</h2>
+        <table>
+            <thead><tr><th>دسته</th><th>تعداد</th></tr></thead>
+            <tbody>
+            <tr><td>بلیط قیمت کامل</td><td>{{ full_price_count }}</td></tr>
+            <tr><td>بلیط باسا</td><td>{{ basa_discount_count }}</td></tr>
+            <tr><td>بلیط رایگان (زیر ۱۵ سال)</td><td>{{ free_age_count }}</td></tr>
+            <tr><td>تخفیف ویژه (با کد تخفیف)</td><td>{{ discount_code_count }}</td></tr>
+            <tr><td>سهمیه‌ی کاربران ویژه (VIP)</td><td>{{ vip_quota_count }}</td></tr>
+            <tr><td>صادرشده‌ی دستی توسط ادمین</td><td>{{ admin_issued_count }}</td></tr>
+            <tr class="total-row"><td>جمع کل بلیط‌های صادرشده</td><td>{{ total_tickets }}</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
         <h2>تفکیک درآمد</h2>
         <table>
             <thead><tr><th>دسته</th><th>تعداد</th><th>مبلغ (ریال)</th></tr></thead>
