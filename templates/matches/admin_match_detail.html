@@ -789,6 +789,61 @@
         </div>
 
         <!-- ============================================================
+    بخش تعداد کل بلیط‌های صادرشده (تفکیک کامل همه‌ی دسته‌ها)
+    ============================================================ -->
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-ticket-alt"></i>
+                    تعداد کل بلیط‌های صادرشده (تفکیک کامل)
+                </h5>
+                <span class="badge bg-light text-dark">{{ total_tickets }} بلیط</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover text-center align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>دسته</th>
+                                <th>تعداد</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>بلیط قیمت کامل</td>
+                                <td>{{ full_price_count }}</td>
+                            </tr>
+                            <tr>
+                                <td>بلیط باسا</td>
+                                <td>{{ basa_discount_count }}</td>
+                            </tr>
+                            <tr>
+                                <td>بلیط رایگان (زیر ۱۵ سال)</td>
+                                <td>{{ free_age_count }}</td>
+                            </tr>
+                            <tr>
+                                <td>تخفیف ویژه (با کد تخفیف)</td>
+                                <td>{{ discount_code_count }}</td>
+                            </tr>
+                            <tr>
+                                <td>سهمیه‌ی کاربران ویژه (VIP)</td>
+                                <td>{{ vip_quota_count }}</td>
+                            </tr>
+                            <tr>
+                                <td>صادرشده‌ی دستی توسط ادمین</td>
+                                <td>{{ admin_issued_count }}</td>
+                            </tr>
+                            <tr class="table-warning">
+                                <td><strong>جمع کل بلیط‌های صادرشده</strong></td>
+                                <td><strong>{{ total_tickets }}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
     بخش کدهای تخفیف کاربران ویژه (این مسابقه)
     ============================================================ -->
         <div class="card shadow-sm mt-4">
