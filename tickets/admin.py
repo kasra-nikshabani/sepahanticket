@@ -89,10 +89,15 @@ class VIPQuotaAdmin(admin.ModelAdmin):
 
 @admin.register(DiscountCode)
 class DiscountCodeAdmin(admin.ModelAdmin):
-    list_display = ('code', 'block', 'discount_percent', 'used_count', 'max_uses', 'is_active', 'expires_at')
-    list_filter = ('is_active', 'block')
-    search_fields = ('code',)
+    list_display = (
+        'code', 'vip_owner', 'match', 'block', 'discount_percent',
+        'used_count', 'max_uses', 'is_active', 'expires_at',
+    )
+    list_filter = ('is_active', 'vip_owner', 'match', 'block')
+    search_fields = ('code', 'vip_owner__username', 'vip_owner__first_name', 'vip_owner__last_name')
     readonly_fields = ('used_count', 'created_at')
+    raw_id_fields = ('match',)
+    list_select_related = ('vip_owner', 'match', 'block')
 
     def save_model(self, request, obj, form, change):
         if not obj.code:
