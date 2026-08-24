@@ -49,6 +49,7 @@
                         <thead>
                         <tr>
                             <th>کد</th>
+                            <th>کاربر ویژه</th>
                             <th>درصد تخفیف</th>
                             <th>مسابقه</th>
                             <th>بلوک</th>
@@ -62,11 +63,18 @@
                         {% for discount in discounts %}
                             <tr>
                                 <td><strong>{{ discount.code }}</strong></td>
+                                <td>
+                                    {% if discount.vip_owner %}
+                                        <span class="badge bg-warning text-dark"><i class="fas fa-star"></i> {{ discount.vip_owner.get_full_name|default:discount.vip_owner.username }}</span>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
                                 <td>{{ discount.discount_percent }}%</td>
-                                <td>{{ discount.match }}</td>
+                                <td>{{ discount.match|default:"همه مسابقات" }}</td>
                                 <td>{{ discount.block|default:"همه" }}</td>
                                 <td>{{ discount.used_count }}</td>
-                                <td>{{ discount.max_usage|default:"نامحدود" }}</td>
+                                <td>{{ discount.max_uses|default:"نامحدود" }}</td>
                                 <td>
                                     {% if discount.is_active %}
                                         <span class="badge bg-success">فعال</span>
@@ -91,7 +99,7 @@
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="8" class="text-center">هیچ کد تخفیفی وجود ندارد.</td>
+                                <td colspan="9" class="text-center">هیچ کد تخفیفی وجود ندارد.</td>
                             </tr>
                         {% endfor %}
                         </tbody>

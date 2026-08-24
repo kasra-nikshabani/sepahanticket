@@ -79,9 +79,10 @@ class VIPQuotaForm(forms.ModelForm):
 class DiscountCodeForm(forms.ModelForm):
     class Meta:
         model = DiscountCode
-        fields = ['code', 'match', 'block', 'discount_percent', 'max_uses', 'is_active', 'expires_at']
+        fields = ['code', 'vip_owner', 'match', 'block', 'discount_percent', 'max_uses', 'is_active', 'expires_at']
         widgets = {
             'code': forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr', 'placeholder': 'SUMMER20'}),
+            'vip_owner': forms.Select(attrs={'class': 'form-select'}),
             'match': forms.Select(attrs={'class': 'form-select', 'id': 'id_match'}),
             'block': forms.Select(attrs={'class': 'form-select', 'id': 'id_block'}),
             'discount_percent': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 100}),
@@ -91,6 +92,7 @@ class DiscountCodeForm(forms.ModelForm):
         }
         labels = {
             'code': 'کد تخفیف',
+            'vip_owner': 'کاربر ویژه (اختیاری)',
             'match': 'مسابقه',
             'block': 'بلوک (اختیاری)',
             'discount_percent': 'درصد تخفیف',
@@ -106,6 +108,10 @@ class DiscountCodeForm(forms.ModelForm):
         self.fields['block'].queryset = Block.objects.filter(is_active=True)
         self.fields['block'].required = False
         self.fields['expires_at'].required = False
+        # فقط کاربران ویژه قابل انتخاب باشند -- این کد تخفیف صاحبی جز
+        # کاربر ویژه نمی‌تونه داشته باشه
+        self.fields['vip_owner'].queryset = User.objects.filter(user_type='vip').order_by('username')
+        self.fields['vip_owner'].required = False
 
         # اگر مسابقه‌ای وجود نداشت، پیام مناسب نمایش بده
         if not self.fields['match'].queryset.exists():

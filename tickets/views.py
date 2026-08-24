@@ -1858,7 +1858,7 @@ from django.views.decorators.cache import never_cache
 @staff_member_required
 @never_cache
 def admin_discount_list(request):
-    discounts = DiscountCode.objects.select_related('match', 'block').all().order_by('-created_at')
+    discounts = DiscountCode.objects.select_related('match', 'block', 'vip_owner').all().order_by('-created_at')
     active_count = discounts.filter(is_active=True).count()
     total_uses = discounts.aggregate(total=Sum('used_count'))['total'] or 0
     avg_discount = discounts.aggregate(avg=Avg('discount_percent'))['avg'] or 0
