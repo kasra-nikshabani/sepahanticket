@@ -484,6 +484,104 @@
             {% endif %}
         </div>
     </div>
+
+    <!-- ===== کدهای تخفیف کاربر ویژه ===== -->
+    <div class="card-custom mt-4">
+        <div class="card-header-custom">
+            <h4><i class="fas fa-percentage"></i> کدهای تخفیف {{ target_user.get_full_name|default:target_user.username }}</h4>
+            <span class="ticket-count"><i class="fas fa-list"></i> {{ vip_discount_codes|length }} کد</span>
+        </div>
+        <div class="card-body-custom">
+            <div class="filter-section" style="align-items:flex-end;">
+                <form method="post" style="flex:1; display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="create_discount_code">
+                    <div style="min-width:180px;">
+                        <label class="filter-label" style="display:block; margin-bottom:4px;">مسابقه</label>
+                        <select name="discount_match_id" required style="width:100%; padding:8px 14px; border-radius:8px; border:1.5px solid #e8eaed;">
+                            <option value="">— انتخاب کنید —</option>
+                            {% for m in matches %}
+                                <option value="{{ m.id }}" {% if selected_match_id == m.id %}selected{% endif %}>
+                                    {{ m.home_team }} vs {{ m.away_team }} ({{ m.date_time|date:"Y/m/d" }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div style="min-width:140px;">
+                        <label class="filter-label" style="display:block; margin-bottom:4px;">کد تخفیف</label>
+                        <input type="text" name="code" required maxlength="20" dir="ltr" placeholder="مثلاً VIP2010"
+                               style="width:100%; padding:8px 14px; border-radius:8px; border:1.5px solid #e8eaed;">
+                    </div>
+                    <div style="width:120px;">
+                        <label class="filter-label" style="display:block; margin-bottom:4px;">درصد تخفیف</label>
+                        <input type="number" name="discount_percent" required min="0" max="100" placeholder="مثلاً 20"
+                               style="width:100%; padding:8px 14px; border-radius:8px; border:1.5px solid #e8eaed;">
+                    </div>
+                    <div style="width:120px;">
+                        <label class="filter-label" style="display:block; margin-bottom:4px;">تعداد مجاز</label>
+                        <input type="number" name="max_uses" required min="1" placeholder="مثلاً 100"
+                               style="width:100%; padding:8px 14px; border-radius:8px; border:1.5px solid #e8eaed;">
+                    </div>
+                    <button type="submit" class="btn-filter"><i class="fas fa-plus"></i> ساخت کد</button>
+                </form>
+            </div>
+
+            {% if vip_discount_codes %}
+                <div class="table-responsive">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-tag"></i> کد</th>
+                                <th><i class="fas fa-trophy"></i> مسابقه</th>
+                                <th><i class="fas fa-percentage"></i> درصد</th>
+                                <th><i class="fas fa-users"></i> استفاده‌شده / مجاز</th>
+                                <th><i class="fas fa-check-circle"></i> وضعیت</th>
+                                <th><i class="fas fa-cog"></i> عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dc in vip_discount_codes %}
+                                <tr>
+                                    <td><strong dir="ltr">{{ dc.code }}</strong></td>
+                                    <td class="match-cell">
+                                        {% if dc.match %}
+                                            {{ dc.match.home_team }} vs {{ dc.match.away_team }}
+                                            <span class="match-date">{{ dc.match.date_time|date:"Y/m/d" }}</span>
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ dc.discount_percent }}٪</td>
+                                    <td>{{ dc.used_count }} / {{ dc.max_uses }}</td>
+                                    <td>
+                                        <span class="status-badge {% if dc.is_active %}unused{% else %}used{% endif %}">
+                                            {% if dc.is_active %}فعال{% else %}غیرفعال{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                                            <a href="{% url 'tickets:admin_discount_toggle' dc.id %}?next={{ back_url|urlencode }}" class="btn-download" title="{% if dc.is_active %}غیرفعال کن{% else %}فعال کن{% endif %}">
+                                                <i class="fas fa-power-off"></i>
+                                            </a>
+                                            <a href="{% url 'tickets:admin_discount_delete' dc.id %}?next={{ back_url|urlencode }}" class="btn-delete" title="حذف کد">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-percentage"></i>
+                    <h5>هنوز کد تخفیفی ساخته نشده</h5>
+                    <p class="text-muted">با فرم بالا، برای این کاربر ویژه و یک مسابقه‌ی مشخص کد تخفیف بسازید.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
 
 <script>

@@ -1224,7 +1224,26 @@ def _compute_match_report_stats(match):
     و هم admin_match_full_report (گزارش کامل تک‌صفحه‌ای بعد از برگزاری
     مسابقه) استفاده می‌شود، تا منطق محاسبه یک‌جا و هماهنگ بماند.
     """
-    from tickets.models import Order
+    from tickets.models import Order, DiscountCode
+
+    # ===== کدهای تخفیفی که ادمین به کاربران ویژه برای همین مسابقه داده --
+    # چندنفر با کد هرکدوم خرید کردن (used_count روی خودِ DiscountCode). =====
+    vip_discount_codes_data = [
+        {
+            'code': dc.code,
+            'owner_name': (
+                f"{dc.vip_owner.first_name} {dc.vip_owner.last_name}".strip() or dc.vip_owner.username
+            ) if dc.vip_owner else '—',
+            'discount_percent': dc.discount_percent,
+            'max_uses': dc.max_uses,
+            'used_count': dc.used_count,
+            'remaining': dc.max_uses - dc.used_count,
+            'is_active': dc.is_active,
+        }
+        for dc in DiscountCode.objects.filter(match=match, vip_owner__isnull=False)
+            .select_related('vip_owner').order_by('-created_at')
+    ]
+    vip_discount_codes_total_uses = sum(d['used_count'] for d in vip_discount_codes_data)
 
     wallet_paid_total = Order.objects.filter(
         match=match, payment_status='paid'
@@ -1430,6 +1449,8 @@ def _compute_match_report_stats(match):
         'vip_total_not_used_count': vip_quota_not_used_count + admin_issued_not_used_count,
         'vip_total_used_count': vip_quota_used_count + admin_issued_used_count,
         'vip_users_data': vip_users_data,
+        'vip_discount_codes_data': vip_discount_codes_data,
+        'vip_discount_codes_total_uses': vip_discount_codes_total_uses,
     }
 
 

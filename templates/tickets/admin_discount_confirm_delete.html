@@ -28,11 +28,12 @@
                     <p class="text-danger">⚠️ این عمل غیرقابل بازگشت است!</p>
                     <form method="post">
                         {% csrf_token %}
+                        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-danger">
                                 <i class="fas fa-trash"></i> بله، حذف کن
                             </button>
-                            <a href="{% url 'tickets:admin_discount_list' %}" class="btn btn-secondary">
+                            <a href="{% if next %}{{ next }}{% else %}{% url 'tickets:admin_discount_list' %}{% endif %}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-right"></i> لغو و بازگشت
                             </a>
                         </div>

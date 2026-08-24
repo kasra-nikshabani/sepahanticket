@@ -1571,7 +1571,47 @@ def manage_user_tickets(request, user_id):
 
     matches = Match.objects.filter(is_active=True).order_by('-date_time')
 
+    back_url = reverse('tickets:manage_user_tickets', args=[user_id])
+    if match_id:
+        back_url = f'{back_url}?match_id={match_id}'
+
+    def redirect_back():
+        return redirect(back_url)
+
     if request.method == 'POST':
+        if request.POST.get('action') == 'create_discount_code':
+            code = request.POST.get('code', '').strip().upper()
+            discount_match_id = request.POST.get('discount_match_id')
+            try:
+                discount_percent = int(request.POST.get('discount_percent'))
+                max_uses = int(request.POST.get('max_uses'))
+            except (TypeError, ValueError):
+                messages.error(request, 'درصد تخفیف و تعداد باید عدد باشند.')
+                return redirect_back()
+
+            if not code:
+                messages.error(request, 'کد تخفیف را وارد کنید.')
+            elif not discount_match_id:
+                messages.error(request, 'برای ساخت کد تخفیف باید یک مسابقه انتخاب کنید.')
+            elif not (0 <= discount_percent <= 100):
+                messages.error(request, 'درصد تخفیف باید بین ۰ تا ۱۰۰ باشد.')
+            elif max_uses < 1:
+                messages.error(request, 'حداکثر استفاده باید حداقل ۱ باشد.')
+            elif DiscountCode.objects.filter(code=code).exists():
+                messages.error(request, f'کد "{code}" قبلاً استفاده شده. یک کد دیگر انتخاب کنید.')
+            else:
+                discount_match = get_object_or_404(Match, id=discount_match_id)
+                DiscountCode.objects.create(
+                    code=code, match=discount_match, vip_owner=user,
+                    discount_percent=discount_percent, max_uses=max_uses, is_active=True,
+                )
+                messages.success(
+                    request,
+                    f'کد تخفیف "{code}" برای {user.get_full_name() or user.username} '
+                    f'({discount_match.home_team} vs {discount_match.away_team}) ساخته شد.'
+                )
+            return redirect_back()
+
         ticket_id = request.POST.get('ticket_id')
         if ticket_id:
             ticket = get_object_or_404(Ticket, id=ticket_id, user=user)
@@ -1583,13 +1623,14 @@ def manage_user_tickets(request, user_id):
                 if ticket.qr_code: ticket.qr_code.delete(save=False)
                 ticket.delete()
                 messages.success(request, f'✅ بلیط {ticket.ticket_number} با موفقیت حذف شد و صندلی آزاد شد.')
-            return redirect(
-                f'{reverse("tickets:manage_user_tickets", args=[user_id])}?match_id={match_id}' if match_id else reverse(
-                    'tickets:manage_user_tickets', args=[user_id]))
+            return redirect_back()
+
+    vip_discount_codes = DiscountCode.objects.filter(vip_owner=user).select_related('match').order_by('-created_at')
 
     context = {
         'target_user': user, 'tickets': tickets, 'matches': matches,
         'selected_match': selected_match, 'selected_match_id': int(match_id) if match_id else None,
+        'vip_discount_codes': vip_discount_codes, 'back_url': back_url,
     }
     return render(request, 'tickets/manage_user_tickets.html', context)
 
@@ -1865,12 +1906,13 @@ def admin_discount_edit(request, discount_id):
 @staff_member_required
 def admin_discount_delete(request, discount_id):
     discount = get_object_or_404(DiscountCode, id=discount_id)
+    next_url = request.POST.get('next') or request.GET.get('next')
     if request.method == 'POST':
         code = discount.code;
         discount.delete()
         messages.success(request, f'کد تخفیف "{code}" با موفقیت حذف شد.')
-        return redirect('tickets:admin_discount_list')
-    return render(request, 'tickets/admin_discount_confirm_delete.html', {'discount': discount})
+        return redirect(next_url) if next_url else redirect('tickets:admin_discount_list')
+    return render(request, 'tickets/admin_discount_confirm_delete.html', {'discount': discount, 'next': next_url})
 
 
 @staff_member_required
@@ -1880,7 +1922,8 @@ def admin_discount_toggle(request, discount_id):
     discount.save()
     status = 'فعال' if discount.is_active else 'غیرفعال'
     messages.success(request, f'کد تخفیف "{discount.code}" {status} شد.')
-    return redirect('tickets:admin_discount_list')
+    next_url = request.POST.get('next') or request.GET.get('next')
+    return redirect(next_url) if next_url else redirect('tickets:admin_discount_list')
 
 
 @staff_member_required

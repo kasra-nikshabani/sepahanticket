@@ -786,6 +786,59 @@
         </div>
 
         <!-- ============================================================
+    بخش کدهای تخفیف کاربران ویژه (این مسابقه)
+    ============================================================ -->
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-percentage"></i>
+                    کدهای تخفیف کاربران ویژه (این مسابقه)
+                </h5>
+                <span class="badge bg-light text-dark">{{ vip_discount_codes_total_uses }} استفاده از {{ vip_discount_codes_data|length }} کد</span>
+            </div>
+            <div class="card-body">
+                {% if vip_discount_codes_data %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover text-center align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>کد</th>
+                                    <th>کاربر ویژه</th>
+                                    <th>درصد تخفیف</th>
+                                    <th>استفاده‌شده</th>
+                                    <th>باقیمانده</th>
+                                    <th>حداکثر مجاز</th>
+                                    <th>وضعیت</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dc in vip_discount_codes_data %}
+                                <tr>
+                                    <td dir="ltr"><strong>{{ dc.code }}</strong></td>
+                                    <td>{{ dc.owner_name }}</td>
+                                    <td>{{ dc.discount_percent }}٪</td>
+                                    <td><strong>{{ dc.used_count }}</strong></td>
+                                    <td>{{ dc.remaining }}</td>
+                                    <td>{{ dc.max_uses }}</td>
+                                    <td>
+                                        {% if dc.is_active %}
+                                            <span class="badge bg-success">فعال</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">غیرفعال</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">برای این مسابقه هیچ کد تخفیفی به کاربران ویژه داده نشده است.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ============================================================
     بخش بلوک‌های ورزشگاه (نمایش باکسی)
     ============================================================ -->
         <div class="card shadow-sm mt-4">

@@ -276,6 +276,18 @@ class DiscountCode(models.Model):
         null=True, blank=True,
         verbose_name="بلوک (اختیاری)"
     )
+    # اگر این کد برای یک کاربر ویژه‌ی خاص صادر شده (نه یک کد تخفیف عمومی)،
+    # اینجا مشخص می‌شود -- تا بشه توی گزارش مسابقه دید هر کاربر ویژه چند نفر
+    # رو با کدش آورده. SET_NULL نه CASCADE، چون حذف کاربر نباید کد/سابقه‌ی
+    # استفاده‌شده‌ش رو از بین ببره.
+    vip_owner = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='vip_discount_codes',
+        limit_choices_to={'user_type': 'vip'},
+        verbose_name="کاربر ویژه (صاحب کد)",
+    )
     discount_percent = models.IntegerField(
         verbose_name="درصد تخفیف", validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
