@@ -26,6 +26,7 @@ MarkupSafe==3.0.3
 openpyxl==3.1.5
 order==2.1.7
 pillow==12.3.0
+pillow-heif==1.5.0
 psycopg2-binary==2.9.12
 pycparser==3.0
 pydyf==0.12.1
