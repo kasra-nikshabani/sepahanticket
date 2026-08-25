@@ -40,6 +40,30 @@ class MatchForm(forms.ModelForm):
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'ticket_sales_enabled': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+        # چون سایت به‌جای i18n جنگو (که LANGUAGE_CODE روی 'en-us' مونده) با
+        # متن فارسیِ مستقیم کار می‌کنه، پیام‌های پیش‌فرض جنگو (مثل "This field
+        # is required") انگلیسی می‌مونن مگر این‌که اینجا صریحاً فارسی بشن.
+        labels = {
+            'sport_type': 'رشته ورزشی',
+            'home_team': 'تیم میزبان',
+            'away_team': 'تیم میهمان',
+            'home_team_logo': 'لوگوی تیم میزبان',
+            'away_team_logo': 'لوگوی تیم میهمان',
+            'stadium': 'ورزشگاه',
+            'date_time': 'تاریخ و ساعت برگزاری',
+            'is_active': 'فعال',
+            'ticket_sales_enabled': 'فروش بلیط فعال',
+        }
+        error_messages = {
+            'sport_type': {'required': 'رشته ورزشی را انتخاب کنید.'},
+            'home_team': {'required': 'نام تیم میزبان را وارد کنید.'},
+            'away_team': {'required': 'نام تیم میهمان را وارد کنید.'},
+            'stadium': {'required': 'ورزشگاه را انتخاب کنید.'},
+            'date_time': {
+                'required': 'تاریخ و ساعت مسابقه را وارد کنید.',
+                'invalid': 'فرمت تاریخ و ساعت نامعتبر است.',
+            },
+        }
 
 
 from django import forms
