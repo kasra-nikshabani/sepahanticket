@@ -1850,7 +1850,10 @@ def admin_match_create(request):
             messages.success(request, f'مسابقه "{match.home_team} vs {match.away_team}" با موفقیت ایجاد شد.')
             return redirect('matches:admin_match_list')
         else:
-            messages.error(request, 'خطا در فرم. لطفاً دوباره تلاش کنید.')
+            for field, errors in form.errors.items():
+                label = form.fields[field].label if field in form.fields else field
+                for error in errors:
+                    messages.error(request, f'{label}: {error}')
     else:
         form = MatchForm()
 
@@ -1868,7 +1871,10 @@ def admin_match_edit(request, match_id):
             messages.success(request, f'مسابقه "{match.home_team} vs {match.away_team}" با موفقیت ویرایش شد.')
             return redirect('matches:admin_match_list')
         else:
-            messages.error(request, 'خطا در فرم. لطفاً دوباره تلاش کنید.')
+            for field, errors in form.errors.items():
+                label = form.fields[field].label if field in form.fields else field
+                for error in errors:
+                    messages.error(request, f'{label}: {error}')
     else:
         form = MatchForm(instance=match)
 
