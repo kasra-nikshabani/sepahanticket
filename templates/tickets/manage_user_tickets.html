@@ -582,6 +582,84 @@
             {% endif %}
         </div>
     </div>
+
+    <!-- ===== کدهای ویژه‌ی کاربر ویژه (رایگان‌کننده‌ی یک بلیط) ===== -->
+    <div class="card-custom mt-4">
+        <div class="card-header-custom">
+            <h4><i class="fas fa-gift"></i> کدهای ویژه {{ target_user.get_full_name|default:target_user.username }}</h4>
+            <span class="ticket-count"><i class="fas fa-list"></i> {{ special_code_groups|length }} مسابقه</span>
+        </div>
+        <div class="card-body-custom">
+            <div class="filter-section" style="align-items:flex-end;">
+                <form method="post" style="flex:1; display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="create_special_codes">
+                    <div style="min-width:220px;">
+                        <label class="filter-label" style="display:block; margin-bottom:4px;">مسابقه</label>
+                        <select name="special_match_id" required style="width:100%; padding:8px 14px; border-radius:8px; border:1.5px solid #e8eaed;">
+                            <option value="">— انتخاب کنید —</option>
+                            {% for m in matches %}
+                                <option value="{{ m.id }}">{{ m.home_team }} vs {{ m.away_team }} ({{ m.date_time|date:"Y/m/d" }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div style="width:140px;">
+                        <label class="filter-label" style="display:block; margin-bottom:4px;">تعداد</label>
+                        <input type="number" name="quantity" required min="1" max="500" placeholder="مثلاً 50"
+                               style="width:100%; padding:8px 14px; border-radius:8px; border:1.5px solid #e8eaed;">
+                    </div>
+                    <button type="submit" class="btn-filter"><i class="fas fa-magic"></i> تولید کد ویژه</button>
+                </form>
+            </div>
+
+            {% if special_code_groups %}
+                {% for group in special_code_groups %}
+                <details class="special-code-group" {% if forloop.first %}open{% endif %} style="margin-bottom:14px; border:1px solid #e8eaed; border-radius:10px; overflow:hidden;">
+                    <summary style="cursor:pointer; padding:12px 16px; background:#f8f9fa; font-weight:600; display:flex; justify-content:space-between; align-items:center; list-style:none;">
+                        <span>
+                            {{ group.match.home_team }} vs {{ group.match.away_team }}
+                            <span style="color:#6c757d; font-weight:400; font-size:13px;">({{ group.match.date_time|date:"Y/m/d" }})</span>
+                        </span>
+                        <span class="badge-ticket">{{ group.used_count }} / {{ group.codes|length }} استفاده‌شده</span>
+                    </summary>
+                    <div class="table-responsive" style="padding:12px 16px;">
+                        <table class="table-custom">
+                            <thead>
+                                <tr><th>کد</th><th>وضعیت</th><th>بلیط مرتبط</th><th>تاریخ ساخت</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for sc in group.codes %}
+                                <tr>
+                                    <td dir="ltr"><strong>{{ sc.code }}</strong></td>
+                                    <td>
+                                        {% if sc.is_used %}
+                                            <span class="status-badge used">استفاده‌شده</span>
+                                        {% else %}
+                                            <span class="status-badge unused">آزاد</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% with t=sc.tickets.first %}
+                                            {% if t %}{{ t.full_name }}{% else %}—{% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td>{{ sc.created_at|date:"Y/m/d H:i" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-gift"></i>
+                    <h5>هنوز کد ویژه‌ای ساخته نشده</h5>
+                    <p class="text-muted">با فرم بالا، برای این کاربر ویژه و یک مسابقه‌ی مشخص کد ویژه بسازید (مثلاً ۵۰ عدد یکجا).</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
 
 <script>

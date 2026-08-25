@@ -28,7 +28,7 @@ from openpyxl.styles import Font, PatternFill, Alignment
 import pytz
 
 import matches
-from .models import Ticket, VIPQuota, DiscountCode, Order
+from .models import Ticket, VIPQuota, DiscountCode, Order, SpecialCode
 from .forms import BulkTicketForm, VIPQuotaForm, DiscountCodeForm
 from .reservation import SeatReservation
 from matches.models import Match, Seat, Row, MatchSeat, Block, get_block_price_map, get_basa_discount_percent
@@ -826,6 +826,7 @@ def ticket_info(request, match_id):
         basa_national_codes = set()
         if basa_discount_percent > 0:
             basa_national_codes = set(User.objects.filter(is_basa_member=True).values_list('national_code', flat=True))
+        used_special_codes_in_order = set()  # جلوگیری از استفاده‌ی یک کد ویژه برای دو صندلی در همین سفارش
 
         for seat_data in seats_data:
             match_seat_id = seat_data['id']
@@ -901,6 +902,29 @@ def ticket_info(request, match_id):
                 ticket_discount_code_amount = seat_price - discounted_price
                 seat_price = discounted_price
 
+            # ===== کد ویژه -- برخلاف کد تخفیف (که درصدی از کل سفارشه)، اینجا
+            # فقط همین یک بلیط رو کاملاً رایگان می‌کنه، مستقل از بقیه‌ی
+            # بلیط‌های همین سفارش. اولویتش از همه‌چیز بالاتره چون کاربر
+            # صراحتاً همین بلیط رو با این کد رایگان خواسته. =====
+            special_code_input = (request.POST.get(f'special_code_{match_seat_id}') or '').strip().upper()
+            special_code_obj = None
+            if special_code_input:
+                if special_code_input in used_special_codes_in_order:
+                    messages.error(request, f'کد ویژه «{special_code_input}» فقط یک‌بار قابل استفاده است و نمی‌تواند برای دو صندلی وارد شود.')
+                    return render(request, 'tickets/ticket_info.html', context)
+                try:
+                    special_code_obj = SpecialCode.objects.get(code=special_code_input)
+                    valid, msg = special_code_obj.is_valid(match=match)
+                    if not valid:
+                        messages.error(request, f'کد ویژه نامعتبر: {msg}')
+                        return render(request, 'tickets/ticket_info.html', context)
+                except SpecialCode.DoesNotExist:
+                    messages.error(request, 'کد ویژه یافت نشد.')
+                    return render(request, 'tickets/ticket_info.html', context)
+                used_special_codes_in_order.add(special_code_input)
+                seat_price = 0
+                ticket_discount_code_amount = 0
+
             actual_total_price += seat_price
             processed_tickets_data.append({
                 'match_seat_id': match_seat_id,
@@ -910,6 +934,7 @@ def ticket_info(request, match_id):
                 'age': age,
                 'basa_discount_amount': basa_discount_amount,
                 'discount_code_amount': ticket_discount_code_amount,
+                'special_code': special_code_obj,
             })
 
         if not processed_tickets_data:
@@ -947,6 +972,18 @@ def ticket_info(request, match_id):
                     if not valid:
                         messages.error(request, f'کد تخفیف دیگر معتبر نیست: {msg}')
                         return render(request, 'tickets/ticket_info.html', context)
+
+                # ===== قفل و اعتبارسنجی مجدد کدهای ویژه (همون منطق ضدِ race
+                # condition بالا، برای هر کدِ ویژه‌ی استفاده‌شده در این سفارش) =====
+                for ticket_data in processed_tickets_data:
+                    if ticket_data['special_code'] is None:
+                        continue
+                    locked = SpecialCode.objects.select_for_update().get(pk=ticket_data['special_code'].pk)
+                    valid, msg = locked.is_valid(match=match)
+                    if not valid:
+                        messages.error(request, f'کد ویژه دیگر معتبر نیست: {msg}')
+                        return render(request, 'tickets/ticket_info.html', context)
+                    ticket_data['special_code'] = locked
 
                 payment_method = 'free'
                 if wallet_amount_used > 0 and discount_percent > 0:
@@ -1001,8 +1038,14 @@ def ticket_info(request, match_id):
                         basa_discount_amount=ticket_data['basa_discount_amount'],
                         discount_code=discount_obj if ticket_data['discount_code_amount'] > 0 else None,
                         discount_code_amount=ticket_data['discount_code_amount'],
+                        special_code=ticket_data['special_code'],
                     )
                     tickets.append(ticket)
+
+                    if ticket_data['special_code'] is not None:
+                        ticket_data['special_code'].is_used = True
+                        ticket_data['special_code'].used_at = timezone.now()
+                        ticket_data['special_code'].save(update_fields=['is_used', 'used_at'])
 
                     match_seat.is_available = False
                     match_seat.reserved_until = None
@@ -1618,6 +1661,34 @@ def manage_user_tickets(request, user_id):
                 )
             return redirect_back()
 
+        if request.POST.get('action') == 'create_special_codes':
+            special_match_id = request.POST.get('special_match_id')
+            try:
+                quantity = int(request.POST.get('quantity'))
+            except (TypeError, ValueError):
+                messages.error(request, 'تعداد باید عدد باشد.')
+                return redirect_back()
+
+            if not special_match_id:
+                messages.error(request, 'برای ساخت کد ویژه باید یک مسابقه انتخاب کنید.')
+            elif quantity < 1 or quantity > 500:
+                messages.error(request, 'تعداد باید بین ۱ تا ۵۰۰ باشد.')
+            else:
+                special_match = get_object_or_404(Match, id=special_match_id)
+                import random, string
+                for _ in range(quantity):
+                    while True:
+                        candidate = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+                        if not SpecialCode.objects.filter(code=candidate).exists():
+                            break
+                    SpecialCode.objects.create(code=candidate, vip_owner=user, match=special_match)
+                messages.success(
+                    request,
+                    f'{quantity} کد ویژه برای {user.get_full_name() or user.username} '
+                    f'({special_match.home_team} vs {special_match.away_team}) ساخته شد.'
+                )
+            return redirect_back()
+
         ticket_id = request.POST.get('ticket_id')
         if ticket_id:
             ticket = get_object_or_404(Ticket, id=ticket_id, user=user)
@@ -1633,10 +1704,23 @@ def manage_user_tickets(request, user_id):
 
     vip_discount_codes = DiscountCode.objects.filter(vip_owner=user).select_related('match').order_by('-created_at')
 
+    # ===== کدهای ویژه‌ی این کاربر، به تفکیک مسابقه (هر مسابقه یک گروه) =====
+    special_codes_qs = SpecialCode.objects.filter(vip_owner=user).select_related('match').prefetch_related('tickets').order_by('-created_at')
+    special_groups_by_match = {}
+    for sc in special_codes_qs:
+        g = special_groups_by_match.setdefault(sc.match_id, {'match': sc.match, 'codes': [], 'used_count': 0})
+        g['codes'].append(sc)
+        if sc.is_used:
+            g['used_count'] += 1
+    special_code_groups = sorted(
+        special_groups_by_match.values(), key=lambda g: g['match'].date_time, reverse=True
+    )
+
     context = {
         'target_user': user, 'tickets': tickets, 'matches': matches,
         'selected_match': selected_match, 'selected_match_id': int(match_id) if match_id else None,
         'vip_discount_codes': vip_discount_codes, 'back_url': back_url,
+        'special_code_groups': special_code_groups,
     }
     return render(request, 'tickets/manage_user_tickets.html', context)
 
@@ -1794,6 +1878,29 @@ def check_discount(request):
         return JsonResponse({'valid': False, 'message': msg})
     except DiscountCode.DoesNotExist:
         return JsonResponse({'valid': False, 'message': 'کد تخفیف یافت نشد'})
+
+
+def check_special_code(request):
+    """اعتبارسنجی زنده‌ی «کد ویژه» برای یک صندلی مشخص، حین تکمیل فرم خرید --
+    فقط برای پیش‌نمایش قیمت است؛ اعتبارسنجی نهایی و قفل‌شده باز هم سمت
+    سرور، لحظه‌ی ثبت نهایی خرید (ticket_info/_finalize_ticket_purchase)
+    انجام می‌شود."""
+    if request.method != 'POST': return JsonResponse({'valid': False})
+    code = request.POST.get('code', '').strip().upper()
+    match_id = request.POST.get('match_id')
+    if not match_id: return JsonResponse({'valid': False, 'message': 'شناسه مسابقه مشخص نشده است.'})
+    try:
+        match = Match.objects.get(id=match_id)
+    except Match.DoesNotExist:
+        return JsonResponse({'valid': False, 'message': 'مسابقه یافت نشد.'})
+    try:
+        special = SpecialCode.objects.get(code=code)
+        valid, msg = special.is_valid(match=match)
+        if valid:
+            return JsonResponse({'valid': True, 'message': 'کد ویژه معتبر است -- این بلیط رایگان می‌شود'})
+        return JsonResponse({'valid': False, 'message': msg})
+    except SpecialCode.DoesNotExist:
+        return JsonResponse({'valid': False, 'message': 'کد ویژه یافت نشد'})
 
 
 # ============================================================

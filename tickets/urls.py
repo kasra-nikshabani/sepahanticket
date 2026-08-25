@@ -31,6 +31,7 @@ urlpatterns = [
     path('api/gate-login/', api.gate_login, name='gate_login'),
     path('api/scan-ticket/', api.scan_ticket, name='scan_ticket'),
     path('check-discount/', views.check_discount, name='check_discount'),
+    path('check-special-code/', views.check_special_code, name='check_special_code'),
     path('vip-dashboard/', views.vip_dashboard, name='vip_dashboard'),
     path('vip-issued-tickets/', views.vip_issued_tickets, name='vip_issued_tickets'),
     path('admin/vip-quota/', views.admin_vip_quota_list, name='admin_vip_quota_list'),

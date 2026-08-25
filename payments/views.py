@@ -92,7 +92,7 @@ def payment_request(request):
         for key, value in request.POST.items():
             if key.startswith('full_name_') or key.startswith('national_code_') or \
                     key.startswith('tarikhe_tavallod_') or key.startswith('shomare_hamrah_') or \
-                    key.startswith('match_seat_id_'):
+                    key.startswith('match_seat_id_') or key.startswith('special_code_'):
                 buyer_info[key] = value
 
         # ===== درصد تخفیف هرگز از ورودی کاربر خوانده نمی‌شود =====
@@ -289,7 +289,7 @@ def _release_payment_seats(payment):
 
 
 def _finalize_ticket_purchase(payment, gateway_amount_paid):
-    from tickets.models import Ticket, Order, DiscountCode
+    from tickets.models import Ticket, Order, DiscountCode, SpecialCode
     from matches.models import Match, MatchSeat, get_block_price_map, get_basa_discount_percent
     from tickets.reservation import SeatReservation
     from wallet.models import Wallet
@@ -344,6 +344,7 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
         basa_national_codes = set()
         if basa_discount_percent > 0:
             basa_national_codes = set(User.objects.filter(is_basa_member=True).values_list('national_code', flat=True))
+        used_special_code_pks = set()  # جلوگیری از استفاده‌ی یک کد ویژه برای دو صندلی در همین سفارش
 
         for pk in match_seat_pks:
             pk_str = str(pk)
@@ -391,6 +392,24 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
                 seat_discount_code_amount = seat_price - discounted_price
                 seat_price = discounted_price
 
+            # ===== کد ویژه (SpecialCode) -- درست مثل مسیر کیف‌پول/رایگان،
+            # اگر کاربر برای همین صندلی یک کد ویژه‌ی معتبر وارد کرده باشد،
+            # این بلیط کاملاً رایگان می‌شود، مستقل از بقیه‌ی محاسبات. =====
+            special_code_input = (payment.buyer_info.get(f'special_code_{pk_str}') or '').strip().upper()
+            special_code_obj = None
+            if special_code_input:
+                try:
+                    special_code_obj = SpecialCode.objects.select_for_update().get(code=special_code_input)
+                    valid, _msg = special_code_obj.is_valid(match=match)
+                    if not valid or special_code_obj.pk in used_special_code_pks:
+                        special_code_obj = None
+                except SpecialCode.DoesNotExist:
+                    special_code_obj = None
+            if special_code_obj:
+                used_special_code_pks.add(special_code_obj.pk)
+                seat_price = 0
+                seat_discount_code_amount = 0
+
             actual_total_price += seat_price
             processed_seats_data.append({
                 'match_seat': match_seat,
@@ -400,6 +419,7 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
                 'age': age,
                 'basa_discount_amount': basa_discount_amount,
                 'discount_code_amount': seat_discount_code_amount,
+                'special_code': special_code_obj,
             })
 
         discount_amount = pre_code_discount_total - actual_total_price
@@ -503,6 +523,7 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             seat_age = seat_data['age']
             seat_basa_discount = seat_data['basa_discount_amount']
             seat_discount_code_amount = seat_data['discount_code_amount']
+            seat_special_code = seat_data['special_code']
 
             if user.user_type != 'vip':
                 if national_code in processed_national_codes:
@@ -526,8 +547,14 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
                 basa_discount_amount=seat_basa_discount,
                 discount_code=discount_obj if seat_discount_code_amount > 0 else None,
                 discount_code_amount=seat_discount_code_amount,
+                special_code=seat_special_code,
             )
             tickets_created.append(ticket)
+
+            if seat_special_code is not None:
+                seat_special_code.is_used = True
+                seat_special_code.used_at = timezone.now()
+                seat_special_code.save(update_fields=['is_used', 'used_at'])
 
             match_seat.is_available = False; match_seat.reserved_until = None
             match_seat.save(); SeatReservation.release(match_seat.id, force=True)

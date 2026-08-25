@@ -79,6 +79,15 @@ class Ticket(models.Model):
         related_name='tickets', verbose_name="کد تخفیف اعمال‌شده",
     )
     discount_code_amount = models.PositiveIntegerField(default=0, verbose_name="مبلغ تخفیفِ کد (ریال)")
+    # اگر این بلیط با یک «کد ویژه» (SpecialCode -- کد یک‌بارمصرفِ رایگان‌کننده‌ی
+    # همون یک بلیط، نه تخفیف درصدی روی کل سبد) رایگان شده باشه، اینجا ثبت
+    # می‌شه. این کاملاً مستقل از discount_code بالاست: discount_code یعنی
+    # درصدی از کل سفارش کم شده، ولی special_code یعنی خودِ همین یک بلیط با
+    # یک کد اختصاصیِ کاربر ویژه ۱۰۰٪ رایگان شده.
+    special_code = models.ForeignKey(
+        'SpecialCode', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='tickets', verbose_name="کد ویژه اعمال‌شده",
+    )
 
     # ===== وضعیت و زمان =====
     status = models.CharField(max_length=20, choices=TICKET_STATUS, default='paid')
@@ -325,6 +334,49 @@ class DiscountCode(models.Model):
         if self.block and block and self.block != block:
             return False, "این کد تخفیف برای این بلوک معتبر نیست"
         return True, "معتبر"
+
+
+# ============================================================
+#  کد ویژه -- برخلاف DiscountCode (که یک درصد تخفیف روی کل سبد خریدِ یک
+#  سفارش اعمال می‌شه)، هر کد ویژه دقیقاً یک بار مصرف می‌شه و فقط همون یک
+#  بلیطی که کاربر توی فرم «تکمیل اطلاعات خریدار» کدش رو وارد کرده رو
+#  ۱۰۰٪ رایگان می‌کنه -- نه کل سبد خرید رو. کاربر ویژه از قبل تعداد
+#  زیادی از این کدها رو (مثلاً ۵۰ تا) برای یک مسابقه‌ی خاص می‌گیره و بین
+#  افراد پخش می‌کنه.
+# ============================================================
+class SpecialCode(models.Model):
+    code = models.CharField(max_length=20, unique=True, verbose_name="کد ویژه")
+    vip_owner = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.CASCADE,
+        related_name='special_codes',
+        limit_choices_to={'user_type': 'vip'},
+        verbose_name="کاربر ویژه (صاحب کد)",
+    )
+    match = models.ForeignKey(
+        'matches.Match',
+        on_delete=models.CASCADE,
+        related_name='special_codes',
+        verbose_name="مسابقه",
+    )
+    is_used = models.BooleanField(default=False, verbose_name="استفاده‌شده")
+    used_at = models.DateTimeField(null=True, blank=True, verbose_name="زمان استفاده")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "کد ویژه"
+        verbose_name_plural = "کدهای ویژه"
+        ordering = ['-created_at']
+
+    def is_valid(self, match=None):
+        if self.is_used:
+            return False, "این کد ویژه قبلاً استفاده شده است"
+        if match and self.match_id != match.id:
+            return False, "این کد ویژه برای این مسابقه معتبر نیست"
+        return True, "معتبر"
+
+    def __str__(self):
+        return self.code
 
 
 class Transaction(WalletTransaction):

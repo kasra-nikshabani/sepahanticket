@@ -182,6 +182,14 @@
                         <div class="spinner-border spinner-border-sm" role="status"></div> در حال استعلام از ثبت احوال...
                     </div>
 
+                    <div class="mt-3 special-code-wrap" id="specialCodeWrap_{{ forloop.counter }}" style="display:none;">
+                        <label class="form-label small fw-bold text-muted">
+                            <i class="fas fa-gift text-warning"></i> کد ویژه (اختیاری -- این بلیط را رایگان می‌کند)
+                        </label>
+                        <input type="text" class="form-control form-control-modern special-code-input" id="specialCode_{{ forloop.counter }}" name="special_code_{{ seat.id }}" placeholder="کد ویژه را وارد کنید" data-seat-index="{{ forloop.counter }}" style="direction:ltr; text-transform:uppercase;" disabled>
+                        <div id="specialCodeMsg_{{ forloop.counter }}" class="mt-1 small"></div>
+                    </div>
+
                     <input type="hidden" id="fan_id_{{ forloop.counter }}" name="fan_id_{{ forloop.counter }}">
                     <input type="hidden" id="fan_kodeMeli_{{ forloop.counter }}" name="national_code_{{ seat.id }}" value="">
                     <input type="hidden" id="fan_name_{{ forloop.counter }}" name="full_name_{{ seat.id }}" value="">
@@ -280,6 +288,7 @@
         window.freeSeats = {};
         window.removedSeats = {};
         window.basaSeats = {}; // {seatIndex: basa_discount_percent}
+        window.specialCodeSeats = {}; // {seatIndex: true} -- این بلیط با کد ویژه رایگان شده
 
         // ===== ساخت Dropdown های تاریخ تولد =====
         const startYear = new Date().getFullYear() - 621; // تقریبی سال شمسی
@@ -397,7 +406,11 @@
                 if (window.removedSeats[seatIndex] || card.style.display === 'none') return;
 
                 const base = parseInt(el.dataset.base);
-                if (window.freeSeats[seatIndex]) {
+                if (window.specialCodeSeats[seatIndex]) {
+                    el.textContent = 'رایگان (کد ویژه)';
+                    el.classList.add('text-success');
+                    currentTotal += 0;
+                } else if (window.freeSeats[seatIndex]) {
                     el.textContent = 'رایگان';
                     el.classList.add('text-success');
                     currentTotal += 0;
@@ -435,6 +448,7 @@
             document.getElementById('fan_dob_' + index).value = '';
             document.getElementById('fan_mobile_' + index).value = '';
             document.querySelector(`input[name="match_seat_id_${index}"]`).value = '';
+            delete window.specialCodeSeats[index];
 
             window.updateAll();
             checkAllInquired();
@@ -521,7 +535,48 @@
         document.querySelectorAll('.inquiry-btn').forEach(function(btn) {
             btn.addEventListener('click', function() { inquiryFan(this.dataset.seatIndex); });
         });
+
+        document.querySelectorAll('.special-code-input').forEach(function(input) {
+            input.addEventListener('blur', function() { checkSpecialCode(this.dataset.seatIndex); });
+            input.addEventListener('input', function() { this.value = this.value.toUpperCase(); });
+        });
     });
+
+    function checkSpecialCode(index) {
+        const input = document.getElementById('specialCode_' + index);
+        const msgDiv = document.getElementById('specialCodeMsg_' + index);
+        const code = input.value.trim();
+
+        if (!code) {
+            delete window.specialCodeSeats[index];
+            msgDiv.innerHTML = '';
+            window.updateAll();
+            return;
+        }
+
+        msgDiv.innerHTML = '<span class="text-muted">در حال بررسی...</span>';
+        fetch("{% url 'tickets:check_special_code' %}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCookie('csrftoken') },
+            body: `code=${encodeURIComponent(code)}&match_id={{ match.id }}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.valid) {
+                window.specialCodeSeats[index] = true;
+                msgDiv.innerHTML = `<span class="text-success">✅ ${data.message}</span>`;
+            } else {
+                delete window.specialCodeSeats[index];
+                msgDiv.innerHTML = `<span class="text-danger">❌ ${data.message}</span>`;
+            }
+            window.updateAll();
+        })
+        .catch(function() {
+            delete window.specialCodeSeats[index];
+            msgDiv.innerHTML = '<span class="text-danger">❌ خطا در بررسی کد ویژه</span>';
+            window.updateAll();
+        });
+    }
 
     function inquiryFan(index) {
         const name = document.getElementById('name_' + index).value.trim();
@@ -599,6 +654,14 @@
                     } else {
                         showInquiryMessage(index, `${prefix}سن: ${data.age} سال`, msgStyle);
                     }
+                }
+
+                // ===== فیلد «کد ویژه» فقط بعد از تایید موفق استعلام باز می‌شود =====
+                const scWrap = document.getElementById('specialCodeWrap_' + index);
+                const scInput = document.getElementById('specialCode_' + index);
+                if (scWrap && scInput) {
+                    scWrap.style.display = 'block';
+                    scInput.disabled = false;
                 }
 
                 window.updateAll();
