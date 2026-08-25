@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>کدهای ویژه</title>
+    <style>
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('file://{{ vazirmatn_dir }}/Vazirmatn-Regular.woff2') format('woff2');
+            font-weight: 400; font-style: normal;
+        }
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('file://{{ vazirmatn_dir }}/Vazirmatn-Medium.woff2') format('woff2');
+            font-weight: 500; font-style: normal;
+        }
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('file://{{ vazirmatn_dir }}/Vazirmatn-Bold.woff2') format('woff2');
+            font-weight: 700; font-style: normal;
+        }
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('file://{{ vazirmatn_dir }}/Vazirmatn-ExtraBold.woff2') format('woff2');
+            font-weight: 800; font-style: normal;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Vazirmatn', 'IRANSans', 'Arial', sans-serif;
+            padding: 24px; direction: rtl; background: #fff; color: #1A1A2E;
+            line-height: 1.7; font-size: 12px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1A1A2E 0%, #232345 100%);
+            color: #fff; padding: 18px 22px; border-radius: 12px;
+            border-bottom: 4px solid #D4AF37; margin-bottom: 16px;
+        }
+        .header h1 { color: #D4AF37; font-size: 19px; font-weight: 800; }
+        .header .meta { font-size: 11px; opacity: 0.88; margin-top: 5px; }
+
+        .instructions {
+            background: #fff8e1; border: 1.5px solid #D4AF37; border-radius: 10px;
+            padding: 14px 18px; margin-bottom: 18px;
+        }
+        .instructions h2 { font-size: 13px; font-weight: 800; color: #7a5c00; margin-bottom: 8px; }
+        .instructions ol { padding-right: 18px; }
+        .instructions li { font-size: 11px; color: #4a3d00; margin-bottom: 5px; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 11px; border-radius: 8px; overflow: hidden; }
+        th { background: #1A1A2E; color: #fff; font-weight: 700; padding: 8px 10px; text-align: center; }
+        td { padding: 8px 10px; text-align: center; border-bottom: 1px solid #eee; }
+        tbody tr:nth-child(even) { background: #f8f9fb; }
+
+        .code-cell { font-family: 'Courier New', monospace; direction: ltr; font-weight: 800; font-size: 13px; letter-spacing: 1px; }
+        .status-free { color: #1E8E3E; font-weight: 700; }
+        .status-used { color: #c0392b; font-weight: 700; }
+
+        .footer { margin-top: 18px; font-size: 9px; color: #999; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>کدهای ویژه</h1>
+        <div class="meta">صادرشده برای: {{ owner_name }} — {{ codes|length }} کد — تولید شده در {{ today|date:"Y/m/d H:i" }}</div>
+    </div>
+
+    <div class="instructions">
+        <h2>راهنمای استفاده از کد ویژه</h2>
+        <ol>
+            <li>هر کد ویژه فقط یک‌بار قابل استفاده است و دقیقاً یک بلیط را کاملاً رایگان می‌کند.</li>
+            <li>هنگام خرید بلیط، در صفحه‌ی «تکمیل اطلاعات خریدار»، اول باید اطلاعات آن صندلی استعلام و تایید شود.</li>
+            <li>بعد از تایید موفق استعلام، فیلدی با عنوان «کد ویژه» ظاهر می‌شود -- کد را دقیقاً همان‌طور که نوشته شده در آن وارد کنید.</li>
+            <li>در صورت معتبر بودن کد، قیمت همان یک بلیط صفر می‌شود و بقیه‌ی بلیط‌های همان خرید (در صورت وجود) با قیمت عادی محاسبه می‌شوند.</li>
+            <li>هر کد را فقط در اختیار یک نفر قرار دهید -- کدهای «استفاده‌شده» در جدول زیر دیگر قابل استفاده نیستند.</li>
+        </ol>
+    </div>
+
+    <table>
+        <thead>
+            <tr><th>کد ویژه</th><th>مسابقه</th><th>تاریخ مسابقه</th><th>وضعیت</th></tr>
+        </thead>
+        <tbody>
+            {% for sc in codes %}
+            <tr>
+                <td class="code-cell">{{ sc.code }}</td>
+                <td>{{ sc.match.home_team }} vs {{ sc.match.away_team }}</td>
+                <td>{{ sc.match.date_time|date:"Y/m/d H:i" }}</td>
+                <td>
+                    {% if sc.is_used %}
+                        <span class="status-used">استفاده‌شده</span>
+                    {% else %}
+                        <span class="status-free">آزاد</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">تولید شده در {{ today|date:"Y/m/d H:i" }} — سامانه فروش بلیط سپاهان</div>
+</body>
+</html>

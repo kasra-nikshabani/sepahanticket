@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import zipfile
 from io import BytesIO
@@ -18,6 +19,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.http import HttpResponse, JsonResponse, Http404
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.db.models import Count, Sum, Avg, Q
@@ -25,6 +27,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.cache import never_cache
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
+from weasyprint import HTML
 import pytz
 
 import matches
@@ -247,6 +250,67 @@ def vip_issued_tickets(request):
         'selected_match_id': int(match_id) if match_id else None,
     }
     return render(request, 'tickets/vip_issued_tickets.html', context)
+
+
+@login_required
+def vip_special_codes(request):
+    """پنل کاربر ویژه برای دیدن کدهای ویژه‌ای که ادمین براش صادر کرده -- به
+    تفکیک هر مسابقه، با امکان انتخاب چندتایی و دانلود گروهی به‌صورت PDF."""
+    if request.user.user_type != 'vip':
+        messages.error(request, 'شما دسترسی به این بخش ندارید.')
+        return redirect('matches:home')
+
+    codes_qs = SpecialCode.objects.filter(vip_owner=request.user).select_related('match').order_by('-created_at')
+    groups_by_match = {}
+    for sc in codes_qs:
+        g = groups_by_match.setdefault(sc.match_id, {'match': sc.match, 'codes': [], 'used_count': 0})
+        g['codes'].append(sc)
+        if sc.is_used:
+            g['used_count'] += 1
+    special_code_groups = sorted(groups_by_match.values(), key=lambda g: g['match'].date_time, reverse=True)
+
+    context = {'special_code_groups': special_code_groups}
+    return render(request, 'tickets/vip_special_codes.html', context)
+
+
+@login_required
+def vip_special_codes_download(request):
+    """دانلود گروهی (چندتایی) کدهای ویژه‌ی انتخاب‌شده به‌صورت یک فایل PDF."""
+    if request.user.user_type != 'vip':
+        messages.error(request, 'شما دسترسی به این بخش ندارید.')
+        return redirect('matches:home')
+
+    if request.method != 'POST':
+        return redirect('tickets:vip_special_codes')
+
+    code_ids = request.POST.getlist('code_ids')
+    if not code_ids:
+        messages.warning(request, 'هیچ کدی برای دانلود انتخاب نشده است.')
+        return redirect('tickets:vip_special_codes')
+
+    codes = list(
+        SpecialCode.objects.filter(id__in=code_ids, vip_owner=request.user).select_related('match').order_by(
+            'match__date_time', 'created_at'
+        )
+    )
+    if not codes:
+        messages.error(request, 'کدهای انتخاب‌شده یافت نشد.')
+        return redirect('tickets:vip_special_codes')
+
+    context = {
+        'codes': codes,
+        'owner_name': request.user.get_full_name() or request.user.username,
+        'today': timezone.now(),
+        'vazirmatn_dir': os.path.join(settings.BASE_DIR, 'static', 'vendor', 'vazirmatn', 'webfonts'),
+    }
+    html_string = render_to_string('tickets/vip_special_codes_pdf.html', context)
+    html = HTML(string=html_string, base_url=settings.MEDIA_ROOT)
+
+    response = HttpResponse(content_type='application/pdf')
+    filename = f"کدهای_ویژه_{request.user.username}_{timezone.now().strftime('%Y%m%d_%H%M')}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    html.write_pdf(target=response)
+    return response
 
 
 # ============================================================

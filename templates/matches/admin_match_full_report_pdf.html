@@ -160,6 +160,7 @@
             <div class="kpi-box"><div class="num">{{ attendance_percent }}٪</div><div class="lbl">نرخ حضور</div></div>
             <div class="kpi-box"><div class="num">{{ free_age_count }}</div><div class="lbl">رایگان (زیر ۱۵ سال)</div></div>
             <div class="kpi-box"><div class="num">{{ discount_code_count }}</div><div class="lbl">تخفیف ویژه (با کد)</div></div>
+            <div class="kpi-box"><div class="num">{{ special_code_ticket_count }}</div><div class="lbl">کد ویژه (از {{ special_codes_created_count }} ساخته‌شده)</div></div>
         </div>
     </div>
 
@@ -172,6 +173,7 @@
             <tr><td>بلیط باسا</td><td>{{ basa_discount_count }}</td></tr>
             <tr><td>بلیط رایگان (زیر ۱۵ سال)</td><td>{{ free_age_count }}</td></tr>
             <tr><td>تخفیف ویژه (با کد تخفیف)</td><td>{{ discount_code_count }}</td></tr>
+            <tr><td>کد ویژه (رایگان‌کننده‌ی یک بلیط)</td><td>{{ special_code_ticket_count }}</td></tr>
             <tr><td>سهمیه‌ی کاربران ویژه (VIP)</td><td>{{ vip_quota_count }}</td></tr>
             <tr><td>صادرشده‌ی دستی توسط ادمین</td><td>{{ admin_issued_count }}</td></tr>
             <tr class="total-row"><td>جمع کل بلیط‌های صادرشده</td><td>{{ total_tickets }}</td></tr>
@@ -187,11 +189,12 @@
             <tr><td>قیمت کامل</td><td>{{ full_price_count }}</td><td>{{ full_price_revenue|rial_display }}</td></tr>
             <tr><td>باسا (دریافتی بعد از تخفیف)</td><td>{{ basa_discount_count }}</td><td>{{ basa_revenue|rial_display }}</td></tr>
             <tr><td>تخفیف ویژه (با کد، بعد از تخفیف)</td><td>{{ discount_code_count }}</td><td>{{ discount_code_total_paid|rial_display }}</td></tr>
+            <tr><td>کد ویژه (رایگان)</td><td>{{ special_code_ticket_count }}</td><td>۰</td></tr>
             <tr><td>رایگان (زیر ۱۵ سال)</td><td>{{ free_age_count }}</td><td>۰</td></tr>
             <tr class="total-row"><td>درآمد کل</td><td>{{ total_paid_tickets_count }}</td><td>{{ total_revenue|rial_display }}</td></tr>
             </tbody>
         </table>
-        <div class="note">مبلغ تخفیف باسا داده‌شده (نه دریافتی): {{ basa_discount_total|rial_display }} ریال — پرداخت‌شده از کیف پول: {{ wallet_paid_total|rial_display }} ریال — پرداختی با کد تخفیف: {{ discount_code_total_paid|rial_display }} ریال ({{ discount_code_usage_count }} استفاده)</div>
+        <div class="note">مبلغ تخفیف باسا داده‌شده (نه دریافتی): {{ basa_discount_total|rial_display }} ریال — پرداخت‌شده از کیف پول: {{ wallet_paid_total|rial_display }} ریال — پرداختی با کد تخفیف: {{ discount_code_total_paid|rial_display }} ریال ({{ discount_code_usage_count }} استفاده) — کد ویژه‌ی ساخته‌شده: {{ special_codes_created_count }}</div>
     </div>
 
     <div class="section">
@@ -262,6 +265,14 @@
                 <div class="bar-pct"><b>{{ discount_code_used_percent }}٪</b> / <span class="nu">{{ discount_code_not_used_percent }}٪</span></div>
             </div>
             <div class="bar-row">
+                <div class="bar-label">کد ویژه</div>
+                <div class="bar-track">
+                    <div class="bar-seg used" style="width: {{ special_code_ticket_used_percent }}%;"></div>
+                    <div class="bar-seg not-used" style="width: {{ special_code_ticket_not_used_percent }}%;"></div>
+                </div>
+                <div class="bar-pct"><b>{{ special_code_ticket_used_percent }}٪</b> / <span class="nu">{{ special_code_ticket_not_used_percent }}٪</span></div>
+            </div>
+            <div class="bar-row">
                 <div class="bar-label">جمع کل</div>
                 <div class="bar-track">
                     <div class="bar-seg used" style="width: {{ attendance_percent }}%;"></div>
@@ -294,6 +305,10 @@
             <tr>
                 <td>تخفیف ویژه (با کد تخفیف)</td><td>{{ discount_code_count }}</td><td>{{ discount_code_used_count }}</td>
                 <td>{{ discount_code_not_used_count }}</td><td>{{ discount_code_used_percent }}٪</td>
+            </tr>
+            <tr>
+                <td>کد ویژه (رایگان‌کننده‌ی یک بلیط)</td><td>{{ special_code_ticket_count }}</td><td>{{ special_code_ticket_used_count }}</td>
+                <td>{{ special_code_ticket_not_used_count }}</td><td>{{ special_code_ticket_used_percent }}٪</td>
             </tr>
             <tr class="total-row">
                 <td>جمع کل</td><td>{{ total_issued_tickets }}</td><td>{{ used_tickets }}</td>

@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}کدهای ویژه{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tickets-container { max-width: 1000px; margin: 30px auto; }
+    .card-custom {
+        background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e8eaed; overflow: hidden;
+    }
+    .card-header-custom {
+        background: linear-gradient(135deg, #1A1A2E, #16213E); padding: 20px 30px;
+        border-bottom: 3px solid #D4AF37; display: flex; justify-content: space-between;
+        align-items: center; flex-wrap: wrap; gap: 12px;
+    }
+    .card-header-custom h4 { margin: 0; font-weight: 700; color: #D4AF37; }
+    .card-header-custom h4 i { margin-left: 10px; }
+    .card-body-custom { padding: 30px; }
+
+    .match-group {
+        border: 1px solid #e8eaed; border-radius: 12px; margin-bottom: 18px; overflow: hidden;
+    }
+    .match-group summary {
+        cursor: pointer; padding: 14px 18px; background: #f8f9fa; font-weight: 700;
+        display: flex; justify-content: space-between; align-items: center; list-style: none;
+        color: #1A1A2E;
+    }
+    .match-group summary::-webkit-details-marker { display: none; }
+    .match-group summary .meta { color: #6c757d; font-weight: 400; font-size: 0.82rem; margin-right: 6px; }
+    .badge-count {
+        background: rgba(212, 175, 55, 0.15); color: #B8960F; padding: 4px 14px; border-radius: 50px;
+        font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(212, 175, 55, 0.25); white-space: nowrap;
+    }
+    .codes-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .codes-table th { background: #fff; color: #1A1A2E; font-weight: 700; padding: 10px 12px; text-align: center; border-bottom: 2px solid #eee; }
+    .codes-table td { padding: 10px 12px; text-align: center; border-bottom: 1px solid #f1f1f1; }
+    .codes-table tr:last-child td { border-bottom: none; }
+    .code-pill { font-family: 'Courier New', monospace; direction: ltr; background: #f1f3f4; padding: 4px 10px; border-radius: 8px; font-weight: 700; display: inline-block; }
+    .status-badge { padding: 3px 12px; border-radius: 50px; font-size: 0.78rem; font-weight: 700; }
+    .status-badge.free { background: #d4edda; color: #155724; }
+    .status-badge.used { background: #f8d7da; color: #721c24; }
+
+    .download-bar {
+        position: sticky; bottom: 0; background: #fff; border-top: 2px solid #D4AF37;
+        padding: 14px 20px; margin: 24px -30px -30px; display: flex; justify-content: space-between;
+        align-items: center; flex-wrap: wrap; gap: 10px;
+    }
+    .btn-download-selected {
+        background: linear-gradient(135deg, #D4AF37, #B8960F); color: #1A1A2E; border: none;
+        font-weight: 700; padding: 10px 26px; border-radius: 10px; transition: all 0.2s;
+    }
+    .btn-download-selected:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(212, 175, 55, .3); }
+    .btn-download-selected:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .empty-state {
+        text-align: center; padding: 70px 20px; background: linear-gradient(145deg, #1A1A2E 0%, #2D2D44 50%, #1A1A2E 100%);
+        border-radius: 16px; border: 2px dashed rgba(212, 175, 55, .3); color: #fff;
+    }
+    .empty-state i { font-size: 44px; color: #D4AF37; margin-bottom: 14px; display: block; }
+    .empty-state p { color: rgba(255, 255, 255, .5); margin-top: 6px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tickets-container">
+    <div class="card-custom">
+        <div class="card-header-custom">
+            <h4><i class="fas fa-gift"></i> کدهای ویژه</h4>
+            <span class="badge-count">{{ special_code_groups|length }} مسابقه</span>
+        </div>
+        <div class="card-body-custom">
+            {% if special_code_groups %}
+                <form method="post" action="{% url 'tickets:vip_special_codes_download' %}" id="downloadForm">
+                    {% csrf_token %}
+                    {% for group in special_code_groups %}
+                    <details class="match-group" {% if forloop.first %}open{% endif %}>
+                        <summary>
+                            <span>
+                                {{ group.match.home_team }} vs {{ group.match.away_team }}
+                                <span class="meta">({{ group.match.date_time|date:"Y/m/d" }})</span>
+                            </span>
+                            <span class="badge-count">{{ group.used_count }} / {{ group.codes|length }} استفاده‌شده</span>
+                        </summary>
+                        <div class="table-responsive">
+                            <table class="codes-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:40px;"><input type="checkbox" class="select-match-all" data-match="{{ group.match.id }}"></th>
+                                        <th>کد</th>
+                                        <th>وضعیت</th>
+                                        <th>تاریخ صدور</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for sc in group.codes %}
+                                    <tr>
+                                        <td><input type="checkbox" name="code_ids" value="{{ sc.id }}" class="code-checkbox" data-match="{{ group.match.id }}"></td>
+                                        <td><span class="code-pill">{{ sc.code }}</span></td>
+                                        <td>
+                                            {% if sc.is_used %}
+                                                <span class="status-badge used">استفاده‌شده</span>
+                                            {% else %}
+                                                <span class="status-badge free">آزاد</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ sc.created_at|date:"Y/m/d" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </details>
+                    {% endfor %}
+
+                    <div class="download-bar">
+                        <span class="text-muted small"><span id="selectedCount">0</span> کد انتخاب شده</span>
+                        <button type="submit" class="btn-download-selected" id="downloadBtn" disabled>
+                            <i class="fas fa-file-pdf"></i> دانلود گروهی (PDF)
+                        </button>
+                    </div>
+                </form>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-gift"></i>
+                    <h5>هنوز کد ویژه‌ای برای شما صادر نشده است</h5>
+                    <p>وقتی ادمین برایتان کد ویژه بسازد، اینجا نمایش داده می‌شود.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const checkboxes = document.querySelectorAll('.code-checkbox');
+    const selectAllBoxes = document.querySelectorAll('.select-match-all');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const selectedCount = document.getElementById('selectedCount');
+
+    function updateCount() {
+        const count = document.querySelectorAll('.code-checkbox:checked').length;
+        selectedCount.textContent = count.toLocaleString('fa-IR');
+        downloadBtn.disabled = count === 0;
+    }
+
+    selectAllBoxes.forEach(function (box) {
+        box.addEventListener('change', function () {
+            document.querySelectorAll('.code-checkbox[data-match="' + this.dataset.match + '"]').forEach(function (cb) {
+                cb.checked = box.checked;
+            });
+            updateCount();
+        });
+    });
+
+    checkboxes.forEach(function (cb) {
+        cb.addEventListener('change', updateCount);
+    });
+});
+</script>
+{% endblock %}

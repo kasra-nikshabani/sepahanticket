@@ -736,6 +736,24 @@
                 <div class="stat-number">{{ admin_issued_count }}</div>
                 <p class="stat-label">تعداد بلیط صادرشده توسط مدیر</p>
             </div>
+            <div class="stat-card orange">
+                <span class="stat-icon"><i class="fas fa-gift"></i></span>
+                <div class="stat-number">{{ special_codes_created_count }}</div>
+                <p class="stat-label">کد ویژه ساخته‌شده</p>
+            </div>
+            <div class="stat-card green">
+                <span class="stat-icon"><i class="fas fa-check-circle"></i></span>
+                <div class="stat-number">{{ special_code_ticket_count }}</div>
+                <p class="stat-label">کد ویژه استفاده‌شده (بلیط گرفته‌شده)</p>
+            </div>
+            <div class="stat-card purple">
+                <span class="stat-icon"><i class="fas fa-door-open"></i></span>
+                <div class="stat-number">{{ special_code_ticket_used_count }}</div>
+                <p class="stat-label">بلیطِ کد ویژه که از گیت عبور کرده</p>
+                <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">
+                    از {{ special_code_ticket_count }} بلیط -- {{ special_code_ticket_used_percent }}٪ حضور
+                </small>
+            </div>
             <!-- ===== پایان تفکیک درآمد ===== -->
 
             <!-- ===== آمار تفکیکی سکوها ===== -->
@@ -824,6 +842,10 @@
                             <tr>
                                 <td>تخفیف ویژه (با کد تخفیف)</td>
                                 <td>{{ discount_code_count }}</td>
+                            </tr>
+                            <tr>
+                                <td>کد ویژه (رایگان‌کننده‌ی یک بلیط)</td>
+                                <td>{{ special_code_ticket_count }}</td>
                             </tr>
                             <tr>
                                 <td>سهمیه‌ی کاربران ویژه (VIP)</td>
