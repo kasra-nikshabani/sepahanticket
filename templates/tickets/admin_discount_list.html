@@ -2,110 +2,194 @@
 {% load static %}
 {% load currency_filters %}
 
-{% block title %}لیست کدهای تخفیف{% endblock %}
+{% block title %}کدهای تخفیف{% endblock %}
+
+{% block extra_css %}
+<style>
+    .discounts-page { max-width: 1200px; margin: 30px auto; padding: 0 16px; }
+
+    .page-header {
+        background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
+        border-radius: 20px; padding: 26px 32px; color: #fff; margin-bottom: 24px;
+        border-bottom: 3px solid #D4AF37; display: flex; justify-content: space-between;
+        align-items: center; flex-wrap: wrap; gap: 16px;
+    }
+    .page-header h2 { margin: 0; color: #D4AF37; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+    .page-header p { margin: 6px 0 0; opacity: .7; font-size: .9rem; }
+    .btn-create {
+        background: linear-gradient(135deg, #D4AF37, #B8960F); color: #1A1A2E; border: none;
+        font-weight: 700; padding: 12px 26px; border-radius: 12px; text-decoration: none;
+        display: inline-flex; align-items: center; gap: 8px; transition: all .3s;
+    }
+    .btn-create:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(212, 175, 55, .35); color: #1A1A2E; }
+
+    .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .kpi-card {
+        background: #fff; border-radius: 16px; padding: 20px; text-align: center;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, .06); border: 1px solid #eee; border-top: 4px solid #D4AF37;
+    }
+    .kpi-card .num { font-size: 1.8rem; font-weight: 800; color: #1A1A2E; }
+    .kpi-card .lbl { font-size: .85rem; color: #6c757d; margin-top: 4px; }
+
+    .match-group { margin-bottom: 26px; border-radius: 20px; overflow: hidden; box-shadow: 0 6px 24px rgba(0, 0, 0, .07); border: 1px solid #eee; }
+    .match-group-header {
+        background: linear-gradient(135deg, #1A1A2E 0%, #2D2D44 100%); color: #fff; padding: 16px 24px;
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+        border-bottom: 3px solid #D4AF37;
+    }
+    .match-group-header.no-match { background: linear-gradient(135deg, #4a4a4a, #2e2e2e); border-bottom-color: #888; }
+    .match-title { font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .match-title i { color: #D4AF37; }
+    .match-title .match-date { font-size: .78rem; opacity: .7; font-weight: 400; }
+    .match-code-count { background: rgba(212, 175, 55, .15); color: #D4AF37; padding: 4px 14px; border-radius: 50px; font-size: .8rem; font-weight: 700; border: 1px solid rgba(212, 175, 55, .25); white-space: nowrap; }
+
+    table.codes-table { width: 100%; border-collapse: collapse; font-size: .9rem; background: #fff; }
+    table.codes-table th { background: #f8f9fa; color: #1A1A2E; font-weight: 700; padding: 12px 14px; text-align: center; border-bottom: 2px solid #eee; white-space: nowrap; }
+    table.codes-table td { padding: 12px 14px; text-align: center; border-bottom: 1px solid #f1f1f1; vertical-align: middle; }
+    table.codes-table tbody tr:hover td { background: #fafafa; }
+    table.codes-table tbody tr:last-child td { border-bottom: none; }
+
+    .code-pill { font-family: 'Courier New', monospace; direction: ltr; background: #f1f3f4; padding: 4px 10px; border-radius: 8px; font-weight: 700; color: #1A1A2E; display: inline-block; }
+    .owner-badge { background: #fff8e1; color: #B8960F; border: 1px solid #f0dfa0; padding: 3px 10px; border-radius: 50px; font-size: .78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+
+    .usage-bar-wrap { display: flex; align-items: center; gap: 8px; justify-content: center; }
+    .usage-bar { width: 70px; height: 8px; background: #eee; border-radius: 6px; overflow: hidden; flex-shrink: 0; }
+    .usage-bar-fill { height: 100%; background: linear-gradient(90deg, #1E8E3E, #43c274); border-radius: 6px; }
+    .usage-text { font-size: .78rem; color: #555; white-space: nowrap; }
+
+    .status-pill { padding: 4px 12px; border-radius: 50px; font-size: .78rem; font-weight: 700; white-space: nowrap; }
+    .status-pill.active { background: #e6f7ee; color: #1E8E3E; }
+    .status-pill.inactive { background: #fdeceb; color: #c0392b; }
+
+    .action-btns { display: flex; gap: 6px; justify-content: center; }
+    .action-btn {
+        width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center;
+        text-decoration: none; transition: all .2s; border: none; cursor: pointer;
+    }
+    .action-btn.edit { background: #fff4d6; color: #B8960F; }
+    .action-btn.toggle { background: #e8f0fe; color: #1a56db; }
+    .action-btn.delete { background: #fdeceb; color: #c0392b; }
+    .action-btn:hover { transform: translateY(-2px); filter: brightness(0.95); color: inherit; }
+
+    .empty-state {
+        text-align: center; padding: 70px 20px; background: linear-gradient(145deg, #1A1A2E 0%, #2D2D44 50%, #1A1A2E 100%);
+        border-radius: 20px; border: 2px dashed rgba(212, 175, 55, .3); color: #fff;
+    }
+    .empty-state i { font-size: 48px; color: #D4AF37; margin-bottom: 16px; display: block; }
+    .empty-state h4 { font-weight: 700; }
+    .empty-state p { color: rgba(255, 255, 255, .5); margin-top: 6px; }
+
+    @media (max-width: 768px) {
+        .page-header { padding: 20px; flex-direction: column; align-items: flex-start; }
+        .btn-create { width: 100%; justify-content: center; }
+        table.codes-table { font-size: .78rem; }
+        table.codes-table th, table.codes-table td { padding: 8px 6px; }
+        .match-group-header { padding: 14px 16px; }
+        .match-title { font-size: .92rem; }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-    <div class="container mt-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2>لیست کدهای تخفیف</h2>
-            <a href="{% url 'tickets:admin_discount_create' %}" class="btn btn-success">
-                <i class="fas fa-plus"></i> ایجاد کد تخفیف جدید
-            </a>
+<div class="discounts-page">
+    <div class="page-header">
+        <div>
+            <h2><i class="fas fa-percentage"></i> کدهای تخفیف</h2>
+            <p>مدیریت کدهای تخفیف، به تفکیک هر مسابقه</p>
         </div>
+        <a href="{% url 'tickets:admin_discount_create' %}" class="btn-create">
+            <i class="fas fa-plus"></i> ایجاد کد تخفیف جدید
+        </a>
+    </div>
 
-        <!-- آمار -->
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="card bg-primary text-white">
-                    <div class="card-body">
-                        <h5 class="card-title">کدهای فعال</h5>
-                        <h3>{{ active_count }}</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card bg-success text-white">
-                    <div class="card-body">
-                        <h5 class="card-title">کل استفاده‌ها</h5>
-                        <h3>{{ total_uses }}</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card bg-info text-white">
-                    <div class="card-body">
-                        <h5 class="card-title">میانگین تخفیف</h5>
-                        <h3>{{ avg_discount|floatformat:0 }}%</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="kpi-row">
+        <div class="kpi-card"><div class="num">{{ active_count }}</div><div class="lbl">کدهای فعال</div></div>
+        <div class="kpi-card"><div class="num">{{ total_uses }}</div><div class="lbl">کل استفاده‌ها</div></div>
+        <div class="kpi-card"><div class="num">{{ avg_discount|floatformat:0 }}٪</div><div class="lbl">میانگین تخفیف</div></div>
+        <div class="kpi-card"><div class="num">{{ match_groups|length }}</div><div class="lbl">مسابقه‌ی دارای کد</div></div>
+    </div>
 
-        <!-- جدول کدهای تخفیف -->
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+    {% if match_groups %}
+        {% for group in match_groups %}
+        <div class="match-group">
+            <div class="match-group-header {% if not group.match %}no-match{% endif %}">
+                <div class="match-title">
+                    {% if group.match %}
+                        <i class="fas fa-futbol"></i>
+                        <span>{{ group.match.home_team }} vs {{ group.match.away_team }}</span>
+                        <span class="match-date">{{ group.match.date_time|date:"Y/m/d H:i" }}</span>
+                    {% else %}
+                        <i class="fas fa-globe"></i>
+                        <span>بدون مسابقه‌ی خاص (برای همه‌ی مسابقات معتبر)</span>
+                    {% endif %}
+                </div>
+                <span class="match-code-count">{{ group.codes|length }} کد</span>
+            </div>
+            <div class="table-responsive">
+                <table class="codes-table">
+                    <thead>
                         <tr>
                             <th>کد</th>
                             <th>کاربر ویژه</th>
-                            <th>درصد تخفیف</th>
-                            <th>مسابقه</th>
+                            <th>درصد</th>
                             <th>بلوک</th>
-                            <th>تعداد استفاده</th>
-                            <th>حداکثر استفاده</th>
+                            <th>استفاده</th>
                             <th>وضعیت</th>
                             <th>عملیات</th>
                         </tr>
-                        </thead>
-                        <tbody>
-                        {% for discount in discounts %}
-                            <tr>
-                                <td><strong>{{ discount.code }}</strong></td>
-                                <td>
-                                    {% if discount.vip_owner %}
-                                        <span class="badge bg-warning text-dark"><i class="fas fa-star"></i> {{ discount.vip_owner.get_full_name|default:discount.vip_owner.username }}</span>
-                                    {% else %}
-                                        <span class="text-muted">—</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ discount.discount_percent }}%</td>
-                                <td>{{ discount.match|default:"همه مسابقات" }}</td>
-                                <td>{{ discount.block|default:"همه" }}</td>
-                                <td>{{ discount.used_count }}</td>
-                                <td>{{ discount.max_uses|default:"نامحدود" }}</td>
-                                <td>
-                                    {% if discount.is_active %}
-                                        <span class="badge bg-success">فعال</span>
-                                    {% else %}
-                                        <span class="badge bg-danger">غیرفعال</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <a href="{% url 'tickets:admin_discount_edit' discount.id %}"
-                                       class="btn btn-sm btn-warning">
+                    </thead>
+                    <tbody>
+                        {% for discount in group.codes %}
+                        <tr>
+                            <td><span class="code-pill">{{ discount.code }}</span></td>
+                            <td>
+                                {% if discount.vip_owner %}
+                                    <span class="owner-badge"><i class="fas fa-star"></i> {{ discount.vip_owner.get_full_name|default:discount.vip_owner.username }}</span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td><strong>{{ discount.discount_percent }}٪</strong></td>
+                            <td>{{ discount.block.name|default:"همه" }}</td>
+                            <td>
+                                <div class="usage-bar-wrap">
+                                    <div class="usage-bar"><div class="usage-bar-fill" style="width: {{ discount.usage_percent }}%;"></div></div>
+                                    <span class="usage-text">{{ discount.used_count }}/{{ discount.max_uses }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if discount.is_active %}
+                                    <span class="status-pill active">فعال</span>
+                                {% else %}
+                                    <span class="status-pill inactive">غیرفعال</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="action-btns">
+                                    <a href="{% url 'tickets:admin_discount_edit' discount.id %}" class="action-btn edit" title="ویرایش">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a href="{% url 'tickets:admin_discount_toggle' discount.id %}"
-                                       class="btn btn-sm btn-info">
-                                        <i class="fas fa-sync"></i>
+                                    <a href="{% url 'tickets:admin_discount_toggle' discount.id %}" class="action-btn toggle" title="{% if discount.is_active %}غیرفعال کن{% else %}فعال کن{% endif %}">
+                                        <i class="fas fa-power-off"></i>
                                     </a>
-                                    <a href="{% url 'tickets:admin_discount_delete' discount.id %}"
-                                       class="btn btn-sm btn-danger">
+                                    <a href="{% url 'tickets:admin_discount_delete' discount.id %}" class="action-btn delete" title="حذف">
                                         <i class="fas fa-trash"></i>
                                     </a>
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="9" class="text-center">هیچ کد تخفیفی وجود ندارد.</td>
-                            </tr>
+                                </div>
+                            </td>
+                        </tr>
                         {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                    </tbody>
+                </table>
             </div>
         </div>
-    </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-percentage"></i>
+            <h4>هنوز هیچ کد تخفیفی ساخته نشده</h4>
+            <p>با دکمه‌ی بالا اولین کد تخفیف را بسازید.</p>
+        </div>
+    {% endif %}
+</div>
 {% endblock %}

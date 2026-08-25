@@ -1864,12 +1864,33 @@ from django.views.decorators.cache import never_cache
 @staff_member_required
 @never_cache
 def admin_discount_list(request):
-    discounts = DiscountCode.objects.select_related('match', 'block', 'vip_owner').all().order_by('-created_at')
-    active_count = discounts.filter(is_active=True).count()
-    total_uses = discounts.aggregate(total=Sum('used_count'))['total'] or 0
-    avg_discount = discounts.aggregate(avg=Avg('discount_percent'))['avg'] or 0
+    discounts = list(
+        DiscountCode.objects.select_related('match', 'block', 'vip_owner').all().order_by('-created_at')
+    )
+    active_count = sum(1 for d in discounts if d.is_active)
+    total_uses = sum(d.used_count for d in discounts)
+    avg_discount = (sum(d.discount_percent for d in discounts) / len(discounts)) if discounts else 0
+
+    for d in discounts:
+        d.usage_percent = round((d.used_count / d.max_uses * 100) if d.max_uses > 0 else 0, 1)
+
+    # ===== تفکیک کدها بر اساس مسابقه -- کدهایی که match ندارن (یعنی برای
+    # همه‌ی مسابقات معتبرن) توی یک گروه جدا در انتها جمع می‌شن. =====
+    groups_by_match = {}
+    no_match_codes = []
+    for dc in discounts:
+        if dc.match_id:
+            groups_by_match.setdefault(dc.match_id, {'match': dc.match, 'codes': []})['codes'].append(dc)
+        else:
+            no_match_codes.append(dc)
+
+    match_groups = sorted(groups_by_match.values(), key=lambda g: g['match'].date_time, reverse=True)
+    if no_match_codes:
+        match_groups.append({'match': None, 'codes': no_match_codes})
+
     context = {
         'discounts': discounts, 'active_count': active_count, 'total_uses': total_uses, 'avg_discount': avg_discount,
+        'match_groups': match_groups,
     }
     return render(request, 'tickets/admin_discount_list.html', context)
 
