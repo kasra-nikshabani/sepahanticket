@@ -422,10 +422,23 @@
 
             <!-- ===== لیست بلیط‌ها ===== -->
             {% if tickets %}
+                <form method="post" id="bulkDeleteForm" style="display:none;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="bulk_delete_tickets">
+                </form>
+
+                <div id="bulkActionsBar" style="display:none; align-items:center; gap:12px; margin-bottom:12px; padding:10px 16px; background:#fff3cd; border:1px solid #ffe69c; border-radius:8px;">
+                    <span><strong id="selectedCount">0</strong> بلیط انتخاب شده</span>
+                    <button type="button" id="bulkDeleteBtn" class="btn-delete" style="margin-right:auto;">
+                        <i class="fas fa-trash-alt"></i> حذف بلیط‌های انتخاب‌شده
+                    </button>
+                </div>
+
                 <div class="table-responsive">
                     <table class="table-custom">
                         <thead>
                             <tr>
+                                <th style="width:36px;"><input type="checkbox" id="selectAllTickets" title="انتخاب همه"></th>
                                 <th><i class="fas fa-hashtag"></i> شماره</th>
                                 <th><i class="fas fa-trophy"></i> مسابقه</th>
                                 <th><i class="fas fa-chair"></i> صندلی</th>
@@ -439,6 +452,7 @@
                             {% for ticket in tickets %}
                                 <tr data-ticket-id="{{ ticket.id }}"
                                     {% if ticket.pdf_file %}data-pdf-url="{% url 'tickets:download_ticket_pdf' ticket.id %}"{% endif %}>
+                                    <td><input type="checkbox" class="ticket-select" value="{{ ticket.id }}"></td>
                                     <td><strong>{{ ticket.ticket_number }}</strong></td>
                                     <td class="match-cell">
                                         {{ ticket.match.home_team }} vs {{ ticket.match.away_team }}
@@ -729,6 +743,53 @@
 
         if (pendingIds().length > 0) {
             setTimeout(tick, 3000);
+        }
+
+        // ===== انتخاب گروهی (مارک‌کردن) و حذف چندتایی بلیط‌های تخصیصی =====
+        const selectAll = document.getElementById('selectAllTickets');
+        const bulkBar = document.getElementById('bulkActionsBar');
+        const selectedCountEl = document.getElementById('selectedCount');
+        const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+        const bulkForm = document.getElementById('bulkDeleteForm');
+
+        function ticketCheckboxes() {
+            return Array.from(document.querySelectorAll('.ticket-select'));
+        }
+
+        function updateBulkBar() {
+            const checked = ticketCheckboxes().filter(cb => cb.checked);
+            if (bulkBar) bulkBar.style.display = checked.length > 0 ? 'flex' : 'none';
+            if (selectedCountEl) selectedCountEl.textContent = checked.length;
+            if (selectAll) {
+                const all = ticketCheckboxes();
+                selectAll.checked = all.length > 0 && checked.length === all.length;
+            }
+        }
+
+        ticketCheckboxes().forEach(cb => cb.addEventListener('change', updateBulkBar));
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function () {
+                ticketCheckboxes().forEach(cb => { cb.checked = selectAll.checked; });
+                updateBulkBar();
+            });
+        }
+
+        if (bulkDeleteBtn && bulkForm) {
+            bulkDeleteBtn.addEventListener('click', function () {
+                const checked = ticketCheckboxes().filter(cb => cb.checked);
+                if (checked.length === 0) return;
+                if (!confirm(`آیا از حذف ${checked.length} بلیط انتخاب‌شده مطمئن هستید؟ صندلی‌های مربوطه آزاد خواهند شد.`)) return;
+                bulkForm.querySelectorAll('input[name="ticket_ids"]').forEach(el => el.remove());
+                checked.forEach(cb => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'ticket_ids';
+                    input.value = cb.value;
+                    bulkForm.appendChild(input);
+                });
+                bulkForm.submit();
+            });
         }
     });
 </script>

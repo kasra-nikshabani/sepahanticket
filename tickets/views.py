@@ -1807,6 +1807,32 @@ def manage_user_tickets(request, user_id):
                 )
             return redirect_back()
 
+        if request.POST.get('action') == 'bulk_delete_tickets':
+            ticket_ids = request.POST.getlist('ticket_ids')
+            if not ticket_ids:
+                messages.error(request, 'هیچ بلیطی برای حذف انتخاب نشده است.')
+                return redirect_back()
+            qs = Ticket.objects.filter(
+                id__in=ticket_ids, user=user, is_admin_assigned=True, status='admin_assigned'
+            ).select_related('match_seat')
+            deleted_count = 0
+            with transaction.atomic():
+                for ticket in qs:
+                    if ticket.match_seat:
+                        ticket.match_seat.is_available = True
+                        ticket.match_seat.save()
+                    if ticket.pdf_file:
+                        ticket.pdf_file.delete(save=False)
+                    if ticket.qr_code:
+                        ticket.qr_code.delete(save=False)
+                    ticket.delete()
+                    deleted_count += 1
+            if deleted_count:
+                messages.success(request, f'✅ {deleted_count} بلیط با موفقیت حذف شد و صندلی‌های مربوطه آزاد شدند.')
+            else:
+                messages.error(request, 'هیچ‌کدام از بلیط‌های انتخاب‌شده یافت نشد.')
+            return redirect_back()
+
         ticket_id = request.POST.get('ticket_id')
         if ticket_id:
             ticket = get_object_or_404(Ticket, id=ticket_id, user=user)
