@@ -98,6 +98,22 @@ def build_special_codes_zip_task(user_id, code_ids):
 
     tmp_dir = os.path.join(settings.BASE_DIR, 'tmp_downloads')
     os.makedirs(tmp_dir, exist_ok=True)
+
+    # ===== شبکه‌ی ایمنی: اگر کاربری فایل آماده‌شده رو هیچ‌وقت دانلود نکنه
+    # (تب رو ببنده، نتِ قطع بشه و...)، ویوی دانلود که مسئول پاک کردنه هیچ‌وقت
+    # صدا زده نمی‌شه و فایل موقت رو دیسک می‌مونه. اینجا هر بار قبل از نوشتن
+    # فایل جدید، فایل‌های موقت قدیمی‌تر از ۲ ساعت رو پاک می‌کنیم -- کشف‌شده
+    # موقع بررسی سلامت سامانه (یک ZIP ~۶ مگابایتی از یک تست قدیمی روی دیسک
+    # مونده بود چون polling سمت کلاینت زودتر از تمام‌شدنِ job قطع شده بود). =====
+    try:
+        cutoff = timezone.now().timestamp() - 2 * 3600
+        for fname in os.listdir(tmp_dir):
+            fpath = os.path.join(tmp_dir, fname)
+            if os.path.isfile(fpath) and os.path.getmtime(fpath) < cutoff:
+                os.remove(fpath)
+    except OSError:
+        pass
+
     zip_path = os.path.join(tmp_dir, f"special_codes_{uuid.uuid4().hex}.zip")
     with open(zip_path, 'wb') as f:
         f.write(zip_buffer.getvalue())
