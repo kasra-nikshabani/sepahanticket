@@ -297,9 +297,26 @@ def vip_special_codes_download(request):
         messages.error(request, 'کدهای انتخاب‌شده یافت نشد.')
         return redirect('tickets:vip_special_codes')
 
+    filename = f"کدهای_ویژه_{request.user.username}_{timezone.now().strftime('%Y%m%d_%H%M')}.pdf"
+    return _render_special_codes_pdf(request.user, codes, filename)
+
+
+@login_required
+def vip_special_code_download_single(request, code_id):
+    """دانلود تکی: یک PDF فقط برای همین یک کد ویژه (کد + آموزش استفاده)."""
+    if request.user.user_type != 'vip':
+        messages.error(request, 'شما دسترسی به این بخش ندارید.')
+        return redirect('matches:home')
+
+    code = get_object_or_404(SpecialCode, id=code_id, vip_owner=request.user)
+    filename = f"کد_ویژه_{code.code}.pdf"
+    return _render_special_codes_pdf(request.user, [code], filename)
+
+
+def _render_special_codes_pdf(user, codes, filename):
     context = {
         'codes': codes,
-        'owner_name': request.user.get_full_name() or request.user.username,
+        'owner_name': user.get_full_name() or user.username,
         'today': timezone.now(),
         'vazirmatn_dir': os.path.join(settings.BASE_DIR, 'static', 'vendor', 'vazirmatn', 'webfonts'),
     }
@@ -307,7 +324,6 @@ def vip_special_codes_download(request):
     html = HTML(string=html_string, base_url=settings.MEDIA_ROOT)
 
     response = HttpResponse(content_type='application/pdf')
-    filename = f"کدهای_ویژه_{request.user.username}_{timezone.now().strftime('%Y%m%d_%H%M')}.pdf"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     html.write_pdf(target=response)
     return response

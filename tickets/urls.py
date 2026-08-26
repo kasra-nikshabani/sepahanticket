@@ -36,6 +36,7 @@ urlpatterns = [
     path('vip-issued-tickets/', views.vip_issued_tickets, name='vip_issued_tickets'),
     path('vip-special-codes/', views.vip_special_codes, name='vip_special_codes'),
     path('vip-special-codes/download/', views.vip_special_codes_download, name='vip_special_codes_download'),
+    path('vip-special-codes/<int:code_id>/download/', views.vip_special_code_download_single, name='vip_special_code_download_single'),
     path('admin/vip-quota/', views.admin_vip_quota_list, name='admin_vip_quota_list'),
     path('admin/vip-quota/create/', views.admin_vip_quota_create, name='admin_vip_quota_create'),
     path('admin/vip-quota/edit/<int:quota_id>/', views.admin_vip_quota_edit, name='admin_vip_quota_edit'),
