@@ -1,8 +1,9 @@
+{% load jalali %}
 <!DOCTYPE html>
 <html dir="rtl" lang="fa">
 <head>
     <meta charset="UTF-8">
-    <title>کدهای ویژه</title>
+    <title>کد ویژه {{ code.code }}</title>
     <style>
         @font-face {
             font-family: 'Vazirmatn';
@@ -29,77 +30,163 @@
 
         body {
             font-family: 'Vazirmatn', 'IRANSans', 'Arial', sans-serif;
-            padding: 24px; direction: rtl; background: #fff; color: #1A1A2E;
+            padding: 28px; direction: rtl; background: #fff; color: #1A1A2E;
             line-height: 1.7; font-size: 12px;
         }
 
-        .header {
-            background: linear-gradient(135deg, #1A1A2E 0%, #232345 100%);
-            color: #fff; padding: 18px 22px; border-radius: 12px;
-            border-bottom: 4px solid #D4AF37; margin-bottom: 16px;
+        .card {
+            border: 2px solid #D4AF37;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
         }
-        .header h1 { color: #D4AF37; font-size: 19px; font-weight: 800; }
-        .header .meta { font-size: 11px; opacity: 0.88; margin-top: 5px; }
+
+        .title-band {
+            background: linear-gradient(135deg, #1A1A2E 0%, #232345 100%);
+            color: #D4AF37;
+            text-align: center;
+            padding: 22px 20px 18px;
+            border-bottom: 4px solid #D4AF37;
+        }
+        .title-band h1 {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+        .title-band .subtitle {
+            color: #fff;
+            opacity: .8;
+            font-size: 11px;
+            margin-top: 6px;
+        }
+
+        .match-info {
+            text-align: center;
+            padding: 20px 20px 16px;
+            background: #f8f9fb;
+            border-bottom: 1px solid #eee;
+        }
+        .match-info .teams {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1A1A2E;
+        }
+        .match-info .teams .vs {
+            color: #D4AF37;
+            font-weight: 800;
+            margin: 0 8px;
+        }
+        .match-info .datetime {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #555;
+        }
+        .match-info .stadium {
+            margin-top: 3px;
+            font-size: 11px;
+            color: #777;
+        }
+
+        .code-band {
+            text-align: center;
+            padding: 30px 20px;
+            background: #fff;
+        }
+        .code-band .lbl {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .code-band .code-value {
+            display: inline-block;
+            font-family: 'Courier New', monospace;
+            font-size: 42px;
+            font-weight: 800;
+            letter-spacing: 6px;
+            color: #1A1A2E;
+            background: #fdf6e3;
+            border: 2px dashed #D4AF37;
+            border-radius: 14px;
+            padding: 14px 32px;
+            direction: ltr;
+        }
+        .code-band .status {
+            margin-top: 12px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .code-band .status.free { color: #1E8E3E; }
+        .code-band .status.used { color: #c0392b; }
+        .code-band .status.inactive { color: #c0392b; }
 
         .instructions {
-            background: #fff8e1; border: 1.5px solid #D4AF37; border-radius: 10px;
-            padding: 14px 18px; margin-bottom: 18px;
+            background: #fff8e1;
+            border-top: 2px solid #D4AF37;
+            padding: 18px 24px;
         }
-        .instructions h2 { font-size: 13px; font-weight: 800; color: #7a5c00; margin-bottom: 8px; }
+        .instructions h2 {
+            font-size: 13px;
+            font-weight: 800;
+            color: #7a5c00;
+            margin-bottom: 10px;
+        }
         .instructions ol { padding-right: 18px; }
-        .instructions li { font-size: 11px; color: #4a3d00; margin-bottom: 5px; }
+        .instructions li {
+            font-size: 11px;
+            color: #4a3d00;
+            margin-bottom: 6px;
+        }
 
-        table { width: 100%; border-collapse: collapse; font-size: 11px; border-radius: 8px; overflow: hidden; }
-        th { background: #1A1A2E; color: #fff; font-weight: 700; padding: 8px 10px; text-align: center; }
-        td { padding: 8px 10px; text-align: center; border-bottom: 1px solid #eee; }
-        tbody tr:nth-child(even) { background: #f8f9fb; }
-
-        .code-cell { font-family: 'Courier New', monospace; direction: ltr; font-weight: 800; font-size: 13px; letter-spacing: 1px; }
-        .status-free { color: #1E8E3E; font-weight: 700; }
-        .status-used { color: #c0392b; font-weight: 700; }
-
-        .footer { margin-top: 18px; font-size: 9px; color: #999; text-align: center; }
+        .footer {
+            margin-top: 18px;
+            font-size: 9px;
+            color: #999;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>کدهای ویژه</h1>
-        <div class="meta">صادرشده برای: {{ owner_name }} — {{ codes|length }} کد — تولید شده در {{ today|date:"Y/m/d H:i" }}</div>
+    <div class="card">
+        <div class="title-band">
+            <h1>کد ویژه</h1>
+            <div class="subtitle">صادرشده برای: {{ owner_name }}</div>
+        </div>
+
+        <div class="match-info">
+            <div class="teams">{{ code.match.home_team }}<span class="vs">vs</span>{{ code.match.away_team }}</div>
+            <div class="datetime">{{ code.match.date_time|to_jalali_full }}</div>
+            {% if code.match.stadium %}
+                <div class="stadium">{{ code.match.stadium.name }}</div>
+            {% endif %}
+        </div>
+
+        <div class="code-band">
+            <div class="lbl">این کد را هنگام خرید بلیط وارد کنید</div>
+            <div class="code-value">{{ code.code }}</div>
+            <div class="status {% if code.is_used %}used{% elif not code.is_active %}inactive{% else %}free{% endif %}">
+                {% if code.is_used %}
+                    این کد قبلاً استفاده شده است
+                {% elif not code.is_active %}
+                    این کد غیرفعال شده است
+                {% else %}
+                    این کد آزاد و آماده‌ی استفاده است
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h2>راهنمای استفاده از کد ویژه</h2>
+            <ol>
+                <li>این کد فقط یک‌بار قابل استفاده است و دقیقاً یک بلیط را کاملاً رایگان می‌کند.</li>
+                <li>هنگام خرید بلیط، در صفحه‌ی «تکمیل اطلاعات خریدار»، اول باید اطلاعات آن صندلی استعلام و تایید شود.</li>
+                <li>بعد از تایید موفق استعلام، فیلدی با عنوان «کد ویژه» ظاهر می‌شود -- کد بالا را دقیقاً همان‌طور که نوشته شده وارد و دکمه‌ی «بررسی» را بزنید.</li>
+                <li>در صورت معتبر بودن کد، قیمت همان یک بلیط صفر می‌شود و بقیه‌ی بلیط‌های همان خرید (در صورت وجود) با قیمت عادی محاسبه می‌شوند.</li>
+                <li>این کد را فقط در اختیار یک نفر قرار دهید -- بعد از استفاده، دیگر قابل استفاده‌ی مجدد نیست.</li>
+            </ol>
+        </div>
     </div>
 
-    <div class="instructions">
-        <h2>راهنمای استفاده از کد ویژه</h2>
-        <ol>
-            <li>هر کد ویژه فقط یک‌بار قابل استفاده است و دقیقاً یک بلیط را کاملاً رایگان می‌کند.</li>
-            <li>هنگام خرید بلیط، در صفحه‌ی «تکمیل اطلاعات خریدار»، اول باید اطلاعات آن صندلی استعلام و تایید شود.</li>
-            <li>بعد از تایید موفق استعلام، فیلدی با عنوان «کد ویژه» ظاهر می‌شود -- کد را دقیقاً همان‌طور که نوشته شده در آن وارد کنید.</li>
-            <li>در صورت معتبر بودن کد، قیمت همان یک بلیط صفر می‌شود و بقیه‌ی بلیط‌های همان خرید (در صورت وجود) با قیمت عادی محاسبه می‌شوند.</li>
-            <li>هر کد را فقط در اختیار یک نفر قرار دهید -- کدهای «استفاده‌شده» در جدول زیر دیگر قابل استفاده نیستند.</li>
-        </ol>
-    </div>
-
-    <table>
-        <thead>
-            <tr><th>کد ویژه</th><th>مسابقه</th><th>تاریخ مسابقه</th><th>وضعیت</th></tr>
-        </thead>
-        <tbody>
-            {% for sc in codes %}
-            <tr>
-                <td class="code-cell">{{ sc.code }}</td>
-                <td>{{ sc.match.home_team }} vs {{ sc.match.away_team }}</td>
-                <td>{{ sc.match.date_time|date:"Y/m/d H:i" }}</td>
-                <td>
-                    {% if sc.is_used %}
-                        <span class="status-used">استفاده‌شده</span>
-                    {% else %}
-                        <span class="status-free">آزاد</span>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <div class="footer">تولید شده در {{ today|date:"Y/m/d H:i" }} — سامانه فروش بلیط سپاهان</div>
+    <div class="footer">تولید شده در {{ today|to_jalali }} — سامانه فروش بلیط سپاهان</div>
 </body>
 </html>

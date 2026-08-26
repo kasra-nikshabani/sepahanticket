@@ -302,7 +302,7 @@ def vip_special_codes_download(request):
     with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
         used_names = set()
         for code in codes:
-            pdf_bytes = _build_special_codes_pdf_bytes(request.user, [code])
+            pdf_bytes = _build_special_code_pdf_bytes(request.user, code)
             arcname = f"کد_ویژه_{code.code}.pdf"
             # کد یکتاست، ولی برای اطمینان از عدم تصادم نام فایل داخل زیپ
             n = 2
@@ -328,15 +328,17 @@ def vip_special_code_download_single(request, code_id):
         return redirect('matches:home')
 
     code = get_object_or_404(SpecialCode, id=code_id, vip_owner=request.user)
-    pdf_bytes = _build_special_codes_pdf_bytes(request.user, [code])
+    pdf_bytes = _build_special_code_pdf_bytes(request.user, code)
     response = HttpResponse(pdf_bytes, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="کد_ویژه_{code.code}.pdf"'
     return response
 
 
-def _build_special_codes_pdf_bytes(user, codes):
+def _build_special_code_pdf_bytes(user, code):
+    """PDF یک‌صفحه‌ای «گواهی‌مانند» برای دقیقاً یک کد ویژه -- تیتر، اطلاعات
+    مسابقه (تاریخ شمسی)، خودِ کد با فونت بزرگ، و آموزش استفاده."""
     context = {
-        'codes': codes,
+        'code': code,
         'owner_name': user.get_full_name() or user.username,
         'today': timezone.now(),
         'vazirmatn_dir': os.path.join(settings.BASE_DIR, 'static', 'vendor', 'vazirmatn', 'webfonts'),
