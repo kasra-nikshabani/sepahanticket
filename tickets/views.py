@@ -28,6 +28,7 @@ from django.views.decorators.cache import never_cache
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from weasyprint import HTML
+from weasyprint.text.fonts import FontConfiguration
 import pytz
 
 import matches
@@ -298,11 +299,18 @@ def vip_special_codes_download(request):
         messages.error(request, 'کدهای انتخاب‌شده یافت نشد.')
         return redirect('tickets:vip_special_codes')
 
+    # ===== یک FontConfiguration مشترک برای همه‌ی PDFهای این دانلود گروهی --
+    # وگرنه هر بار WeasyPrint دوباره فونت‌های Vazirmatn رو از دیسک پارس
+    # می‌کرد (که تقریباً ۶۰٪ از کل زمان تولید هر PDF بود) و برای دانلود
+    # گروهی چندصد کد، این کار به‌قدری کند می‌شد که ممکن بود از timeout
+    # gunicorn (۱۲۰ ثانیه) هم رد بشه. =====
+    font_config = FontConfiguration()
+
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
         used_names = set()
         for code in codes:
-            pdf_bytes = _build_special_code_pdf_bytes(request.user, code)
+            pdf_bytes = _build_special_code_pdf_bytes(request.user, code, font_config=font_config)
             arcname = f"کد_ویژه_{code.code}.pdf"
             # کد یکتاست، ولی برای اطمینان از عدم تصادم نام فایل داخل زیپ
             n = 2
@@ -334,9 +342,13 @@ def vip_special_code_download_single(request, code_id):
     return response
 
 
-def _build_special_code_pdf_bytes(user, code):
+def _build_special_code_pdf_bytes(user, code, font_config=None):
     """PDF یک‌صفحه‌ای «گواهی‌مانند» برای دقیقاً یک کد ویژه -- تیتر، اطلاعات
-    مسابقه (تاریخ شمسی)، خودِ کد با فونت بزرگ، و آموزش استفاده."""
+    مسابقه (تاریخ شمسی)، خودِ کد با فونت بزرگ، و آموزش استفاده.
+
+    اگه یک FontConfiguration از بیرون پاس داده بشه (برای دانلود گروهی چند
+    کد پشت‌سرهم)، همون استفاده می‌شه تا فونت‌ها فقط یک‌بار پارس بشن -- وگرنه
+    خودش یکی می‌سازه (برای دانلود تکی که فرقی نمی‌کنه)."""
     context = {
         'code': code,
         'owner_name': user.get_full_name() or user.username,
@@ -344,7 +356,9 @@ def _build_special_code_pdf_bytes(user, code):
         'vazirmatn_dir': os.path.join(settings.BASE_DIR, 'static', 'vendor', 'vazirmatn', 'webfonts'),
     }
     html_string = render_to_string('tickets/vip_special_codes_pdf.html', context)
-    return HTML(string=html_string, base_url=settings.MEDIA_ROOT).write_pdf()
+    if font_config is None:
+        font_config = FontConfiguration()
+    return HTML(string=html_string, base_url=settings.MEDIA_ROOT).write_pdf(font_config=font_config)
 
 
 # ============================================================
