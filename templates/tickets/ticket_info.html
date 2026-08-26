@@ -62,6 +62,28 @@
         background: #16213e;
         color: #fff;
     }
+    .special-code-check-btn {
+        background: linear-gradient(135deg, #D4AF37, #B8960F);
+        color: #1a1a2e;
+        font-weight: 800;
+        border: none;
+        padding: 0 20px;
+        border-radius: 8px;
+        transition: all 0.25s;
+        box-shadow: 0 3px 10px rgba(212, 175, 55, 0.45);
+    }
+    .special-code-check-btn:hover:not(:disabled) {
+        background: linear-gradient(135deg, #E8D58A, #D4AF37);
+        color: #1a1a2e;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(212, 175, 55, 0.6);
+    }
+    .special-code-check-btn:disabled {
+        background: #e9ecef;
+        color: #adb5bd;
+        box-shadow: none;
+        cursor: not-allowed;
+    }
     .btn-inquiry-verified {
         background: #28a745 !important;
         color: #fff !important;
@@ -188,7 +210,9 @@
                         </label>
                         <div class="input-group input-group-sm">
                             <input type="text" class="form-control form-control-modern special-code-input" id="specialCode_{{ forloop.counter }}" name="special_code_{{ seat.id }}" placeholder="کد ویژه را وارد کنید" data-seat-index="{{ forloop.counter }}" style="direction:ltr; text-transform:uppercase;" disabled>
-                            <button type="button" class="btn btn-outline-primary special-code-check-btn" data-seat-index="{{ forloop.counter }}" disabled>بررسی</button>
+                            <button type="button" class="btn special-code-check-btn" data-seat-index="{{ forloop.counter }}" disabled>
+                                <i class="fas fa-magic"></i> بررسی کد
+                            </button>
                         </div>
                         <div id="specialCodeMsg_{{ forloop.counter }}" class="mt-1 small"></div>
                     </div>
