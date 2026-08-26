@@ -275,7 +275,8 @@ def vip_special_codes(request):
 
 @login_required
 def vip_special_codes_download(request):
-    """دانلود گروهی (چندتایی) کدهای ویژه‌ی انتخاب‌شده به‌صورت یک فایل PDF."""
+    """دانلود گروهی: یک فایل ZIP که داخلش، به‌ازای هر کد ویژه‌ی انتخاب‌شده،
+    یک PDF جداگانه (کد + آموزش استفاده) هست -- نه یک PDF ترکیبی."""
     if request.user.user_type != 'vip':
         messages.error(request, 'شما دسترسی به این بخش ندارید.')
         return redirect('matches:home')
@@ -297,8 +298,26 @@ def vip_special_codes_download(request):
         messages.error(request, 'کدهای انتخاب‌شده یافت نشد.')
         return redirect('tickets:vip_special_codes')
 
-    filename = f"کدهای_ویژه_{request.user.username}_{timezone.now().strftime('%Y%m%d_%H%M')}.pdf"
-    return _render_special_codes_pdf(request.user, codes, filename)
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+        used_names = set()
+        for code in codes:
+            pdf_bytes = _build_special_codes_pdf_bytes(request.user, [code])
+            arcname = f"کد_ویژه_{code.code}.pdf"
+            # کد یکتاست، ولی برای اطمینان از عدم تصادم نام فایل داخل زیپ
+            n = 2
+            base_arcname = arcname
+            while arcname in used_names:
+                arcname = base_arcname.replace('.pdf', f'_{n}.pdf')
+                n += 1
+            used_names.add(arcname)
+            zip_file.writestr(arcname, pdf_bytes)
+    zip_buffer.seek(0)
+
+    response = HttpResponse(zip_buffer, content_type='application/zip')
+    filename = f"کدهای_ویژه_{request.user.username}_{timezone.now().strftime('%Y%m%d_%H%M')}.zip"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
 
 
 @login_required
@@ -309,11 +328,13 @@ def vip_special_code_download_single(request, code_id):
         return redirect('matches:home')
 
     code = get_object_or_404(SpecialCode, id=code_id, vip_owner=request.user)
-    filename = f"کد_ویژه_{code.code}.pdf"
-    return _render_special_codes_pdf(request.user, [code], filename)
+    pdf_bytes = _build_special_codes_pdf_bytes(request.user, [code])
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="کد_ویژه_{code.code}.pdf"'
+    return response
 
 
-def _render_special_codes_pdf(user, codes, filename):
+def _build_special_codes_pdf_bytes(user, codes):
     context = {
         'codes': codes,
         'owner_name': user.get_full_name() or user.username,
@@ -321,12 +342,7 @@ def _render_special_codes_pdf(user, codes, filename):
         'vazirmatn_dir': os.path.join(settings.BASE_DIR, 'static', 'vendor', 'vazirmatn', 'webfonts'),
     }
     html_string = render_to_string('tickets/vip_special_codes_pdf.html', context)
-    html = HTML(string=html_string, base_url=settings.MEDIA_ROOT)
-
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    html.write_pdf(target=response)
-    return response
+    return HTML(string=html_string, base_url=settings.MEDIA_ROOT).write_pdf()
 
 
 # ============================================================
@@ -2138,6 +2154,28 @@ def admin_discount_toggle(request, discount_id):
     messages.success(request, f'کد تخفیف "{discount.code}" {status} شد.')
     next_url = request.POST.get('next') or request.GET.get('next')
     return redirect(next_url) if next_url else redirect('tickets:admin_discount_list')
+
+
+@staff_member_required
+def admin_special_code_toggle(request, code_id):
+    code = get_object_or_404(SpecialCode, id=code_id)
+    code.is_active = not code.is_active
+    code.save(update_fields=['is_active'])
+    status = 'فعال' if code.is_active else 'غیرفعال'
+    messages.success(request, f'کد ویژه "{code.code}" {status} شد.')
+    next_url = request.POST.get('next') or request.GET.get('next')
+    return redirect(next_url) if next_url else redirect('tickets:manage_vip_users')
+
+
+@staff_member_required
+def admin_special_code_delete(request, code_id):
+    code = get_object_or_404(SpecialCode, id=code_id)
+    next_url = request.POST.get('next') or request.GET.get('next')
+    if request.method == 'POST':
+        code_str = code.code
+        code.delete()
+        messages.success(request, f'کد ویژه "{code_str}" حذف شد.')
+    return redirect(next_url) if next_url else redirect('tickets:manage_vip_users')
 
 
 @staff_member_required

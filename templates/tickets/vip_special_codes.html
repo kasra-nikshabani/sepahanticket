@@ -107,6 +107,8 @@
                                         <td>
                                             {% if sc.is_used %}
                                                 <span class="status-badge used">استفاده‌شده</span>
+                                            {% elif not sc.is_active %}
+                                                <span class="status-badge used">غیرفعال</span>
                                             {% else %}
                                                 <span class="status-badge free">آزاد</span>
                                             {% endif %}

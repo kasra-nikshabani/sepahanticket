@@ -361,6 +361,7 @@ class SpecialCode(models.Model):
     )
     is_used = models.BooleanField(default=False, verbose_name="استفاده‌شده")
     used_at = models.DateTimeField(null=True, blank=True, verbose_name="زمان استفاده")
+    is_active = models.BooleanField(default=True, verbose_name="فعال")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -369,6 +370,8 @@ class SpecialCode(models.Model):
         ordering = ['-created_at']
 
     def is_valid(self, match=None):
+        if not self.is_active:
+            return False, "این کد ویژه غیرفعال شده است"
         if self.is_used:
             return False, "این کد ویژه قبلاً استفاده شده است"
         if match and self.match_id != match.id:

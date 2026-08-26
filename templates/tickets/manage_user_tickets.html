@@ -218,6 +218,14 @@
         background: #d4edda;
         color: #155724;
     }
+    .table-custom .status-badge.active {
+        background: #d4edda;
+        color: #155724;
+    }
+    .table-custom .status-badge.inactive {
+        background: #f8d7da;
+        color: #721c24;
+    }
 
     /* ===== دکمه‌ها ===== */
     .btn-delete {
@@ -625,7 +633,7 @@
                     <div class="table-responsive" style="padding:12px 16px;">
                         <table class="table-custom">
                             <thead>
-                                <tr><th>کد</th><th>وضعیت</th><th>بلیط مرتبط</th><th>تاریخ ساخت</th></tr>
+                                <tr><th>کد</th><th>وضعیت</th><th>فعال‌سازی</th><th>بلیط مرتبط</th><th>تاریخ ساخت</th><th>عملیات</th></tr>
                             </thead>
                             <tbody>
                                 {% for sc in group.codes %}
@@ -639,11 +647,32 @@
                                         {% endif %}
                                     </td>
                                     <td>
+                                        {% if sc.is_active %}
+                                            <span class="status-badge active">فعال</span>
+                                        {% else %}
+                                            <span class="status-badge inactive">غیرفعال</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
                                         {% with t=sc.tickets.first %}
                                             {% if t %}{{ t.full_name }}{% else %}—{% endif %}
                                         {% endwith %}
                                     </td>
                                     <td>{{ sc.created_at|date:"Y/m/d H:i" }}</td>
+                                    <td>
+                                        <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                                            <a href="{% url 'tickets:admin_special_code_toggle' sc.id %}?next={{ back_url|urlencode }}" class="btn-download" title="{% if sc.is_active %}غیرفعال کن{% else %}فعال کن{% endif %}">
+                                                <i class="fas fa-power-off"></i>
+                                            </a>
+                                            <form method="post" action="{% url 'tickets:admin_special_code_delete' sc.id %}" style="display:inline;" onsubmit="return confirm('آیا از حذف کد ویژه «{{ sc.code }}» مطمئن هستید؟');">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="next" value="{{ back_url }}">
+                                                <button type="submit" class="btn-delete" title="حذف کد">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
