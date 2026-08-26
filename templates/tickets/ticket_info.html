@@ -688,14 +688,26 @@
                     }
                 }
 
-                // ===== فیلد «کد ویژه» فقط بعد از تایید موفق استعلام باز می‌شود =====
+                // ===== فیلد «کد ویژه» فقط بعد از تایید موفق استعلام باز می‌شود --
+                // و فقط اگر بلیط از قبل (به‌خاطر سن زیر ۱۵ سال) رایگان نشده باشه؛
+                // وگرنه کد ویژه‌ی یک‌بارمصرف الکی روی بلیطی که مجانی سنه هدر می‌ره. =====
                 const scWrap = document.getElementById('specialCodeWrap_' + index);
                 const scInput = document.getElementById('specialCode_' + index);
                 const scBtn = document.querySelector('.special-code-check-btn[data-seat-index="' + index + '"]');
+                const scMsg = document.getElementById('specialCodeMsg_' + index);
                 if (scWrap && scInput) {
-                    scWrap.style.display = 'block';
-                    scInput.disabled = false;
-                    if (scBtn) scBtn.disabled = false;
+                    if (data.is_free) {
+                        scWrap.style.display = 'none';
+                        scInput.value = '';
+                        scInput.disabled = true;
+                        if (scBtn) scBtn.disabled = true;
+                        if (scMsg) scMsg.innerHTML = '';
+                        delete window.specialCodeSeats[index];
+                    } else {
+                        scWrap.style.display = 'block';
+                        scInput.disabled = false;
+                        if (scBtn) scBtn.disabled = false;
+                    }
                 }
 
                 window.updateAll();

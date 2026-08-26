@@ -397,7 +397,12 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             # این بلیط کاملاً رایگان می‌شود، مستقل از بقیه‌ی محاسبات. =====
             special_code_input = (payment.buyer_info.get(f'special_code_{pk_str}') or '').strip().upper()
             special_code_obj = None
-            if special_code_input:
+            # ===== اگر این صندلی از قبل به‌خاطر سن زیر ۱۵ سال رایگانه، کد ویژه
+            # نادیده گرفته می‌شود (نه مصرف/نه خطا) -- همون‌طور که توی مسیر
+            # رایگان/کیف‌پول (tickets/views.py) هست، نباید کدِ یک‌بارمصرفِ کاربر
+            # ویژه روی بلیطی که مجانی سن است هدر بره یا این بلیط توی گزارش‌ها
+            # به‌جای «رایگان زیر ۱۵ سال» زیر «کد ویژه» شمرده بشه. =====
+            if special_code_input and not is_free:
                 try:
                     special_code_obj = SpecialCode.objects.select_for_update().get(code=special_code_input)
                     valid, _msg = special_code_obj.is_valid(match=match)

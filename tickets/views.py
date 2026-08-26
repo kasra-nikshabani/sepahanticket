@@ -1007,6 +1007,13 @@ def ticket_info(request, match_id):
             special_code_input = (request.POST.get(f'special_code_{match_seat_id}') or '').strip().upper()
             special_code_obj = None
             if special_code_input:
+                # ===== این صندلی از قبل به‌خاطر سن زیر ۱۵ سال رایگانه -- نباید
+                # یک کد ویژه‌ی یک‌بارمصرف رو الکی روش مصرف کنیم، وگرنه هم کدِ
+                # کاربر ویژه بی‌جهت هدر می‌ره، هم توی گزارش‌ها این بلیط به‌جای
+                # «رایگان زیر ۱۵ سال» زیر دسته‌ی «کد ویژه» شمرده می‌شه. =====
+                if is_free:
+                    messages.error(request, 'این صندلی به‌خاطر سن زیر ۱۵ سال از قبل رایگان است و نیازی به کد ویژه ندارد؛ لطفاً کد ویژه را برای این صندلی وارد نکنید.')
+                    return render(request, 'tickets/ticket_info.html', context)
                 if special_code_input in used_special_codes_in_order:
                     messages.error(request, f'کد ویژه «{special_code_input}» فقط یک‌بار قابل استفاده است و نمی‌تواند برای دو صندلی وارد شود.')
                     return render(request, 'tickets/ticket_info.html', context)
