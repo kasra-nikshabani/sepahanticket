@@ -186,7 +186,10 @@
                         <label class="form-label small fw-bold text-muted">
                             <i class="fas fa-gift text-warning"></i> کد ویژه (اختیاری -- این بلیط را رایگان می‌کند)
                         </label>
-                        <input type="text" class="form-control form-control-modern special-code-input" id="specialCode_{{ forloop.counter }}" name="special_code_{{ seat.id }}" placeholder="کد ویژه را وارد کنید" data-seat-index="{{ forloop.counter }}" style="direction:ltr; text-transform:uppercase;" disabled>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control form-control-modern special-code-input" id="specialCode_{{ forloop.counter }}" name="special_code_{{ seat.id }}" placeholder="کد ویژه را وارد کنید" data-seat-index="{{ forloop.counter }}" style="direction:ltr; text-transform:uppercase;" disabled>
+                            <button type="button" class="btn btn-outline-primary special-code-check-btn" data-seat-index="{{ forloop.counter }}" disabled>بررسی</button>
+                        </div>
                         <div id="specialCodeMsg_{{ forloop.counter }}" class="mt-1 small"></div>
                     </div>
 
@@ -537,8 +540,13 @@
         });
 
         document.querySelectorAll('.special-code-input').forEach(function(input) {
-            input.addEventListener('blur', function() { checkSpecialCode(this.dataset.seatIndex); });
             input.addEventListener('input', function() { this.value = this.value.toUpperCase(); });
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); checkSpecialCode(this.dataset.seatIndex); }
+            });
+        });
+        document.querySelectorAll('.special-code-check-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() { checkSpecialCode(this.dataset.seatIndex); });
         });
     });
 
@@ -659,9 +667,11 @@
                 // ===== فیلد «کد ویژه» فقط بعد از تایید موفق استعلام باز می‌شود =====
                 const scWrap = document.getElementById('specialCodeWrap_' + index);
                 const scInput = document.getElementById('specialCode_' + index);
+                const scBtn = document.querySelector('.special-code-check-btn[data-seat-index="' + index + '"]');
                 if (scWrap && scInput) {
                     scWrap.style.display = 'block';
                     scInput.disabled = false;
+                    if (scBtn) scBtn.disabled = false;
                 }
 
                 window.updateAll();
