@@ -276,55 +276,97 @@ def vip_special_codes(request):
 
 @login_required
 def vip_special_codes_download(request):
-    """دانلود گروهی: یک فایل ZIP که داخلش، به‌ازای هر کد ویژه‌ی انتخاب‌شده،
-    یک PDF جداگانه (کد + آموزش استفاده) هست -- نه یک PDF ترکیبی."""
+    """شروع ساخت گروهی ZIP کدهای ویژه در پس‌زمینه (RQ) -- به‌جای ساخت مستقیم
+    توی خودِ درخواست HTTP (که برای دسته‌های بزرگ چند دقیقه طول می‌کشید و
+    کاربر مجبور بود صفحه رو منتظر بمونه). این ویو فقط enqueue می‌کنه و
+    شناسه‌ی job رو برمی‌گردونه؛ فرانت‌اند با Polling روی
+    vip_special_codes_download_status وضعیتش رو چک می‌کنه."""
     if request.user.user_type != 'vip':
-        messages.error(request, 'شما دسترسی به این بخش ندارید.')
-        return redirect('matches:home')
-
+        return JsonResponse({'error': 'شما دسترسی به این بخش ندارید.'}, status=403)
     if request.method != 'POST':
-        return redirect('tickets:vip_special_codes')
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
 
     code_ids = request.POST.getlist('code_ids')
     if not code_ids:
-        messages.warning(request, 'هیچ کدی برای دانلود انتخاب نشده است.')
-        return redirect('tickets:vip_special_codes')
+        return JsonResponse({'error': 'هیچ کدی برای دانلود انتخاب نشده است.'}, status=400)
 
-    codes = list(
-        SpecialCode.objects.filter(id__in=code_ids, vip_owner=request.user).select_related('match').order_by(
-            'match__date_time', 'created_at'
-        )
-    )
-    if not codes:
-        messages.error(request, 'کدهای انتخاب‌شده یافت نشد.')
-        return redirect('tickets:vip_special_codes')
+    if not SpecialCode.objects.filter(id__in=code_ids, vip_owner=request.user).exists():
+        return JsonResponse({'error': 'کدهای انتخاب‌شده یافت نشد.'}, status=404)
 
-    # ===== یک FontConfiguration مشترک برای همه‌ی PDFهای این دانلود گروهی --
-    # وگرنه هر بار WeasyPrint دوباره فونت‌های Vazirmatn رو از دیسک پارس
-    # می‌کرد (که تقریباً ۶۰٪ از کل زمان تولید هر PDF بود) و برای دانلود
-    # گروهی چندصد کد، این کار به‌قدری کند می‌شد که ممکن بود از timeout
-    # gunicorn (۱۲۰ ثانیه) هم رد بشه. =====
-    font_config = FontConfiguration()
+    from .tasks import build_special_codes_zip_task
+    from .queue import pdf_queue
+    job = pdf_queue.enqueue(build_special_codes_zip_task, request.user.id, code_ids, job_timeout=300)
+    return JsonResponse({'job_id': job.id})
 
-    zip_buffer = BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
-        used_names = set()
-        for code in codes:
-            pdf_bytes = _build_special_code_pdf_bytes(request.user, code, font_config=font_config)
-            arcname = f"کد_ویژه_{code.code}.pdf"
-            # کد یکتاست، ولی برای اطمینان از عدم تصادم نام فایل داخل زیپ
-            n = 2
-            base_arcname = arcname
-            while arcname in used_names:
-                arcname = base_arcname.replace('.pdf', f'_{n}.pdf')
-                n += 1
-            used_names.add(arcname)
-            zip_file.writestr(arcname, pdf_bytes)
-    zip_buffer.seek(0)
 
-    response = HttpResponse(zip_buffer, content_type='application/zip')
-    filename = f"کدهای_ویژه_{request.user.username}_{timezone.now().strftime('%Y%m%d_%H%M')}.zip"
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+@login_required
+def vip_special_codes_download_status(request, job_id):
+    """Polling: آیا ZIP درخواست‌شده (job_id بالا) آماده شده یا نه."""
+    if request.user.user_type != 'vip':
+        return JsonResponse({'error': 'شما دسترسی به این بخش ندارید.'}, status=403)
+
+    from rq.job import Job
+    from rq.exceptions import NoSuchJobError
+    from .queue import pdf_queue
+    try:
+        job = Job.fetch(job_id, connection=pdf_queue.connection)
+    except NoSuchJobError:
+        return JsonResponse({'error': 'یافت نشد.'}, status=404)
+
+    if not job.args or job.args[0] != request.user.id:
+        return JsonResponse({'error': 'شما دسترسی به این فایل ندارید.'}, status=403)
+
+    if job.is_failed:
+        return JsonResponse({'ready': True, 'error': 'خطا در ساخت فایل. دوباره تلاش کنید.'})
+
+    if not job.is_finished:
+        return JsonResponse({'ready': False})
+
+    if not job.result:
+        return JsonResponse({'ready': True, 'error': 'کدهای انتخاب‌شده یافت نشد.'})
+
+    return JsonResponse({
+        'ready': True,
+        'download_url': reverse('tickets:vip_special_codes_download_file', args=[job.id]),
+    })
+
+
+@login_required
+def vip_special_codes_download_file(request, job_id):
+    """دانلود نهایی فایل ZIP آماده‌شده -- بعد از serve کردن، خودِ فایل موقت
+    از دیسک پاک می‌شود."""
+    if request.user.user_type != 'vip':
+        raise Http404
+
+    from rq.job import Job
+    from rq.exceptions import NoSuchJobError
+    from .queue import pdf_queue
+    try:
+        job = Job.fetch(job_id, connection=pdf_queue.connection)
+    except NoSuchJobError:
+        raise Http404
+
+    if not job.args or job.args[0] != request.user.id or not job.is_finished or not job.result:
+        raise Http404
+
+    zip_path = job.result['zip_path']
+    display_filename = job.result['display_filename']
+    if not os.path.exists(zip_path):
+        raise Http404
+
+    with open(zip_path, 'rb') as f:
+        data = f.read()
+    try:
+        os.remove(zip_path)
+    except OSError:
+        pass
+    try:
+        job.delete()
+    except Exception:
+        pass
+
+    response = HttpResponse(data, content_type='application/zip')
+    response['Content-Disposition'] = f'attachment; filename="{display_filename}"'
     return response
 
 

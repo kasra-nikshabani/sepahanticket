@@ -129,7 +129,8 @@
 
                     <div class="download-bar">
                         <span class="text-muted small"><span id="selectedCount">0</span> کد انتخاب شده</span>
-                        <button type="submit" class="btn-download-selected" id="downloadBtn" disabled>
+                        <span id="downloadStatusMsg" class="text-muted small"></span>
+                        <button type="button" class="btn-download-selected" id="downloadBtn" disabled>
                             <i class="fas fa-file-pdf"></i> دانلود گروهی (PDF)
                         </button>
                     </div>
@@ -151,6 +152,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectAllBoxes = document.querySelectorAll('.select-match-all');
     const downloadBtn = document.getElementById('downloadBtn');
     const selectedCount = document.getElementById('selectedCount');
+    const statusMsg = document.getElementById('downloadStatusMsg');
+    const form = document.getElementById('downloadForm');
 
     function updateCount() {
         const count = document.querySelectorAll('.code-checkbox:checked').length;
@@ -169,6 +172,69 @@ document.addEventListener('DOMContentLoaded', function () {
 
     checkboxes.forEach(function (cb) {
         cb.addEventListener('change', updateCount);
+    });
+
+    // ===== دانلود گروهی حالا در پس‌زمینه (RQ) ساخته می‌شه، نه توی خودِ
+    // درخواست HTTP -- برای دسته‌های بزرگ چند ده ثانیه طول می‌کشید و مرورگر
+    // معطل می‌موند. اینجا فقط شروعش می‌کنیم و با Polling منتظر آماده شدنش
+    // می‌مونیم، بدون اینکه صفحه قفل بشه. =====
+    let pollTimer = null;
+
+    function stopPolling() {
+        if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+    }
+
+    function setBusy(isBusy, msg) {
+        downloadBtn.disabled = isBusy || document.querySelectorAll('.code-checkbox:checked').length === 0;
+        statusMsg.textContent = msg || '';
+    }
+
+    function pollStatus(jobId, attempt) {
+        attempt = attempt || 0;
+        if (attempt > 150) { // ~5 دقیقه با فاصله ۲ ثانیه
+            setBusy(false, 'ساخت فایل بیش از حد طول کشید. دوباره تلاش کنید.');
+            return;
+        }
+        fetch(`{% url 'tickets:vip_special_codes_download_status' 'JOBID' %}`.replace('JOBID', jobId))
+            .then(r => r.json())
+            .then(data => {
+                if (data.error && !data.ready) {
+                    setBusy(false, data.error);
+                    return;
+                }
+                if (!data.ready) {
+                    pollTimer = setTimeout(() => pollStatus(jobId, attempt + 1), 2000);
+                    return;
+                }
+                if (data.error) {
+                    setBusy(false, data.error);
+                    return;
+                }
+                setBusy(false, 'دانلود شروع شد.');
+                window.location.href = data.download_url;
+            })
+            .catch(() => {
+                pollTimer = setTimeout(() => pollStatus(jobId, attempt + 1), 3000);
+            });
+    }
+
+    downloadBtn.addEventListener('click', function () {
+        stopPolling();
+        const formData = new FormData(form);
+        setBusy(true, 'در حال آماده‌سازی فایل...');
+        fetch("{% url 'tickets:vip_special_codes_download' %}", {
+            method: 'POST',
+            body: formData,
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    setBusy(false, data.error);
+                    return;
+                }
+                pollStatus(data.job_id, 0);
+            })
+            .catch(() => setBusy(false, 'خطا در شروع ساخت فایل. دوباره تلاش کنید.'));
     });
 });
 </script>

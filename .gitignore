@@ -9,4 +9,5 @@ __pycache__/
 venv/
 staticfiles/
 media/
+tmp_downloads/
 *.log
