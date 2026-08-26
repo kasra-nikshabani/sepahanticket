@@ -1380,11 +1380,24 @@ def inquiry_fan(request):
         try:
             data = response.json()
         except ValueError:
-            # اگر سرور JSON برنگرداند (مثلا صفحه ارور بدهد)
+            # ===== سرویس fans.footballeticket.ir بعضی خطاها رو به‌جای JSON،
+            # متن ساده برمی‌گردونه -- مثلاً وقتی خودش نمی‌تونه به ثبت‌احوال
+            # وصل بشه، متن «خطا در اتصال به سرویس ثبت احوال» رو plain-text
+            # می‌ده که ربطی به اشتباه بودن اطلاعات کاربر نداره. قبلاً همیشه
+            # یک پیام ثابت («اطلاعات با ثبت احوال تطابق ندارد») نشون داده
+            # می‌شد که کاربر رو گمراه می‌کرد (فکر می‌کرد کد ملی/تاریخ تولدش
+            # اشتباهه، در حالی که مشکل قطعی سرویسه). حالا اگه متن پاسخ
+            # کوتاه و قابل‌فهم بود (نه یک صفحه‌ی خطای HTML)، همون رو عیناً
+            # نشون می‌دیم. =====
+            raw_text = (response.text or '').strip()
+            if raw_text and len(raw_text) < 200 and '<html' not in raw_text.lower() and '<!doctype' not in raw_text.lower():
+                error_msg = raw_text
+            else:
+                error_msg = 'سرویس استعلام ثبت‌احوال موقتاً در دسترس نیست. لطفاً چند دقیقه دیگر دوباره تلاش کنید.'
             return JsonResponse({
                 'success': False,
-                'error': 'اطلاعات با ثبت احوال تطابق ندارد. لطفاً کد ملی، نام و تاریخ تولد را دقیق وارد کنید.'
-            }, status=400)
+                'error': error_msg,
+            }, status=response.status_code if response.status_code >= 400 else 400)
 
         if response.status_code in [200, 201]:
             age = get_age_from_jalali(tarikhe_tavallod)
