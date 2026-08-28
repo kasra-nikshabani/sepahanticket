@@ -657,6 +657,9 @@
                 <span class="stat-icon"><i class="fas fa-check-circle"></i></span>
                 <div class="stat-number">{{ sold_count }}</div>
                 <p class="stat-label">بلیط فروخته‌شده</p>
+                <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">
+                    = {{ full_price_count }} (قیمت کامل) + {{ basa_discount_count }} (باسا) + {{ free_age_count }} (رایگان زیر ۱۵) -- بلیط‌های ویژه، تخفیف ویژه و کد ویژه اینجا نیستن، هرکدوم کارت جدای خودشون رو دارن
+                </small>
             </div>
             <div class="stat-card orange">
                 <span class="stat-icon"><i class="fas fa-star"></i></span>
@@ -752,6 +755,14 @@
                 <p class="stat-label">بلیطِ کد ویژه که از گیت عبور کرده</p>
                 <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">
                     از {{ special_code_ticket_count }} بلیط -- {{ special_code_ticket_used_percent }}٪ حضور
+                </small>
+            </div>
+            <div class="stat-card gold">
+                <span class="stat-icon"><i class="fas fa-layer-group"></i></span>
+                <div class="stat-number">{{ total_tickets }}</div>
+                <p class="stat-label">جمع کل بلیط‌های صادرشده</p>
+                <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">
+                    = {{ sold_count }} (فروخته‌شده) + {{ vip_count }} (ویژه) + {{ discount_code_usage_count }} (تخفیف ویژه) + {{ special_code_ticket_count }} (کد ویژه)
                 </small>
             </div>
             <!-- ===== پایان تفکیک درآمد ===== -->
