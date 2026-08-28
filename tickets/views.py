@@ -479,6 +479,14 @@ def vip_issue_manual(request, match_id):
                 messages.error(request, 'صندلی انتخاب‌شده معتبر نیست یا قبلاً فروخته شده است.')
                 return redirect('tickets:vip_issue_manual', match_id=match_id)
 
+            # ===== نگهبان اضافی: is_available=True به‌تنهایی همیشه قابل‌اعتماد
+            # نیست (چند صندلی واقعی با بلیط از قبل صادرشده پیدا شد که هنوز
+            # is_available=True بود) -- مستقیماً چک می‌کنیم بلیطی برای این
+            # صندلی نباشه. =====
+            if Ticket.objects.filter(match_seat=match_seat, status__in=['paid', 'admin_assigned', 'vip_issued']).exists():
+                messages.error(request, 'این صندلی از قبل بلیط دارد. لطفاً صندلی دیگری انتخاب کنید.')
+                return redirect('tickets:vip_issue_manual', match_id=match_id)
+
             ticket = Ticket.objects.create(
                 user=request.user, match=match, seat=match_seat.seat, match_seat=match_seat,
                 full_name=full_name, national_code=national_code, status='vip_issued', is_admin_assigned=False,
@@ -609,6 +617,7 @@ def vip_issue_excel(request, match_id):
                     return redirect('tickets:vip_issue_excel', match_id=match_id)
 
                 created = 0
+                seat_idx = 0
                 for _, row_data in df.iterrows():
                     full_name = str(row_data['نام و نام خانوادگی']).strip()
                     national_code = str(row_data['کد ملی']).strip()
@@ -616,7 +625,22 @@ def vip_issue_excel(request, match_id):
                     if not full_name or not national_code or len(national_code) != 10:
                         continue
 
-                    match_seat = available_match_seats[created]
+                    # ===== نگهبان اضافی: is_available=True به‌تنهایی همیشه
+                    # قابل‌اعتماد نیست -- به جای فرض قطعی «همه‌ی available_match_seats
+                    # واقعاً خالی‌ان»، از این لیست جلو می‌ریم تا اولین صندلی‌ای
+                    # که واقعاً بلیط نداره پیدا بشه. =====
+                    match_seat = None
+                    while seat_idx < len(available_match_seats):
+                        candidate = available_match_seats[seat_idx]
+                        seat_idx += 1
+                        if not Ticket.objects.filter(
+                            match_seat=candidate, status__in=['paid', 'admin_assigned', 'vip_issued']
+                        ).exists():
+                            match_seat = candidate
+                            break
+                    if match_seat is None:
+                        messages.error(request, 'صندلی خالی کافی برای ادامه‌ی فایل اکسل باقی نماند.')
+                        break
 
                     ticket = Ticket.objects.create(
                         user=request.user, match=match, seat=match_seat.seat, match_seat=match_seat,
@@ -675,9 +699,13 @@ def select_seats(request, match_id):
             for seat_id in old_seats:
                 try:
                     ms = MatchSeat.objects.get(id=seat_id, match=match)
-                    ms.is_available = True
-                    ms.reserved_until = None
-                    ms.save()
+                    has_ticket = Ticket.objects.filter(
+                        match_seat=ms, status__in=['paid', 'admin_assigned', 'vip_issued']
+                    ).exists()
+                    if not has_ticket:
+                        ms.is_available = True
+                        ms.reserved_until = None
+                        ms.save()
                 except MatchSeat.DoesNotExist:
                     pass
                 SeatReservation.release(seat_id, user_id=getattr(request.user, 'id', None), force=True)
@@ -894,9 +922,13 @@ def ticket_info(request, match_id):
                     for sid in selected_seats:
                         try:
                             ms2 = MatchSeat.objects.get(id=sid, match=match)
-                            ms2.is_available = True
-                            ms2.reserved_until = None
-                            ms2.save()
+                            has_ticket = Ticket.objects.filter(
+                                match_seat=ms2, status__in=['paid', 'admin_assigned', 'vip_issued']
+                            ).exists()
+                            if not has_ticket:
+                                ms2.is_available = True
+                                ms2.reserved_until = None
+                                ms2.save()
                         except MatchSeat.DoesNotExist:
                             pass
                 request.session.pop('selected_seats', None)
@@ -1197,9 +1229,12 @@ def ticket_info(request, match_id):
                     # دقیقاً همون صندلی رو دوباره رزرو می‌کرد، reserved_until
                     # یه مقدار جدیدِ در-آینده می‌گرفت و اون چک ساده رو گول
                     # می‌زد -- اینجا مستقیماً و به‌صورت اتمیک (توی همین
-                    # select_for_update) چک می‌کنیم که این صندلی از قبل
-                    # بلیطِ پولی نداشته باشه. =====
-                    if Ticket.objects.filter(match_seat=match_seat, status='paid').exists():
+                    # select_for_update) چک می‌کنیم که این صندلی از قبل هیچ
+                    # بلیطی (پولی، سهمیه‌ی VIP، یا صدور دستی ادمین) نداشته
+                    # باشه -- نه فقط 'paid'، چون is_available هم می‌تونه از
+                    # واقعیت جدا بیفته (چند صندلی واقعی با بلیط پولی پیدا شد
+                    # که is_available هنوز True بود). =====
+                    if Ticket.objects.filter(match_seat=match_seat, status__in=['paid', 'admin_assigned', 'vip_issued']).exists():
                         messages.error(
                             request,
                             f'صندلی {match_seat.seat.number} همین الان توسط شخص دیگری خریداری شد. لطفاً صندلی دیگری انتخاب کنید.'
@@ -1275,9 +1310,19 @@ def cancel_reservation(request, match_id):
         for seat_id in selected_seats:
             try:
                 match_seat = MatchSeat.objects.get(id=seat_id, match=match)
-                match_seat.is_available = True
-                match_seat.reserved_until = None
-                match_seat.save(update_fields=['is_available', 'reserved_until'])
+                # ===== قبل از آزادسازی، چک می‌کنیم این صندلی از قبل بلیط
+                # نگرفته باشه -- وگرنه یه لغو دیرهنگام/دوباره (مثلاً بعد از
+                # خرید موفق، بازخوردِ کند شبکه یا beforeunload) می‌تونست
+                # صندلیِ همین الان فروخته‌شده رو دوباره «آزاد» نشون بده و
+                # امکان فروش دوم رو باز کنه (همون الگویی که چند صندلی واقعی
+                # رو دچار مشکل کرده بود). =====
+                has_ticket = Ticket.objects.filter(
+                    match_seat=match_seat, status__in=['paid', 'admin_assigned', 'vip_issued']
+                ).exists()
+                if not has_ticket:
+                    match_seat.is_available = True
+                    match_seat.reserved_until = None
+                    match_seat.save(update_fields=['is_available', 'reserved_until'])
             except MatchSeat.DoesNotExist:
                 pass
             SeatReservation.release(seat_id, user_id=getattr(request.user, 'id', None), force=True)
@@ -1315,8 +1360,13 @@ def release_reservation(request):
         for seat_id in selected_seats:
             try:
                 match_seat = MatchSeat.objects.get(id=seat_id, match=match)
-                has_paid_ticket = Ticket.objects.filter(match_seat=match_seat, status='paid').exists()
-                if not has_paid_ticket:
+                # ===== نه فقط 'paid' -- یک صندلیِ سهمیه‌ی VIP/صدور دستی هم نباید
+                # با رها کردنِ رزروِ یک سشنِ کاربرِ عادی دوباره «آزاد» نشون داده
+                # بشه. =====
+                has_ticket = Ticket.objects.filter(
+                    match_seat=match_seat, status__in=['paid', 'admin_assigned', 'vip_issued']
+                ).exists()
+                if not has_ticket:
                     match_seat.is_available = True
                     match_seat.reserved_until = None
                     match_seat.save()
@@ -1604,9 +1654,20 @@ def bulk_issue_tickets(request):
                 created_count = 0
                 for user in users:
                     for _ in range(count_per_user):
-                        if ticket_index >= len(available_match_seats): break
-                        match_seat = available_match_seats[ticket_index]
-                        ticket_index += 1
+                        # ===== نگهبان اضافی: is_available=True به‌تنهایی همیشه
+                        # قابل‌اعتماد نیست -- به‌جای فرض قطعی «همه‌ی
+                        # available_match_seats واقعاً خالی‌ان»، جلو می‌ریم تا
+                        # اولین صندلی‌ای که واقعاً بلیط نداره پیدا بشه. =====
+                        match_seat = None
+                        while ticket_index < len(available_match_seats):
+                            candidate = available_match_seats[ticket_index]
+                            ticket_index += 1
+                            if not Ticket.objects.filter(
+                                match_seat=candidate, status__in=['paid', 'admin_assigned', 'vip_issued']
+                            ).exists():
+                                match_seat = candidate
+                                break
+                        if match_seat is None: break
                         if match_seat.match_id != match.id:
                             match_seat.match = match
                             match_seat.save()
@@ -1731,7 +1792,12 @@ def admin_issue_ticket(request):
                         match_seat, _ = MatchSeat.objects.select_for_update().get_or_create(
                             match=selected_match, seat=seat, defaults={'is_available': True}
                         )
-                        if match_seat.is_available:
+                        # ===== نگهبان اضافی: is_available=True به‌تنهایی همیشه
+                        # قابل‌اعتماد نیست -- مستقیماً هم چک می‌کنیم بلیطی برای
+                        # این صندلی نباشه. =====
+                        if match_seat.is_available and not Ticket.objects.filter(
+                            match_seat=match_seat, status__in=['paid', 'admin_assigned', 'vip_issued']
+                        ).exists():
                             chosen_match_seat = match_seat
                             break
 

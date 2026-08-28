@@ -270,6 +270,7 @@ def payment_verify(request):
 def _release_payment_seats(payment):
     """وقتی پرداخت باقی‌مانده‌ی خرید بلیط ناموفق بود، صندلی‌های رزروشده رو آزاد کن."""
     from matches.models import MatchSeat
+    from tickets.models import Ticket
     from tickets.reservation import SeatReservation
     from django.db import transaction
 
@@ -281,9 +282,24 @@ def _release_payment_seats(payment):
         return
 
     with transaction.atomic():
-        MatchSeat.objects.filter(
-            id__in=seat_ids, match_id=payment.match_id
-        ).update(is_available=True, reserved_until=None)
+        # ===== حتی وقتی کل پرداخت «ناموفق» علامت می‌خوره، ممکنه یکی از
+        # صندلی‌های همین سفارش قبلش (توی _finalize_ticket_purchase، نگهبانِ
+        # دوبار-فروش) بلیط واقعی گرفته باشه -- مثلاً سفارش تک‌صندلی‌ای که
+        # همون یک صندلی از قبل بلیط داشت، پس finalize صفر بلیط ساخت و کلِ
+        # پرداخت "ناموفق" علامت خورد. اگه اینجا بدون چک، is_available رو
+        # True کنیم، دقیقاً همون صندلیِ از-قبل-فروخته‌شده رو دوباره «آزاد»
+        # نشون می‌دیم و امکان فروش سوم رو باز می‌کنیم. =====
+        ticketed_seat_ids = set(
+            Ticket.objects.filter(
+                match_seat_id__in=seat_ids, status__in=['paid', 'admin_assigned', 'vip_issued']
+            ).values_list('match_seat_id', flat=True)
+        )
+        seat_ids_to_release = [sid for sid in seat_ids if sid not in ticketed_seat_ids]
+        if seat_ids_to_release:
+            MatchSeat.objects.filter(
+                id__in=seat_ids_to_release, match_id=payment.match_id
+            ).update(is_available=True, reserved_until=None)
+        seat_ids = seat_ids_to_release
 
     SeatReservation.release_many(seat_ids, force=True)
 
@@ -533,13 +549,15 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             # ===== نگهبان نهایی و قطعی در برابر دوبار-فروش (همون فیکسِ مسیر
             # کیف‌پول/رایگان در tickets/views.py) -- match_seat بالاتر با
             # select_for_update قفل شده؛ اینجا مستقیماً و اتمیک چک می‌کنیم که
-            # این صندلی از قبل بلیط پولی نداشته باشه. برخلاف مسیر کیف‌پول
-            # نمی‌شه اینجا کاربر رو برگردوند چون پول از قبل از طریق زیبال
-            # گرفته شده -- فقط از ساختِ بلیط تکراری روی همین صندلی جلوگیری
-            # می‌کنیم (بدون دست‌زدن به is_available چون صندلی واقعاً متعلق به
-            # همون خریدار قبلیه) و برای پیگیری دستی (بازگشت وجه/تعویض صندلی)
-            # لاگ می‌کنیم؛ بقیه‌ی صندلی‌های همین سفارش عادی پردازش می‌شن. =====
-            if Ticket.objects.filter(match_seat=match_seat, status='paid').exists():
+            # این صندلی از قبل هیچ بلیطی (پولی، سهمیه‌ی VIP، یا صدور دستی
+            # ادمین) نداشته باشه -- نه فقط 'paid'، چون is_available هم می‌تونه
+            # از واقعیت جدا بیفته. برخلاف مسیر کیف‌پول نمی‌شه اینجا کاربر رو
+            # برگردوند چون پول از قبل از طریق زیبال گرفته شده -- فقط از ساختِ
+            # بلیط تکراری روی همین صندلی جلوگیری می‌کنیم (بدون دست‌زدن به
+            # is_available چون صندلی واقعاً متعلق به همون خریدار قبلیه) و برای
+            # پیگیری دستی (بازگشت وجه/تعویض صندلی) لاگ می‌کنیم؛ بقیه‌ی
+            # صندلی‌های همین سفارش عادی پردازش می‌شن. =====
+            if Ticket.objects.filter(match_seat=match_seat, status__in=['paid', 'admin_assigned', 'vip_issued']).exists():
                 logger.error(
                     f"DOUBLE-BOOKING PREVENTED: seat {match_seat.id} (seat number {match_seat.seat.number}) "
                     f"already has a paid ticket. Payment {payment.id} (order {order.id}, user {user.username}, "
