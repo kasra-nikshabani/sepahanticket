@@ -2262,6 +2262,9 @@ def admin_discount_list(request):
 
     for d in discounts:
         d.usage_percent = round((d.used_count / d.max_uses * 100) if d.max_uses > 0 else 0, 1)
+        d.usage_tickets = list(
+            d.tickets.filter(status='paid').select_related('seat__row__block').order_by('-purchase_date')
+        )
 
     # ===== تفکیک کدها بر اساس مسابقه -- کدهایی که match ندارن (یعنی برای
     # همه‌ی مسابقات معتبرن) توی یک گروه جدا در انتها جمع می‌شن. =====

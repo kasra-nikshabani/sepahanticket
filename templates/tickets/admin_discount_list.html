@@ -69,7 +69,15 @@
     .action-btn.edit { background: #fff4d6; color: #B8960F; }
     .action-btn.toggle { background: #e8f0fe; color: #1a56db; }
     .action-btn.delete { background: #fdeceb; color: #c0392b; }
+    .action-btn.view-users { background: #eafaf0; color: #1E8E3E; }
     .action-btn:hover { transform: translateY(-2px); filter: brightness(0.95); color: inherit; }
+
+    .usage-row td { padding: 0 !important; background: #fafbfc; }
+    .usage-row-inner { padding: 14px 20px; }
+    .usage-row-inner .usage-title { font-size: .82rem; font-weight: 700; color: #1A1A2E; margin-bottom: 10px; }
+    table.usage-mini-table { width: 100%; font-size: .82rem; border-collapse: collapse; }
+    table.usage-mini-table th { text-align: center; color: #6c757d; font-weight: 600; padding: 6px 10px; border-bottom: 1px solid #eee; }
+    table.usage-mini-table td { text-align: center; padding: 6px 10px; border-bottom: 1px solid #f1f1f1; }
 
     .empty-state {
         text-align: center; padding: 70px 20px; background: linear-gradient(145deg, #1A1A2E 0%, #2D2D44 50%, #1A1A2E 100%);
@@ -166,6 +174,11 @@
                             </td>
                             <td>
                                 <div class="action-btns">
+                                    {% if discount.usage_tickets %}
+                                        <button type="button" class="action-btn view-users" title="مشاهده استفاده‌کنندگان" onclick="toggleUsageRow('usage-{{ discount.id }}')">
+                                            <i class="fas fa-users"></i>
+                                        </button>
+                                    {% endif %}
                                     <a href="{% url 'tickets:admin_discount_edit' discount.id %}" class="action-btn edit" title="ویرایش">
                                         <i class="fas fa-edit"></i>
                                     </a>
@@ -178,6 +191,30 @@
                                 </div>
                             </td>
                         </tr>
+                        {% if discount.usage_tickets %}
+                        <tr class="usage-row" id="usage-{{ discount.id }}" style="display:none;">
+                            <td colspan="7">
+                                <div class="usage-row-inner">
+                                    <div class="usage-title"><i class="fas fa-users"></i> استفاده‌کنندگان کد «{{ discount.code }}» ({{ discount.usage_tickets|length }} نفر)</div>
+                                    <table class="usage-mini-table">
+                                        <thead>
+                                            <tr><th>نام خریدار</th><th>کد ملی</th><th>صندلی</th><th>تاریخ خرید</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for t in discount.usage_tickets %}
+                                            <tr>
+                                                <td>{{ t.full_name }}</td>
+                                                <td dir="ltr">{{ t.national_code }}</td>
+                                                <td>{{ t.seat.row.block.name }} - ردیف {{ t.seat.row.number }} - صندلی {{ t.seat.number }}</td>
+                                                <td>{{ t.purchase_date|date:"Y/m/d H:i" }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
                         {% endfor %}
                     </tbody>
                 </table>
@@ -192,4 +229,12 @@
         </div>
     {% endif %}
 </div>
+
+<script>
+function toggleUsageRow(id) {
+    const row = document.getElementById(id);
+    if (!row) return;
+    row.style.display = (row.style.display === 'none' || !row.style.display) ? 'table-row' : 'none';
+}
+</script>
 {% endblock %}
