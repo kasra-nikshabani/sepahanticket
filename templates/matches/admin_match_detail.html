@@ -759,10 +759,10 @@
             </div>
             <div class="stat-card gold">
                 <span class="stat-icon"><i class="fas fa-layer-group"></i></span>
-                <div class="stat-number">{{ total_tickets }}</div>
-                <p class="stat-label">جمع کل بلیط‌های صادرشده</p>
+                <div class="stat-number">{{ total_paid_tickets_count }}</div>
+                <p class="stat-label">جمع کل بلیط‌های فروخته‌شده</p>
                 <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">
-                    = {{ sold_count }} (فروخته‌شده) + {{ vip_count }} (ویژه) + {{ discount_code_usage_count }} (تخفیف ویژه) + {{ special_code_ticket_count }} (کد ویژه)
+                    = {{ sold_count }} (فروخته‌شده) + {{ discount_code_usage_count }} (تخفیف ویژه) + {{ special_code_ticket_count }} (کد ویژه) -- بدون بلیط‌های ویژه (VIP)
                 </small>
             </div>
             <!-- ===== پایان تفکیک درآمد ===== -->
