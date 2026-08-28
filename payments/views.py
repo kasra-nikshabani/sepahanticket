@@ -530,6 +530,23 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             seat_discount_code_amount = seat_data['discount_code_amount']
             seat_special_code = seat_data['special_code']
 
+            # ===== نگهبان نهایی و قطعی در برابر دوبار-فروش (همون فیکسِ مسیر
+            # کیف‌پول/رایگان در tickets/views.py) -- match_seat بالاتر با
+            # select_for_update قفل شده؛ اینجا مستقیماً و اتمیک چک می‌کنیم که
+            # این صندلی از قبل بلیط پولی نداشته باشه. برخلاف مسیر کیف‌پول
+            # نمی‌شه اینجا کاربر رو برگردوند چون پول از قبل از طریق زیبال
+            # گرفته شده -- فقط از ساختِ بلیط تکراری روی همین صندلی جلوگیری
+            # می‌کنیم (بدون دست‌زدن به is_available چون صندلی واقعاً متعلق به
+            # همون خریدار قبلیه) و برای پیگیری دستی (بازگشت وجه/تعویض صندلی)
+            # لاگ می‌کنیم؛ بقیه‌ی صندلی‌های همین سفارش عادی پردازش می‌شن. =====
+            if Ticket.objects.filter(match_seat=match_seat, status='paid').exists():
+                logger.error(
+                    f"DOUBLE-BOOKING PREVENTED: seat {match_seat.id} (seat number {match_seat.seat.number}) "
+                    f"already has a paid ticket. Payment {payment.id} (order {order.id}, user {user.username}, "
+                    f"national_code={national_code}) needs manual refund/reseat."
+                )
+                continue
+
             if user.user_type != 'vip':
                 if national_code in processed_national_codes:
                     logger.error(f"Duplicate national code {national_code} in same order {order.id}. Skipping.")

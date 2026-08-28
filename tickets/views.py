@@ -1177,7 +1177,7 @@ def ticket_info(request, match_id):
                     match_seat_id = ticket_data['match_seat_id']
 
                     try:
-                        match_seat = MatchSeat.objects.get(id=match_seat_id, match=match)
+                        match_seat = MatchSeat.objects.select_for_update().get(id=match_seat_id, match=match)
                     except MatchSeat.DoesNotExist:
                         messages.error(request, 'صندلی مورد نظر معتبر نیست یا قبلاً فروخته شده است.')
                         return redirect('matches:block_map', match_id=match_id)
@@ -1188,6 +1188,22 @@ def ticket_info(request, match_id):
                         match_seat.save()
                         SeatReservation.release(match_seat_id, user_id=getattr(request.user, 'id', None), force=True)
                         messages.error(request, f'مدت زمان رزرو صندلی {match_seat.seat.number} به پایان رسیده است.')
+                        return redirect('matches:block_map', match_id=match_id)
+
+                    # ===== نگهبان نهایی و قطعی در برابر دوبار-فروش: حتی اگه چک
+                    # بالا (روی reserved_until) رد بشه -- دقیقاً همون باگی که
+                    # باعث شد ده‌ها صندلی روی مسابقات واقعی دوبار فروخته بشن،
+                    # چون وقتی رزروِ این کاربر منقضی می‌شد و یه کاربر دیگه
+                    # دقیقاً همون صندلی رو دوباره رزرو می‌کرد، reserved_until
+                    # یه مقدار جدیدِ در-آینده می‌گرفت و اون چک ساده رو گول
+                    # می‌زد -- اینجا مستقیماً و به‌صورت اتمیک (توی همین
+                    # select_for_update) چک می‌کنیم که این صندلی از قبل
+                    # بلیطِ پولی نداشته باشه. =====
+                    if Ticket.objects.filter(match_seat=match_seat, status='paid').exists():
+                        messages.error(
+                            request,
+                            f'صندلی {match_seat.seat.number} همین الان توسط شخص دیگری خریداری شد. لطفاً صندلی دیگری انتخاب کنید.'
+                        )
                         return redirect('matches:block_map', match_id=match_id)
 
                     ticket = Ticket.objects.create(
