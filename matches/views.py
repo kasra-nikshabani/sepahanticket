@@ -1249,6 +1249,42 @@ def _compute_match_report_stats(match):
         match=match, payment_status='paid'
     ).aggregate(s=Sum('wallet_amount'))['s'] or 0
 
+    # ===== تفکیک واقعیِ روش پرداخت (کیف پول/زیبال/ترکیبی/رایگان/VIP/ادمین)
+    # -- قبلاً این بخش فقط جمع کیف‌پول رو نشون می‌داد، نه تفکیک واقعیِ
+    # سفارش‌ها بر اساس payment_method. =====
+    PAYMENT_METHOD_LABELS = {
+        'wallet': 'کیف پول', 'zibal': 'درگاه زیبال', 'mixed': 'ترکیبی (کیف پول + زیبال)',
+        'vip': 'صدور بلیط ویژه', 'admin': 'تخصیص ادمین', 'free': 'کاملاً رایگان',
+    }
+    payment_method_breakdown = list(
+        Order.objects.filter(match=match, payment_status='paid')
+        .values('payment_method')
+        .annotate(order_count=Count('id'), total_amount=Sum('total_amount'), wallet_amount=Sum('wallet_amount'))
+        .order_by('-order_count')
+    )
+    for row in payment_method_breakdown:
+        row['label'] = PAYMENT_METHOD_LABELS.get(row['payment_method'], row['payment_method'] or '—')
+
+    # ===== ریز به‌ازای هر کاربر ویژه: چند کد ویژه براش صادر شده و چندتاش
+    # واقعاً به بلیط تبدیل شده (used = «استفاده‌شده» یعنی خودِ کد مصرف شده،
+    # نه اینکه صاحب بلیط از گیت عبور کرده باشه -- اون یکی مفهوم جداست). =====
+    special_code_owners_data = list(
+        SpecialCode.objects.filter(match=match)
+        .values('vip_owner_id', 'vip_owner__first_name', 'vip_owner__last_name', 'vip_owner__username')
+        .annotate(
+            created_count=Count('id'),
+            used_count=Count('id', filter=Q(is_used=True)),
+        )
+        .order_by('-created_count')
+    )
+    for row in special_code_owners_data:
+        full_name = f"{row['vip_owner__first_name']} {row['vip_owner__last_name']}".strip()
+        row['full_name'] = full_name or row['vip_owner__username']
+        row['not_used_count'] = row['created_count'] - row['used_count']
+        row['used_percent'] = round(
+            (row['used_count'] / row['created_count'] * 100) if row['created_count'] > 0 else 0, 1
+        )
+
     # ===== بلیط‌های صادرشده توسط ادمین (سهمیه‌ی VIP در برابر «صدور دستی») =====
     # status='admin_assigned'/'vip_issued' هر دو زیرِ یک user ثبت می‌شن؛ برای
     # VIP quota (bulk_issue_tickets/vip_issue_*) آن user خودِ کاربر VIP
@@ -1501,6 +1537,8 @@ def _compute_match_report_stats(match):
         'vip_users_data': vip_users_data,
         'vip_discount_codes_data': vip_discount_codes_data,
         'vip_discount_codes_total_uses': vip_discount_codes_total_uses,
+        'payment_method_breakdown': payment_method_breakdown,
+        'special_code_owners_data': special_code_owners_data,
     }
 
 

@@ -326,7 +326,92 @@
             <div class="kpi-box"><div class="num">{{ discount_code_total_paid|rial_display }}</div><div class="lbl">پرداختی با کد تخفیف (ریال)</div></div>
             <div class="kpi-box"><div class="num">{{ discount_code_total_given|rial_display }}</div><div class="lbl">مجموع تخفیفِ کد داده‌شده (ریال)</div></div>
         </div>
+        {% if payment_method_breakdown %}
+        <div style="overflow-x:auto; margin-top:16px;">
+            <table class="report-table">
+                <thead>
+                    <tr><th>روش پرداخت</th><th>تعداد سفارش</th><th>مبلغ کل (ریال)</th><th>از کیف پول (ریال)</th></tr>
+                </thead>
+                <tbody>
+                    {% for row in payment_method_breakdown %}
+                    <tr>
+                        <td>{{ row.label }}</td>
+                        <td>{{ row.order_count }}</td>
+                        <td>{{ row.total_amount|default:0|rial_display }}</td>
+                        <td>{{ row.wallet_amount|default:0|rial_display }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
     </div>
+
+    <!-- ===== ریز کدهای تخفیف این مسابقه ===== -->
+    {% if vip_discount_codes_data %}
+    <div class="report-section">
+        <h4><i class="fas fa-percentage"></i> ریز کدهای تخفیف این مسابقه</h4>
+        <div style="overflow-x:auto;">
+            <table class="report-table">
+                <thead>
+                    <tr><th>کد</th><th>صاحب کد (کاربر ویژه)</th><th>درصد</th><th>استفاده‌شده</th><th>سقف مجاز</th><th>باقی‌مانده</th><th>وضعیت</th></tr>
+                </thead>
+                <tbody>
+                    {% for dc in vip_discount_codes_data %}
+                    <tr>
+                        <td dir="ltr"><strong>{{ dc.code }}</strong></td>
+                        <td>{{ dc.owner_name }}</td>
+                        <td>{{ dc.discount_percent }}٪</td>
+                        <td>{{ dc.used_count }}</td>
+                        <td>{{ dc.max_uses }}</td>
+                        <td>{{ dc.remaining }}</td>
+                        <td>{% if dc.is_active %}فعال{% else %}غیرفعال{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr style="font-weight:700; background:#fdf6e3;">
+                        <td colspan="3">جمع کل استفاده</td>
+                        <td colspan="4">{{ vip_discount_codes_total_uses }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ===== ریز کدهای ویژه به تفکیک کاربر ویژه ===== -->
+    {% if special_code_owners_data %}
+    <div class="report-section">
+        <h4><i class="fas fa-gift"></i> ریز کدهای ویژه به تفکیک کاربر ویژه</h4>
+        <div style="overflow-x:auto;">
+            <table class="report-table">
+                <thead>
+                    <tr><th>کاربر ویژه</th><th>کد ساخته‌شده</th><th>استفاده‌شده (بلیط گرفته)</th><th>استفاده‌نشده</th><th>نرخ استفاده</th></tr>
+                </thead>
+                <tbody>
+                    {% for row in special_code_owners_data %}
+                    <tr>
+                        <td>{{ row.full_name }}</td>
+                        <td>{{ row.created_count }}</td>
+                        <td>{{ row.used_count }}</td>
+                        <td>{{ row.not_used_count }}</td>
+                        <td>{{ row.used_percent }}٪</td>
+                    </tr>
+                    {% endfor %}
+                    <tr style="font-weight:700; background:#fdf6e3;">
+                        <td>جمع کل</td>
+                        <td>{{ special_codes_created_count }}</td>
+                        <td>{{ special_code_ticket_count }}</td>
+                        <td>{{ special_code_ticket_not_used_count }}</td>
+                        <td>{{ special_code_ticket_used_percent }}٪</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="note-box">
+            «استفاده‌شده» یعنی کد به یک بلیط تبدیل شده (مصرف شده)؛ این با «عبور از گیت» فرق دارد -- نرخ عبور واقعی از گیت برای بلیط‌های کد ویژه در بخش «تعداد کل بلیط‌های صادرشده» و «مقایسه‌ی حضور» بالاتر آمده است.
+        </div>
+    </div>
+    {% endif %}
 
     <!-- ===== تفکیک سکوها / گیت‌ها ===== -->
     <div class="report-section">
