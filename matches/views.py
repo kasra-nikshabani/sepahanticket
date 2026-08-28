@@ -1734,6 +1734,49 @@ def admin_match_full_report_excel(request, match_id):
     for col in ['A', 'B', 'C', 'D', 'E', 'F']:
         ws_vipusers.column_dimensions[col].width = 26
 
+    # ===== شیت جدید: روش پرداخت (تفکیک واقعیِ سفارش‌ها) =====
+    ws_pay = wb.create_sheet("روش پرداخت")
+    ws_pay.append(['روش پرداخت', 'تعداد سفارش', 'مبلغ کل (ریال)', 'از کیف پول (ریال)'])
+    style_header_row(ws_pay)
+    for row in stats['payment_method_breakdown']:
+        ws_pay.append([row['label'], row['order_count'], row['total_amount'] or 0, row['wallet_amount'] or 0])
+    for col in ['A', 'B', 'C', 'D']:
+        ws_pay.column_dimensions[col].width = 26
+
+    # ===== شیت جدید: ریز کدهای تخفیف این مسابقه =====
+    if stats['vip_discount_codes_data']:
+        ws_disc = wb.create_sheet("کدهای تخفیف")
+        ws_disc.append(['کد', 'صاحب کد', 'درصد', 'استفاده‌شده', 'سقف مجاز', 'باقی‌مانده', 'وضعیت'])
+        style_header_row(ws_disc)
+        for dc in stats['vip_discount_codes_data']:
+            ws_disc.append([
+                dc['code'], dc['owner_name'], f"{dc['discount_percent']}٪",
+                dc['used_count'], dc['max_uses'], dc['remaining'],
+                'فعال' if dc['is_active'] else 'غیرفعال',
+            ])
+        for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G']:
+            ws_disc.column_dimensions[col].width = 22
+
+    # ===== شیت جدید: ریز کدهای ویژه به تفکیک کاربر ویژه =====
+    if stats['special_code_owners_data']:
+        ws_sc = wb.create_sheet("کدهای ویژه")
+        ws_sc.append(['کاربر ویژه', 'کد ساخته‌شده', 'استفاده‌شده', 'استفاده‌نشده', 'نرخ استفاده'])
+        style_header_row(ws_sc)
+        for row in stats['special_code_owners_data']:
+            ws_sc.append([
+                row['full_name'], row['created_count'], row['used_count'],
+                row['not_used_count'], f"{row['used_percent']}٪",
+            ])
+        ws_sc.append([])
+        ws_sc.append([
+            'جمع کل', stats['special_codes_created_count'], stats['special_code_ticket_count'],
+            stats['special_code_ticket_not_used_count'], f"{stats['special_code_ticket_used_percent']}٪",
+        ])
+        for cell in ws_sc[ws_sc.max_row]:
+            cell.font = header_font
+        for col in ['A', 'B', 'C', 'D', 'E']:
+            ws_sc.column_dimensions[col].width = 26
+
     # ===== شیت ۶: تفکیک بلوک‌ها =====
     ws3 = wb.create_sheet("تفکیک بلوک‌ها")
     ws3.append(['بلوک', 'وضعیت', 'ظرفیت', 'فروخته‌شده', 'خالی', 'درصد اشغال', 'عبور کرده از گیت', 'درآمد (ریال)'])
