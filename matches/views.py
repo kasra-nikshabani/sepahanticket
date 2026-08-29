@@ -1134,15 +1134,33 @@ def get_seats_status(request, match_id):
     match_seats = MatchSeat.objects.filter(
         match=match,
         seat__row_id=row_id
-    ).select_related('seat').order_by('seat__number')
+    ).select_related('seat__row__block').order_by('seat__number')
+
+    # ===== این اندپوینت هر چند ثانیه از صفحه‌ی خرید صدا زده می‌شود و وضعیت
+    # صندلی‌ها را دوباره رنگ می‌کند. قبلاً فقط MatchSeat.is_available را
+    # نگاه می‌کرد و هیچ‌کدام از این چهار شرط را چک نمی‌کرد؛ نتیجه این بود
+    # که صفحه درست (خاکستری) لود می‌شد ولی بلافاصله بعدش همین Ajax
+    # صندلی‌های ردیف/بلوکِ غیرفعال را دوباره سبز می‌کرد. =====
+    row_ok = True
+    block_ok = True
+    first = match_seats.first()
+    if first is not None:
+        row_ok = is_row_active_for_match(match, first.seat.row)
+        block_ok = is_block_active_for_match(match, first.seat.row.block)
 
     data = {'seats': []}
 
     for ms in match_seats:
+        available = (
+            ms.is_available          # فروخته/رزرو نشده
+            and ms.is_enabled        # ادمین برای این مسابقه خاموشش نکرده
+            and ms.seat.is_available  # خودِ صندلی به‌صورت کلی فعال است
+            and row_ok and block_ok   # ردیف و بلوکش برای این مسابقه فعال‌اند
+        )
         seat_info = {
             'id': ms.id,
             'number': ms.seat.number,
-            'is_available': ms.is_available,
+            'is_available': available,
             'is_reserved': False,
             'reserved_by_me': False,
         }
