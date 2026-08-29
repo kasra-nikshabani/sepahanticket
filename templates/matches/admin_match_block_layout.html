@@ -115,6 +115,7 @@
             </div>
             <form method="post" action="{% url 'matches:admin_match_toggle_row' match.id item.row.id %}">
                 {% csrf_token %}
+                <input type="hidden" name="desired" value="{% if item.is_active %}off{% else %}on{% endif %}">
                 <button type="submit" class="btn-mini {% if item.is_active %}turn-off{% else %}turn-on{% endif %}">
                     <i class="fas fa-power-off"></i>
                     {% if item.is_active %}غیرفعال کردن ردیف{% else %}فعال کردن ردیف{% endif %}
@@ -144,11 +145,13 @@
                 {% elif not s.global_available %}
                     <form method="post" action="{% url 'matches:admin_match_toggle_seat' match.id s.seat.id %}" style="display:inline;">
                         {% csrf_token %}
+                        <input type="hidden" name="desired" value="{% if s.is_enabled %}off{% else %}on{% endif %}">
                         <button type="submit" class="seat-btn global-off" title="این صندلی به‌صورت کلی (همه‌ی مسابقات) غیرفعال است">{{ s.seat.number }}</button>
                     </form>
                 {% else %}
                     <form method="post" action="{% url 'matches:admin_match_toggle_seat' match.id s.seat.id %}" style="display:inline;">
                         {% csrf_token %}
+                        <input type="hidden" name="desired" value="{% if s.is_enabled %}off{% else %}on{% endif %}">
                         <button type="submit" class="seat-btn {% if not s.is_enabled %}off{% endif %}"
                                 title="{% if s.is_enabled %}کلیک کنید تا برای این مسابقه غیرفعال شود{% else %}کلیک کنید تا برای این مسابقه فعال شود{% endif %}">
                             {{ s.seat.number }}

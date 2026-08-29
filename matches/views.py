@@ -2252,7 +2252,14 @@ def admin_match_toggle_block(request, match_id, block_id):
     match = get_object_or_404(Match, id=match_id)
     block = get_object_or_404(Block, id=block_id, stadium=match.stadium)
 
-    new_state = not is_block_active_for_match(match, block)
+    # ===== حالت مقصد صریح از فرم می‌آید، نه معکوس‌کردنِ کورِ وضعیت فعلی.
+    # با flip کور، دوبار کلیک (یا صفحه‌ی قدیمی/رفرش) وضعیت را برمی‌گرداند و
+    # کاربر فکر می‌کرد غیرفعال کرده در حالی که دوباره فعال شده بود. =====
+    desired = request.POST.get('desired')
+    if desired in ('on', 'off'):
+        new_state = (desired == 'on')
+    else:
+        new_state = not is_block_active_for_match(match, block)
     MatchBlockActive.objects.update_or_create(
         match=match, block=block, defaults={'is_active': new_state}
     )
@@ -2271,7 +2278,11 @@ def admin_match_toggle_row(request, match_id, row_id):
     match = get_object_or_404(Match, id=match_id)
     row = get_object_or_404(Row, id=row_id, block__stadium=match.stadium)
 
-    new_state = not is_row_active_for_match(match, row)
+    desired = request.POST.get('desired')
+    if desired in ('on', 'off'):
+        new_state = (desired == 'on')
+    else:
+        new_state = not is_row_active_for_match(match, row)
     MatchRowActive.objects.update_or_create(
         match=match, row=row, defaults={'is_active': new_state}
     )
@@ -2294,7 +2305,11 @@ def admin_match_toggle_seat(request, match_id, seat_id):
     match_seat, _ = MatchSeat.objects.get_or_create(
         match=match, seat=seat, defaults={'is_available': True}
     )
-    match_seat.is_enabled = not match_seat.is_enabled
+    desired = request.POST.get('desired')
+    if desired in ('on', 'off'):
+        match_seat.is_enabled = (desired == 'on')
+    else:
+        match_seat.is_enabled = not match_seat.is_enabled
     match_seat.save(update_fields=['is_enabled'])
     messages.success(
         request,

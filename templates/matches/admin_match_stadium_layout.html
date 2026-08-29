@@ -154,6 +154,7 @@
                     <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap;">
                         <form method="post" action="{% url 'matches:admin_match_toggle_block' match.id item.block.id %}" style="display:inline;">
                             {% csrf_token %}
+                            <input type="hidden" name="desired" value="{% if item.is_active %}off{% else %}on{% endif %}">
                             <button type="submit" class="btn-mini {% if item.is_active %}turn-off{% else %}turn-on{% endif %}">
                                 <i class="fas fa-power-off"></i>
                                 {% if item.is_active %}غیرفعال کن{% else %}فعال کن{% endif %}
