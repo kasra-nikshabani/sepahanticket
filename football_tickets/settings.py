@@ -250,6 +250,9 @@ GATE_USERS = {
     'gate_home': {'password': os.getenv('GATE_PASSWORD_HOME', ''), 'zone': 'home'},
     'gate_away': {'password': os.getenv('GATE_PASSWORD_AWAY', ''), 'zone': 'away'},
     'gate_women': {'password': os.getenv('GATE_PASSWORD_WOMEN', ''), 'zone': 'women'},
+    # گیت جداگانه‌ی بانوان میهمان. تا وقتی GATE_PASSWORD_WOMEN_AWAY در .env
+    # مقدار نگیرد، این حساب مثل بقیه همیشه ۴۰۱ می‌دهد (ورود ممکن نیست).
+    'gate_women_away': {'password': os.getenv('GATE_PASSWORD_WOMEN_AWAY', ''), 'zone': 'women_away'},
     'gate_vip': {'password': os.getenv('GATE_PASSWORD_VIP', ''), 'zone': 'vip'},
 }
 GATE_TOKEN_TTL = int(os.getenv('GATE_TOKEN_TTL', str(12 * 60 * 60)))  # ۱۲ ساعت

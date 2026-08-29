@@ -35,6 +35,7 @@ from .models import (
     MatchBlockActive, MatchRowActive, get_block_active_map, get_active_block_ids,
     get_row_active_map, get_active_row_ids, is_block_active_for_match, is_row_active_for_match,
     MatchBlockZone, get_block_zone_map, get_block_zone_for_match, get_block_ids_by_zone,
+    AWAY_ZONE_TYPES,
 )
 from .models import ZONE_CHOICES
 from .forms import MatchCostForm, MatchRevenueForm
@@ -193,7 +194,10 @@ def select_block(request, match_id):
 
     # ===== فیلتر بر اساس میزبان یا میهمان بودن -- نوع جایگاه مخصوصِ همین
     # مسابقه است، نه مقدار گلوبالِ بلوک =====
-    away_block_ids = get_block_ids_by_zone(match, 'away')
+    # جایگاه‌های تیم میهمان شامل «میهمان» و «بانوان میهمان» است
+    away_block_ids = []
+    for z in AWAY_ZONE_TYPES:
+        away_block_ids += get_block_ids_by_zone(match, z)
     if selected_team_type == 'away':
         # اگر کاربر میهمان را انتخاب کرده باشد، فقط بلوک‌های میهمان نشان داده شود
         blocks = blocks.filter(id__in=away_block_ids)
@@ -213,6 +217,7 @@ def select_block(request, match_id):
         'away': ('away', 'میهمان'),
         'class1': ('class1', 'کلاس ۱'),
         'women': ('women', 'بانوان'),
+        'women_away': ('women_away', 'بانوان میهمان'),
         'vip': ('vip', 'VIP'),
     }
 
@@ -1244,7 +1249,9 @@ def admin_match_list(request):
             zb.setdefault(ztype, []).append(bid)
         home_sold = all_issued_tickets.filter(seat__row__block_id__in=zb.get('home', [])).count()
         away_sold = all_issued_tickets.filter(seat__row__block_id__in=zb.get('away', [])).count()
-        women_sold = all_issued_tickets.filter(seat__row__block_id__in=zb.get('women', [])).count()
+        women_sold = all_issued_tickets.filter(
+            seat__row__block_id__in=zb.get('women', []) + zb.get('women_away', [])
+        ).count()
         class1_sold = all_issued_tickets.filter(seat__row__block_id__in=zb.get('class1', [])).count()
         vip_sold = all_issued_tickets.filter(seat__row__block_id__in=zb.get('vip', [])).count()
 
@@ -1539,6 +1546,7 @@ def _compute_match_report_stats(match):
         ('home', 'میزبان', Q(seat__row__block_id__in=zone_blocks.get('home', []))),
         ('away', 'میهمان', Q(seat__row__block_id__in=zone_blocks.get('away', []))),
         ('women', 'بانوان', Q(seat__row__block_id__in=zone_blocks.get('women', []))),
+        ('women_away', 'بانوان میهمان', Q(seat__row__block_id__in=zone_blocks.get('women_away', []))),
         ('class1', 'کلاس ۱', Q(seat__row__block_id__in=zone_blocks.get('class1', []))),
         ('vip', 'VIP', Q(seat__row__block_id__in=zone_blocks.get('vip', []))),
     ]

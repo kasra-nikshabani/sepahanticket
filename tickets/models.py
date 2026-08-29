@@ -139,6 +139,7 @@ class Ticket(models.Model):
             zone = get_block_zone_for_match(self.match, self.seat.row.block)
             labels = {
                 'vip': "VIP", 'class1': "کلاس ۱", 'women': "بانوان",
+                'women_away': "بانوان میهمان",
                 'home': "میزبان", 'away': "میهمان",
             }
             return labels.get(zone, "نامشخص")

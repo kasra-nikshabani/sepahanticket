@@ -10,7 +10,8 @@ from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from .models import Ticket
 
-ZONE_LABELS = {'class1': 'کلاس ۱', 'home': 'میزبان', 'away': 'میهمان', 'women': 'بانوان', 'vip': 'VIP'}
+ZONE_LABELS = {'class1': 'کلاس ۱', 'home': 'میزبان', 'away': 'میهمان', 'women': 'بانوان',
+               'women_away': 'بانوان میهمان', 'vip': 'VIP'}
 
 # حداکثر تلاش ناموفق ورود گیت قبل از قفل موقت
 GATE_LOGIN_MAX_ATTEMPTS = 5
@@ -60,7 +61,7 @@ def get_ticket_zone(ticket):
     # تماشاگر با بلیطی که روی آن «میزبان» نوشته دم گیت میهمان رد می‌شود.
     from matches.models import get_block_zone_for_match
     zone = get_block_zone_for_match(ticket.match, block)
-    if zone in ('vip', 'class1', 'women', 'away', 'home'):
+    if zone in ('vip', 'class1', 'women', 'women_away', 'away', 'home'):
         return zone
     return None
 

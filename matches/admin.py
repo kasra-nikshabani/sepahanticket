@@ -58,6 +58,7 @@ def _match_zone_categories(sold_tickets_qs):
         ('میزبان', sold_tickets_qs.filter(seat__row__block__zone_type='home')),
         ('میهمان', sold_tickets_qs.filter(seat__row__block__zone_type='away')),
         ('بانوان', sold_tickets_qs.filter(seat__row__block__zone_type='women')),
+        ('بانوان میهمان', sold_tickets_qs.filter(seat__row__block__zone_type='women_away')),
         ('کلاس ۱', sold_tickets_qs.filter(
             Q(seat__row__block__zone_type='class1') | Q(seat__row__block__is_class1=True))),
         ('VIP', sold_tickets_qs.filter(

@@ -526,9 +526,13 @@
                             <span class="block-badge vip"><i class="fas fa-star"></i> VIP</span>
                         {% elif block.is_class1 %}
                             <span class="block-badge class1"><i class="fas fa-star"></i> کلاس ۱</span>
-                        {% elif block.team_type == 'women' %} <!-- یا هر فیلدی که در ادمین برای بانوان تنظیم کردید -->
+                        {% elif block.team_type == 'women' %}
                             <span class="block-badge" style="background: #ff69b4; color: #fff;">
                                 <i class="fas fa-venus"></i> بانوان
+                            </span>
+                        {% elif block.team_type == 'women_away' %}
+                            <span class="block-badge" style="background: #c2185b; color: #fff;">
+                                <i class="fas fa-venus"></i> بانوان میهمان
                             </span>
                         {% else %}
                             <!-- فقط برای سکوهای عمومی، میزبان/میهمان نشان داده می‌شود -->
