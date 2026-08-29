@@ -58,7 +58,7 @@
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.user.username }}</td>
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.full_name }}</td>
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.national_code }}</td>
-                        <td style="padding:8px; border:1px solid #ddd;">{{ ticket.seat.row.zone_label|default:"—" }}</td>
+                        <td style="padding:8px; border:1px solid #ddd;">{{ ticket.block_type_label|default:"—" }}</td>
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.seat.row.block.name|default:"—" }}</td>
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.seat.row.number|default:"—" }}</td>
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.seat.number|default:"—" }}</td>
@@ -116,7 +116,7 @@
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.user.username }}</td>
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.full_name }}</td>
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.national_code }}</td>
-                        <td style="padding:8px; border:1px solid #ddd;">{{ ticket.seat.row.zone_label|default:"—" }}</td>
+                        <td style="padding:8px; border:1px solid #ddd;">{{ ticket.block_type_label|default:"—" }}</td>
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.seat.row.block.name|default:"—" }}</td>
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.seat.row.number|default:"—" }}</td>
                         <td style="padding:8px; border:1px solid #ddd;">{{ ticket.seat.number|default:"—" }}</td>

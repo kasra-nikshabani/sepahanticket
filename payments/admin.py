@@ -122,7 +122,12 @@ class PaymentAdmin(admin.ModelAdmin):
 
             match_seat = match_seats.get(pk)
             if match_seat:
-                zone = escape(match_seat.seat.row.zone_label)
+                # نوع جایگاه مخصوصِ همین مسابقه، نه مقدار گلوبالِ بلوک
+                from matches.models import get_block_zone_for_match, ZONE_CHOICES
+                zone = escape(dict(ZONE_CHOICES).get(
+                    get_block_zone_for_match(obj.match, match_seat.seat.row.block),
+                    match_seat.seat.row.zone_label,
+                ))
                 block = escape(match_seat.seat.row.block.name)
                 row_number = match_seat.seat.row.number
                 seat_number = match_seat.seat.number

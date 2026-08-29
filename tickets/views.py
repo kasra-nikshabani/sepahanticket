@@ -38,7 +38,7 @@ from .reservation import SeatReservation
 from matches.models import Match, Seat, Row, MatchSeat, Block, get_block_price_map, get_basa_discount_percent
 from matches.models import (
     get_active_block_ids, get_active_row_ids, is_block_active_for_match, is_row_active_for_match,
-    find_new_orphan_seats,
+    find_new_orphan_seats, get_block_zone_for_match, ZONE_CHOICES,
 )
 from accounts.models import User
 from wallet.models import Wallet
@@ -1021,7 +1021,11 @@ def ticket_info(request, match_id):
                 'row_name': match_seat.seat.row.name,
                 'is_home': match_seat.seat.row.is_home,
                 'price': price,
-                'zone_label': match_seat.seat.row.zone_label,
+                # نوع جایگاه مخصوصِ همین مسابقه (نه مقدار گلوبالِ بلوک)
+                'zone_label': dict(ZONE_CHOICES).get(
+                    get_block_zone_for_match(match, match_seat.seat.row.block),
+                    match_seat.seat.row.zone_label,
+                ),
             })
             total_price += price
         except MatchSeat.DoesNotExist:
