@@ -1128,25 +1128,34 @@ def get_seats_status(request, match_id):
     """دریافت وضعیت لحظه‌ای صندلی‌های یک مسابقه با وضعیت رزرو"""
     match = get_object_or_404(Match, id=match_id, is_active=True)
     row_id = request.GET.get('row_id')
-    if not row_id:
-        return JsonResponse({'error': 'row_id required'}, status=400)
+    block_id = request.GET.get('block_id')
+    if not row_id and not block_id:
+        return JsonResponse({'error': 'row_id or block_id required'}, status=400)
 
-    match_seats = MatchSeat.objects.filter(
-        match=match,
-        seat__row_id=row_id
-    ).select_related('seat__row__block').order_by('seat__number')
-
-    # ===== این اندپوینت هر چند ثانیه از صفحه‌ی خرید صدا زده می‌شود و وضعیت
-    # صندلی‌ها را دوباره رنگ می‌کند. قبلاً فقط MatchSeat.is_available را
-    # نگاه می‌کرد و هیچ‌کدام از این چهار شرط را چک نمی‌کرد؛ نتیجه این بود
-    # که صفحه درست (خاکستری) لود می‌شد ولی بلافاصله بعدش همین Ajax
-    # صندلی‌های ردیف/بلوکِ غیرفعال را دوباره سبز می‌کرد. =====
-    row_ok = True
-    block_ok = True
-    first = match_seats.first()
-    if first is not None:
-        row_ok = is_row_active_for_match(match, first.seat.row)
+    # ===== قبلاً این اندپوینت فقط یک ردیف را برمی‌گرداند و صفحه‌ی خرید هم
+    # فقط برای «اولین ردیف» صدایش می‌زد -- در حالی که همان صفحه تمام
+    # ردیف‌های بلوک را نشان می‌دهد. نتیجه: صندلی‌های بقیه‌ی ردیف‌ها هیچ‌وقت
+    # به‌روز نمی‌شدند و از لحظه‌ی باز شدن صفحه سبز می‌ماندند، حتی اگر ادمین
+    # ردیف/صندلی را غیرفعال می‌کرد یا کس دیگری آن را می‌خرید. حالا با
+    # block_id کلِ بلوک برگردانده می‌شود. =====
+    if block_id:
+        block = get_object_or_404(Block, id=block_id)
+        match_seats = MatchSeat.objects.filter(
+            match=match, seat__row__block=block
+        ).select_related('seat__row').order_by('seat__row__number', 'seat__number')
+        block_ok = is_block_active_for_match(match, block)
+        active_row_ids = set(get_active_row_ids(match, block=block))
+    else:
+        match_seats = MatchSeat.objects.filter(
+            match=match, seat__row_id=row_id
+        ).select_related('seat__row__block').order_by('seat__number')
+        first = match_seats.first()
+        if first is None:
+            return JsonResponse({'seats': []})
         block_ok = is_block_active_for_match(match, first.seat.row.block)
+        active_row_ids = (
+            {first.seat.row_id} if is_row_active_for_match(match, first.seat.row) else set()
+        )
 
     data = {'seats': []}
 
@@ -1155,7 +1164,8 @@ def get_seats_status(request, match_id):
             ms.is_available          # فروخته/رزرو نشده
             and ms.is_enabled        # ادمین برای این مسابقه خاموشش نکرده
             and ms.seat.is_available  # خودِ صندلی به‌صورت کلی فعال است
-            and row_ok and block_ok   # ردیف و بلوکش برای این مسابقه فعال‌اند
+            and block_ok                              # بلوکش برای این مسابقه فعال است
+            and ms.seat.row_id in active_row_ids      # ردیفِ خودش هم فعال است
         )
         seat_info = {
             'id': ms.id,

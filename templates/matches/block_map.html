@@ -728,16 +728,18 @@
 
             // ===== بروزرسانی خودکار =====
             const matchId = {{ match.id }};
-            const rowId = {{ first_row_id|default:"null" }};
+            // کل بلوک به‌روز می‌شود، نه فقط ردیف اول -- صفحه همه‌ی ردیف‌های
+            // بلوک را نشان می‌دهد و قبلاً بقیه‌ی ردیف‌ها هیچ‌وقت رفرش نمی‌شدند.
+            const blockId = {{ block.id }};
             const seatMap = new Map();
             document.querySelectorAll('.seat:not(.missing)').forEach(el => {
                 const id = parseInt(el.dataset.seatId);
                 if (id) seatMap.set(id, el);
             });
 
-            if (rowId) {
+            if (blockId) {
                 function updateSeats() {
-                    fetch(`/matches/get-seats-status/${matchId}/?row_id=${rowId}`)
+                    fetch(`/matches/get-seats-status/${matchId}/?block_id=${blockId}`)
                         .then(response => response.json())
                         .then(data => {
                             if (data.seats) {
