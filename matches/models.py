@@ -503,6 +503,82 @@ def get_active_row_ids(match, block=None):
     return [rid for rid, active in get_row_active_map(match, block).items() if active]
 
 
+def find_new_orphan_seats(match, selected_match_seat_ids):
+    """صندلی‌هایی که اگر انتخابِ داده‌شده نهایی شود، «تکی» جا می‌مانند.
+
+    مسئله: وقتی چند نفر کنار هم می‌خرند، ممکن است وسط یا کنارشان دقیقاً یک
+    صندلی خالی بماند. آن صندلی عملاً دیگر فروش نمی‌رود (کسی تنها نمی‌نشیند و
+    به گروه‌ها هم نمی‌خورد) -- روی یک مسابقه‌ی واقعی ۷۵ صندلی این‌طور از
+    دست رفته بود.
+
+    قاعده: فقط تکی‌هایی که همین انتخاب *ایجاد* می‌کند مهم‌اند. اگر صندلی
+    تکی از قبل خالی مانده باشد، خریدش کاملاً آزاد است (چون دارد مشکل را حل
+    می‌کند، نه ایجاد).
+
+    مجاورت بر اساس ترتیب صندلی‌های *موجود* در همان ردیف حساب می‌شود، نه
+    تفاضل عددی شماره‌ها -- چون ممکن است بعضی شماره‌ها اصلاً صندلی نداشته
+    باشند و همسایه‌ی فیزیکی، صندلی بعدیِ موجود باشد.
+
+    خروجی: لیستی از MatchSeat هایی که تکی می‌شوند (خالی یعنی مشکلی نیست).
+    """
+    selected = set(selected_match_seat_ids)
+    if not selected:
+        return []
+
+    rows_of_interest = set(
+        MatchSeat.objects.filter(id__in=selected).values_list('seat__row_id', flat=True)
+    )
+    if not rows_of_interest:
+        return []
+
+    active_block_ids = set(get_active_block_ids(match))
+    active_row_ids = set(get_active_row_ids(match))
+
+    seats_by_row = {}
+    for ms in (
+        MatchSeat.objects.filter(match=match, seat__row_id__in=rows_of_interest)
+        .select_related('seat__row')
+        .order_by('seat__row_id', 'seat__number')
+    ):
+        seats_by_row.setdefault(ms.seat.row_id, []).append(ms)
+
+    def sellable(ms):
+        """آیا این صندلی الان برای فروش در دسترس است (یعنی «خالی» حساب می‌شود)."""
+        return (
+            ms.is_available
+            and ms.is_enabled
+            and ms.seat.is_available
+            and ms.seat.row_id in active_row_ids
+            and ms.seat.row.block_id in active_block_ids
+        )
+
+    def orphan_ids(free_flags, seats):
+        """شناسه‌ی صندلی‌هایی که در یک دنباله‌ی خالیِ به‌طول دقیقاً ۱ هستند."""
+        out = set()
+        run = []
+        for ms, is_free in zip(seats, free_flags):
+            if is_free:
+                run.append(ms)
+            else:
+                if len(run) == 1:
+                    out.add(run[0].id)
+                run = []
+        if len(run) == 1:
+            out.add(run[0].id)
+        return out
+
+    new_orphans = []
+    for row_id, seats in seats_by_row.items():
+        before = [sellable(ms) for ms in seats]
+        after = [sellable(ms) and ms.id not in selected for ms in seats]
+        created = orphan_ids(after, seats) - orphan_ids(before, seats)
+        if created:
+            by_id = {ms.id: ms for ms in seats}
+            new_orphans.extend(by_id[i] for i in created)
+
+    return new_orphans
+
+
 def is_block_active_for_match(match, block):
     """آیا این بلوک برای این مسابقهٔ خاص فعال است؟"""
     override = MatchBlockActive.objects.filter(

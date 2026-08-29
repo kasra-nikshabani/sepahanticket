@@ -429,6 +429,24 @@
         .sel-total { color: #cfd6e4; font-size: .9rem; }
         .sel-total b { color: #4caf50; font-size: 1rem; }
 
+        .orphan-warn-line {
+            margin-top: 6px; font-size: .78rem; color: #ffcf9e;
+            background: rgba(255, 140, 0, .13);
+            border: 1px solid rgba(255, 140, 0, .35);
+            border-radius: 10px; padding: 6px 12px; max-width: 460px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .orphan-warn-line i { color: #ff8c00; }
+        /* صندلی‌ای که با این انتخاب تکی می‌ماند */
+        .seat.orphan-warn {
+            box-shadow: 0 0 0 2px #ff8c00, 0 0 16px rgba(255,140,0,.6) !important;
+            animation: orphanPulse 1s ease-in-out infinite;
+        }
+        @keyframes orphanPulse {
+            0%,100% { box-shadow: 0 0 0 2px #ff8c00, 0 0 12px rgba(255,140,0,.45) !important; }
+            50%     { box-shadow: 0 0 0 2px #ffb055, 0 0 22px rgba(255,140,0,.8) !important; }
+        }
+
         .sel-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; max-width: 460px; }
         .sel-chip {
             font-size: .72rem; font-weight: 700; color: #1A1A2E;
@@ -692,6 +710,7 @@
                         </span>
                     </div>
                     <div class="sel-chips" id="selChips"></div>
+                    <div class="orphan-warn-line" id="orphanWarn" hidden></div>
                 </div>
                 <button class="btn-continue" id="continueBtn" disabled>
                     <i class="fas fa-credit-card"></i> ادامه به اطلاعات خریدار
@@ -824,13 +843,70 @@
                 }
             }
 
+            const orphanWarnEl = document.getElementById('orphanWarn');
+
+            // ===== قانون «صندلی تکی» (همان قانونی که سرور هم اعمال می‌کند) =====
+            // اگر انتخاب کاربر باعث شود دقیقاً یک صندلی خالی بین پرها گیر
+            // بیفتد، آن صندلی دیگر فروش نمی‌رود. اینجا زنده هشدار می‌دهیم و
+            // دکمه‌ی ادامه را می‌بندیم تا کاربر سرِ پرداخت غافلگیر نشود.
+            // تکی‌هایی که از قبل خالی بوده‌اند مانعی ندارند.
+            function runsOfOne(flags, els) {
+                const out = [];
+                let run = [];
+                for (let i = 0; i < els.length; i++) {
+                    if (flags[i]) { run.push(els[i]); }
+                    else { if (run.length === 1) out.push(run[0]); run = []; }
+                }
+                if (run.length === 1) out.push(run[0]);
+                return out;
+            }
+
+            function checkOrphans() {
+                document.querySelectorAll('.seat.orphan-warn')
+                        .forEach(el => el.classList.remove('orphan-warn'));
+
+                const offenders = [];
+                document.querySelectorAll('.seat-grid').forEach(grid => {
+                    const els = Array.from(grid.querySelectorAll('.seat:not(.missing)'));
+                    if (!els.some(el => el.classList.contains('selected'))) return;
+
+                    // «خالی» یعنی قابل خرید: available یا انتخاب‌شده‌ی خودِ کاربر
+                    const freeBefore = els.map(el =>
+                        el.classList.contains('available') || el.classList.contains('selected'));
+                    const freeAfter = els.map((el, i) =>
+                        freeBefore[i] && !el.classList.contains('selected'));
+
+                    const before = new Set(runsOfOne(freeBefore, els));
+                    runsOfOne(freeAfter, els).forEach(el => {
+                        if (!before.has(el)) offenders.push(el);
+                    });
+                });
+
+                offenders.forEach(el => el.classList.add('orphan-warn'));
+
+                if (offenders.length) {
+                    const spots = offenders.slice(0, 3)
+                        .map(el => `ردیف ${faNum(el.dataset.row)} صندلی ${faNum(el.dataset.number)}`)
+                        .join('، ');
+                    const more = offenders.length > 3 ? ` و ${faNum(offenders.length - 3)} مورد دیگر` : '';
+                    orphanWarnEl.innerHTML =
+                        `<i class="fas fa-triangle-exclamation"></i> این انتخاب یک صندلی تکی جا می‌گذارد ` +
+                        `(${spots}${more}). آن را هم انتخاب کنید یا صندلی‌هایتان را جابه‌جا کنید.`;
+                    orphanWarnEl.hidden = false;
+                } else {
+                    orphanWarnEl.hidden = true;
+                }
+                return offenders.length;
+            }
+
             function updateSelectedCount() {
                 const count = selectedSeats.size;
                 selectedCountSpan.textContent = faNum(count);
-                continueBtn.disabled = count === 0;
                 selectionCta.classList.toggle('visible', count > 0);
                 input.value = JSON.stringify(Array.from(selectedSeats));
                 renderChips();
+                const bad = checkOrphans();
+                continueBtn.disabled = count === 0 || bad > 0;
             }
 
             seats.forEach(seat => {

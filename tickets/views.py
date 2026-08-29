@@ -38,6 +38,7 @@ from .reservation import SeatReservation
 from matches.models import Match, Seat, Row, MatchSeat, Block, get_block_price_map, get_basa_discount_percent
 from matches.models import (
     get_active_block_ids, get_active_row_ids, is_block_active_for_match, is_row_active_for_match,
+    find_new_orphan_seats,
 )
 from accounts.models import User
 from wallet.models import Wallet
@@ -829,6 +830,26 @@ def reserve_seats(request, match_id):
                 if ms.seat.row_id not in active_row_ids or ms.seat.row.block_id not in active_block_ids:
                     messages.error(request, 'یکی از صندلی‌های انتخاب‌شده برای این مسابقه در دسترس نیست.')
                     return redirect('matches:block_map', match_id=match_id)
+
+            # ===== قانون «صندلی تکی»: انتخابی که دقیقاً یک صندلی خالی را
+            # بین پرها گیر می‌اندازد رد می‌شود، چون آن صندلی عملاً دیگر
+            # فروش نمی‌رود. تکی‌هایی که از قبل وجود داشته‌اند مانعی ندارند
+            # (خریدشان حتی مطلوب است). =====
+            orphans = find_new_orphan_seats(match, selected_seats)
+            if orphans:
+                spots = '، '.join(
+                    f'ردیف {o.seat.row.number} صندلی {o.seat.number}' for o in orphans[:3]
+                )
+                more = f' و {len(orphans) - 3} مورد دیگر' if len(orphans) > 3 else ''
+                SeatReservation.release_many(
+                    reserved_seats, user_id=getattr(request.user, 'id', None), force=True
+                )
+                messages.error(
+                    request,
+                    f'این انتخاب یک صندلی تکی خالی جا می‌گذارد ({spots}{more}) که دیگر قابل فروش نیست. '
+                    f'لطفاً آن صندلی را هم به انتخابتان اضافه کنید، یا صندلی‌هایتان را کمی جابه‌جا کنید.'
+                )
+                return redirect('matches:block_map', match_id=match_id)
 
             for seat_id in selected_seats:
                 match_seat = locked_map[seat_id]
