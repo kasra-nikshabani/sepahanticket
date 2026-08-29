@@ -202,29 +202,25 @@
 
     <!-- نوع تیم -->
     <div class="team-type-wrapper">
-        {% with block=ticket.seat.row.block %}
-            <div style="
-                    display: inline-block;
-                    padding: 8px 25px;
-                    border-radius: 50px;
-                    font-size: 18px;
-                    font-weight: bold;
-                    font-family: 'Tahoma', 'Vazir', sans-serif;
-                    background-color:
-                    {% if block.is_vip or block.zone_type == 'vip' %}#9b59b6
-                    {% elif block.zone_type == 'women' %}#e83e8c
-                    {% elif block.is_class1 or block.zone_type == 'class1' %}#007bff
-                    {% elif block.zone_type == 'home' %}#28a745
-                    {% else %}#ffc107{% endif %};
-                    color: {% if block.zone_type == 'away' %}#212529{% else %}white{% endif %};
-                    ">
-                {% if block.is_vip or block.zone_type == 'vip' %}VIP
-                {% elif block.zone_type == 'women' %}بانوان
-                {% elif block.is_class1 or block.zone_type == 'class1' %}کلاس ۱
-                {% elif block.zone_type == 'home' %}میزبان
-                {% else %}میهمان{% endif %}
-            </div>
-        {% endwith %}
+        {# نوع جایگاه مخصوصِ همین مسابقه از ویو می‌آید (team_zone/team_type)، #}
+        {# نه از block.zone_type گلوبال -- وگرنه با چکِ گیت نمی‌خواند. #}
+        <div style="
+                display: inline-block;
+                padding: 8px 25px;
+                border-radius: 50px;
+                font-size: 18px;
+                font-weight: bold;
+                font-family: 'Tahoma', 'Vazir', sans-serif;
+                background-color:
+                {% if team_zone == 'vip' %}#9b59b6
+                {% elif team_zone == 'women' %}#e83e8c
+                {% elif team_zone == 'class1' %}#007bff
+                {% elif team_zone == 'home' %}#28a745
+                {% else %}#ffc107{% endif %};
+                color: {% if team_zone == 'away' %}#212529{% else %}white{% endif %};
+                ">
+            {{ team_type }}
+        </div>
     </div>
 
     <!-- فوتر -->

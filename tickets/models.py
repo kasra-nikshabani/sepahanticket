@@ -177,8 +177,15 @@ class Ticket(models.Model):
 
         logger = logging.getLogger(__name__)
 
-        # ===== استفاده از پراپرتی جدید برای دریافت نام سکو =====
+        # ===== نام و کدِ جایگاه، هر دو مخصوصِ همین مسابقه =====
+        # team_zone عمداً جدا پاس داده می‌شود چون قالب علاوه بر متن، رنگ را
+        # هم از روی نوع جایگاه انتخاب می‌کند. قبلاً قالب این متغیرها را
+        # نادیده می‌گرفت و مستقیم از block.zone_type گلوبال می‌خواند -- یعنی
+        # تغییر جایگاه برای یک مسابقه روی PDF بلیط اثر نمی‌کرد، در حالی که
+        # گیت جایگاهِ همان مسابقه را چک می‌کرد و این دو با هم نمی‌خواندند.
+        from matches.models import get_block_zone_for_match
         team_type = self.block_type_label
+        team_zone = get_block_zone_for_match(self.match, self.seat.row.block)
 
         qr_image_base64 = None
         if self.qr_code:
@@ -200,7 +207,8 @@ class Ticket(models.Model):
             'ticket': self,
             'match': self.match,
             'seat': self.seat,
-            'team_type': team_type,  # <--- این متغیر به PDF فرستاده می‌شود
+            'team_type': team_type,  # برچسب فارسی جایگاه (مخصوص همین مسابقه)
+            'team_zone': team_zone,  # کد جایگاه: home/away/women/class1/vip
             'user': self.user,
             'qr_base64': qr_image_base64,
         }
