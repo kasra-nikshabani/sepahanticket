@@ -168,7 +168,8 @@
                                     {% elif ticket.seat.row.zone_label == 'میهمان' %}bg-warning text-dark
                                     {% elif ticket.seat.row.zone_label == 'VIP' %}bg-purple
                                     {% elif ticket.seat.row.zone_label == 'کلاس ۱' %}bg-primary
-                                    {% elif ticket.seat.row.zone_label == 'بانوان' %}bg-pink
+                                    {% elif ticket.seat.row.zone_label == 'بانوان میزبان' %}bg-pink
+                                    {% elif ticket.seat.row.zone_label == 'بانوان میهمان' %}bg-pink
                                     {% else %}bg-secondary{% endif %}">
                                     {{ ticket.seat.row.zone_label }}
                                 </span>

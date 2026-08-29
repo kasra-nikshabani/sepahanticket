@@ -10,7 +10,7 @@ from django.utils import timezone
 #         ('away', 'مهمان'),
 #         ('class1', 'کلاس ۱'),
 #         ('vip', 'VIP'),
-#         ('women', 'بانوان'),
+#         ('women', 'بانوان میزبان'),
 #     )
 class MatchCost(models.Model):
     """هزینه‌های هر مسابقه"""
@@ -229,7 +229,8 @@ class Row(models.Model):
         labels = {
             'home': 'میزبان',
             'away': 'میهمان',
-            'women': 'بانوان',
+            'women': 'بانوان میزبان',
+            'women_away': 'بانوان میهمان',
         }
         return labels.get(self.block.zone_type, 'میزبان')
 

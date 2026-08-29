@@ -216,7 +216,7 @@ def select_block(request, match_id):
         'home': ('home', 'میزبان'),
         'away': ('away', 'میهمان'),
         'class1': ('class1', 'کلاس ۱'),
-        'women': ('women', 'بانوان'),
+        'women': ('women', 'بانوان میزبان'),
         'women_away': ('women_away', 'بانوان میهمان'),
         'vip': ('vip', 'VIP'),
     }
@@ -1545,7 +1545,7 @@ def _compute_match_report_stats(match):
         # نوع جایگاه مخصوصِ همین مسابقه (نه مقدار گلوبالِ بلوک)
         ('home', 'میزبان', Q(seat__row__block_id__in=zone_blocks.get('home', []))),
         ('away', 'میهمان', Q(seat__row__block_id__in=zone_blocks.get('away', []))),
-        ('women', 'بانوان', Q(seat__row__block_id__in=zone_blocks.get('women', []))),
+        ('women', 'بانوان میزبان', Q(seat__row__block_id__in=zone_blocks.get('women', []))),
         ('women_away', 'بانوان میهمان', Q(seat__row__block_id__in=zone_blocks.get('women_away', []))),
         ('class1', 'کلاس ۱', Q(seat__row__block_id__in=zone_blocks.get('class1', []))),
         ('vip', 'VIP', Q(seat__row__block_id__in=zone_blocks.get('vip', []))),
