@@ -31,21 +31,68 @@
             text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
         }
 
-        .map-header .match-time,
-        .map-header .block-name {
-            color: #aaa;
-            font-size: 0.9rem;
+        .map-header .vs-badge {
+            display: inline-block;
+            font-size: .72rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #1A1A2E;
+            background: linear-gradient(135deg, #D4AF37, #f0d670);
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin: 0 8px;
+            vertical-align: middle;
         }
 
-        .map-header .block-name {
-            color: #D4AF37;
-            font-weight: 600;
-            background: rgba(212, 175, 55, 0.15);
-            display: inline-block;
-            padding: 2px 18px;
-            border-radius: 20px;
-            margin-top: 4px;
+        .header-meta {
+            display: flex; justify-content: center; flex-wrap: wrap;
+            gap: 8px; margin-top: 10px;
         }
+        .meta-chip {
+            font-size: .78rem; color: #cfd6e4;
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.08);
+            padding: 4px 12px; border-radius: 20px;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .meta-chip i { color: #D4AF37; font-size: .8rem; }
+
+        .header-badges {
+            display: flex; justify-content: center; flex-wrap: wrap;
+            gap: 8px; margin-top: 10px;
+        }
+        .map-header .block-name {
+            color: #D4AF37; font-weight: 700; font-size: .86rem;
+            background: rgba(212, 175, 55, 0.15);
+            border: 1px solid rgba(212,175,55,.35);
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 16px; border-radius: 20px;
+        }
+        .price-badge {
+            color: #1A1A2E; font-weight: 800; font-size: .86rem;
+            background: linear-gradient(135deg, #D4AF37, #e8c964);
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 16px; border-radius: 20px;
+            box-shadow: 0 3px 12px rgba(212,175,55,.28);
+        }
+
+        /* نوار ظرفیت */
+        .capacity-wrap { max-width: 420px; margin: 14px auto 0; }
+        .capacity-bar {
+            height: 7px; border-radius: 20px; overflow: hidden;
+            background: rgba(255,255,255,.09);
+            border: 1px solid rgba(255,255,255,.07);
+        }
+        .capacity-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2d8a4e, #4caf50);
+            border-radius: 20px;
+        }
+        .capacity-text {
+            display: flex; justify-content: space-between;
+            font-size: .72rem; color: #9aa5b8; margin-top: 6px;
+        }
+        .capacity-text b { color: #4caf50; }
 
         /* ===== منطقه صندلی‌ها ===== */
         .seating-area {
@@ -167,18 +214,27 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 6px;
+            /* شکل صندلی: بالای گرد، پایه‌ی صاف */
+            border-radius: 10px 10px 5px 5px;
             font-size: 10px;
             font-weight: 700;
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
             border: 1.5px solid rgba(255, 255, 255, 0.12);
             background: #2d3a4a;
             color: #ccc;
             user-select: none;
-            box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+            box-shadow: inset 0 -3px 5px rgba(0, 0, 0, 0.35);
             position: relative;
         }
+        /* دسته‌های کناری صندلی */
+        .seat::before, .seat::after {
+            content: ""; position: absolute; bottom: 3px;
+            width: 2px; height: 8px; border-radius: 2px;
+            background: rgba(0,0,0,.22);
+        }
+        .seat::before { right: -1px; }
+        .seat::after  { left: -1px; }
 
         /* در حالت wrap، صندلی‌ها کمی بزرگ‌تر می‌شوند */
         .seat-grid.wrap-mode .seat {
@@ -209,12 +265,18 @@
         }
 
         .seat.selected {
-            background: #D4AF37 !important;
+            background: linear-gradient(145deg, #f0d670, #D4AF37) !important;
             border-color: #ffd700 !important;
             color: #1A1A2E !important;
-            transform: scale(1.2);
-            box-shadow: 0 0 30px rgba(212, 175, 55, 0.7);
+            transform: scale(1.22) translateY(-2px);
+            box-shadow: 0 0 26px rgba(212, 175, 55, 0.75), 0 4px 10px rgba(0,0,0,.35);
             z-index: 3;
+            animation: seatPop .22s ease;
+        }
+        @keyframes seatPop {
+            0%   { transform: scale(1) translateY(0); }
+            60%  { transform: scale(1.34) translateY(-3px); }
+            100% { transform: scale(1.22) translateY(-2px); }
         }
 
         .seat.reserved {
@@ -360,14 +422,24 @@
             flex-wrap: wrap;
         }
 
-        .selection-info {
-            font-size: 15px;
-        }
+        .selection-info { font-size: 15px; }
+        .selection-info strong { color: #D4AF37; font-size: 1.2rem; }
+        .sel-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .sel-line i { color: #D4AF37; }
+        .sel-total { color: #cfd6e4; font-size: .9rem; }
+        .sel-total b { color: #4caf50; font-size: 1rem; }
 
-        .selection-info strong {
-            color: #D4AF37;
-            font-size: 1.2rem;
+        .sel-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; max-width: 460px; }
+        .sel-chip {
+            font-size: .72rem; font-weight: 700; color: #1A1A2E;
+            background: linear-gradient(135deg, #D4AF37, #e8c964);
+            padding: 3px 9px; border-radius: 14px;
+            display: inline-flex; align-items: center; gap: 5px;
+            animation: chipIn .18s ease;
         }
+        .sel-chip .x { cursor: pointer; opacity: .65; font-weight: 900; }
+        .sel-chip .x:hover { opacity: 1; }
+        @keyframes chipIn { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
         .btn-continue {
             padding: 10px 32px;
@@ -524,9 +596,23 @@
     <div class="stadium-map">
         <!-- هدر -->
         <div class="map-header">
-            <h2>{{ match.home_team }} <span style="color:#D4AF37;">🆚</span> {{ match.away_team }}</h2>
-            <div class="match-time">{{ match.date_time|date:"Y/m/d H:i" }}</div>
-            <div class="block-name">{{ selected_block.name }}</div>
+            <h2>{{ match.home_team }} <span class="vs-badge">VS</span> {{ match.away_team }}</h2>
+            <div class="header-meta">
+                <span class="meta-chip"><i class="far fa-calendar"></i> {{ match.date_time|date:"Y/m/d" }}</span>
+                <span class="meta-chip"><i class="far fa-clock"></i> {{ match.date_time|date:"H:i" }}</span>
+                <span class="meta-chip"><i class="fas fa-location-dot"></i> {{ match.stadium.name }}</span>
+            </div>
+            <div class="header-badges">
+                <span class="block-name"><i class="fas fa-layer-group"></i> {{ selected_block.name }}</span>
+                <span class="price-badge"><i class="fas fa-tag"></i> {{ block_price|rial_display }} ریال</span>
+            </div>
+            <div class="capacity-wrap">
+                <div class="capacity-bar"><div class="capacity-fill" style="width: {{ seat_occupancy }}%;"></div></div>
+                <div class="capacity-text">
+                    <span><b>{{ seat_available|rial_display }}</b> صندلی خالی از {{ seat_total|rial_display }}</span>
+                    <span>{{ seat_occupancy }}٪ پر شده</span>
+                </div>
+            </div>
         </div>
 
         <!-- دکمه تغییر حالت -->
@@ -550,6 +636,7 @@
                                  data-row="{{ row_data.row_number }}"
                                  data-number="{{ seat.number }}"
                                  data-available="{{ seat.is_available|yesno:"true,false" }}"
+                                 title="ردیف {{ row_data.row_number }} — صندلی {{ seat.number }}"
                                  {% if not seat.id %}style="display:none;"{% endif %}>
                                 {{ seat.number }}
                             </div>
@@ -572,7 +659,7 @@
         <div class="legend">
             <div class="legend-item">
                 <div class="legend-box available"></div>
-                خالی
+                خالی <b>({{ seat_available|rial_display }})</b>
             </div>
             <div class="legend-item">
                 <div class="legend-box unavailable"></div>
@@ -597,7 +684,14 @@
             <!-- روی موبایل این بخش تا وقتی صندلی‌ای انتخاب نشده مخفی است -->
             <div class="selection-cta" id="selectionCta">
                 <div class="selection-info">
-                    🎫 تعداد انتخاب شده: <strong id="selectedCount">0</strong> از ۵
+                    <div class="sel-line">
+                        <i class="fas fa-ticket"></i> انتخاب‌شده:
+                        <strong id="selectedCount">0</strong> از ۵
+                        <span class="sel-total" id="selTotalWrap" hidden>
+                            — جمع: <b id="selTotal">0</b> ریال
+                        </span>
+                    </div>
+                    <div class="sel-chips" id="selChips"></div>
                 </div>
                 <button class="btn-continue" id="continueBtn" disabled>
                     <i class="fas fa-credit-card"></i> ادامه به اطلاعات خریدار
@@ -688,12 +782,55 @@
             rowInput.value = '{{ first_row_id|default:"" }}';
             form.appendChild(rowInput);
 
+            // قیمت هر صندلی در این بلوک برای همین مسابقه
+            const SEAT_PRICE = {{ block_price|default:0 }};
+            const chipsBox = document.getElementById('selChips');
+            const totalWrap = document.getElementById('selTotalWrap');
+            const totalEl = document.getElementById('selTotal');
+
+            // شمارش‌ها با رقم فارسی، ولی مبالغ دقیقاً مثل فیلتر rial_display
+            // سایت (رقم لاتین + جداکننده‌ی فارسی ٬) تا با بَج قیمت بالای
+            // همین صفحه و بقیه‌ی سایت یکدست بماند.
+            function faNum(n) {
+                return Number(n).toLocaleString('fa-IR').replace(/,/g, '٬');
+            }
+            function moneyFmt(n) {
+                return Number(n).toLocaleString('en-US').replace(/,/g, '٬');
+            }
+
+            // نمایش چیپ‌های «ردیف/صندلی» و جمع قیمت زنده -- تا کاربر دقیقاً
+            // ببیند چه صندلی‌هایی انتخاب کرده و چقدر باید بپردازد.
+            function renderChips() {
+                if (!chipsBox) return;
+                chipsBox.innerHTML = '';
+                selectedSeats.forEach(id => {
+                    const el = document.querySelector(`.seat[data-seat-id="${id}"]`);
+                    if (!el) return;
+                    const chip = document.createElement('span');
+                    chip.className = 'sel-chip';
+                    chip.innerHTML = `ردیف ${faNum(el.dataset.row)} · صندلی ${faNum(el.dataset.number)} <span class="x">×</span>`;
+                    chip.querySelector('.x').addEventListener('click', () => {
+                        el.classList.remove('selected');
+                        el.classList.add('available');
+                        selectedSeats.delete(parseInt(id));
+                        updateSelectedCount();
+                    });
+                    chipsBox.appendChild(chip);
+                });
+                if (totalWrap && totalEl) {
+                    const count = selectedSeats.size;
+                    totalWrap.hidden = count === 0 || !SEAT_PRICE;
+                    totalEl.textContent = moneyFmt(count * SEAT_PRICE);
+                }
+            }
+
             function updateSelectedCount() {
                 const count = selectedSeats.size;
-                selectedCountSpan.textContent = count;
+                selectedCountSpan.textContent = faNum(count);
                 continueBtn.disabled = count === 0;
                 selectionCta.classList.toggle('visible', count > 0);
                 input.value = JSON.stringify(Array.from(selectedSeats));
+                renderChips();
             }
 
             seats.forEach(seat => {

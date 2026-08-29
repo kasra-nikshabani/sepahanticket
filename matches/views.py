@@ -404,6 +404,13 @@ def show_block_map(request, match_id):
         messages.warning(request, f'هیچ صندلی‌ای برای بلوک "{block.name}" یافت نشد.')
         return redirect('matches:select_block', match_id=match_id)
 
+    # ===== داده‌های نمایشی صفحه‌ی انتخاب صندلی: قیمت این بلوک برای همین
+    # مسابقه (نه قیمت پیش‌فرض بلوک) و شمارش صندلی‌های خالی، برای نشان دادن
+    # قیمت زنده‌ی سبد و نوار ظرفیت. =====
+    seat_total = sum(len(r['seats']) for r in map_data)
+    seat_available = sum(1 for r in map_data for s in r['seats'] if s['is_available'])
+    block_price = get_block_price_map(match).get(block.id, block.price)
+
     context = {
         'match': match,
         'block': block,
@@ -416,6 +423,10 @@ def show_block_map(request, match_id):
         'selected_block': block,
         'map_data': map_data,
         'first_row_id': first_row_id,
+        'block_price': block_price,
+        'seat_total': seat_total,
+        'seat_available': seat_available,
+        'seat_occupancy': round((seat_total - seat_available) / seat_total * 100, 1) if seat_total else 0,
     }
     return render(request, 'matches/block_map.html', context)
 
