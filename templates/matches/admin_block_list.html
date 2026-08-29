@@ -351,6 +351,11 @@
         .block-card .card-header .block-name { font-size: 15px; }
         .block-card .card-footer .btn-sm { flex: 1; justify-content: center; }
     }
+    .moved-notice {
+        background: #fff8e1; border: 1px solid #f0dfa0; border-right: 4px solid #D4AF37;
+        border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; font-size: .88rem;
+        color: #6b5500; line-height: 1.9;
+    }
 </style>
 {% endblock %}
 
@@ -416,35 +421,14 @@
         </div>
     </div>
 
-    <!-- ===== عملیات گروهی روی طبقه ===== -->
-    {% if selected_stadium %}
-        <div class="floor-bulk-actions">
-            <div class="floor-bulk-title"><i class="fas fa-layer-group"></i> فعال/غیرفعال کردن کل یک طبقه (ورزشگاه: {{ selected_stadium.name }})</div>
-            {% for floor_value, floor_label in floor_choices %}
-                <div class="floor-bulk-row">
-                    <span class="floor-bulk-label">{{ floor_label }}</span>
-                    <form method="post"
-                          action="{% url 'matches:admin_bulk_toggle_floor' selected_stadium.id floor_value %}"
-                          onsubmit="return confirm('آیا مطمئنید؟ همه‌ی سکوهای «{{ floor_label }}» در ورزشگاه «{{ selected_stadium.name }}» فعال می‌شوند.');">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="activate">
-                        <button type="submit" class="btn-floor-action activate"><i class="fas fa-check"></i> فعال کردن همه</button>
-                    </form>
-                    <form method="post"
-                          action="{% url 'matches:admin_bulk_toggle_floor' selected_stadium.id floor_value %}"
-                          onsubmit="return confirm('آیا مطمئنید؟ همه‌ی سکوهای «{{ floor_label }}» در ورزشگاه «{{ selected_stadium.name }}» غیرفعال می‌شوند.');">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="deactivate">
-                        <button type="submit" class="btn-floor-action deactivate"><i class="fas fa-ban"></i> غیرفعال کردن همه</button>
-                    </form>
-                </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="floor-bulk-hint">
-            <i class="fas fa-info-circle"></i> برای فعال/غیرفعال کردن گروهیِ یک طبقه، ابتدا یک ورزشگاه مشخص از فیلتر بالا انتخاب کنید.
-        </div>
-    {% endif %}
+    <!-- عملیات گروهی طبقه: به «جزئیات مسابقه ← چیدمان ورزشگاه این مسابقه» منتقل شد -->
+    <div class="moved-notice">
+        <i class="fas fa-info-circle"></i>
+        <strong>فعال/غیرفعال کردن بلوک، ردیف و صندلی از این صفحه برداشته شده است.</strong>
+        این کار حالا از مسیر <strong>«جزئیات مسابقه ← چیدمان ورزشگاه این مسابقه»</strong> انجام می‌شود،
+        تا هر تغییری فقط روی همان مسابقه اعمال شود و به بقیه‌ی مسابقات سرایت نکند.
+        این صفحه فقط برای ساخت و ویرایش ساختار فیزیکی ورزشگاه است (نام سکو، قیمت پیش‌فرض، ردیف و صندلی).
+    </div>
 
     <!-- ===== کارت‌های بلوک ===== -->
     <div class="blocks-grid">
@@ -503,12 +487,6 @@
                 </div>
             </div>
             <div class="card-footer">
-                <a href="{% url 'matches:toggle_block_status' block.id %}"
-                   class="btn-sm btn-toggle"
-                   onclick="return confirm('آیا از تغییر وضعیت این سکو اطمینان دارید؟')">
-                    <i class="fas {% if block.is_active %}fa-ban{% else %}fa-check{% endif %}"></i>
-                    {% if block.is_active %}غیرفعال{% else %}فعال{% endif %}
-                </a>
                 <a href="{% url 'matches:manage_block_seats' block.id %}" class="btn-sm btn-seats">
                     <i class="fas fa-chair"></i> صندلی‌ها
                 </a>

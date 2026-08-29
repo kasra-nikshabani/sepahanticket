@@ -1932,58 +1932,42 @@ def admin_block_delete(request, block_id):
     return render(request, 'matches/admin_block_confirm_delete.html', {'block': block})
 
 
-def _sync_seats_to_blocks_status(block_ids, is_active):
-    """وقتی یک بلوک فعال/غیرفعال می‌شود، صندلی‌های خودش (Seat.is_available)
-    را هم هماهنگ می‌کند -- وگرنه صفحه‌ی «مدیریت صندلی‌ها» با وضعیت بلوک
-    ناهماهنگ می‌ماند (بلوک غیرفعال ولی صندلی‌هایش هنوز «فعال» نشان داده
-    می‌شوند). صندلی‌های دارای بلیط واقعی دست‌نخورده می‌مانند."""
-    Seat.objects.filter(row__block_id__in=block_ids).exclude(
-        ticket__status__in=['paid', 'admin_assigned', 'vip_issued']
-    ).update(is_available=is_active)
+# ===== فعال/غیرفعال کردنِ گلوبالِ بلوک/ردیف/صندلی برداشته شد =====
+# این سه ویو قبلاً وضعیت را روی خودِ بلوک/صندلی (که متعلق به ورزشگاه‌اند و
+# بین همه‌ی مسابقات مشترک) می‌نوشتند و همین باعث می‌شد تغییر برای یک بازی
+# روی همه‌ی بازی‌ها اثر بگذارد. بدتر: _sync_seats_to_blocks_status با یک
+# UPDATE دسته‌جمعی، is_available تمام صندلی‌های بلوک را صفر می‌کرد و اگر
+# بعداً بلوک از مسیر دیگری فعال می‌شد، صندلی‌ها خاموش می‌ماندند -- که در
+# عمل ۳۴هزار صندلی را غیرقابل‌فروش کرده بود.
+#
+# حالا تنها جای فعال/غیرفعال کردن، صفحه‌ی «چیدمان ورزشگاه این مسابقه»
+# (جزئیات مسابقه) است که همه‌چیز را مخصوصِ همان مسابقه ذخیره می‌کند.
+# خودِ ویوها حذف نشدند تا لینک/بوکمارک قدیمی ۵۰۰ ندهد؛ فقط کاری نمی‌کنند
+# و کاربر را به مسیر درست راهنمایی می‌کنند.
+
+_MOVED_MSG = (
+    'فعال/غیرفعال کردن بلوک، ردیف و صندلی از این صفحه برداشته شده است. '
+    'این کار را از «جزئیات مسابقه ← چیدمان ورزشگاه این مسابقه» انجام دهید '
+    'تا تغییر فقط روی همان مسابقه اعمال شود و به بقیه‌ی مسابقات سرایت نکند.'
+)
 
 
 @staff_member_required
 def toggle_block_status(request, block_id):
-    block = get_object_or_404(Block, id=block_id)
-    block.is_active = not block.is_active
-    block.save()
-    _sync_seats_to_blocks_status([block.id], block.is_active)
-    status = 'فعال' if block.is_active else 'غیرفعال'
-    messages.success(request, f'بلوک "{block.name}" {status} شد.')
+    messages.warning(request, _MOVED_MSG)
     return redirect('matches:admin_block_list')
 
 
 @staff_member_required
 def admin_bulk_toggle_floor(request, stadium_id, floor):
-    """فعال/غیرفعال کردن یک‌جای تمام سکوهای یک طبقه در یک ورزشگاه"""
-    if request.method != 'POST':
-        return redirect('matches:admin_block_list')
-
-    stadium = get_object_or_404(Stadium, id=stadium_id)
-    if floor not in dict(Block.FLOOR_CHOICES):
-        messages.error(request, 'طبقه نامعتبر است.')
-        return redirect('matches:admin_block_list')
-
-    new_state = request.POST.get('action') == 'activate'
-    floor_block_ids = list(Block.objects.filter(stadium=stadium, floor=floor).values_list('id', flat=True))
-    updated = Block.objects.filter(id__in=floor_block_ids).update(is_active=new_state)
-    _sync_seats_to_blocks_status(floor_block_ids, new_state)
-
-    floor_label = dict(Block.FLOOR_CHOICES)[floor]
-    status_label = 'فعال' if new_state else 'غیرفعال'
-    messages.success(request, f'{updated} سکوی «{floor_label}» در ورزشگاه «{stadium.name}» {status_label} شد.')
-    return redirect(f"{reverse('matches:admin_block_list')}?stadium_id={stadium.id}")
+    messages.warning(request, _MOVED_MSG)
+    return redirect(f"{reverse('matches:admin_block_list')}?stadium_id={stadium_id}")
 
 
 @staff_member_required
 def toggle_seat_status(request, seat_id):
     seat = get_object_or_404(Seat, id=seat_id)
-    seat.is_available = not seat.is_available
-    seat.save()
-    msg = f'وضعیت صندلی {seat.number} در ردیف {seat.row.number} تغییر کرد.'
-    if seat.is_available and _reactivate_block_if_needed(seat.row.block):
-        msg += ' بلوک هم به‌صورت خودکار فعال شد.'
-    messages.success(request, msg)
+    messages.warning(request, _MOVED_MSG)
     return redirect('matches:manage_block_seats', block_id=seat.row.block.id)
 
 
