@@ -5,67 +5,151 @@
 
 {% block extra_css %}
 <style>
-    .layout-page { max-width: 1150px; margin: 30px auto; padding: 0 16px; }
+    .layout-page { max-width: 1250px; margin: 24px auto; padding: 0 14px 40px; }
+
     .page-header {
         background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
-        border-radius: 20px; padding: 24px 30px; color: #fff; margin-bottom: 20px;
+        border-radius: 18px; padding: 22px 26px; color: #fff; margin-bottom: 16px;
         border-bottom: 3px solid #D4AF37;
     }
-    .page-header h2 { margin: 0; color: #D4AF37; font-weight: 800; display: flex; align-items: center; gap: 10px; }
-    .page-header .meta { font-size: .9rem; opacity: .8; margin-top: 8px; }
+    .page-header h2 { margin: 0; color: #D4AF37; font-weight: 800; font-size: 1.3rem;
+                      display: flex; align-items: center; gap: 10px; }
+    .page-header .meta { font-size: .85rem; opacity: .78; margin-top: 7px; }
 
-    .info-banner {
-        background: #fff8e1; border: 1px solid #f0dfa0; border-right: 4px solid #D4AF37;
-        border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; font-size: .88rem; color: #6b5500;
+    .info-banner, .warn-banner {
+        border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; font-size: .85rem; line-height: 1.9;
+    }
+    .info-banner { background: #fff8e1; border: 1px solid #f0dfa0; border-right: 4px solid #D4AF37; color: #6b5500; }
+    .warn-banner { background: #fdeceb; border: 1px solid #f5b7b1; border-right: 4px solid #c0392b; color: #922b21; }
+
+    /* ===== نوار ابزار چسبان: جست‌وجو + فیلتر ===== */
+    .toolbar {
+        position: sticky; top: 0; z-index: 20;
+        background: #fff; border: 1px solid #e8eaed; border-radius: 14px;
+        padding: 12px 16px; margin-bottom: 18px;
+        box-shadow: 0 4px 16px rgba(0,0,0,.07);
+        display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+    }
+    .search-wrap { position: relative; flex: 1; min-width: 190px; }
+    .search-wrap i {
+        position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+        color: #b9c0c8; font-size: .85rem; pointer-events: none;
+    }
+    .search-wrap input {
+        width: 100%; padding: 9px 34px 9px 12px; border-radius: 10px;
+        border: 1.5px solid #e8eaed; font-size: .88rem; font-family: inherit; background: #fafbfc;
+    }
+    .search-wrap input:focus { border-color: #D4AF37; outline: none; background: #fff; }
+
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip {
+        border: 1.5px solid #e8eaed; background: #fff; color: #5a6570;
+        padding: 7px 14px; border-radius: 20px; font-size: .8rem; font-weight: 700;
+        cursor: pointer; transition: all .15s; font-family: inherit;
+    }
+    .chip:hover { border-color: #D4AF37; }
+    .chip.on { background: #1A1A2E; border-color: #1A1A2E; color: #D4AF37; }
+    .chip .n { opacity: .6; font-weight: 500; }
+
+    .kpi-inline { font-size: .82rem; color: #5a6570; white-space: nowrap; }
+    .kpi-inline b { color: #1A1A2E; font-size: 1.05rem; }
+
+    /* ===== بخش هر طبقه ===== */
+    .floor-sec { margin-bottom: 22px; }
+    .floor-head {
+        display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+        background: linear-gradient(135deg, #1A1A2E, #2b2b47); color: #fff;
+        border-radius: 14px 14px 0 0; padding: 12px 18px; border-bottom: 3px solid #D4AF37;
+    }
+    .floor-head .ttl { font-weight: 800; display: flex; align-items: center; gap: 9px; font-size: .97rem; flex-wrap: wrap; }
+    .floor-head .ttl i { color: #D4AF37; }
+    .floor-head .sub { font-size: .76rem; opacity: .72; font-weight: 400; }
+    .floor-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .btn-bulk {
+        border-radius: 9px; padding: 7px 13px; font-size: .78rem; font-weight: 700;
+        cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 5px;
+        transition: filter .15s;
+    }
+    .btn-bulk.b-on  { background: rgba(76,175,80,.18); color: #8ce6ab; border: 1px solid rgba(76,175,80,.45); }
+    .btn-bulk.b-off { background: rgba(220,80,70,.18); color: #ffb3ad; border: 1px solid rgba(220,80,70,.45); }
+    .btn-bulk:hover { filter: brightness(1.3); }
+
+    .floor-body {
+        border: 1px solid #e8eaed; border-top: none; border-radius: 0 0 14px 14px;
+        padding: 14px; background: #f8f9fb;
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr)); gap: 12px;
     }
 
-    .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 22px; }
-    .kpi-card { background: #fff; border-radius: 14px; padding: 16px; text-align: center; border: 1px solid #eee; border-top: 4px solid #D4AF37; }
-    .kpi-card .num { font-size: 1.6rem; font-weight: 800; color: #1A1A2E; }
-    .kpi-card .lbl { font-size: .82rem; color: #6c757d; margin-top: 4px; }
-
-    table.layout-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 18px rgba(0,0,0,.06); }
-    table.layout-table th { background: #1A1A2E; color: #fff; font-weight: 700; padding: 12px 14px; text-align: center; font-size: .85rem; }
-    table.layout-table td { padding: 12px 14px; text-align: center; border-bottom: 1px solid #f1f1f1; vertical-align: middle; font-size: .9rem; }
-    table.layout-table tbody tr:hover td { background: #fafafa; }
-    table.layout-table tbody tr.is-off td { background: #fff5f5; }
-    table.layout-table tbody tr.is-off:hover td { background: #ffecec; }
-
-    .pill { padding: 4px 12px; border-radius: 50px; font-size: .78rem; font-weight: 700; white-space: nowrap; display: inline-block; }
-    .pill.on { background: #e6f7ee; color: #1E8E3E; }
-    .pill.off { background: #fdeceb; color: #c0392b; }
-    .pill.override { background: #e8f0fe; color: #1a56db; font-size: .72rem; }
-    .pill.default { background: #f1f3f4; color: #777; font-size: .72rem; }
-
-    .btn-mini {
-        border: none; border-radius: 9px; padding: 7px 14px; font-weight: 700; font-size: .8rem;
-        cursor: pointer; transition: all .2s; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+    /* ===== کارت بلوک ===== */
+    .bcard {
+        background: #fff; border: 1.5px solid #e8eaed; border-radius: 13px; overflow: hidden;
+        transition: box-shadow .15s, border-color .15s; display: flex; flex-direction: column;
     }
-    .btn-mini.turn-off { background: #fdeceb; color: #c0392b; }
-    .btn-mini.turn-on { background: #e6f7ee; color: #1E8E3E; }
-    .btn-mini.detail { background: #fff4d6; color: #B8960F; }
-    .btn-mini.reset { background: #f1f3f4; color: #666; }
-    .btn-mini:hover { transform: translateY(-2px); filter: brightness(.96); }
+    .bcard:hover { border-color: #D4AF37; box-shadow: 0 6px 18px rgba(212,175,55,.15); }
+    .bcard.is-off { background: #fff7f6; border-color: #f0cdc8; }
 
-    .btn-back { background: #f1f3f4; border: none; color: #1A1A2E; padding: 10px 22px; border-radius: 10px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
-    .btn-back:hover { background: #e8eaed; color: #1A1A2E; }
-
-    .warn-banner {
-        background: #fdeceb; border: 1px solid #f5b7b1; border-right: 4px solid #c0392b;
-        border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; font-size: .88rem; color: #922b21;
+    .bcard-head {
+        display: flex; align-items: center; justify-content: space-between; gap: 8px;
+        padding: 11px 14px; border-bottom: 1px solid #f1f1f1;
     }
+    .bcard.is-off .bcard-head { border-bottom-color: #f6dedb; }
+    .bcard-name { font-weight: 800; color: #1A1A2E; font-size: .95rem; }
+
+    /* کلید روشن/خاموش */
+    .sw { border: none; padding: 0; background: none; cursor: pointer;
+          position: relative; display: inline-block; width: 46px; height: 25px; flex-shrink: 0; }
+    .sw .track {
+        position: absolute; inset: 0; border-radius: 20px; background: #d0d6dc; transition: background .18s;
+    }
+    .sw .track::before {
+        content: ""; position: absolute; width: 19px; height: 19px; border-radius: 50%;
+        background: #fff; top: 3px; right: 3px; transition: transform .18s;
+        box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    }
+    .sw.on .track { background: #2d8a4e; }
+    .sw.on .track::before { transform: translateX(-21px); }
+
+    .bcard-body { padding: 9px 14px 12px; flex: 1; }
+    .brow { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: .81rem; padding: 4px 0; }
+    .brow .lbl { color: #7b8794; }
+    .brow .val { font-weight: 700; color: #1A1A2E; }
+    .zone-form { display: flex; gap: 4px; align-items: center; }
     .zone-select {
-        padding: 6px 10px; border-radius: 8px; border: 1.5px solid #e8eaed; background: #fff;
-        font-size: .82rem; font-family: inherit; cursor: pointer; min-width: 100px;
+        padding: 6px 9px; border-radius: 8px; border: 1.5px solid #e8eaed; background: #fff;
+        font-size: .79rem; font-family: inherit; cursor: pointer; max-width: 128px;
     }
     .zone-select:focus { border-color: #D4AF37; outline: none; }
+    .zone-reset { border: none; background: #f1f3f4; color: #6c757d; border-radius: 7px;
+                  padding: 6px 8px; cursor: pointer; font-size: .72rem; }
 
-    .floor-title { font-weight: 800; color: #1A1A2E; margin: 22px 0 10px; display: flex; align-items: center; gap: 8px; }
-    .floor-title i { color: #D4AF37; }
+    .tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+    .tag { padding: 3px 9px; border-radius: 20px; font-size: .69rem; font-weight: 700; }
+    .tag.override { background: #e8f0fe; color: #1a56db; }
+    .tag.default  { background: #f1f3f4; color: #7b8794; }
+    .tag.sold     { background: #fff4d6; color: #8a6d00; }
+    .tag.off      { background: #fdeceb; color: #c0392b; }
 
-    @media (max-width: 768px) {
-        table.layout-table { font-size: .78rem; }
-        table.layout-table th, table.layout-table td { padding: 8px 6px; }
+    .bcard-foot { display: flex; gap: 6px; padding: 0 14px 13px; }
+    .btn-s {
+        border: none; border-radius: 9px; padding: 7px 10px; font-size: .78rem; font-weight: 700;
+        cursor: pointer; text-decoration: none; font-family: inherit;
+        display: inline-flex; align-items: center; justify-content: center; gap: 5px; transition: filter .15s;
+    }
+    .btn-s.detail { background: #fff4d6; color: #B8960F; flex: 1; }
+    .btn-s.reset  { background: #f1f3f4; color: #6c757d; }
+    .btn-s:hover { filter: brightness(.95); }
+
+    .empty-hint { text-align: center; color: #8a949e; padding: 24px; font-size: .87rem; grid-column: 1/-1; }
+
+    .btn-back {
+        background: #f1f3f4; color: #1A1A2E; padding: 10px 22px; border-radius: 10px;
+        font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-back:hover { background: #e8eaed; color: #1A1A2E; }
+
+    @media (max-width: 640px) {
+        .floor-body { grid-template-columns: 1fr; }
+        .toolbar { position: static; }
     }
 </style>
 {% endblock %}
@@ -94,96 +178,171 @@
     </div>
     {% endif %}
 
-    <div class="kpi-row">
-        <div class="kpi-card"><div class="num">{{ active_count }}</div><div class="lbl">بلوک فعال برای این مسابقه</div></div>
-        <div class="kpi-card"><div class="num">{{ total_count }}</div><div class="lbl">کل بلوک‌های ورزشگاه</div></div>
+    <!-- نوار ابزار: جست‌وجو و فیلتر (همه سمت کلاینت، بدون رفت‌وبرگشت به سرور) -->
+    <div class="toolbar">
+        <div class="search-wrap">
+            <i class="fas fa-search"></i>
+            <input type="search" id="blockSearch" placeholder="جست‌وجوی نام سکو…" autocomplete="off">
+        </div>
+        <div class="chips">
+            <button type="button" class="chip on" data-filter="all">همه <span class="n">({{ total_count }})</span></button>
+            <button type="button" class="chip" data-filter="on">فعال <span class="n">({{ active_count }})</span></button>
+            <button type="button" class="chip" data-filter="off">غیرفعال</button>
+            <button type="button" class="chip" data-filter="ovr">تنظیم اختصاصی <span class="n">({{ override_count }})</span></button>
+            <button type="button" class="chip" data-filter="sold">دارای بلیط</button>
+        </div>
+        <div class="kpi-inline">نمایش: <b id="visCount">{{ total_count }}</b> سکو</div>
     </div>
 
-    <table class="layout-table">
-        <thead>
-            <tr>
-                <th>بلوک</th>
-                <th>طبقه</th>
-                <th>نوع جایگاه این مسابقه</th>
-                <th>ردیف</th>
-                <th>بلیط صادرشده</th>
-                <th>وضعیت این مسابقه</th>
-                <th>نوع تنظیم</th>
-                <th>عملیات</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in blocks_data %}
-            <tr class="{% if not item.is_active %}is-off{% endif %}">
-                <td><strong>{{ item.block.name }}</strong></td>
-                <td>{{ item.block.get_floor_display }}</td>
-                <td>
-                    <form method="post" action="{% url 'matches:admin_match_set_block_zone' match.id item.block.id %}"
-                          style="display:flex; gap:5px; align-items:center; justify-content:center;">
-                        {% csrf_token %}
-                        <select name="zone_type" class="zone-select" onchange="this.form.submit()">
-                            {% for z, zlabel in zone_choices %}
-                                <option value="{{ z }}" {% if item.zone == z %}selected{% endif %}>{{ zlabel }}</option>
-                            {% endfor %}
-                        </select>
-                        {% if item.has_zone_override %}
-                            <button type="submit" name="zone_type" value="" class="btn-mini reset" title="برگشت به نوع جایگاه پیش‌فرض">
-                                <i class="fas fa-undo"></i>
-                            </button>
-                        {% endif %}
-                    </form>
-                    {% if item.has_zone_override %}<span class="pill override" style="margin-top:4px;">اختصاصی</span>{% endif %}
-                </td>
-                <td>{{ item.row_count }}</td>
-                <td>{% if item.sold_count %}<strong>{{ item.sold_count }}</strong>{% else %}—{% endif %}</td>
-                <td>
-                    {% if item.is_active %}
-                        <span class="pill on">فعال</span>
-                    {% else %}
-                        <span class="pill off">غیرفعال</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if item.has_override %}
-                        <span class="pill override">اختصاصی این مسابقه</span>
-                    {% else %}
-                        <span class="pill default">پیش‌فرض</span>
-                    {% endif %}
-                </td>
-                <td>
-                    <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap;">
-                        <form method="post" action="{% url 'matches:admin_match_toggle_block' match.id item.block.id %}" style="display:inline;">
-                            {% csrf_token %}
-                            <input type="hidden" name="desired" value="{% if item.is_active %}off{% else %}on{% endif %}">
-                            <button type="submit" class="btn-mini {% if item.is_active %}turn-off{% else %}turn-on{% endif %}">
-                                <i class="fas fa-power-off"></i>
-                                {% if item.is_active %}غیرفعال کن{% else %}فعال کن{% endif %}
-                            </button>
-                        </form>
-                        <a href="{% url 'matches:admin_match_block_layout' match.id item.block.id %}" class="btn-mini detail">
-                            <i class="fas fa-list"></i> ردیف/صندلی
-                        </a>
-                        {% if item.has_override %}
-                        <form method="post" action="{% url 'matches:admin_match_reset_block' match.id item.block.id %}" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn-mini reset" title="برگشت به وضعیت پیش‌فرض">
-                                <i class="fas fa-undo"></i>
-                            </button>
-                        </form>
-                        {% endif %}
-                    </div>
-                </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="8">هیچ بلوکی برای این ورزشگاه تعریف نشده است.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    {% for fl in floor_groups %}
+    <div class="floor-sec">
+        <div class="floor-head">
+            <div class="ttl">
+                <i class="fas fa-layer-group"></i>
+                {{ fl.label }}
+                <span class="sub">
+                    {{ fl.active }} فعال از {{ fl.blocks|length }}
+                    {% if fl.overrides %} · {{ fl.overrides }} تنظیم اختصاصی{% endif %}
+                    {% if fl.sold %} · {{ fl.sold }} بلیط صادرشده{% endif %}
+                </span>
+            </div>
+            <div class="floor-actions">
+                <form method="post" action="{% url 'matches:admin_match_bulk_toggle_floor' match.id fl.key %}"
+                      onsubmit="return confirm('همه‌ی سکوهای «{{ fl.label }}» فقط برای این مسابقه فعال شوند؟');">
+                    {% csrf_token %}
+                    <input type="hidden" name="desired" value="on">
+                    <button type="submit" class="btn-bulk b-on"><i class="fas fa-check"></i> فعال کردن کل طبقه</button>
+                </form>
+                <form method="post" action="{% url 'matches:admin_match_bulk_toggle_floor' match.id fl.key %}"
+                      onsubmit="return confirm('همه‌ی سکوهای «{{ fl.label }}» فقط برای این مسابقه غیرفعال شوند؟');">
+                    {% csrf_token %}
+                    <input type="hidden" name="desired" value="off">
+                    <button type="submit" class="btn-bulk b-off"><i class="fas fa-ban"></i> غیرفعال کردن کل طبقه</button>
+                </form>
+            </div>
+        </div>
 
-    <div style="margin-top:20px;">
+        <div class="floor-body">
+            {% for item in fl.blocks %}
+            <div class="bcard {% if not item.is_active %}is-off{% endif %}"
+                 data-name="{{ item.block.name }}"
+                 data-state="{% if item.is_active %}on{% else %}off{% endif %}"
+                 data-ovr="{% if item.has_override or item.has_zone_override %}1{% else %}0{% endif %}"
+                 data-sold="{% if item.sold_count %}1{% else %}0{% endif %}">
+
+                <div class="bcard-head">
+                    <span class="bcard-name">{{ item.block.name }}</span>
+                    <form method="post" action="{% url 'matches:admin_match_toggle_block' match.id item.block.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="desired" value="{% if item.is_active %}off{% else %}on{% endif %}">
+                        <button type="submit" class="sw {% if item.is_active %}on{% endif %}"
+                                title="{% if item.is_active %}غیرفعال کردن{% else %}فعال کردن{% endif %} این سکو برای این مسابقه">
+                            <span class="track"></span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="bcard-body">
+                    <div class="brow">
+                        <span class="lbl">نوع جایگاه</span>
+                        <form method="post" action="{% url 'matches:admin_match_set_block_zone' match.id item.block.id %}" class="zone-form">
+                            {% csrf_token %}
+                            <select name="zone_type" class="zone-select" onchange="this.form.submit()">
+                                {% for z, zlabel in zone_choices %}
+                                    <option value="{{ z }}" {% if item.zone == z %}selected{% endif %}>{{ zlabel }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if item.has_zone_override %}
+                            <button type="submit" name="zone_type" value="" class="zone-reset" title="برگشت به نوع جایگاه پیش‌فرض">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                            {% endif %}
+                        </form>
+                    </div>
+                    <div class="brow"><span class="lbl">تعداد ردیف</span><span class="val">{{ item.row_count }}</span></div>
+                    <div class="brow">
+                        <span class="lbl">بلیط صادرشده</span>
+                        <span class="val">{% if item.sold_count %}{{ item.sold_count }}{% else %}—{% endif %}</span>
+                    </div>
+                    <div class="tags">
+                        {% if not item.is_active %}<span class="tag off">غیرفعال</span>{% endif %}
+                        {% if item.has_override or item.has_zone_override %}
+                            <span class="tag override">اختصاصی این مسابقه</span>
+                        {% else %}
+                            <span class="tag default">پیش‌فرض</span>
+                        {% endif %}
+                        {% if item.sold_count %}<span class="tag sold">فروش دارد</span>{% endif %}
+                    </div>
+                </div>
+
+                <div class="bcard-foot">
+                    <a href="{% url 'matches:admin_match_block_layout' match.id item.block.id %}" class="btn-s detail">
+                        <i class="fas fa-list"></i> ردیف و صندلی
+                    </a>
+                    {% if item.has_override %}
+                    <form method="post" action="{% url 'matches:admin_match_reset_block' match.id item.block.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-s reset" title="برگشت وضعیت فعال/غیرفعال به پیش‌فرض">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            <div class="empty-hint" hidden>سکویی با این فیلتر پیدا نشد.</div>
+        </div>
+    </div>
+    {% empty %}
+        <div class="empty-hint">هیچ بلوکی برای این ورزشگاه تعریف نشده است.</div>
+    {% endfor %}
+
+    <div style="margin-top:18px;">
         <a href="{% url 'matches:admin_match_detail' match.id %}" class="btn-back">
             <i class="fas fa-arrow-right"></i> بازگشت به جزئیات مسابقه
         </a>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var search = document.getElementById('blockSearch');
+    var chips  = Array.prototype.slice.call(document.querySelectorAll('.chip'));
+    var cards  = Array.prototype.slice.call(document.querySelectorAll('.bcard'));
+    var visCount = document.getElementById('visCount');
+    var filter = 'all';
+
+    function apply() {
+        var q = (search.value || '').trim();
+        var shown = 0;
+        cards.forEach(function (c) {
+            var okQ = !q || c.dataset.name.indexOf(q) !== -1;
+            var okF = true;
+            if (filter === 'on')   okF = c.dataset.state === 'on';
+            if (filter === 'off')  okF = c.dataset.state === 'off';
+            if (filter === 'ovr')  okF = c.dataset.ovr === '1';
+            if (filter === 'sold') okF = c.dataset.sold === '1';
+            var show = okQ && okF;
+            c.hidden = !show;
+            if (show) shown++;
+        });
+        // طبقه‌ای که هیچ کارت قابل‌نمایشی ندارد کلاً پنهان شود
+        Array.prototype.slice.call(document.querySelectorAll('.floor-sec')).forEach(function (sec) {
+            var any = Array.prototype.slice.call(sec.querySelectorAll('.bcard')).some(function (c) { return !c.hidden; });
+            sec.hidden = !any;
+        });
+        if (visCount) visCount.textContent = shown;
+    }
+
+    search.addEventListener('input', apply);
+    chips.forEach(function (ch) {
+        ch.addEventListener('click', function () {
+            chips.forEach(function (x) { x.classList.remove('on'); });
+            ch.classList.add('on');
+            filter = ch.dataset.filter;
+            apply();
+        });
+    });
+});
+</script>
 {% endblock %}

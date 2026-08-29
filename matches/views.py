@@ -2171,15 +2171,96 @@ def admin_match_stadium_layout(request, match_id):
             'has_zone_override': block.id in zone_override_ids,
         })
 
+    # ===== گروه‌بندی بر اساس طبقه: این ورزشگاه ۷۴ بلوک دارد و یک جدول تخت
+    # عملاً غیرقابل‌کار کردن بود. هر طبقه یک بخش جدا با آمار و عملیات گروهیِ
+    # مخصوصِ همین مسابقه می‌گیرد. =====
+    floor_labels = dict(Block.FLOOR_CHOICES)
+    floors = {}
+    for item in blocks_data:
+        f = item['block'].floor
+        g = floors.setdefault(f, {'key': f, 'label': floor_labels.get(f, f),
+                                  'blocks': [], 'active': 0, 'overrides': 0, 'sold': 0})
+        g['blocks'].append(item)
+        if item['is_active']:
+            g['active'] += 1
+        if item['has_override'] or item['has_zone_override']:
+            g['overrides'] += 1
+        g['sold'] += item['sold_count']
+    floor_groups = [floors[k] for k, _ in Block.FLOOR_CHOICES if k in floors]
+
     context = {
         'match': match,
         'blocks_data': blocks_data,
+        'floor_groups': floor_groups,
         'active_count': sum(1 for b in blocks_data if b['is_active']),
         'total_count': len(blocks_data),
+        'override_count': sum(1 for b in blocks_data
+                              if b['has_override'] or b['has_zone_override']),
         'zone_choices': ZONE_CHOICES,
         'any_tickets_issued': bool(sold_by_block),
     }
     return render(request, 'matches/admin_match_stadium_layout.html', context)
+
+
+@staff_member_required
+def admin_match_bulk_toggle_floor(request, match_id, floor):
+    """فعال/غیرفعال کردن یک‌جای همه‌ی بلوک‌های یک طبقه -- فقط برای همین مسابقه.
+
+    معادلِ همان دکمه‌ی گروهیِ قدیمیِ صفحه‌ی «مدیریت سکوها»، ولی این‌بار بدون
+    هیچ اثری روی مسابقات دیگر یا روی وضعیت گلوبالِ ورزشگاه."""
+    if request.method != 'POST':
+        return redirect('matches:admin_match_stadium_layout', match_id=match_id)
+    match = get_object_or_404(Match, id=match_id)
+    desired = request.POST.get('desired')
+    if desired not in ('on', 'off'):
+        messages.error(request, 'درخواست نامعتبر است.')
+        return redirect('matches:admin_match_stadium_layout', match_id=match.id)
+    new_state = (desired == 'on')
+
+    blocks = Block.objects.filter(stadium=match.stadium)
+    if floor != 'all':
+        if floor not in dict(Block.FLOOR_CHOICES):
+            messages.error(request, 'طبقه نامعتبر است.')
+            return redirect('matches:admin_match_stadium_layout', match_id=match.id)
+        blocks = blocks.filter(floor=floor)
+
+    for block in blocks:
+        MatchBlockActive.objects.update_or_create(
+            match=match, block=block, defaults={'is_active': new_state}
+        )
+    scope = 'همه‌ی طبقات' if floor == 'all' else f'طبقه‌ی «{dict(Block.FLOOR_CHOICES)[floor]}»'
+    messages.success(
+        request,
+        f'{blocks.count()} سکوی {scope} فقط برای این مسابقه '
+        f'{"فعال" if new_state else "غیرفعال"} شد.'
+    )
+    return redirect('matches:admin_match_stadium_layout', match_id=match.id)
+
+
+@staff_member_required
+def admin_match_bulk_toggle_rows(request, match_id, block_id):
+    """فعال/غیرفعال کردن یک‌جای همه‌ی ردیف‌های یک بلوک برای همین مسابقه."""
+    if request.method != 'POST':
+        return redirect('matches:admin_match_stadium_layout', match_id=match_id)
+    match = get_object_or_404(Match, id=match_id)
+    block = get_object_or_404(Block, id=block_id, stadium=match.stadium)
+    desired = request.POST.get('desired')
+    if desired not in ('on', 'off'):
+        messages.error(request, 'درخواست نامعتبر است.')
+        return redirect('matches:admin_match_block_layout', match_id=match.id, block_id=block.id)
+    new_state = (desired == 'on')
+
+    rows = Row.objects.filter(block=block)
+    for row in rows:
+        MatchRowActive.objects.update_or_create(
+            match=match, row=row, defaults={'is_active': new_state}
+        )
+    messages.success(
+        request,
+        f'{rows.count()} ردیف بلوک «{block.name}» فقط برای این مسابقه '
+        f'{"فعال" if new_state else "غیرفعال"} شد.'
+    )
+    return redirect('matches:admin_match_block_layout', match_id=match.id, block_id=block.id)
 
 
 @staff_member_required
@@ -2265,13 +2346,23 @@ def admin_match_block_layout(request, match_id, block_id):
             'is_sold': seat.id in sold_seat_ids,
         })
 
-    rows_data = [{
-        'row': row,
-        'is_active': row_active_map.get(row.id, row.is_active),
-        'has_override': row.id in row_override_ids,
-        'global_is_active': row.is_active,
-        'seats': seats_by_row.get(row.id, []),
-    } for row in rows]
+    rows_data = []
+    for row in rows:
+        row_seats = seats_by_row.get(row.id, [])
+        # آمار خلاصه‌ی هر ردیف تا ادمین بدون باز کردن گرید بفهمد داخلش چه خبر است
+        sold = sum(1 for s in row_seats if s['is_sold'])
+        off = sum(1 for s in row_seats if not s['is_sold'] and (not s['is_enabled'] or not s['global_available']))
+        rows_data.append({
+            'row': row,
+            'is_active': row_active_map.get(row.id, row.is_active),
+            'has_override': row.id in row_override_ids,
+            'global_is_active': row.is_active,
+            'seats': row_seats,
+            'seat_count': len(row_seats),
+            'sold_count': sold,
+            'off_count': off,
+            'free_count': len(row_seats) - sold - off,
+        })
 
     context = {
         'match': match,
@@ -2279,6 +2370,12 @@ def admin_match_block_layout(request, match_id, block_id):
         'selected_block': block,  # نامِ بدون‌ابهام برای استفاده در قالب
         'block_is_active': is_block_active_for_match(match, block),
         'rows_data': rows_data,
+        'row_total': len(rows_data),
+        'row_active_count': sum(1 for r in rows_data if r['is_active']),
+        'row_override_count': sum(1 for r in rows_data if r['has_override']),
+        'block_zone_label': dict(ZONE_CHOICES).get(
+            get_block_zone_for_match(match, block), ''
+        ),
     }
     return render(request, 'matches/admin_match_block_layout.html', context)
 

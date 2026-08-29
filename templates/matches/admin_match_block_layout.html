@@ -5,50 +5,112 @@
 
 {% block extra_css %}
 <style>
-    .layout-page { max-width: 1150px; margin: 30px auto; padding: 0 16px; }
+    .layout-page { max-width: 1150px; margin: 24px auto; padding: 0 14px 40px; }
+
     .page-header {
         background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
-        border-radius: 20px; padding: 24px 30px; color: #fff; margin-bottom: 20px;
+        border-radius: 18px; padding: 22px 26px; color: #fff; margin-bottom: 14px;
         border-bottom: 3px solid #D4AF37;
     }
-    .page-header h2 { margin: 0; color: #D4AF37; font-weight: 800; display: flex; align-items: center; gap: 10px; }
-    .page-header .meta { font-size: .88rem; opacity: .8; margin-top: 8px; }
-
-    .info-banner {
-        background: #fff8e1; border: 1px solid #f0dfa0; border-right: 4px solid #D4AF37;
-        border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; font-size: .88rem; color: #6b5500;
-    }
-    .warn-banner {
-        background: #fdeceb; border: 1px solid #f5b7b1; border-right: 4px solid #c0392b;
-        border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; font-size: .88rem; color: #922b21;
+    .page-header h2 { margin: 0; color: #D4AF37; font-weight: 800; font-size: 1.28rem;
+                      display: flex; align-items: center; gap: 10px; }
+    .page-header .meta { font-size: .85rem; opacity: .78; margin-top: 7px; }
+    .page-header .zone-badge {
+        display: inline-block; background: rgba(212,175,55,.18); border: 1px solid rgba(212,175,55,.45);
+        color: #D4AF37; padding: 3px 12px; border-radius: 20px; font-size: .76rem; font-weight: 700; margin-top: 8px;
     }
 
-    .row-card { background: #fff; border: 1px solid #e8eaed; border-radius: 14px; margin-bottom: 14px; overflow: hidden; }
-    .row-card.is-off { border-color: #f5b7b1; }
+    .info-banner, .warn-banner {
+        border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; font-size: .85rem; line-height: 1.9;
+    }
+    .info-banner { background: #fff8e1; border: 1px solid #f0dfa0; border-right: 4px solid #D4AF37; color: #6b5500; }
+    .warn-banner { background: #fdeceb; border: 1px solid #f5b7b1; border-right: 4px solid #c0392b; color: #922b21; }
+
+    /* ===== نوار ابزار چسبان ===== */
+    .toolbar {
+        position: sticky; top: 0; z-index: 20;
+        background: #fff; border: 1px solid #e8eaed; border-radius: 14px;
+        padding: 12px 16px; margin-bottom: 16px; box-shadow: 0 4px 16px rgba(0,0,0,.07);
+    }
+    .tb-line { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .tb-line + .tb-line { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #eef0f2; }
+
+    .search-wrap { position: relative; flex: 1; min-width: 170px; }
+    .search-wrap i { position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+                     color: #b9c0c8; font-size: .85rem; pointer-events: none; }
+    .search-wrap input {
+        width: 100%; padding: 9px 34px 9px 12px; border-radius: 10px;
+        border: 1.5px solid #e8eaed; font-size: .88rem; font-family: inherit; background: #fafbfc;
+    }
+    .search-wrap input:focus { border-color: #D4AF37; outline: none; background: #fff; }
+
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip {
+        border: 1.5px solid #e8eaed; background: #fff; color: #5a6570;
+        padding: 7px 14px; border-radius: 20px; font-size: .8rem; font-weight: 700;
+        cursor: pointer; transition: all .15s; font-family: inherit;
+    }
+    .chip:hover { border-color: #D4AF37; }
+    .chip.on { background: #1A1A2E; border-color: #1A1A2E; color: #D4AF37; }
+    .chip .n { opacity: .6; font-weight: 500; }
+
+    .btn-bulk {
+        border-radius: 9px; padding: 7px 13px; font-size: .78rem; font-weight: 700; cursor: pointer;
+        font-family: inherit; display: inline-flex; align-items: center; gap: 5px; transition: filter .15s;
+    }
+    .btn-bulk.b-on  { background: #e6f7ee; color: #1E8E3E; border: 1px solid #bfe8cf; }
+    .btn-bulk.b-off { background: #fdeceb; color: #c0392b; border: 1px solid #f5c6c1; }
+    .btn-bulk.b-neutral { background: #f1f3f4; color: #5a6570; border: 1px solid #e2e5e8; }
+    .btn-bulk:hover { filter: brightness(.96); }
+
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .78rem; color: #5a6570; }
+    .legend .box { display: inline-block; width: 14px; height: 14px; border-radius: 4px;
+                   margin-left: 5px; vertical-align: middle; border: 1.5px solid #d9e0e6; }
+    .legend .box.on { background: #fff; }
+    .legend .box.off { background: #fdeceb; border-color: #f5b7b1; }
+    .legend .box.sold { background: #1A1A2E; border-color: #1A1A2E; }
+    .legend .box.global-off { background: #f1f3f4; border-color: #ddd; }
+    .legend .box.row-off { background: repeating-linear-gradient(45deg, #f6dedb, #f6dedb 3px, #fbeceb 3px, #fbeceb 6px); border-color: #eab6b0; }
+
+    /* ===== کارت ردیف ===== */
+    .row-card { background: #fff; border: 1.5px solid #e8eaed; border-radius: 13px; margin-bottom: 11px; overflow: hidden; }
+    .row-card.is-off { border-color: #f0cdc8; }
     .row-head {
         display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
-        padding: 12px 18px; background: #f8f9fa; border-bottom: 1px solid #eee;
+        padding: 11px 16px; background: #f8f9fb; border-bottom: 1px solid #eef0f2;
     }
-    .row-card.is-off .row-head { background: #fff5f5; }
-    .row-head .title { font-weight: 700; color: #1A1A2E; }
+    .row-card.is-off .row-head { background: #fff7f6; border-bottom-color: #f6dedb; }
+    .row-head .title { font-weight: 800; color: #1A1A2E; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: .92rem; }
+    .row-head .stats { font-size: .77rem; color: #7b8794; font-weight: 400; }
+    .row-head .stats b { color: #1A1A2E; }
+    .head-actions { display: flex; align-items: center; gap: 8px; }
 
-    .pill { padding: 4px 12px; border-radius: 50px; font-size: .76rem; font-weight: 700; white-space: nowrap; display: inline-block; }
+    .caret { border: none; background: #eef0f2; color: #5a6570; width: 30px; height: 30px;
+             border-radius: 8px; cursor: pointer; font-size: .8rem; }
+    .caret:hover { background: #e2e5e8; }
+
+    .pill { padding: 3px 11px; border-radius: 50px; font-size: .72rem; font-weight: 700; white-space: nowrap; display: inline-block; }
     .pill.on { background: #e6f7ee; color: #1E8E3E; }
     .pill.off { background: #fdeceb; color: #c0392b; }
-    .pill.override { background: #e8f0fe; color: #1a56db; font-size: .7rem; }
-    .pill.default { background: #f1f3f4; color: #777; font-size: .7rem; }
+    .pill.override { background: #e8f0fe; color: #1a56db; font-size: .68rem; }
+    .pill.default { background: #f1f3f4; color: #7b8794; font-size: .68rem; }
 
-    .btn-mini {
-        border: none; border-radius: 9px; padding: 7px 14px; font-weight: 700; font-size: .8rem;
-        cursor: pointer; transition: all .2s; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+    /* کلید روشن/خاموش ردیف */
+    .sw { border: none; padding: 0; background: none; cursor: pointer;
+          position: relative; display: inline-block; width: 46px; height: 25px; flex-shrink: 0; }
+    .sw .track { position: absolute; inset: 0; border-radius: 20px; background: #d0d6dc; transition: background .18s; }
+    .sw .track::before {
+        content: ""; position: absolute; width: 19px; height: 19px; border-radius: 50%;
+        background: #fff; top: 3px; right: 3px; transition: transform .18s; box-shadow: 0 1px 4px rgba(0,0,0,.3);
     }
-    .btn-mini.turn-off { background: #fdeceb; color: #c0392b; }
-    .btn-mini.turn-on { background: #e6f7ee; color: #1E8E3E; }
-    .btn-mini:hover { transform: translateY(-2px); filter: brightness(.96); }
+    .sw.on .track { background: #2d8a4e; }
+    .sw.on .track::before { transform: translateX(-21px); }
 
-    .seats-grid { display: flex; flex-wrap: wrap; gap: 7px; padding: 14px 18px; }
+    .row-body[hidden] { display: none; }
+
+    .seats-grid { display: flex; flex-wrap: wrap; gap: 6px; padding: 13px 16px; }
     .seat-btn {
-        width: 46px; height: 42px; border-radius: 9px; border: 1.5px solid #d9e0e6; background: #fff;
+        width: 44px; height: 40px; border-radius: 9px; border: 1.5px solid #d9e0e6; background: #fff;
         font-size: .78rem; font-weight: 700; color: #1A1A2E; cursor: pointer; transition: all .15s;
         display: flex; align-items: center; justify-content: center; padding: 0;
     }
@@ -59,9 +121,9 @@
     .seat-btn.global-off { background: #f1f3f4; border-color: #ddd; color: #aaa; }
 
     .row-disabled-note {
-        margin: 0 18px 10px; padding: 10px 14px; border-radius: 10px;
+        margin: 11px 16px 0; padding: 9px 13px; border-radius: 10px;
         background: #fdeceb; border: 1px solid #f5b7b1; border-right: 4px solid #c0392b;
-        color: #922b21; font-size: .84rem;
+        color: #922b21; font-size: .82rem; line-height: 1.8;
     }
     .seats-grid.grid-disabled { opacity: .55; }
     .seat-btn.row-off {
@@ -70,16 +132,13 @@
     }
     .seat-btn.row-off:hover { transform: none; border-color: #eab6b0; }
 
-    .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: .8rem; color: #555; padding: 0 18px 14px; }
-    .legend .box { display: inline-block; width: 14px; height: 14px; border-radius: 4px; margin-left: 5px; vertical-align: middle; border: 1.5px solid #d9e0e6; }
-    .legend .box.on { background: #fff; }
-    .legend .box.off { background: #fdeceb; border-color: #f5b7b1; }
-    .legend .box.sold { background: #1A1A2E; border-color: #1A1A2E; }
-    .legend .box.global-off { background: #f1f3f4; border-color: #ddd; }
-    .legend .box.row-off { background: repeating-linear-gradient(45deg, #f6dedb, #f6dedb 3px, #fbeceb 3px, #fbeceb 6px); border-color: #eab6b0; }
+    .empty-hint { text-align: center; color: #8a949e; padding: 22px; font-size: .87rem; }
 
-    .btn-back { background: #f1f3f4; border: none; color: #1A1A2E; padding: 10px 22px; border-radius: 10px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-back { background: #f1f3f4; color: #1A1A2E; padding: 10px 22px; border-radius: 10px;
+                font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
     .btn-back:hover { background: #e8eaed; color: #1A1A2E; }
+
+    @media (max-width: 640px) { .toolbar { position: static; } }
 </style>
 {% endblock %}
 
@@ -90,6 +149,7 @@
         <div class="meta">
             {{ match.home_team }} vs {{ match.away_team }} — {{ match.date_time|date:"Y/m/d H:i" }}
         </div>
+        {% if block_zone_label %}<span class="zone-badge">جایگاه این مسابقه: {{ block_zone_label }}</span>{% endif %}
     </div>
 
     {% if not block_is_active %}
@@ -104,81 +164,194 @@
         روی هر صندلی کلیک کنید تا فقط برای همین مسابقه فعال/غیرفعال شود. صندلی‌هایی که بلیط صادرشده دارند قابل تغییر نیستند.
     </div>
 
+    <!-- نوار ابزار: عملیات گروهی، جست‌وجو، فیلتر و راهنما -->
+    <div class="toolbar">
+        <div class="tb-line">
+            <div class="search-wrap">
+                <i class="fas fa-search"></i>
+                <input type="search" id="rowSearch" placeholder="شماره ردیف…" autocomplete="off" inputmode="numeric">
+            </div>
+            <div class="chips">
+                <button type="button" class="chip on" data-filter="all">همه <span class="n">({{ row_total }})</span></button>
+                <button type="button" class="chip" data-filter="on">فعال <span class="n">({{ row_active_count }})</span></button>
+                <button type="button" class="chip" data-filter="off">غیرفعال</button>
+                <button type="button" class="chip" data-filter="ovr">اختصاصی <span class="n">({{ row_override_count }})</span></button>
+                <button type="button" class="chip" data-filter="sold">دارای بلیط</button>
+            </div>
+        </div>
+        <div class="tb-line">
+            <form method="post" action="{% url 'matches:admin_match_bulk_toggle_rows' match.id selected_block.id %}"
+                  onsubmit="return confirm('همه‌ی {{ row_total }} ردیف این بلوک فقط برای این مسابقه فعال شوند؟');">
+                {% csrf_token %}
+                <input type="hidden" name="desired" value="on">
+                <button type="submit" class="btn-bulk b-on"><i class="fas fa-check"></i> فعال کردن همه‌ی ردیف‌ها</button>
+            </form>
+            <form method="post" action="{% url 'matches:admin_match_bulk_toggle_rows' match.id selected_block.id %}"
+                  onsubmit="return confirm('همه‌ی {{ row_total }} ردیف این بلوک فقط برای این مسابقه غیرفعال شوند؟');">
+                {% csrf_token %}
+                <input type="hidden" name="desired" value="off">
+                <button type="submit" class="btn-bulk b-off"><i class="fas fa-ban"></i> غیرفعال کردن همه‌ی ردیف‌ها</button>
+            </form>
+            <button type="button" class="btn-bulk b-neutral" id="toggleAll">
+                <i class="fas fa-compress-alt"></i> <span id="toggleAllTxt">جمع کردن همه‌ی ردیف‌ها</span>
+            </button>
+        </div>
+        <div class="tb-line">
+            <div class="legend">
+                <span><span class="box on"></span>فعال</span>
+                <span><span class="box off"></span>غیرفعالِ این مسابقه</span>
+                <span><span class="box sold"></span>بلیط صادرشده</span>
+                <span><span class="box global-off"></span>غیرفعالِ کلی</span>
+                <span><span class="box row-off"></span>ردیف/بلوک غیرفعال</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="rowsWrap">
     {% for item in rows_data %}
-    <div class="row-card {% if not item.is_active %}is-off{% endif %}">
+    <div class="row-card {% if not item.is_active %}is-off{% endif %}"
+         data-num="{{ item.row.number }}"
+         data-state="{% if item.is_active %}on{% else %}off{% endif %}"
+         data-ovr="{% if item.has_override %}1{% else %}0{% endif %}"
+         data-sold="{% if item.sold_count %}1{% else %}0{% endif %}">
         <div class="row-head">
             <div class="title">
+                <button type="button" class="caret" title="باز/بسته کردن صندلی‌ها"><i class="fas fa-chevron-up"></i></button>
                 ردیف {{ item.row.number }}
-                <span style="color:#6c757d; font-weight:400; font-size:.82rem;">({{ item.seats|length }} صندلی)</span>
+                <span class="stats">
+                    <b>{{ item.seat_count }}</b> صندلی
+                    {% if item.sold_count %} · <b>{{ item.sold_count }}</b> فروخته{% endif %}
+                    {% if item.off_count %} · <b>{{ item.off_count }}</b> غیرفعال{% endif %}
+                </span>
                 {% if item.is_active %}<span class="pill on">فعال</span>{% else %}<span class="pill off">غیرفعال</span>{% endif %}
                 {% if item.has_override %}<span class="pill override">اختصاصی</span>{% else %}<span class="pill default">پیش‌فرض</span>{% endif %}
             </div>
-            <form method="post" action="{% url 'matches:admin_match_toggle_row' match.id item.row.id %}">
-                {% csrf_token %}
-                <input type="hidden" name="desired" value="{% if item.is_active %}off{% else %}on{% endif %}">
-                <button type="submit" class="btn-mini {% if item.is_active %}turn-off{% else %}turn-on{% endif %}">
-                    <i class="fas fa-power-off"></i>
-                    {% if item.is_active %}غیرفعال کردن ردیف{% else %}فعال کردن ردیف{% endif %}
-                </button>
-            </form>
+            <div class="head-actions">
+                <form method="post" action="{% url 'matches:admin_match_toggle_row' match.id item.row.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="desired" value="{% if item.is_active %}off{% else %}on{% endif %}">
+                    <button type="submit" class="sw {% if item.is_active %}on{% endif %}"
+                            title="{% if item.is_active %}غیرفعال کردن{% else %}فعال کردن{% endif %} این ردیف برای این مسابقه">
+                        <span class="track"></span>
+                    </button>
+                </form>
+            </div>
         </div>
 
-        {% if not item.is_active or not block_is_active %}
-        <div class="row-disabled-note">
-            <i class="fas fa-ban"></i>
-            {% if not block_is_active %}
-                چون این <strong>بلوک</strong> برای این مسابقه غیرفعال است، هیچ‌کدام از صندلی‌های زیر قابل فروش نیستند.
-            {% else %}
-                این <strong>ردیف</strong> برای این مسابقه غیرفعال است — هیچ‌کدام از صندلی‌های زیر قابل فروش نیستند.
-            {% endif %}
-            برای تغییر تک‌تک صندلی‌ها، اول ردیف/بلوک را فعال کنید.
-        </div>
-        {% endif %}
-
-        <div class="seats-grid {% if not item.is_active or not block_is_active %}grid-disabled{% endif %}">
-            {% for s in item.seats %}
-                {% if not item.is_active or not block_is_active %}
-                    <button type="button" class="seat-btn row-off" disabled
-                            title="{% if not block_is_active %}بلوک{% else %}ردیف{% endif %} این صندلی برای این مسابقه غیرفعال است">{{ s.seat.number }}</button>
-                {% elif s.is_sold %}
-                    <button type="button" class="seat-btn sold" disabled title="بلیط صادر شده — قابل تغییر نیست">{{ s.seat.number }}</button>
-                {% elif not s.global_available %}
-                    <form method="post" action="{% url 'matches:admin_match_toggle_seat' match.id s.seat.id %}" style="display:inline;">
-                        {% csrf_token %}
-                        <input type="hidden" name="desired" value="{% if s.is_enabled %}off{% else %}on{% endif %}">
-                        <button type="submit" class="seat-btn global-off" title="این صندلی به‌صورت کلی (همه‌ی مسابقات) غیرفعال است">{{ s.seat.number }}</button>
-                    </form>
+        <div class="row-body">
+            {% if not item.is_active or not block_is_active %}
+            <div class="row-disabled-note">
+                <i class="fas fa-ban"></i>
+                {% if not block_is_active %}
+                    چون این <strong>بلوک</strong> برای این مسابقه غیرفعال است، هیچ‌کدام از صندلی‌های زیر قابل فروش نیستند.
                 {% else %}
-                    <form method="post" action="{% url 'matches:admin_match_toggle_seat' match.id s.seat.id %}" style="display:inline;">
-                        {% csrf_token %}
-                        <input type="hidden" name="desired" value="{% if s.is_enabled %}off{% else %}on{% endif %}">
-                        <button type="submit" class="seat-btn {% if not s.is_enabled %}off{% endif %}"
-                                title="{% if s.is_enabled %}کلیک کنید تا برای این مسابقه غیرفعال شود{% else %}کلیک کنید تا برای این مسابقه فعال شود{% endif %}">
-                            {{ s.seat.number }}
-                        </button>
-                    </form>
+                    این <strong>ردیف</strong> برای این مسابقه غیرفعال است — هیچ‌کدام از صندلی‌های زیر قابل فروش نیستند.
                 {% endif %}
-            {% empty %}
-                <span style="color:#6c757d; font-size:.85rem;">صندلی‌ای در این ردیف تعریف نشده است.</span>
-            {% endfor %}
-        </div>
+                برای تغییر تک‌تک صندلی‌ها، اول ردیف/بلوک را فعال کنید.
+            </div>
+            {% endif %}
 
-        <div class="legend">
-            <span><span class="box on"></span>فعال</span>
-            <span><span class="box off"></span>غیرفعالِ این مسابقه</span>
-            <span><span class="box sold"></span>بلیط صادرشده</span>
-            <span><span class="box global-off"></span>غیرفعالِ کلی</span>
-            <span><span class="box row-off"></span>ردیف/بلوک غیرفعال</span>
+            <div class="seats-grid {% if not item.is_active or not block_is_active %}grid-disabled{% endif %}">
+                {% for s in item.seats %}
+                    {% if not item.is_active or not block_is_active %}
+                        <button type="button" class="seat-btn row-off" disabled
+                                title="{% if not block_is_active %}بلوک{% else %}ردیف{% endif %} این صندلی برای این مسابقه غیرفعال است">{{ s.seat.number }}</button>
+                    {% elif s.is_sold %}
+                        <button type="button" class="seat-btn sold" disabled title="بلیط صادر شده — قابل تغییر نیست">{{ s.seat.number }}</button>
+                    {% elif not s.global_available %}
+                        <form method="post" action="{% url 'matches:admin_match_toggle_seat' match.id s.seat.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="desired" value="{% if s.is_enabled %}off{% else %}on{% endif %}">
+                            <button type="submit" class="seat-btn global-off" title="این صندلی به‌صورت کلی (همه‌ی مسابقات) غیرفعال است">{{ s.seat.number }}</button>
+                        </form>
+                    {% else %}
+                        <form method="post" action="{% url 'matches:admin_match_toggle_seat' match.id s.seat.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="desired" value="{% if s.is_enabled %}off{% else %}on{% endif %}">
+                            <button type="submit" class="seat-btn {% if not s.is_enabled %}off{% endif %}"
+                                    title="{% if s.is_enabled %}کلیک کنید تا برای این مسابقه غیرفعال شود{% else %}کلیک کنید تا برای این مسابقه فعال شود{% endif %}">
+                                {{ s.seat.number }}
+                            </button>
+                        </form>
+                    {% endif %}
+                {% empty %}
+                    <span style="color:#6c757d; font-size:.85rem;">صندلی‌ای در این ردیف تعریف نشده است.</span>
+                {% endfor %}
+            </div>
         </div>
     </div>
     {% empty %}
-    <p>هیچ ردیفی برای این بلوک تعریف نشده است.</p>
+    <div class="empty-hint">هیچ ردیفی برای این بلوک تعریف نشده است.</div>
     {% endfor %}
+    <div class="empty-hint" id="noRowHint" hidden>ردیفی با این فیلتر پیدا نشد.</div>
+    </div>
 
-    <div style="margin-top:20px;">
+    <div style="margin-top:18px;">
         <a href="{% url 'matches:admin_match_stadium_layout' match.id %}" class="btn-back">
             <i class="fas fa-arrow-right"></i> بازگشت به لیست بلوک‌ها
         </a>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var search = document.getElementById('rowSearch');
+    var chips  = Array.prototype.slice.call(document.querySelectorAll('.chip'));
+    var cards  = Array.prototype.slice.call(document.querySelectorAll('.row-card'));
+    var noHint = document.getElementById('noRowHint');
+    var filter = 'all';
+
+    // ===== باز/بسته کردن گرید صندلی‌های هر ردیف =====
+    function setOpen(card, open) {
+        var body  = card.querySelector('.row-body');
+        var caret = card.querySelector('.caret i');
+        if (!body) return;
+        body.hidden = !open;
+        if (caret) caret.className = open ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
+    }
+    cards.forEach(function (card) {
+        var btn = card.querySelector('.caret');
+        if (btn) btn.addEventListener('click', function () {
+            var body = card.querySelector('.row-body');
+            setOpen(card, body.hidden);
+        });
+    });
+
+    var allCollapsed = false;
+    var toggleAll = document.getElementById('toggleAll');
+    var toggleAllTxt = document.getElementById('toggleAllTxt');
+    if (toggleAll) toggleAll.addEventListener('click', function () {
+        allCollapsed = !allCollapsed;
+        cards.forEach(function (c) { setOpen(c, !allCollapsed); });
+        toggleAllTxt.textContent = allCollapsed ? 'باز کردن همه‌ی ردیف‌ها' : 'جمع کردن همه‌ی ردیف‌ها';
+    });
+
+    // ===== جست‌وجو و فیلتر =====
+    function apply() {
+        var q = (search.value || '').trim();
+        var shown = 0;
+        cards.forEach(function (c) {
+            var okQ = !q || c.dataset.num.indexOf(q) === 0;
+            var okF = true;
+            if (filter === 'on')   okF = c.dataset.state === 'on';
+            if (filter === 'off')  okF = c.dataset.state === 'off';
+            if (filter === 'ovr')  okF = c.dataset.ovr === '1';
+            if (filter === 'sold') okF = c.dataset.sold === '1';
+            var show = okQ && okF;
+            c.hidden = !show;
+            if (show) shown++;
+        });
+        if (noHint) noHint.hidden = (shown > 0 || cards.length === 0);
+    }
+    search.addEventListener('input', apply);
+    chips.forEach(function (ch) {
+        ch.addEventListener('click', function () {
+            chips.forEach(function (x) { x.classList.remove('on'); });
+            ch.classList.add('on');
+            filter = ch.dataset.filter;
+            apply();
+        });
+    });
+});
+</script>
 {% endblock %}
