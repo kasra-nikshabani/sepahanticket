@@ -50,6 +50,16 @@
     .btn-back { background: #f1f3f4; border: none; color: #1A1A2E; padding: 10px 22px; border-radius: 10px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
     .btn-back:hover { background: #e8eaed; color: #1A1A2E; }
 
+    .warn-banner {
+        background: #fdeceb; border: 1px solid #f5b7b1; border-right: 4px solid #c0392b;
+        border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; font-size: .88rem; color: #922b21;
+    }
+    .zone-select {
+        padding: 6px 10px; border-radius: 8px; border: 1.5px solid #e8eaed; background: #fff;
+        font-size: .82rem; font-family: inherit; cursor: pointer; min-width: 100px;
+    }
+    .zone-select:focus { border-color: #D4AF37; outline: none; }
+
     .floor-title { font-weight: 800; color: #1A1A2E; margin: 22px 0 10px; display: flex; align-items: center; gap: 8px; }
     .floor-title i { color: #D4AF37; }
 
@@ -75,6 +85,15 @@
         بلوکی که «پیش‌فرض» است یعنی هنوز برای این مسابقه تنظیم اختصاصی ندارد و از وضعیت کلی سکو پیروی می‌کند.
     </div>
 
+    {% if any_tickets_issued %}
+    <div class="warn-banner">
+        <i class="fas fa-exclamation-triangle"></i>
+        برای بعضی بلوک‌ها از قبل بلیط صادر شده است. اگر <strong>نوع جایگاه</strong> را عوض کنید،
+        روی PDF بلیط‌های صادرشده جایگاه قبلی چاپ مانده ولی <strong>گیت جایگاه جدید را چک می‌کند</strong> —
+        یعنی دارندگان آن بلیط‌ها باید از گیت جدید وارد شوند.
+    </div>
+    {% endif %}
+
     <div class="kpi-row">
         <div class="kpi-card"><div class="num">{{ active_count }}</div><div class="lbl">بلوک فعال برای این مسابقه</div></div>
         <div class="kpi-card"><div class="num">{{ total_count }}</div><div class="lbl">کل بلوک‌های ورزشگاه</div></div>
@@ -85,7 +104,7 @@
             <tr>
                 <th>بلوک</th>
                 <th>طبقه</th>
-                <th>جایگاه</th>
+                <th>نوع جایگاه این مسابقه</th>
                 <th>ردیف</th>
                 <th>بلیط صادرشده</th>
                 <th>وضعیت این مسابقه</th>
@@ -98,7 +117,23 @@
             <tr class="{% if not item.is_active %}is-off{% endif %}">
                 <td><strong>{{ item.block.name }}</strong></td>
                 <td>{{ item.block.get_floor_display }}</td>
-                <td>{{ item.block.get_zone_type_display }}</td>
+                <td>
+                    <form method="post" action="{% url 'matches:admin_match_set_block_zone' match.id item.block.id %}"
+                          style="display:flex; gap:5px; align-items:center; justify-content:center;">
+                        {% csrf_token %}
+                        <select name="zone_type" class="zone-select" onchange="this.form.submit()">
+                            {% for z, zlabel in zone_choices %}
+                                <option value="{{ z }}" {% if item.zone == z %}selected{% endif %}>{{ zlabel }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if item.has_zone_override %}
+                            <button type="submit" name="zone_type" value="" class="btn-mini reset" title="برگشت به نوع جایگاه پیش‌فرض">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                        {% endif %}
+                    </form>
+                    {% if item.has_zone_override %}<span class="pill override" style="margin-top:4px;">اختصاصی</span>{% endif %}
+                </td>
                 <td>{{ item.row_count }}</td>
                 <td>{% if item.sold_count %}<strong>{{ item.sold_count }}</strong>{% else %}—{% endif %}</td>
                 <td>

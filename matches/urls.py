@@ -47,6 +47,7 @@ urlpatterns = [
     path('admin/match/<int:match_id>/stadium-layout/', views.admin_match_stadium_layout, name='admin_match_stadium_layout'),
     path('admin/match/<int:match_id>/stadium-layout/block/<int:block_id>/', views.admin_match_block_layout, name='admin_match_block_layout'),
     path('admin/match/<int:match_id>/stadium-layout/toggle-block/<int:block_id>/', views.admin_match_toggle_block, name='admin_match_toggle_block'),
+    path('admin/match/<int:match_id>/stadium-layout/set-zone/<int:block_id>/', views.admin_match_set_block_zone, name='admin_match_set_block_zone'),
     path('admin/match/<int:match_id>/stadium-layout/reset-block/<int:block_id>/', views.admin_match_reset_block, name='admin_match_reset_block'),
     path('admin/match/<int:match_id>/stadium-layout/toggle-row/<int:row_id>/', views.admin_match_toggle_row, name='admin_match_toggle_row'),
     path('admin/match/<int:match_id>/stadium-layout/toggle-seat/<int:seat_id>/', views.admin_match_toggle_seat, name='admin_match_toggle_seat'),

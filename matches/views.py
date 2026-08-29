@@ -34,7 +34,9 @@ from .models import Match, MatchCost, MatchRevenue, MatchFinancialReport, MatchB
 from .models import (
     MatchBlockActive, MatchRowActive, get_block_active_map, get_active_block_ids,
     get_row_active_map, get_active_row_ids, is_block_active_for_match, is_row_active_for_match,
+    MatchBlockZone, get_block_zone_map, get_block_zone_for_match, get_block_ids_by_zone,
 )
+from .models import ZONE_CHOICES
 from .forms import MatchCostForm, MatchRevenueForm
 from tickets.models import Ticket
 from django.views.decorators.cache import cache_page
@@ -189,13 +191,15 @@ def select_block(request, match_id):
         floor=selected_floor,
     ).order_by('order')
 
-    # ===== فیلتر بر اساس میزبان یا میهمان بودن =====
+    # ===== فیلتر بر اساس میزبان یا میهمان بودن -- نوع جایگاه مخصوصِ همین
+    # مسابقه است، نه مقدار گلوبالِ بلوک =====
+    away_block_ids = get_block_ids_by_zone(match, 'away')
     if selected_team_type == 'away':
         # اگر کاربر میهمان را انتخاب کرده باشد، فقط بلوک‌های میهمان نشان داده شود
-        blocks = blocks.filter(zone_type='away')
+        blocks = blocks.filter(id__in=away_block_ids)
     else:
         # اگر کاربر میزبان را انتخاب کرده باشد، بلوک‌های میهمان نشان داده نشود (تا VIP، بانوان و کلاس ۱ هم برای میزبان باشد)
-        blocks = blocks.exclude(zone_type='away')
+        blocks = blocks.exclude(id__in=away_block_ids)
 
     if not blocks.exists():
         messages.warning(
@@ -241,6 +245,7 @@ def select_block(request, match_id):
     }
 
     block_price_map = get_block_price_map(match)
+    block_zone_map = get_block_zone_map(match)
 
     for block in blocks:
         total_seats = total_map.get(block.id, 0)
@@ -260,7 +265,8 @@ def select_block(request, match_id):
             1
         )
 
-        zone_type = block.zone_type
+        # برچسب جایگاه هم از نوع جایگاهِ همین مسابقه خوانده می‌شود
+        zone_type = block_zone_map.get(block.id, block.zone_type)
         if zone_type in zone_labels:
             block.team_type, block.team_type_label = zone_labels[zone_type]
         else:
@@ -1184,13 +1190,15 @@ def admin_match_list(request):
 
         # ===== تمام بلیط‌های صادر شده (برای تفکیک سکوها) =====
         all_issued_tickets = sold_tickets | vip_tickets
-        home_sold = all_issued_tickets.filter(seat__row__block__zone_type='home').count()
-        away_sold = all_issued_tickets.filter(seat__row__block__zone_type='away').count()
-        women_sold = all_issued_tickets.filter(seat__row__block__zone_type='women').count()
-        class1_sold = all_issued_tickets.filter(
-            Q(seat__row__block__zone_type='class1') | Q(seat__row__block__is_class1=True)).count()
-        vip_sold = all_issued_tickets.filter(
-            Q(seat__row__block__zone_type='vip') | Q(seat__row__block__is_vip=True)).count()
+        # نوع جایگاه مخصوصِ همین مسابقه
+        zb = {}
+        for bid, ztype in get_block_zone_map(match).items():
+            zb.setdefault(ztype, []).append(bid)
+        home_sold = all_issued_tickets.filter(seat__row__block_id__in=zb.get('home', [])).count()
+        away_sold = all_issued_tickets.filter(seat__row__block_id__in=zb.get('away', [])).count()
+        women_sold = all_issued_tickets.filter(seat__row__block_id__in=zb.get('women', [])).count()
+        class1_sold = all_issued_tickets.filter(seat__row__block_id__in=zb.get('class1', [])).count()
+        vip_sold = all_issued_tickets.filter(seat__row__block_id__in=zb.get('vip', [])).count()
 
         sold_count = sold_tickets.count()
         vip_count = vip_tickets.count()
@@ -1472,13 +1480,19 @@ def _compute_match_report_stats(match):
             'is_active_for_match': block.id in active_block_ids,
         })
 
+    # نگاشت نوع جایگاه -> شناسه‌ی بلوک‌ها، مخصوصِ همین مسابقه
+    zone_blocks = {}
+    for bid, ztype in get_block_zone_map(match).items():
+        zone_blocks.setdefault(ztype, []).append(bid)
+
     all_issued_tickets = sold_tickets_qs | vip_tickets_qs
     zone_defs = [
-        ('home', 'میزبان', Q(seat__row__block__zone_type='home')),
-        ('away', 'میهمان', Q(seat__row__block__zone_type='away')),
-        ('women', 'بانوان', Q(seat__row__block__zone_type='women')),
-        ('class1', 'کلاس ۱', Q(seat__row__block__zone_type='class1') | Q(seat__row__block__is_class1=True)),
-        ('vip', 'VIP', Q(seat__row__block__zone_type='vip') | Q(seat__row__block__is_vip=True)),
+        # نوع جایگاه مخصوصِ همین مسابقه (نه مقدار گلوبالِ بلوک)
+        ('home', 'میزبان', Q(seat__row__block_id__in=zone_blocks.get('home', []))),
+        ('away', 'میهمان', Q(seat__row__block_id__in=zone_blocks.get('away', []))),
+        ('women', 'بانوان', Q(seat__row__block_id__in=zone_blocks.get('women', []))),
+        ('class1', 'کلاس ۱', Q(seat__row__block_id__in=zone_blocks.get('class1', []))),
+        ('vip', 'VIP', Q(seat__row__block_id__in=zone_blocks.get('vip', []))),
     ]
     zones_data = []
     for key, label, zone_q in zone_defs:
@@ -2096,8 +2110,15 @@ def admin_match_stadium_layout(request, match_id):
         )
     }
 
+    zone_map = get_block_zone_map(match)
+    zone_override_ids = set(
+        MatchBlockZone.objects.filter(match=match).values_list('block_id', flat=True)
+    )
+    zone_labels = dict(ZONE_CHOICES)
+
     blocks_data = []
     for block in blocks:
+        zone = zone_map.get(block.id, block.zone_type)
         blocks_data.append({
             'block': block,
             'is_active': active_map.get(block.id, block.is_active),
@@ -2105,6 +2126,9 @@ def admin_match_stadium_layout(request, match_id):
             'global_is_active': block.is_active,
             'sold_count': sold_by_block.get(block.id, 0),
             'row_count': Row.objects.filter(block=block).count(),
+            'zone': zone,
+            'zone_label': zone_labels.get(zone, zone),
+            'has_zone_override': block.id in zone_override_ids,
         })
 
     context = {
@@ -2112,8 +2136,56 @@ def admin_match_stadium_layout(request, match_id):
         'blocks_data': blocks_data,
         'active_count': sum(1 for b in blocks_data if b['is_active']),
         'total_count': len(blocks_data),
+        'zone_choices': ZONE_CHOICES,
+        'any_tickets_issued': bool(sold_by_block),
     }
     return render(request, 'matches/admin_match_stadium_layout.html', context)
+
+
+@staff_member_required
+def admin_match_set_block_zone(request, match_id, block_id):
+    """تعیین نوع جایگاه (میزبان/میهمان/...) یک بلوک فقط برای همین مسابقه.
+    مقدار خالی یعنی برگشت به نوع جایگاه پیش‌فرضِ بلوک."""
+    if request.method != 'POST':
+        return redirect('matches:admin_match_stadium_layout', match_id=match_id)
+    match = get_object_or_404(Match, id=match_id)
+    block = get_object_or_404(Block, id=block_id, stadium=match.stadium)
+
+    zone = (request.POST.get('zone_type') or '').strip()
+    if zone == '':
+        deleted, _ = MatchBlockZone.objects.filter(match=match, block=block).delete()
+        if deleted:
+            messages.success(request, f'نوع جایگاه بلوک «{block.name}» به پیش‌فرض برگشت.')
+        return redirect('matches:admin_match_stadium_layout', match_id=match.id)
+
+    valid_zones = {z for z, _ in ZONE_CHOICES}
+    if zone not in valid_zones:
+        messages.error(request, 'نوع جایگاه انتخاب‌شده معتبر نیست.')
+        return redirect('matches:admin_match_stadium_layout', match_id=match.id)
+
+    MatchBlockZone.objects.update_or_create(
+        match=match, block=block, defaults={'zone_type': zone}
+    )
+    label = dict(ZONE_CHOICES).get(zone, zone)
+    msg = f'نوع جایگاه بلوک «{block.name}» فقط برای این مسابقه به «{label}» تغییر کرد.'
+
+    # ===== هشدار عملیاتی مهم: PDF بلیط‌هایی که از قبل صادر شده‌اند با
+    # جایگاه قبلی چاپ شده، ولی گیت نوع جایگاه را زنده می‌خواند. پس اگر بعد
+    # از صدور بلیط جایگاه عوض شود، تماشاگر با بلیطی که روی آن جایگاه قبلی
+    # نوشته دم گیت رد می‌شود. =====
+    issued = Ticket.objects.filter(
+        match=match, seat__row__block=block,
+        status__in=['paid', 'admin_assigned', 'vip_issued'],
+    ).count()
+    if issued:
+        messages.warning(
+            request,
+            f'توجه: {issued} بلیط از قبل برای این بلوک صادر شده است. روی PDF آن بلیط‌ها '
+            f'جایگاه قبلی چاپ شده، ولی گیت از این به بعد «{label}» را چک می‌کند — '
+            f'یعنی دارندگان آن بلیط‌ها باید از گیت «{label}» وارد شوند.'
+        )
+    messages.success(request, msg)
+    return redirect('matches:admin_match_stadium_layout', match_id=match.id)
 
 
 @staff_member_required

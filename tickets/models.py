@@ -129,19 +129,19 @@ class Ticket(models.Model):
 
     @property
     def block_type_label(self):
-        """پراپرتی برای دریافت نام فارسی نوع سکو برای استفاده در PDF و سایت"""
+        """پراپرتی برای دریافت نام فارسی نوع سکو برای استفاده در PDF و سایت.
+
+        نوع جایگاه مخصوصِ همین مسابقه خوانده می‌شود (نه مقدار گلوبالِ بلوک)،
+        چون سهمیه‌ی میزبان/میهمان از بازی به بازی فرق می‌کند. باید دقیقاً با
+        get_ticket_zone در tickets/api.py (که گیت استفاده می‌کند) یکی بماند."""
         if self.seat and self.seat.row and self.seat.row.block:
-            block = self.seat.row.block
-            if getattr(block, 'is_vip', False) or block.zone_type == 'vip':
-                return "VIP"
-            elif getattr(block, 'is_class1', False) or block.zone_type == 'class1':
-                return "کلاس ۱"
-            elif block.zone_type == 'women':
-                return "بانوان"
-            elif block.zone_type == 'home':
-                return "میزبان"
-            elif block.zone_type == 'away':
-                return "میهمان"
+            from matches.models import get_block_zone_for_match
+            zone = get_block_zone_for_match(self.match, self.seat.row.block)
+            labels = {
+                'vip': "VIP", 'class1': "کلاس ۱", 'women': "بانوان",
+                'home': "میزبان", 'away': "میهمان",
+            }
+            return labels.get(zone, "نامشخص")
         return "نامشخص"
 
     def generate_qr_code(self):

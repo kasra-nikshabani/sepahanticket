@@ -406,6 +406,68 @@ class MatchRowActive(models.Model):
         return f"{self.match} - {self.row}: {'فعال' if self.is_active else 'غیرفعال'}"
 
 
+class MatchBlockZone(models.Model):
+    """نوع جایگاه (میزبان/میهمان/بانوان/کلاس۱/VIP) یک بلوک فقط برای یک
+    مسابقهٔ خاص. نبودِ رکورد یعنی از zone_type/is_vip/is_class1 پیش‌فرضِ
+    خود بلوک پیروی کن.
+
+    کاربرد واقعی: سهمیه‌ی تیم میهمان معمولاً از مسابقه‌ای به مسابقه‌ی دیگر
+    فرق می‌کند؛ قبلاً چون zone_type روی خود بلوک بود، تغییرش برای یک بازی
+    روی همه‌ی بازی‌های آن ورزشگاه اثر می‌گذاشت."""
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='block_zone_overrides')
+    block = models.ForeignKey(Block, on_delete=models.CASCADE, related_name='match_zone_overrides')
+    zone_type = models.CharField(max_length=10, choices=ZONE_CHOICES, verbose_name="نوع جایگاه")
+
+    class Meta:
+        unique_together = ('match', 'block')
+        verbose_name = "نوع جایگاه اختصاصی بلوک برای مسابقه"
+        verbose_name_plural = "نوع جایگاه‌های اختصاصی بلوک برای مسابقات"
+
+    def __str__(self):
+        return f"{self.match} - {self.block.name}: {self.get_zone_type_display()}"
+
+
+def get_block_zone_map(match):
+    """{block_id: zone_type} -- نوع جایگاه مؤثرِ هر بلوک برای این مسابقه.
+
+    نکته: is_vip/is_class1 روی خود بلوک اولویت دارند (همان ترتیبی که
+    Ticket.block_type_label و gate API استفاده می‌کنند)، مگر اینکه برای این
+    مسابقه override تعریف شده باشد که در آن صورت override برنده است."""
+    state = {}
+    for bid, ztype, is_vip, is_class1 in Block.objects.filter(
+        stadium=match.stadium_id
+    ).values_list('id', 'zone_type', 'is_vip', 'is_class1'):
+        if is_vip:
+            state[bid] = 'vip'
+        elif is_class1:
+            state[bid] = 'class1'
+        else:
+            state[bid] = ztype
+    state.update(dict(
+        MatchBlockZone.objects.filter(match=match).values_list('block_id', 'zone_type')
+    ))
+    return state
+
+
+def get_block_zone_for_match(match, block):
+    """نوع جایگاه یک بلوک برای یک مسابقهٔ مشخص."""
+    override = MatchBlockZone.objects.filter(
+        match=match, block=block
+    ).values_list('zone_type', flat=True).first()
+    if override is not None:
+        return override
+    if block.is_vip:
+        return 'vip'
+    if block.is_class1:
+        return 'class1'
+    return block.zone_type
+
+
+def get_block_ids_by_zone(match, zone_type):
+    """شناسه‌ی بلوک‌هایی که برای این مسابقه از این نوع جایگاه‌اند."""
+    return [bid for bid, z in get_block_zone_map(match).items() if z == zone_type]
+
+
 def get_block_active_map(match):
     """{block_id: bool} -- وضعیت مؤثرِ فعال/غیرفعالِ هر بلوکِ ورزشگاهِ این
     مسابقه (override اختصاصی در صورت وجود، وگرنه Block.is_active)."""

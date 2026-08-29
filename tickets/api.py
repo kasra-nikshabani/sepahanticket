@@ -54,16 +54,14 @@ def get_ticket_zone(ticket):
     except Exception:
         return None
 
-    if getattr(block, 'is_vip', False) or block.zone_type == 'vip':
-        return 'vip'
-    if getattr(block, 'is_class1', False) or block.zone_type == 'class1':
-        return 'class1'
-    if block.zone_type == 'women':
-        return 'women'
-    if block.zone_type == 'away':
-        return 'away'
-    if block.zone_type == 'home':
-        return 'home'
+    # نوع جایگاه مخصوصِ همین مسابقه (نه مقدار گلوبالِ بلوک) -- سهمیه‌ی
+    # میزبان/میهمان از بازی به بازی فرق می‌کند. باید دقیقاً با
+    # Ticket.block_type_label (که روی PDF بلیط چاپ می‌شود) یکی بماند، وگرنه
+    # تماشاگر با بلیطی که روی آن «میزبان» نوشته دم گیت میهمان رد می‌شود.
+    from matches.models import get_block_zone_for_match
+    zone = get_block_zone_for_match(ticket.match, block)
+    if zone in ('vip', 'class1', 'women', 'away', 'home'):
+        return zone
     return None
 
 @csrf_exempt
