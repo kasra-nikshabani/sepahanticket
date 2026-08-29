@@ -357,11 +357,118 @@ def get_basa_discount_percent(match):
     return MatchBasaDiscount.objects.filter(match=match).values_list('discount_percent', flat=True).first() or 0
 
 
+# ============================================================
+#  فعال/غیرفعال بودنِ اختصاصیِ هر مسابقه (بلوک / ردیف / صندلی)
+# ============================================================
+# مسئله: Block.is_active و Row.is_active و Seat.is_available روی خودِ
+# بلوک/ردیف/صندلی ذخیره می‌شن، و اون‌ها متعلق به «ورزشگاه»ن نه «مسابقه».
+# پس هر تغییری بین همه‌ی مسابقاتِ اون ورزشگاه مشترک بود -- اگر بلوکی برای
+# یک مسابقه غیرفعال می‌شد، برای بقیه‌ی مسابقات هم غیرفعال می‌شد.
+#
+# راه‌حل: دقیقاً همون الگوی MatchBlockPrice -- یک جدول override به‌ازای
+# (مسابقه، بلوک/ردیف). اگر رکوردی نباشه، مقدار پیش‌فرضِ گلوبال استفاده
+# می‌شه؛ برای همین این تغییر کاملاً backward-compatible است و تا وقتی
+# ادمین عمداً برای یک مسابقه چیزی رو تغییر نده، هیچ رفتاری عوض نمی‌شود.
+#
+# برای صندلی، جدول جدا نساختیم چون MatchSeat از قبل دقیقاً همون جدولِ
+# «وضعیت هر صندلی در هر مسابقه» است -- فقط یک فیلد is_enabled به آن اضافه
+# شده (جدا از is_available که معنی «فروخته/رزرو نشده» می‌دهد).
+
+class MatchBlockActive(models.Model):
+    """فعال/غیرفعال بودن یک بلوک فقط برای یک مسابقهٔ خاص. نبودِ رکورد یعنی
+    از Block.is_active پیش‌فرض پیروی کن."""
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='block_active_overrides')
+    block = models.ForeignKey(Block, on_delete=models.CASCADE, related_name='match_active_overrides')
+    is_active = models.BooleanField(verbose_name="فعال")
+
+    class Meta:
+        unique_together = ('match', 'block')
+        verbose_name = "وضعیت اختصاصی بلوک برای مسابقه"
+        verbose_name_plural = "وضعیت‌های اختصاصی بلوک برای مسابقات"
+
+    def __str__(self):
+        return f"{self.match} - {self.block.name}: {'فعال' if self.is_active else 'غیرفعال'}"
+
+
+class MatchRowActive(models.Model):
+    """فعال/غیرفعال بودن یک ردیف فقط برای یک مسابقهٔ خاص. نبودِ رکورد یعنی
+    از Row.is_active پیش‌فرض پیروی کن."""
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='row_active_overrides')
+    row = models.ForeignKey(Row, on_delete=models.CASCADE, related_name='match_active_overrides')
+    is_active = models.BooleanField(verbose_name="فعال")
+
+    class Meta:
+        unique_together = ('match', 'row')
+        verbose_name = "وضعیت اختصاصی ردیف برای مسابقه"
+        verbose_name_plural = "وضعیت‌های اختصاصی ردیف برای مسابقات"
+
+    def __str__(self):
+        return f"{self.match} - {self.row}: {'فعال' if self.is_active else 'غیرفعال'}"
+
+
+def get_block_active_map(match):
+    """{block_id: bool} -- وضعیت مؤثرِ فعال/غیرفعالِ هر بلوکِ ورزشگاهِ این
+    مسابقه (override اختصاصی در صورت وجود، وگرنه Block.is_active)."""
+    state = dict(
+        Block.objects.filter(stadium=match.stadium_id).values_list('id', 'is_active')
+    )
+    state.update(dict(
+        MatchBlockActive.objects.filter(match=match).values_list('block_id', 'is_active')
+    ))
+    return state
+
+
+def get_active_block_ids(match):
+    """شناسه‌ی بلوک‌هایی که برای این مسابقهٔ خاص فعال‌اند."""
+    return [bid for bid, active in get_block_active_map(match).items() if active]
+
+
+def get_row_active_map(match, block=None):
+    """{row_id: bool} -- وضعیت مؤثرِ هر ردیف برای این مسابقه (اختیاری: فقط
+    ردیف‌های یک بلوک)."""
+    rows = Row.objects.filter(block__stadium=match.stadium_id)
+    overrides = MatchRowActive.objects.filter(match=match)
+    if block is not None:
+        rows = rows.filter(block=block)
+        overrides = overrides.filter(row__block=block)
+    state = dict(rows.values_list('id', 'is_active'))
+    state.update(dict(overrides.values_list('row_id', 'is_active')))
+    return state
+
+
+def get_active_row_ids(match, block=None):
+    """شناسه‌ی ردیف‌هایی که برای این مسابقهٔ خاص فعال‌اند."""
+    return [rid for rid, active in get_row_active_map(match, block).items() if active]
+
+
+def is_block_active_for_match(match, block):
+    """آیا این بلوک برای این مسابقهٔ خاص فعال است؟"""
+    override = MatchBlockActive.objects.filter(
+        match=match, block=block
+    ).values_list('is_active', flat=True).first()
+    return block.is_active if override is None else override
+
+
+def is_row_active_for_match(match, row):
+    """آیا این ردیف برای این مسابقهٔ خاص فعال است؟"""
+    override = MatchRowActive.objects.filter(
+        match=match, row=row
+    ).values_list('is_active', flat=True).first()
+    return row.is_active if override is None else override
+
+
 class MatchSeat(models.Model):
     """وضعیت یک صندلی برای یک مسابقه خاص"""
     match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='match_seats')
     seat = models.ForeignKey(Seat, on_delete=models.CASCADE, related_name='match_seats')
     is_available = models.BooleanField(default=True, verbose_name="موجود")
+    # ===== «آیا ادمین این صندلی را برای همین مسابقه فعال گذاشته؟» -- کاملاً
+    # جدا از is_available که معنی «فروخته/رزرو نشده» می‌دهد. یک صندلی وقتی
+    # برای خرید قابل انتخاب است که هم is_enabled باشد و هم is_available.
+    # بدون این فیلد، غیرفعال‌کردن یک صندلی مجبور بود روی Seat.is_available
+    # (که بین همه‌ی مسابقات مشترک است) نوشته شود و به بقیه‌ی مسابقات سرایت
+    # می‌کرد. =====
+    is_enabled = models.BooleanField(default=True, verbose_name="فعال برای این مسابقه")
     reserved_until = models.DateTimeField(null=True, blank=True)
 
     @classmethod
@@ -374,11 +481,13 @@ class MatchSeat(models.Model):
         """
         پیش‌ساخت تمام MatchSeatهای یک مسابقه (یا یک بلوک).
         قبل از شروع فروش اجرا شود تا get_or_create در مسیر خرید نباشد.
+
+        فیلترِ فعال‌بودن بلوک/ردیف مخصوصِ همین مسابقه است (نه گلوبال).
         """
         seat_qs = Seat.objects.filter(
             row__block__stadium=match.stadium,
-            row__block__is_active=True,
-            row__is_active=True,
+            row__block_id__in=get_active_block_ids(match),
+            row_id__in=get_active_row_ids(match),
         )
         if block is not None:
             seat_qs = seat_qs.filter(row__block=block)

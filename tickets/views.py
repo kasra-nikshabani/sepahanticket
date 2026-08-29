@@ -36,6 +36,9 @@ from .models import Ticket, VIPQuota, DiscountCode, Order, SpecialCode
 from .forms import BulkTicketForm, VIPQuotaForm, DiscountCodeForm
 from .reservation import SeatReservation
 from matches.models import Match, Seat, Row, MatchSeat, Block, get_block_price_map, get_basa_discount_percent
+from matches.models import (
+    get_active_block_ids, get_active_row_ids, is_block_active_for_match, is_row_active_for_match,
+)
 from accounts.models import User
 from wallet.models import Wallet
 from .utils import get_access_token
@@ -427,20 +430,23 @@ def vip_issue_manual(request, match_id):
     selected_block_id = request.GET.get('block_id')
     selected_row_id = request.GET.get('row_id')
 
-    blocks = Block.objects.filter(stadium=match.stadium, is_active=True).order_by('order')
+    blocks = Block.objects.filter(
+        stadium=match.stadium, id__in=get_active_block_ids(match)
+    ).order_by('order')
     selected_block = None
     rows = []
     all_seats = []
 
     if selected_block_id:
         selected_block = get_object_or_404(Block, id=selected_block_id)
-        rows = Row.objects.filter(block=selected_block, is_active=True).order_by('number')
+        active_row_ids = get_active_row_ids(match, block=selected_block)
+        rows = Row.objects.filter(block=selected_block, id__in=active_row_ids).order_by('number')
 
         if selected_row_id:
             if not rows.filter(id=selected_row_id).exists():
                 selected_row_id = None
 
-        seats_qs = Seat.objects.filter(row__block=selected_block, row__is_active=True)
+        seats_qs = Seat.objects.filter(row__block=selected_block, row_id__in=active_row_ids)
         if selected_row_id:
             seats_qs = seats_qs.filter(row_id=selected_row_id)
         seats_qs = seats_qs.order_by('row__number', 'number')
@@ -449,7 +455,8 @@ def vip_issue_manual(request, match_id):
             match_seat, created = MatchSeat.objects.get_or_create(match=match, seat=seat,
                                                                   defaults={'is_available': True})
             seat.match_seat = match_seat
-            seat.is_available = match_seat.is_available
+            # صندلی‌ای که ادمین برای همین مسابقه خاموشش کرده، قابل صدور نیست
+            seat.is_available = match_seat.is_available and match_seat.is_enabled
             all_seats.append(seat)
 
     if request.method == 'POST':
@@ -474,9 +481,16 @@ def vip_issue_manual(request, match_id):
                 return redirect('tickets:vip_dashboard')
 
             try:
-                match_seat = MatchSeat.objects.select_for_update().get(id=match_seat_id, match=match, is_available=True)
+                match_seat = MatchSeat.objects.select_for_update().select_related('seat__row__block').get(
+                    id=match_seat_id, match=match, is_available=True, is_enabled=True
+                )
             except MatchSeat.DoesNotExist:
-                messages.error(request, 'صندلی انتخاب‌شده معتبر نیست یا قبلاً فروخته شده است.')
+                messages.error(request, 'صندلی انتخاب‌شده معتبر نیست، غیرفعال است یا قبلاً فروخته شده است.')
+                return redirect('tickets:vip_issue_manual', match_id=match_id)
+
+            if (not is_row_active_for_match(match, match_seat.seat.row)
+                    or not is_block_active_for_match(match, match_seat.seat.row.block)):
+                messages.error(request, 'ردیف/بلوک این صندلی برای این مسابقه غیرفعال است.')
                 return redirect('tickets:vip_issue_manual', match_id=match_id)
 
             # ===== نگهبان اضافی: is_available=True به‌تنهایی همیشه قابل‌اعتماد
@@ -601,7 +615,11 @@ def vip_issue_excel(request, match_id):
                 quota = VIPQuota.objects.select_for_update().get(pk=quota.pk)
 
                 available_match_seats = list(
-                    MatchSeat.objects.select_for_update().filter(match=match, is_available=True)
+                    MatchSeat.objects.select_for_update().filter(
+                        match=match, is_available=True, is_enabled=True,
+                        seat__row__block_id__in=get_active_block_ids(match),
+                        seat__row_id__in=get_active_row_ids(match),
+                    )
                     .select_related('seat')
                     .order_by('seat__row__block__order', 'seat__row__number', 'seat__number')
                 )
@@ -691,7 +709,11 @@ def select_seats(request, match_id):
         messages.error(request, 'لطفاً ابتدا ردیف را انتخاب کنید.')
         return redirect('matches:block_map', match_id=match_id)
 
-    row = get_object_or_404(Row, id=section_id, is_active=True)
+    row = get_object_or_404(Row, id=section_id)
+    # ردیف/بلوکی که برای همین مسابقه غیرفعال شده نباید قابل خرید باشد
+    if not is_row_active_for_match(match, row) or not is_block_active_for_match(match, row.block):
+        messages.error(request, 'این ردیف برای این مسابقه در دسترس نیست.')
+        return redirect('matches:select_block', match_id=match_id)
 
     if request.session.get('selected_seats'):
         old_seats = request.session.get('selected_seats', [])
@@ -778,7 +800,7 @@ def reserve_seats(request, match_id):
             locked = (
                 MatchSeat.objects
                 .select_for_update()
-                .select_related('seat')
+                .select_related('seat__row__block')
                 .filter(id__in=selected_seats, match=match)
             )
             locked_map = {ms.id: ms for ms in locked}
@@ -792,6 +814,21 @@ def reserve_seats(request, match_id):
             if any(not ms.seat.is_available for ms in locked_map.values()):
                 messages.error(request, 'یکی از صندلی‌های انتخاب‌شده در دسترس نیست.')
                 return redirect('matches:block_map', match_id=match_id)
+
+            # ===== نگهبان اصلیِ فعال/غیرفعال بودنِ مخصوصِ همین مسابقه: صندلی،
+            # ردیف و بلوکش هر سه باید برای این مسابقه فعال باشند. این آخرین و
+            # قطعی‌ترین نقطه‌ی کنترل است -- حتی اگر کاربر با یک لینک قدیمی یا
+            # درخواست دستکاری‌شده مستقیم به اینجا برسد. =====
+            if any(not ms.is_enabled for ms in locked_map.values()):
+                messages.error(request, 'یکی از صندلی‌های انتخاب‌شده برای این مسابقه در دسترس نیست.')
+                return redirect('matches:block_map', match_id=match_id)
+
+            active_block_ids = set(get_active_block_ids(match))
+            active_row_ids = set(get_active_row_ids(match))
+            for ms in locked_map.values():
+                if ms.seat.row_id not in active_row_ids or ms.seat.row.block_id not in active_block_ids:
+                    messages.error(request, 'یکی از صندلی‌های انتخاب‌شده برای این مسابقه در دسترس نیست.')
+                    return redirect('matches:block_map', match_id=match_id)
 
             for seat_id in selected_seats:
                 match_seat = locked_map[seat_id]
@@ -1631,14 +1668,20 @@ def bulk_issue_tickets(request):
             block = form.cleaned_data['block']
             count_per_user = form.cleaned_data['seat_count_per_user']
 
-            seats_in_block = Seat.objects.filter(row__block=block, row__is_active=True, is_available=True).order_by(
-                'row__number', 'number')
+            if not is_block_active_for_match(match, block):
+                messages.error(request, f'بلوک «{block.name}» برای این مسابقه غیرفعال است.')
+                return render(request, 'tickets/bulk_issue.html', {'form': form})
+
+            seats_in_block = Seat.objects.filter(
+                row__block=block, row_id__in=get_active_row_ids(match, block=block), is_available=True
+            ).order_by('row__number', 'number')
 
             available_match_seats = []
             for seat in seats_in_block:
                 match_seat, created = MatchSeat.objects.get_or_create(match=match, seat=seat,
                                                                       defaults={'is_available': True})
-                if match_seat.is_available: available_match_seats.append(match_seat)
+                if match_seat.is_available and match_seat.is_enabled:
+                    available_match_seats.append(match_seat)
 
             total_needed = users.count() * count_per_user
             if len(available_match_seats) < total_needed:
@@ -1728,9 +1771,14 @@ def admin_issue_ticket(request):
     if match_id:
         selected_match = get_object_or_404(Match, id=match_id)
         block_price_map = get_block_price_map(selected_match)
-        blocks = Block.objects.filter(stadium=selected_match.stadium, is_active=True).order_by('order')
+        blocks = Block.objects.filter(
+            stadium=selected_match.stadium, id__in=get_active_block_ids(selected_match)
+        ).order_by('order')
+        active_row_ids_all = get_active_row_ids(selected_match)
         for block in blocks:
-            total_seats = Seat.objects.filter(row__block=block, row__is_active=True, is_available=True).count()
+            total_seats = Seat.objects.filter(
+                row__block=block, row_id__in=active_row_ids_all, is_available=True
+            ).count()
             sold_seats = MatchSeat.objects.filter(
                 match=selected_match, seat__row__block=block, is_available=False
             ).count()
@@ -1776,6 +1824,9 @@ def admin_issue_ticket(request):
             else:
                 block = get_object_or_404(Block, id=block_id, stadium=selected_match.stadium)
                 from matches.models import get_block_price_for_match
+                if not is_block_active_for_match(selected_match, block):
+                    messages.error(request, f'بلوک «{block.name}» برای این مسابقه غیرفعال است.')
+                    return redirect(f'{reverse("tickets:admin_issue_ticket")}?match_id={selected_match.id}')
 
                 with transaction.atomic():
                     # همون منطق پیدا کردن اولین صندلی خالی که bulk_issue_tickets
@@ -1784,7 +1835,9 @@ def admin_issue_ticket(request):
                     # حال خرید از همین بلوک باشد، دو تراکنش به‌درستی سریالایز
                     # بشوند و یک صندلی دوبار صادر نشود.
                     seats_in_block = Seat.objects.filter(
-                        row__block=block, row__is_active=True, is_available=True
+                        row__block=block,
+                        row_id__in=get_active_row_ids(selected_match, block=block),
+                        is_available=True,
                     ).order_by('row__number', 'number')
 
                     chosen_match_seat = None
@@ -1794,8 +1847,9 @@ def admin_issue_ticket(request):
                         )
                         # ===== نگهبان اضافی: is_available=True به‌تنهایی همیشه
                         # قابل‌اعتماد نیست -- مستقیماً هم چک می‌کنیم بلیطی برای
-                        # این صندلی نباشه. =====
-                        if match_seat.is_available and not Ticket.objects.filter(
+                        # این صندلی نباشه. is_enabled هم یعنی ادمین این صندلی
+                        # را برای همین مسابقه خاموش نکرده باشد. =====
+                        if match_seat.is_available and match_seat.is_enabled and not Ticket.objects.filter(
                             match_seat=match_seat, status__in=['paid', 'admin_assigned', 'vip_issued']
                         ).exists():
                             chosen_match_seat = match_seat
@@ -2025,12 +2079,16 @@ def row_occupancy_report(request):
     if match_id:
         match = get_object_or_404(Match, id=match_id)
 
-        # ===== اصلاح مهم: فقط بلوک‌های متعلق به ورزشگاه همین مسابقه =====
-        blocks = Block.objects.filter(stadium=match.stadium, is_active=True).order_by('order')
+        # ===== اصلاح مهم: فقط بلوک‌های متعلق به ورزشگاه همین مسابقه، و فقط
+        # آن‌هایی که برای همین مسابقه فعال‌اند =====
+        blocks = Block.objects.filter(
+            stadium=match.stadium, id__in=get_active_block_ids(match)
+        ).order_by('order')
+        active_row_ids = get_active_row_ids(match)
 
         for block in blocks:
             # ۱. کل صندلی‌های فعال این بلوک
-            total_seats = Seat.objects.filter(row__block=block, row__is_active=True).count()
+            total_seats = Seat.objects.filter(row__block=block, row_id__in=active_row_ids).count()
 
             # ۲. بلیط‌های قطعا فروخته شده برای این مسابقه در این بلوک
             sold_tickets = Ticket.objects.filter(
@@ -2412,8 +2470,11 @@ def export_sales_report_excel(request):
         vip_revenue = sum(t.price or 0 for t in vip_tickets)
         total_revenue = revenue
 
-        total_seats = Seat.objects.filter(row__block__stadium=match.stadium, row__block__is_active=True,
-                                          row__is_active=True).count()
+        total_seats = Seat.objects.filter(
+            row__block__stadium=match.stadium,
+            row__block_id__in=get_active_block_ids(match),
+            row_id__in=get_active_row_ids(match),
+        ).count()
         sold_seats = MatchSeat.objects.filter(match=match, is_available=False).count()
         occupancy = round((sold_seats / total_seats * 100) if total_seats > 0 else 0, 1)
 
@@ -2478,7 +2539,9 @@ def get_blocks_for_match(request):
     if not match_id: return JsonResponse({'blocks': []})
     try:
         match = Match.objects.get(id=match_id)
-        blocks = Block.objects.filter(stadium=match.stadium, is_active=True).order_by('order')
+        blocks = Block.objects.filter(
+            stadium=match.stadium, id__in=get_active_block_ids(match)
+        ).order_by('order')
         blocks_data = [{'id': block.id, 'name': block.name} for block in blocks]
         return JsonResponse({'blocks': blocks_data})
     except Match.DoesNotExist:

@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}چیدمان ورزشگاه برای {{ match.home_team }} vs {{ match.away_team }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .layout-page { max-width: 1150px; margin: 30px auto; padding: 0 16px; }
+    .page-header {
+        background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
+        border-radius: 20px; padding: 24px 30px; color: #fff; margin-bottom: 20px;
+        border-bottom: 3px solid #D4AF37;
+    }
+    .page-header h2 { margin: 0; color: #D4AF37; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+    .page-header .meta { font-size: .9rem; opacity: .8; margin-top: 8px; }
+
+    .info-banner {
+        background: #fff8e1; border: 1px solid #f0dfa0; border-right: 4px solid #D4AF37;
+        border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; font-size: .88rem; color: #6b5500;
+    }
+
+    .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 22px; }
+    .kpi-card { background: #fff; border-radius: 14px; padding: 16px; text-align: center; border: 1px solid #eee; border-top: 4px solid #D4AF37; }
+    .kpi-card .num { font-size: 1.6rem; font-weight: 800; color: #1A1A2E; }
+    .kpi-card .lbl { font-size: .82rem; color: #6c757d; margin-top: 4px; }
+
+    table.layout-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 18px rgba(0,0,0,.06); }
+    table.layout-table th { background: #1A1A2E; color: #fff; font-weight: 700; padding: 12px 14px; text-align: center; font-size: .85rem; }
+    table.layout-table td { padding: 12px 14px; text-align: center; border-bottom: 1px solid #f1f1f1; vertical-align: middle; font-size: .9rem; }
+    table.layout-table tbody tr:hover td { background: #fafafa; }
+    table.layout-table tbody tr.is-off td { background: #fff5f5; }
+    table.layout-table tbody tr.is-off:hover td { background: #ffecec; }
+
+    .pill { padding: 4px 12px; border-radius: 50px; font-size: .78rem; font-weight: 700; white-space: nowrap; display: inline-block; }
+    .pill.on { background: #e6f7ee; color: #1E8E3E; }
+    .pill.off { background: #fdeceb; color: #c0392b; }
+    .pill.override { background: #e8f0fe; color: #1a56db; font-size: .72rem; }
+    .pill.default { background: #f1f3f4; color: #777; font-size: .72rem; }
+
+    .btn-mini {
+        border: none; border-radius: 9px; padding: 7px 14px; font-weight: 700; font-size: .8rem;
+        cursor: pointer; transition: all .2s; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+    }
+    .btn-mini.turn-off { background: #fdeceb; color: #c0392b; }
+    .btn-mini.turn-on { background: #e6f7ee; color: #1E8E3E; }
+    .btn-mini.detail { background: #fff4d6; color: #B8960F; }
+    .btn-mini.reset { background: #f1f3f4; color: #666; }
+    .btn-mini:hover { transform: translateY(-2px); filter: brightness(.96); }
+
+    .btn-back { background: #f1f3f4; border: none; color: #1A1A2E; padding: 10px 22px; border-radius: 10px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-back:hover { background: #e8eaed; color: #1A1A2E; }
+
+    .floor-title { font-weight: 800; color: #1A1A2E; margin: 22px 0 10px; display: flex; align-items: center; gap: 8px; }
+    .floor-title i { color: #D4AF37; }
+
+    @media (max-width: 768px) {
+        table.layout-table { font-size: .78rem; }
+        table.layout-table th, table.layout-table td { padding: 8px 6px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="layout-page">
+    <div class="page-header">
+        <h2><i class="fas fa-th-large"></i> چیدمان ورزشگاه برای این مسابقه</h2>
+        <div class="meta">
+            {{ match.home_team }} vs {{ match.away_team }} — {{ match.date_time|date:"Y/m/d H:i" }} — {{ match.stadium.name }}
+        </div>
+    </div>
+
+    <div class="info-banner">
+        <i class="fas fa-info-circle"></i>
+        هر تغییری که در این صفحه بدهید <strong>فقط روی همین مسابقه</strong> اثر می‌گذارد و به مسابقات دیگرِ همین ورزشگاه سرایت نمی‌کند.
+        بلوکی که «پیش‌فرض» است یعنی هنوز برای این مسابقه تنظیم اختصاصی ندارد و از وضعیت کلی سکو پیروی می‌کند.
+    </div>
+
+    <div class="kpi-row">
+        <div class="kpi-card"><div class="num">{{ active_count }}</div><div class="lbl">بلوک فعال برای این مسابقه</div></div>
+        <div class="kpi-card"><div class="num">{{ total_count }}</div><div class="lbl">کل بلوک‌های ورزشگاه</div></div>
+    </div>
+
+    <table class="layout-table">
+        <thead>
+            <tr>
+                <th>بلوک</th>
+                <th>طبقه</th>
+                <th>جایگاه</th>
+                <th>ردیف</th>
+                <th>بلیط صادرشده</th>
+                <th>وضعیت این مسابقه</th>
+                <th>نوع تنظیم</th>
+                <th>عملیات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in blocks_data %}
+            <tr class="{% if not item.is_active %}is-off{% endif %}">
+                <td><strong>{{ item.block.name }}</strong></td>
+                <td>{{ item.block.get_floor_display }}</td>
+                <td>{{ item.block.get_zone_type_display }}</td>
+                <td>{{ item.row_count }}</td>
+                <td>{% if item.sold_count %}<strong>{{ item.sold_count }}</strong>{% else %}—{% endif %}</td>
+                <td>
+                    {% if item.is_active %}
+                        <span class="pill on">فعال</span>
+                    {% else %}
+                        <span class="pill off">غیرفعال</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if item.has_override %}
+                        <span class="pill override">اختصاصی این مسابقه</span>
+                    {% else %}
+                        <span class="pill default">پیش‌فرض</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap;">
+                        <form method="post" action="{% url 'matches:admin_match_toggle_block' match.id item.block.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-mini {% if item.is_active %}turn-off{% else %}turn-on{% endif %}">
+                                <i class="fas fa-power-off"></i>
+                                {% if item.is_active %}غیرفعال کن{% else %}فعال کن{% endif %}
+                            </button>
+                        </form>
+                        <a href="{% url 'matches:admin_match_block_layout' match.id item.block.id %}" class="btn-mini detail">
+                            <i class="fas fa-list"></i> ردیف/صندلی
+                        </a>
+                        {% if item.has_override %}
+                        <form method="post" action="{% url 'matches:admin_match_reset_block' match.id item.block.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-mini reset" title="برگشت به وضعیت پیش‌فرض">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8">هیچ بلوکی برای این ورزشگاه تعریف نشده است.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top:20px;">
+        <a href="{% url 'matches:admin_match_detail' match.id %}" class="btn-back">
+            <i class="fas fa-arrow-right"></i> بازگشت به جزئیات مسابقه
+        </a>
+    </div>
+</div>
+{% endblock %}

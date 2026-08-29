@@ -451,8 +451,8 @@
                 </thead>
                 <tbody>
                     {% for row in blocks_data %}
-                    <tr {% if not row.block.is_active %}style="color:#c62828;"{% endif %}>
-                        <td>{{ row.block.name }}{% if not row.block.is_active %} (غیرفعال){% endif %}</td>
+                    <tr {% if not row.is_active_for_match %}style="color:#c62828;"{% endif %}>
+                        <td>{{ row.block.name }}{% if not row.is_active_for_match %} (غیرفعال در این مسابقه){% endif %}</td>
                         <td>{{ row.total_seats }}</td>
                         <td>{{ row.occupied_seats }}</td>
                         <td>{{ row.available_seats }}</td>

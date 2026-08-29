@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}ردیف‌ها و صندلی‌های {{ block.name }} — {{ match.home_team }} vs {{ match.away_team }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .layout-page { max-width: 1150px; margin: 30px auto; padding: 0 16px; }
+    .page-header {
+        background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
+        border-radius: 20px; padding: 24px 30px; color: #fff; margin-bottom: 20px;
+        border-bottom: 3px solid #D4AF37;
+    }
+    .page-header h2 { margin: 0; color: #D4AF37; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+    .page-header .meta { font-size: .88rem; opacity: .8; margin-top: 8px; }
+
+    .info-banner {
+        background: #fff8e1; border: 1px solid #f0dfa0; border-right: 4px solid #D4AF37;
+        border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; font-size: .88rem; color: #6b5500;
+    }
+    .warn-banner {
+        background: #fdeceb; border: 1px solid #f5b7b1; border-right: 4px solid #c0392b;
+        border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; font-size: .88rem; color: #922b21;
+    }
+
+    .row-card { background: #fff; border: 1px solid #e8eaed; border-radius: 14px; margin-bottom: 14px; overflow: hidden; }
+    .row-card.is-off { border-color: #f5b7b1; }
+    .row-head {
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+        padding: 12px 18px; background: #f8f9fa; border-bottom: 1px solid #eee;
+    }
+    .row-card.is-off .row-head { background: #fff5f5; }
+    .row-head .title { font-weight: 700; color: #1A1A2E; }
+
+    .pill { padding: 4px 12px; border-radius: 50px; font-size: .76rem; font-weight: 700; white-space: nowrap; display: inline-block; }
+    .pill.on { background: #e6f7ee; color: #1E8E3E; }
+    .pill.off { background: #fdeceb; color: #c0392b; }
+    .pill.override { background: #e8f0fe; color: #1a56db; font-size: .7rem; }
+    .pill.default { background: #f1f3f4; color: #777; font-size: .7rem; }
+
+    .btn-mini {
+        border: none; border-radius: 9px; padding: 7px 14px; font-weight: 700; font-size: .8rem;
+        cursor: pointer; transition: all .2s; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+    }
+    .btn-mini.turn-off { background: #fdeceb; color: #c0392b; }
+    .btn-mini.turn-on { background: #e6f7ee; color: #1E8E3E; }
+    .btn-mini:hover { transform: translateY(-2px); filter: brightness(.96); }
+
+    .seats-grid { display: flex; flex-wrap: wrap; gap: 7px; padding: 14px 18px; }
+    .seat-btn {
+        width: 46px; height: 42px; border-radius: 9px; border: 1.5px solid #d9e0e6; background: #fff;
+        font-size: .78rem; font-weight: 700; color: #1A1A2E; cursor: pointer; transition: all .15s;
+        display: flex; align-items: center; justify-content: center; padding: 0;
+    }
+    .seat-btn:hover { transform: translateY(-2px); border-color: #D4AF37; }
+    .seat-btn.off { background: #fdeceb; border-color: #f5b7b1; color: #c0392b; text-decoration: line-through; }
+    .seat-btn.sold { background: #1A1A2E; border-color: #1A1A2E; color: #D4AF37; cursor: not-allowed; }
+    .seat-btn.sold:hover { transform: none; }
+    .seat-btn.global-off { background: #f1f3f4; border-color: #ddd; color: #aaa; }
+
+    .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: .8rem; color: #555; padding: 0 18px 14px; }
+    .legend .box { display: inline-block; width: 14px; height: 14px; border-radius: 4px; margin-left: 5px; vertical-align: middle; border: 1.5px solid #d9e0e6; }
+    .legend .box.on { background: #fff; }
+    .legend .box.off { background: #fdeceb; border-color: #f5b7b1; }
+    .legend .box.sold { background: #1A1A2E; border-color: #1A1A2E; }
+    .legend .box.global-off { background: #f1f3f4; border-color: #ddd; }
+
+    .btn-back { background: #f1f3f4; border: none; color: #1A1A2E; padding: 10px 22px; border-radius: 10px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-back:hover { background: #e8eaed; color: #1A1A2E; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="layout-page">
+    <div class="page-header">
+        <h2><i class="fas fa-list"></i> ردیف‌ها و صندلی‌های «{{ block.name }}»</h2>
+        <div class="meta">
+            {{ match.home_team }} vs {{ match.away_team }} — {{ match.date_time|date:"Y/m/d H:i" }}
+        </div>
+    </div>
+
+    {% if not block_is_active %}
+    <div class="warn-banner">
+        <i class="fas fa-exclamation-triangle"></i>
+        این بلوک در حال حاضر برای این مسابقه <strong>غیرفعال</strong> است، پس هیچ‌کدام از صندلی‌های زیر قابل فروش نیستند — حتی آن‌هایی که تکی فعال‌اند.
+    </div>
+    {% endif %}
+
+    <div class="info-banner">
+        <i class="fas fa-info-circle"></i>
+        روی هر صندلی کلیک کنید تا فقط برای همین مسابقه فعال/غیرفعال شود. صندلی‌هایی که بلیط صادرشده دارند قابل تغییر نیستند.
+    </div>
+
+    {% for item in rows_data %}
+    <div class="row-card {% if not item.is_active %}is-off{% endif %}">
+        <div class="row-head">
+            <div class="title">
+                ردیف {{ item.row.number }}
+                <span style="color:#6c757d; font-weight:400; font-size:.82rem;">({{ item.seats|length }} صندلی)</span>
+                {% if item.is_active %}<span class="pill on">فعال</span>{% else %}<span class="pill off">غیرفعال</span>{% endif %}
+                {% if item.has_override %}<span class="pill override">اختصاصی</span>{% else %}<span class="pill default">پیش‌فرض</span>{% endif %}
+            </div>
+            <form method="post" action="{% url 'matches:admin_match_toggle_row' match.id item.row.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-mini {% if item.is_active %}turn-off{% else %}turn-on{% endif %}">
+                    <i class="fas fa-power-off"></i>
+                    {% if item.is_active %}غیرفعال کردن ردیف{% else %}فعال کردن ردیف{% endif %}
+                </button>
+            </form>
+        </div>
+
+        <div class="seats-grid">
+            {% for s in item.seats %}
+                {% if s.is_sold %}
+                    <button type="button" class="seat-btn sold" disabled title="بلیط صادر شده — قابل تغییر نیست">{{ s.seat.number }}</button>
+                {% elif not s.global_available %}
+                    <form method="post" action="{% url 'matches:admin_match_toggle_seat' match.id s.seat.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="seat-btn global-off" title="این صندلی به‌صورت کلی (همه‌ی مسابقات) غیرفعال است">{{ s.seat.number }}</button>
+                    </form>
+                {% else %}
+                    <form method="post" action="{% url 'matches:admin_match_toggle_seat' match.id s.seat.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="seat-btn {% if not s.is_enabled %}off{% endif %}"
+                                title="{% if s.is_enabled %}کلیک کنید تا برای این مسابقه غیرفعال شود{% else %}کلیک کنید تا برای این مسابقه فعال شود{% endif %}">
+                            {{ s.seat.number }}
+                        </button>
+                    </form>
+                {% endif %}
+            {% empty %}
+                <span style="color:#6c757d; font-size:.85rem;">صندلی‌ای در این ردیف تعریف نشده است.</span>
+            {% endfor %}
+        </div>
+
+        <div class="legend">
+            <span><span class="box on"></span>فعال</span>
+            <span><span class="box off"></span>غیرفعالِ این مسابقه</span>
+            <span><span class="box sold"></span>بلیط صادرشده</span>
+            <span><span class="box global-off"></span>غیرفعالِ کلی</span>
+        </div>
+    </div>
+    {% empty %}
+    <p>هیچ ردیفی برای این بلوک تعریف نشده است.</p>
+    {% endfor %}
+
+    <div style="margin-top:20px;">
+        <a href="{% url 'matches:admin_match_stadium_layout' match.id %}" class="btn-back">
+            <i class="fas fa-arrow-right"></i> بازگشت به لیست بلوک‌ها
+        </a>
+    </div>
+</div>
+{% endblock %}

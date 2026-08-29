@@ -31,6 +31,10 @@ import tempfile
 import os
 from django.conf import settings
 from .models import Match, MatchCost, MatchRevenue, MatchFinancialReport, MatchBlockPrice, get_block_price_map, MatchBasaDiscount
+from .models import (
+    MatchBlockActive, MatchRowActive, get_block_active_map, get_active_block_ids,
+    get_row_active_map, get_active_row_ids, is_block_active_for_match, is_row_active_for_match,
+)
 from .forms import MatchCostForm, MatchRevenueForm
 from tickets.models import Ticket
 from django.views.decorators.cache import cache_page
@@ -74,20 +78,16 @@ def home(request):
     matches_list = list(matches)
     stadium_ids = {m.stadium_id for m in matches_list}
 
-    # ظرفیت کل هر ورزشگاه (یک کوئری)
-    stadium_capacity = {
-        row['row__block__stadium']: row['c']
-        for row in (
-            Seat.objects
-            .filter(
-                row__block__stadium_id__in=stadium_ids,
-                row__block__is_active=True,
-                row__is_active=True,
-            )
-            .values('row__block__stadium')
-            .annotate(c=Count('id'))
-        )
-    }
+    # ===== ظرفیت هر مسابقه -- چون فعال/غیرفعال بودن بلوک و ردیف الان مخصوصِ
+    # هر مسابقه است، ظرفیت دیگر یک عدد مشترک به‌ازای هر ورزشگاه نیست و باید
+    # به‌ازای هر مسابقه حساب شود. =====
+    match_capacity = {}
+    for m in matches_list:
+        match_capacity[m.id] = Seat.objects.filter(
+            row__block__stadium_id=m.stadium_id,
+            row__block_id__in=get_active_block_ids(m),
+            row_id__in=get_active_row_ids(m),
+        ).count()
 
     # تعداد صندلی‌های غیرفعال (فروخته/رزرو) per match
     sold_map = {
@@ -101,7 +101,7 @@ def home(request):
     }
 
     for match in matches_list:
-        total_seats = stadium_capacity.get(match.stadium_id, 0)
+        total_seats = match_capacity.get(match.id, 0)
         sold_seats = sold_map.get(match.id, 0)
         available_seats = max(total_seats - sold_seats, 0)
         occupancy = round((sold_seats / total_seats * 100) if total_seats > 0 else 0, 1)
@@ -182,9 +182,10 @@ def select_block(request, match_id):
 
     # فیلتر بر اساس طبقه -- selected_floor مقادیر 'ground'/'second' دارد که
     # دقیقاً با choices فیلد Block.floor یکی است
+    # فعال/غیرفعال بودن بلوک مخصوصِ همین مسابقه است، نه گلوبال
     blocks = Block.objects.filter(
         stadium=stadium,
-        is_active=True,
+        id__in=get_active_block_ids(match),
         floor=selected_floor,
     ).order_by('order')
 
@@ -303,13 +304,20 @@ def show_block_map(request, match_id):
         return redirect('matches:select_block', match_id=match_id)
 
     block = get_object_or_404(Block, id=block_id)
-    rows = Row.objects.filter(block=block, is_active=True).order_by('number')
+    # ===== بلوکی که برای همین مسابقه غیرفعال شده نباید قابل خرید باشد، حتی
+    # اگر شناسه‌اش از سشن/لینک قدیمی بیاید =====
+    if not is_block_active_for_match(match, block):
+        messages.error(request, 'این بلوک برای این مسابقه در دسترس نیست.')
+        return redirect('matches:select_block', match_id=match_id)
+
+    active_row_ids = get_active_row_ids(match, block=block)
+    rows = Row.objects.filter(block=block, id__in=active_row_ids).order_by('number')
 
     # بارگذاری یک‌جا: همه صندلی‌ها + MatchSeatهای موجود (بدون get_or_create در حلقه)
     rows = list(rows)
     all_seats = list(
         Seat.objects
-        .filter(row__block=block, row__is_active=True)
+        .filter(row__block=block, row_id__in=active_row_ids)
         .select_related('row')
         .order_by('row__number', 'number')
     )
@@ -355,9 +363,11 @@ def show_block_map(request, match_id):
             ms = existing_ms.get(seat.id)
             if not ms:
                 continue
-            # صندلی‌ای که خودش (نه فقط برای این مسابقه) غیرفعال شده هیچ‌وقت
-            # سبز نشان داده نمی‌شود -- مستقل از وضعیت رزرو/فروش این مسابقه
-            if not seat.is_available:
+            # صندلی‌ای که غیرفعال است هیچ‌وقت سبز نشان داده نمی‌شود -- مستقل
+            # از وضعیت رزرو/فروش این مسابقه. دو حالت: یا به‌صورت گلوبال
+            # غیرفعال است (Seat.is_available)، یا ادمین آن را فقط برای همین
+            # مسابقه خاموش کرده (MatchSeat.is_enabled).
+            if not seat.is_available or not ms.is_enabled:
                 seat_list.append({
                     'number': seat.number,
                     'is_available': False,
@@ -409,7 +419,10 @@ def select_row(request, match_id):
         return redirect('matches:select_block', match_id=match_id)
 
     block = get_object_or_404(Block, id=block_id)
-    rows = Row.objects.filter(block=block, is_active=True).order_by('number')
+    if not is_block_active_for_match(match, block):
+        messages.error(request, 'این بلوک برای این مسابقه در دسترس نیست.')
+        return redirect('matches:select_block', match_id=match_id)
+    rows = Row.objects.filter(block=block, id__in=get_active_row_ids(match, block=block)).order_by('number')
 
     if request.method == 'POST':
         row_id = request.POST.get('row_id')
@@ -1161,8 +1174,11 @@ def admin_match_list(request):
     total_revenue = 0
 
     for match in matches_qs:
-        total_seats = Seat.objects.filter(row__block__stadium=match.stadium, row__block__is_active=True,
-                                          row__is_active=True).count()
+        total_seats = Seat.objects.filter(
+            row__block__stadium=match.stadium,
+            row__block_id__in=get_active_block_ids(match),
+            row_id__in=get_active_row_ids(match),
+        ).count()
         sold_tickets = Ticket.objects.filter(match=match, status='paid')
         vip_tickets = Ticket.objects.filter(match=match, status__in=['admin_assigned', 'vip_issued'])
 
@@ -1409,10 +1425,18 @@ def _compute_match_report_stats(match):
     )
     attendance_percent = round((used_tickets / total_issued_tickets * 100) if total_issued_tickets > 0 else 0, 1)
 
-    total_match_seats = Seat.objects.filter(row__block__stadium=match.stadium, row__block__is_active=True,
-                                            row__is_active=True).count()
+    # ظرفیت/اشغال بر اساس بلوک‌ها و ردیف‌هایی که برای همین مسابقه فعال‌اند
+    active_block_ids = get_active_block_ids(match)
+    active_row_ids = get_active_row_ids(match)
+    total_match_seats = Seat.objects.filter(
+        row__block__stadium=match.stadium,
+        row__block_id__in=active_block_ids,
+        row_id__in=active_row_ids,
+    ).count()
     occupied = MatchSeat.objects.filter(
-        match=match, is_available=False, seat__row__block__is_active=True, seat__row__is_active=True
+        match=match, is_available=False,
+        seat__row__block_id__in=active_block_ids,
+        seat__row_id__in=active_row_ids,
     ).count()
     available = total_match_seats - occupied
     occupancy_percent = round((occupied / total_match_seats * 100) if total_match_seats > 0 else 0, 1)
@@ -1421,12 +1445,12 @@ def _compute_match_report_stats(match):
         'seat__row__block_id', flat=True
     ).distinct()
     blocks = Block.objects.filter(stadium=match.stadium).filter(
-        Q(is_active=True) | Q(id__in=blocks_with_sales)
+        Q(id__in=active_block_ids) | Q(id__in=blocks_with_sales)
     ).order_by('order')
     blocks_data = []
     block_price_map = get_block_price_map(match)
     for block in blocks:
-        total_seats = Seat.objects.filter(row__block=block, row__is_active=True).count()
+        total_seats = Seat.objects.filter(row__block=block, row_id__in=active_row_ids).count()
         occupied_seats = MatchSeat.objects.filter(match=match, seat__row__block=block, is_available=False).count()
         available_seats = total_seats - occupied_seats
         occupancy = round((occupied_seats / total_seats * 100) if total_seats > 0 else 0, 1)
@@ -1442,8 +1466,10 @@ def _compute_match_report_stats(match):
         blocks_data.append({
             'block': block, 'total_seats': total_seats, 'occupied_seats': occupied_seats,
             'available_seats': available_seats, 'occupancy': occupancy,
-            'row_count': Row.objects.filter(block=block, is_active=True).count(),
+            'row_count': Row.objects.filter(block=block, id__in=active_row_ids).count(),
             'revenue': block_revenue, 'used': block_used,
+            # وضعیت فعال/غیرفعالِ مخصوصِ همین مسابقه (نه وضعیت گلوبالِ بلوک)
+            'is_active_for_match': block.id in active_block_ids,
         })
 
     all_issued_tickets = sold_tickets_qs | vip_tickets_qs
@@ -2042,6 +2068,179 @@ def admin_match_block_prices(request, match_id):
     if changed:
         messages.success(request, 'قیمت بلیط‌های اختصاصی این مسابقه ذخیره شد.')
     return redirect('matches:admin_match_edit', match_id=match.id)
+
+
+# ============================================================
+#  چیدمان ورزشگاه مخصوصِ یک مسابقه (فعال/غیرفعال کردن بلوک/ردیف/صندلی)
+# ============================================================
+# همه‌ی تغییرات اینجا فقط روی همین مسابقه اثر می‌گذارند و به مسابقات دیگرِ
+# همان ورزشگاه سرایت نمی‌کنند -- برخلاف صفحه‌ی «مدیریت سکوها» که وضعیت
+# پیش‌فرضِ گلوبال را عوض می‌کند.
+
+@staff_member_required
+def admin_match_stadium_layout(request, match_id):
+    """لیست بلوک‌های ورزشگاه با وضعیت فعال/غیرفعالِ مخصوصِ همین مسابقه."""
+    match = get_object_or_404(Match, id=match_id)
+    active_map = get_block_active_map(match)
+    override_ids = set(
+        MatchBlockActive.objects.filter(match=match).values_list('block_id', flat=True)
+    )
+
+    blocks = Block.objects.filter(stadium=match.stadium).order_by('floor', 'order')
+    sold_by_block = {
+        row['seat__row__block_id']: row['c']
+        for row in (
+            Ticket.objects.filter(
+                match=match, status__in=['paid', 'admin_assigned', 'vip_issued']
+            ).values('seat__row__block_id').annotate(c=Count('id'))
+        )
+    }
+
+    blocks_data = []
+    for block in blocks:
+        blocks_data.append({
+            'block': block,
+            'is_active': active_map.get(block.id, block.is_active),
+            'has_override': block.id in override_ids,
+            'global_is_active': block.is_active,
+            'sold_count': sold_by_block.get(block.id, 0),
+            'row_count': Row.objects.filter(block=block).count(),
+        })
+
+    context = {
+        'match': match,
+        'blocks_data': blocks_data,
+        'active_count': sum(1 for b in blocks_data if b['is_active']),
+        'total_count': len(blocks_data),
+    }
+    return render(request, 'matches/admin_match_stadium_layout.html', context)
+
+
+@staff_member_required
+def admin_match_block_layout(request, match_id, block_id):
+    """ردیف‌ها و صندلی‌های یک بلوک، با وضعیت مخصوصِ همین مسابقه."""
+    match = get_object_or_404(Match, id=match_id)
+    block = get_object_or_404(Block, id=block_id, stadium=match.stadium)
+
+    row_active_map = get_row_active_map(match, block=block)
+    row_override_ids = set(
+        MatchRowActive.objects.filter(match=match, row__block=block).values_list('row_id', flat=True)
+    )
+
+    rows = list(Row.objects.filter(block=block).order_by('number'))
+    seats = list(
+        Seat.objects.filter(row__block=block).select_related('row').order_by('row__number', 'number')
+    )
+    ms_map = {
+        ms.seat_id: ms
+        for ms in MatchSeat.objects.filter(match=match, seat__row__block=block)
+    }
+    sold_seat_ids = set(
+        Ticket.objects.filter(
+            match=match, seat__row__block=block,
+            status__in=['paid', 'admin_assigned', 'vip_issued'],
+        ).values_list('seat_id', flat=True)
+    )
+
+    seats_by_row = {}
+    for seat in seats:
+        ms = ms_map.get(seat.id)
+        seats_by_row.setdefault(seat.row_id, []).append({
+            'seat': seat,
+            # اگر هنوز MatchSeat ساخته نشده، پیش‌فرض یعنی فعال
+            'is_enabled': ms.is_enabled if ms else True,
+            'global_available': seat.is_available,
+            'is_sold': seat.id in sold_seat_ids,
+        })
+
+    rows_data = [{
+        'row': row,
+        'is_active': row_active_map.get(row.id, row.is_active),
+        'has_override': row.id in row_override_ids,
+        'global_is_active': row.is_active,
+        'seats': seats_by_row.get(row.id, []),
+    } for row in rows]
+
+    context = {
+        'match': match,
+        'block': block,
+        'block_is_active': is_block_active_for_match(match, block),
+        'rows_data': rows_data,
+    }
+    return render(request, 'matches/admin_match_block_layout.html', context)
+
+
+@staff_member_required
+def admin_match_toggle_block(request, match_id, block_id):
+    """فعال/غیرفعال کردن یک بلوک فقط برای همین مسابقه."""
+    if request.method != 'POST':
+        return redirect('matches:admin_match_stadium_layout', match_id=match_id)
+    match = get_object_or_404(Match, id=match_id)
+    block = get_object_or_404(Block, id=block_id, stadium=match.stadium)
+
+    new_state = not is_block_active_for_match(match, block)
+    MatchBlockActive.objects.update_or_create(
+        match=match, block=block, defaults={'is_active': new_state}
+    )
+    messages.success(
+        request,
+        f'بلوک «{block.name}» فقط برای این مسابقه {"فعال" if new_state else "غیرفعال"} شد.'
+    )
+    return redirect('matches:admin_match_stadium_layout', match_id=match.id)
+
+
+@staff_member_required
+def admin_match_toggle_row(request, match_id, row_id):
+    """فعال/غیرفعال کردن یک ردیف فقط برای همین مسابقه."""
+    if request.method != 'POST':
+        return redirect('matches:admin_match_stadium_layout', match_id=match_id)
+    match = get_object_or_404(Match, id=match_id)
+    row = get_object_or_404(Row, id=row_id, block__stadium=match.stadium)
+
+    new_state = not is_row_active_for_match(match, row)
+    MatchRowActive.objects.update_or_create(
+        match=match, row=row, defaults={'is_active': new_state}
+    )
+    messages.success(
+        request,
+        f'ردیف {row.number} از بلوک «{row.block.name}» فقط برای این مسابقه '
+        f'{"فعال" if new_state else "غیرفعال"} شد.'
+    )
+    return redirect('matches:admin_match_block_layout', match_id=match.id, block_id=row.block_id)
+
+
+@staff_member_required
+def admin_match_toggle_seat(request, match_id, seat_id):
+    """فعال/غیرفعال کردن یک صندلی فقط برای همین مسابقه."""
+    if request.method != 'POST':
+        return redirect('matches:admin_match_stadium_layout', match_id=match_id)
+    match = get_object_or_404(Match, id=match_id)
+    seat = get_object_or_404(Seat, id=seat_id, row__block__stadium=match.stadium)
+
+    match_seat, _ = MatchSeat.objects.get_or_create(
+        match=match, seat=seat, defaults={'is_available': True}
+    )
+    match_seat.is_enabled = not match_seat.is_enabled
+    match_seat.save(update_fields=['is_enabled'])
+    messages.success(
+        request,
+        f'صندلی {seat.number} (ردیف {seat.row.number}) فقط برای این مسابقه '
+        f'{"فعال" if match_seat.is_enabled else "غیرفعال"} شد.'
+    )
+    return redirect('matches:admin_match_block_layout', match_id=match.id, block_id=seat.row.block_id)
+
+
+@staff_member_required
+def admin_match_reset_block(request, match_id, block_id):
+    """حذف تنظیم اختصاصیِ این مسابقه برای یک بلوک -- برگشت به وضعیت پیش‌فرض گلوبال."""
+    if request.method != 'POST':
+        return redirect('matches:admin_match_stadium_layout', match_id=match_id)
+    match = get_object_or_404(Match, id=match_id)
+    block = get_object_or_404(Block, id=block_id, stadium=match.stadium)
+    deleted, _ = MatchBlockActive.objects.filter(match=match, block=block).delete()
+    if deleted:
+        messages.success(request, f'بلوک «{block.name}» به وضعیت پیش‌فرض برگشت.')
+    return redirect('matches:admin_match_stadium_layout', match_id=match.id)
 
 
 @staff_member_required

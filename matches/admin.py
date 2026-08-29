@@ -11,6 +11,7 @@ from openpyxl.styles import Font, Alignment
 
 # ===== ایمپورت مدل‌ها (با اضافه کردن Block) =====
 from .models import Match, Row, Seat, Stadium, MatchSeat, Block
+from .models import get_active_block_ids, get_active_row_ids
 from tickets.models import Ticket
 
 
@@ -140,7 +141,9 @@ class MatchAdmin(admin.ModelAdmin):
 
             occupied_seats = MatchSeat.objects.filter(match=match, is_available=False).count()
             total_seats = Seat.objects.filter(
-                row__block__stadium=match.stadium, row__block__is_active=True, row__is_active=True
+                row__block__stadium=match.stadium,
+                row__block_id__in=get_active_block_ids(match),
+                row_id__in=get_active_row_ids(match),
             ).count()
 
             report_data.append({
@@ -191,7 +194,9 @@ class MatchAdmin(admin.ModelAdmin):
                 blocks = match.stadium.blocks.all()
             else:
                 # روش ۳: دریافت مستقیم
-                blocks = Block.objects.filter(stadium=match.stadium, is_active=True).order_by('order')
+                blocks = Block.objects.filter(
+                    stadium=match.stadium, id__in=get_active_block_ids(match)
+                ).order_by('order')
 
         block_stats = []
         for block in blocks:

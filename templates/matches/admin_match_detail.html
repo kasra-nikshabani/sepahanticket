@@ -635,6 +635,9 @@
                 <a href="{% url 'matches:admin_match_full_report' match.id %}" class="btn-back" style="background:#D4AF37; color:#1A1A2E; border-color:#D4AF37;">
                     <i class="fas fa-file-alt"></i> گزارش کامل مسابقه
                 </a>
+                <a href="{% url 'matches:admin_match_stadium_layout' match.id %}" class="btn-back" style="background:#1A1A2E; color:#D4AF37; border-color:#1A1A2E;">
+                    <i class="fas fa-th-large"></i> چیدمان ورزشگاه این مسابقه
+                </a>
                 {% if not match.is_cancelled %}
                     <a href="{% url 'matches:admin_match_cancel' match.id %}" class="btn-back" style="background:#dc3545; color:#fff; border-color:#dc3545;">
                         <i class="fas fa-ban"></i> لغو مسابقه و بازگشت وجه
@@ -944,15 +947,15 @@
                 <div class="row">
                     {% for block_data in blocks_data %}
                         <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-4">
-                            <div class="block-card {% if not block_data.block.is_active %}inactive{% endif %}">
+                            <div class="block-card {% if not block_data.is_active_for_match %}inactive{% endif %}">
                                 <!-- هدر کارت -->
                                 <div class="block-card-header">
                                     <div class="block-name">
                                         <i class="fas fa-cube"></i>
                                         {{ block_data.block.name }}
                                     </div>
-                                    <span class="block-status {% if block_data.block.is_active %}active{% else %}inactive{% endif %}">
-                            {{ block_data.block.is_active|yesno:"فعال,غیرفعال" }}
+                                    <span class="block-status {% if block_data.is_active_for_match %}active{% else %}inactive{% endif %}">
+                            {{ block_data.is_active_for_match|yesno:"فعال,غیرفعال" }}
                         </span>
                                 </div>
 

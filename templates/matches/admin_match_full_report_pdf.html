@@ -421,7 +421,7 @@
             {% for row in blocks_data %}
             <tr>
                 <td>{{ row.block.name }}</td>
-                <td>{% if row.block.is_active %}فعال{% else %}غیرفعال{% endif %}</td>
+                <td>{% if row.is_active_for_match %}فعال{% else %}غیرفعال{% endif %}</td>
                 <td>{{ row.total_seats }}</td><td>{{ row.occupied_seats }}</td><td>{{ row.available_seats }}</td>
                 <td>{{ row.occupancy }}٪</td><td>{{ row.used }}</td><td>{{ row.revenue|rial_display }}</td>
             </tr>
