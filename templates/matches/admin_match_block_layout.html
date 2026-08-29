@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}ردیف‌ها و صندلی‌های {{ block.name }} — {{ match.home_team }} vs {{ match.away_team }}{% endblock %}
+{% block title %}ردیف‌ها و صندلی‌های {{ selected_block.name }} — {{ match.home_team }} vs {{ match.away_team }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -86,7 +86,7 @@
 {% block content %}
 <div class="layout-page">
     <div class="page-header">
-        <h2><i class="fas fa-list"></i> ردیف‌ها و صندلی‌های «{{ block.name }}»</h2>
+        <h2><i class="fas fa-list"></i> ردیف‌ها و صندلی‌های «{{ selected_block.name }}»</h2>
         <div class="meta">
             {{ match.home_team }} vs {{ match.away_team }} — {{ match.date_time|date:"Y/m/d H:i" }}
         </div>

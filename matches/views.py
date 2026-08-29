@@ -407,6 +407,13 @@ def show_block_map(request, match_id):
     context = {
         'match': match,
         'block': block,
+        # ===== نامِ «block» داخل قالب توسط تگ خودِ جنگو ({% block %}) سایه
+        # انداخته می‌شود (همان مکانیزمی که {{ block.super }} را ممکن می‌کند)،
+        # پس {{ block.id }} و {{ block.name }} داخل قالب خالی رندر می‌شدند --
+        # که هم نام سکو را ناپدید می‌کرد و هم با تولید «const blockId = ;»
+        # کلِ اسکریپت صفحه را با خطای سینتکس از کار می‌انداخت و دیگر هیچ
+        # صندلی‌ای قابل انتخاب نبود. با یک نام بدون‌ابهام حل شد. =====
+        'selected_block': block,
         'map_data': map_data,
         'first_row_id': first_row_id,
     }
@@ -441,6 +448,8 @@ def select_row(request, match_id):
     return render(request, 'matches/select_row.html', {
         'match': match,
         'block': block,
+        # نام «block» داخل قالب توسط تگ {% block %} خودِ جنگو سایه می‌افتد
+        'selected_block': block,
         'rows': rows,
     })
 
@@ -1946,7 +1955,7 @@ def admin_block_edit(request, block_id=None):
     else:
         form = BlockForm(instance=block)
 
-    return render(request, 'matches/admin_block_form.html', {'form': form, 'block': block})
+    return render(request, 'matches/admin_block_form.html', {'form': form, 'block': block, 'selected_block': block})
 
 
 @staff_member_required
@@ -1957,7 +1966,7 @@ def admin_block_delete(request, block_id):
         block.delete()
         messages.success(request, f'بلوک "{block_name}" با موفقیت حذف شد.')
         return redirect('matches:admin_block_list')
-    return render(request, 'matches/admin_block_confirm_delete.html', {'block': block})
+    return render(request, 'matches/admin_block_confirm_delete.html', {'block': block, 'selected_block': block})
 
 
 # ===== فعال/غیرفعال کردنِ گلوبالِ بلوک/ردیف/صندلی برداشته شد =====
@@ -2248,6 +2257,7 @@ def admin_match_block_layout(request, match_id, block_id):
     context = {
         'match': match,
         'block': block,
+        'selected_block': block,  # نامِ بدون‌ابهام برای استفاده در قالب
         'block_is_active': is_block_active_for_match(match, block),
         'rows_data': rows_data,
     }

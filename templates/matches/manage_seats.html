@@ -4,7 +4,7 @@
 
 {% block title %}
     {% if block %}
-        مدیریت صندلی‌های بلوک {{ block.name }}
+        مدیریت صندلی‌های بلوک {{ row.block.name }}
     {% else %}
         مدیریت صندلی‌های {{ row.name }}
     {% endif %}
@@ -95,7 +95,7 @@
             <h4>
                 <i class="fas fa-chair"></i>
                 {% if block %}
-                    مدیریت صندلی‌های بلوک {{ block.name }}
+                    مدیریت صندلی‌های بلوک {{ row.block.name }}
                 {% else %}
                     مدیریت صندلی‌های {{ row.name }}
                 {% endif %}
@@ -124,7 +124,7 @@
                 <i class="fas fa-info-circle"></i>
                 مدیریت صندلی‌های
                 {% if block %}
-                    بلوک <strong>{{ block.name }}</strong>
+                    بلوک <strong>{{ row.block.name }}</strong>
                 {% else %}
                     ردیف <strong>{{ row.name }}</strong>
                 {% endif %}

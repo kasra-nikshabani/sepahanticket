@@ -2,7 +2,7 @@
 {% load currency_filters %}
 {% load static %}
 
-{% block title %}نقشه سکو {{ block.name }}{% endblock %}
+{% block title %}نقشه سکو {{ selected_block.name }}{% endblock %}
 
 {% block extra_css %}
     <style>
@@ -526,7 +526,7 @@
         <div class="map-header">
             <h2>{{ match.home_team }} <span style="color:#D4AF37;">🆚</span> {{ match.away_team }}</h2>
             <div class="match-time">{{ match.date_time|date:"Y/m/d H:i" }}</div>
-            <div class="block-name">{{ block.name }}</div>
+            <div class="block-name">{{ selected_block.name }}</div>
         </div>
 
         <!-- دکمه تغییر حالت -->
@@ -730,7 +730,7 @@
             const matchId = {{ match.id }};
             // کل بلوک به‌روز می‌شود، نه فقط ردیف اول -- صفحه همه‌ی ردیف‌های
             // بلوک را نشان می‌دهد و قبلاً بقیه‌ی ردیف‌ها هیچ‌وقت رفرش نمی‌شدند.
-            const blockId = {{ block.id }};
+            const blockId = {{ selected_block.id }};
             const seatMap = new Map();
             document.querySelectorAll('.seat:not(.missing)').forEach(el => {
                 const id = parseInt(el.dataset.seatId);
