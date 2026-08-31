@@ -299,8 +299,20 @@ def phone_register(request):
                 request.session['pending_registration'] = pending_data
                 messages.info(request, f'کد قبلی هنوز معتبر است. {e.retry_after} ثانیه دیگر می‌توانید کد جدید بگیرید.')
                 return redirect('accounts:otp_verify')
+            except SMSProviderBusyError as e:
+                # ===== خرابیِ سرویس پیامک، نه خطای کاربر =====
+                # قبلاً این استثنا به except عمومیِ پایین می‌افتاد و متن خامِ
+                # سرویس پیامک («تعداد درخواست بیشتر از حد مجاز است - N ثانیه
+                # دیگر تلاش نمایید») مستقیم به کاربر نشان داده می‌شد، آن هم با
+                # پیشوند «خطا در ثبت‌نام» -- که کاربر را به این نتیجه می‌رساند
+                # که اطلاعاتش ایراد دارد، در حالی که ثبت‌نامش کاملاً درست بوده
+                # و فقط پیامک ارسال نشده.
+                logger.error("phone_register: SMS provider busy for %s***: %s",
+                             phone_number[:6], e.message)
+                messages.error(request, e.message)
             except Exception as e:
-                messages.error(request, f'❌ خطا در ثبت‌نام: {str(e)}')
+                logger.error("phone_register failed for %s***: %s", phone_number[:6], e)
+                messages.error(request, '❌ ارسال کد تأیید موقتاً ممکن نیست. چند لحظه دیگر دوباره تلاش کنید.')
         else:
             # نمایش خطاهای فرم
             for field, errors in form.errors.items():

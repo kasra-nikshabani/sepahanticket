@@ -173,12 +173,19 @@ LOGGING = {
         },
     },
     'handlers': {
+        # ===== چرا WatchedFileHandler و نه RotatingFileHandler =====
+        # گانیکورن ده‌ها پروسه‌ی مستقل دارد و RotatingFileHandler فرض می‌کند
+        # تنها نویسنده‌ی فایل است: وقتی چند پروسه هم‌زمان به سقف حجم می‌رسند،
+        # همه با هم doRollover را صدا می‌زنند و فایل‌ها را زیر پای هم
+        # rename می‌کنند. نتیجه FileNotFoundError داخل خودِ logging بود و
+        # چون خطاهای logging بی‌صدا بلعیده می‌شوند، رکوردها *ساکت* گم
+        # می‌شدند -- دقیقاً وقتی که بیشترین نیاز را به لاگ داشتیم.
+        # WatchedFileHandler خودش نمی‌چرخاند؛ فقط اگر فایل جابه‌جا شود
+        # دوباره بازش می‌کند، که با logrotate بیرونی امن است.
         'file': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'logging.handlers.WatchedFileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'django-errors.log'),
-            'maxBytes': 10 * 1024 * 1024,
-            'backupCount': 5,
             'formatter': 'verbose',
         },
     },
