@@ -16,7 +16,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 
 from .forms import RegisterForm, LoginForm, PhoneLoginForm, OTPVerifyForm, PhoneRegisterForm
 from .models import OTP
-from .services import create_otp, get_valid_otp, OTPRateLimitError
+from .services import create_otp, get_valid_otp, OTPRateLimitError, SMSProviderBusyError
 
 User = get_user_model()
 
@@ -87,8 +87,11 @@ def phone_login(request):
                 request.session['otp_phone'] = phone_number
                 messages.info(request, f'کد قبلی هنوز معتبر است. {e.retry_after} ثانیه دیگر می‌توانید کد جدید بگیرید.')
                 return redirect('accounts:otp_verify')
+            except SMSProviderBusyError as e:
+                messages.error(request, e.message)
             except Exception as e:
-                messages.error(request, f'خطا در ارسال پیامک: {str(e)}')
+                logger.error("create_otp failed for %s***: %s", phone_number[:6], e)
+                messages.error(request, 'ارسال پیامک موقتاً ممکن نیست. چند لحظه دیگر دوباره تلاش کنید.')
         else:
             for error in form.errors.values():
                 messages.error(request, error)
@@ -228,8 +231,19 @@ def resend_otp(request):
              'retry_after': e.retry_after},
             status=429,
         )
+    except SMSProviderBusyError as e:
+        # سرویس پیامک خودش ما را محدود کرده -- خرابی سرور نیست، پس ۵۰۰ نمی‌دهیم
+        return JsonResponse(
+            {'status': 'error', 'message': f'⏳ {e.message}', 'retry_after': e.retry_after},
+            status=429,
+        )
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': f'❌ خطا در ارسال پیامک: {str(e)}'}, status=500)
+        logger.error("resend_otp failed for %s***: %s", (phone_number or '')[:6], e)
+        return JsonResponse(
+            {'status': 'error',
+             'message': '❌ ارسال پیامک موقتاً ممکن نیست. چند لحظه دیگر دوباره تلاش کنید.'},
+            status=503,
+        )
 
 
 # ==========================================

@@ -14,6 +14,22 @@ logger = logging.getLogger(__name__)
 OTP_COOLDOWN_SECONDS = 60
 
 
+# ===== تایم‌اوت تماس با سرویس پیامک =====
+# عمداً کوتاه: این تماس داخل چرخه‌ی درخواست انجام می‌شود و هر ثانیه‌ای که
+# طول بکشد یک worker گانیکورن را قفل نگه می‌دارد. زیر بار بالا (روز
+# مسابقه) با تایم‌اوت ۱۰ ثانیه، چند صد درخواستِ معطلِ پیامک کافی بود تا
+# همه‌ی workerها اشغال شوند و کل سایت کند شود.
+SMS_TIMEOUT = 4
+
+
+class SMSProviderBusyError(Exception):
+    """سرویس پیامک خودش ما را محدود کرده یا در دسترس نیست."""
+    def __init__(self, message, retry_after=30):
+        super().__init__(message)
+        self.message = message
+        self.retry_after = retry_after
+
+
 class OTPRateLimitError(Exception):
     """
     برای یک شماره تلفن، در کمتر از OTP_COOLDOWN_SECONDS ثانیه دوباره
@@ -71,7 +87,7 @@ def send_sms_via_smsir(phone_number, code):
         }
 
         try:
-            response = requests.post(url, json=payload, headers=headers, timeout=10)
+            response = requests.post(url, json=payload, headers=headers, timeout=SMS_TIMEOUT)
             result = response.json()
 
             if response.status_code == 200 and result.get('status') == 1:
@@ -110,7 +126,7 @@ def send_sms_via_smsir(phone_number, code):
     }
 
     try:
-        response = requests.post(url, json=payload, headers=headers, timeout=10)
+        response = requests.post(url, json=payload, headers=headers, timeout=SMS_TIMEOUT)
         result = response.json()
 
         if response.status_code == 200 and result.get('status') == 1:
@@ -170,6 +186,14 @@ def create_otp(phone_number):
         # چون پیامک واقعاً ارسال نشده، قفل ۶۰ ثانیه‌ای را هم آزاد می‌کنیم
         # تا خرابی موقت سرویس پیامک باعث انتظار بی‌خودِ کاربر نشود.
         cache.delete(cooldown_key)
+        # اگر خودِ سرویس پیامک ما را محدود کرده باشد، این یک خطای موقت است
+        # نه خرابی سرور -- نباید به کاربر صفحه‌ی ۵۰۰ نشان داده شود.
+        low = (msg or '').lower()
+        if 'بیشتر از حد مجاز' in (msg or '') or 'too many' in low or 'limit' in low:
+            raise SMSProviderBusyError(
+                'در حال حاضر تعداد درخواست‌های پیامک زیاد است. چند لحظه صبر کنید و دوباره تلاش کنید.',
+                retry_after=30,
+            )
         raise Exception(f"خطا در ارسال پیامک: {msg}")
 
     return otp
