@@ -6,6 +6,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction, IntegrityError
 from django.db.models import Q, Count, Prefetch, Sum
 from django.http import JsonResponse
+from django.core.cache import cache
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
@@ -47,6 +48,17 @@ from django.views.decorators.cache import never_cache
 # ============================================================
 #  ویوهای عمومی (کاربران عادی)
 # ============================================================
+
+def invalidate_match_capacity(match_id):
+    """
+    کشِ ظرفیت یک مسابقه را باطل می‌کند.
+
+    هر جایی که چیدمان مخصوصِ همین مسابقه عوض می‌شود (فعال/غیرفعال کردن
+    بلوک، ردیف یا صندلی) باید صدا زده شود، وگرنه ظرفیتِ نمایش‌داده‌شده در
+    صفحه‌ی اصلی تا انقضای کش قدیمی می‌ماند.
+    """
+    cache.delete(f'match_capacity:{match_id}')
+
 @never_cache
 def home(request):
     """صفحه اصلی - نمایش مسابقات با ظرفیت‌های دقیق"""
@@ -84,13 +96,25 @@ def home(request):
     # ===== ظرفیت هر مسابقه -- چون فعال/غیرفعال بودن بلوک و ردیف الان مخصوصِ
     # هر مسابقه است، ظرفیت دیگر یک عدد مشترک به‌ازای هر ورزشگاه نیست و باید
     # به‌ازای هر مسابقه حساب شود. =====
+    # ===== ظرفیت کش می‌شود =====
+    # این شمارش برای هر مسابقه یک COUNT روی ده‌ها هزار صندلی است، با یک
+    # IN طولانی از شناسه‌ی ردیف‌های فعال -- و صفحه‌ی اصلی پرترافیک‌ترین
+    # صفحه‌ی سایت است. بدون کش، زیر بار بالا همین یک خط دیتابیس را زمین
+    # می‌زد (اندازه‌گیری‌شده: ~۳۰۰ درخواست بر ثانیه و پاسخ‌های ۶۰ ثانیه‌ای).
+    # ظرفیت فقط وقتی عوض می‌شود که ادمین چیدمان را دست بزند، و همان‌جا هم
+    # کش باطل می‌شود (invalidate_match_capacity).
     match_capacity = {}
     for m in matches_list:
-        match_capacity[m.id] = Seat.objects.filter(
-            row__block__stadium_id=m.stadium_id,
-            row__block_id__in=get_active_block_ids(m),
-            row_id__in=get_active_row_ids(m),
-        ).count()
+        ck = f'match_capacity:{m.id}'
+        val = cache.get(ck)
+        if val is None:
+            val = Seat.objects.filter(
+                row__block__stadium_id=m.stadium_id,
+                row__block_id__in=get_active_block_ids(m),
+                row_id__in=get_active_row_ids(m),
+            ).count()
+            cache.set(ck, val, 600)
+        match_capacity[m.id] = val
 
     # تعداد صندلی‌های غیرفعال (فروخته/رزرو) per match
     sold_map = {
@@ -2261,6 +2285,7 @@ def admin_match_bulk_toggle_floor(request, match_id, floor):
     if request.method != 'POST':
         return redirect('matches:admin_match_stadium_layout', match_id=match_id)
     match = get_object_or_404(Match, id=match_id)
+    invalidate_match_capacity(match.id)
     desired = request.POST.get('desired')
     if desired not in ('on', 'off'):
         messages.error(request, 'درخواست نامعتبر است.')
@@ -2293,6 +2318,7 @@ def admin_match_bulk_toggle_rows(request, match_id, block_id):
     if request.method != 'POST':
         return redirect('matches:admin_match_stadium_layout', match_id=match_id)
     match = get_object_or_404(Match, id=match_id)
+    invalidate_match_capacity(match.id)
     block = get_object_or_404(Block, id=block_id, stadium=match.stadium)
     desired = request.POST.get('desired')
     if desired not in ('on', 'off'):
@@ -2320,6 +2346,7 @@ def admin_match_set_block_zone(request, match_id, block_id):
     if request.method != 'POST':
         return redirect('matches:admin_match_stadium_layout', match_id=match_id)
     match = get_object_or_404(Match, id=match_id)
+    invalidate_match_capacity(match.id)
     block = get_object_or_404(Block, id=block_id, stadium=match.stadium)
 
     zone = (request.POST.get('zone_type') or '').strip()
@@ -2436,6 +2463,7 @@ def admin_match_toggle_block(request, match_id, block_id):
     if request.method != 'POST':
         return redirect('matches:admin_match_stadium_layout', match_id=match_id)
     match = get_object_or_404(Match, id=match_id)
+    invalidate_match_capacity(match.id)
     block = get_object_or_404(Block, id=block_id, stadium=match.stadium)
 
     # ===== حالت مقصد صریح از فرم می‌آید، نه معکوس‌کردنِ کورِ وضعیت فعلی.
@@ -2462,6 +2490,7 @@ def admin_match_toggle_row(request, match_id, row_id):
     if request.method != 'POST':
         return redirect('matches:admin_match_stadium_layout', match_id=match_id)
     match = get_object_or_404(Match, id=match_id)
+    invalidate_match_capacity(match.id)
     row = get_object_or_404(Row, id=row_id, block__stadium=match.stadium)
 
     desired = request.POST.get('desired')
@@ -2486,6 +2515,7 @@ def admin_match_toggle_seat(request, match_id, seat_id):
     if request.method != 'POST':
         return redirect('matches:admin_match_stadium_layout', match_id=match_id)
     match = get_object_or_404(Match, id=match_id)
+    invalidate_match_capacity(match.id)
     seat = get_object_or_404(Seat, id=seat_id, row__block__stadium=match.stadium)
 
     match_seat, _ = MatchSeat.objects.get_or_create(
@@ -2511,6 +2541,7 @@ def admin_match_reset_block(request, match_id, block_id):
     if request.method != 'POST':
         return redirect('matches:admin_match_stadium_layout', match_id=match_id)
     match = get_object_or_404(Match, id=match_id)
+    invalidate_match_capacity(match.id)
     block = get_object_or_404(Block, id=block_id, stadium=match.stadium)
     deleted, _ = MatchBlockActive.objects.filter(match=match, block=block).delete()
     if deleted:
