@@ -6,6 +6,13 @@ from django.core.cache import cache
 # تایم‌اوت تماس با سرویس بیرونیِ هواداری (ثانیه)
 FAN_API_TIMEOUT = 4
 
+# اتصال پایدار (همان دلیل _sms_session در accounts/services.py): بدون آن
+# هر استعلام یک TLS handshake کامل است و در تمام مدتش یک نخ اشغال می‌ماند.
+fan_session = requests.Session()
+fan_session.mount('https://', requests.adapters.HTTPAdapter(
+    pool_connections=8, pool_maxsize=64, max_retries=0,
+))
+
 # ===== مدار شکن (circuit breaker) برای سرویس هواداری =====
 # تایم‌اوت به‌تنهایی کافی نیست. وقتی fans.footballeticket.ir هنگ می‌کند
 # (TCP وصل می‌شود ولی هیچ پاسخی نمی‌دهد)، هر درخواستِ استعلام یک نخِ
@@ -82,7 +89,7 @@ def get_access_token():
         raise FanAPIDownError()
 
     try:
-        response = requests.post(url, json=payload, timeout=FAN_API_TIMEOUT)
+        response = fan_session.post(url, json=payload, timeout=FAN_API_TIMEOUT)
     except requests.exceptions.RequestException:
         record_fan_api_failure()
         raise FanAPIDownError()

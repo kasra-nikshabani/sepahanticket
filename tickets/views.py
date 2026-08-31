@@ -43,7 +43,7 @@ from matches.models import (
 from accounts.models import User
 from wallet.models import Wallet, is_wallet_enabled, WALLET_DISABLED_MESSAGE
 from .utils import (
-    get_access_token, FAN_API_TIMEOUT, FanAPIDownError,
+    get_access_token, FAN_API_TIMEOUT, FanAPIDownError, fan_session,
     fan_api_is_down, record_fan_api_failure, record_fan_api_success,
 )
 
@@ -1601,7 +1601,7 @@ def inquiry_fan(request):
             raise FanAPIDownError()
 
         try:
-            response = requests.post(url, json=payload, headers=headers, timeout=FAN_API_TIMEOUT)
+            response = fan_session.post(url, json=payload, headers=headers, timeout=FAN_API_TIMEOUT)
         except requests.exceptions.RequestException:
             record_fan_api_failure()
             raise FanAPIDownError()

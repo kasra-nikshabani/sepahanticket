@@ -27,6 +27,17 @@ OTP_VALIDITY_MINUTES = 5
 # همه‌ی workerها اشغال شوند و کل سایت کند شود.
 SMS_TIMEOUT = 4
 
+# ===== اتصال پایدار به سرویس پیامک =====
+# requests.post ساده برای هر پیامک یک اتصال TLS تازه می‌سازد؛ خودِ
+# handshake چند صد میلی‌ثانیه است و در تمام آن مدت یک نخ گانیکورن اشغال
+# می‌ماند. روز مسابقه در نمونه‌برداری از پشته‌ی نخ‌ها، چندین نخ هم‌زمان
+# داخل do_handshake دیده شدند. با یک Session مشترک، اتصال باز می‌ماند و
+# پیامک‌های بعدی از همان استفاده می‌کنند (بدون handshake دوباره).
+_sms_session = requests.Session()
+_sms_session.mount('https://', requests.adapters.HTTPAdapter(
+    pool_connections=8, pool_maxsize=64, max_retries=0,
+))
+
 
 class SMSProviderBusyError(Exception):
     """سرویس پیامک خودش ما را محدود کرده یا در دسترس نیست."""
@@ -93,7 +104,7 @@ def send_sms_via_smsir(phone_number, code):
         }
 
         try:
-            response = requests.post(url, json=payload, headers=headers, timeout=SMS_TIMEOUT)
+            response = _sms_session.post(url, json=payload, headers=headers, timeout=SMS_TIMEOUT)
             result = response.json()
 
             if response.status_code == 200 and result.get('status') == 1:
@@ -132,7 +143,7 @@ def send_sms_via_smsir(phone_number, code):
     }
 
     try:
-        response = requests.post(url, json=payload, headers=headers, timeout=SMS_TIMEOUT)
+        response = _sms_session.post(url, json=payload, headers=headers, timeout=SMS_TIMEOUT)
         result = response.json()
 
         if response.status_code == 200 and result.get('status') == 1:
