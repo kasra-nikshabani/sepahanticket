@@ -589,11 +589,15 @@ def admin_site_settings(request):
         status__in=['paid', 'admin_assigned', 'vip_issued'],
     ).count()
 
+    # اعداد نمایشی با رقم فارسی، هم‌شکل با بقیه‌ی سایت
+    def _fa(n):
+        return f'{n:,}'.translate(str.maketrans('0123456789,', '۰۱۲۳۴۵۶۷۸۹٬'))
+
     context = {
         'settings_obj': settings_obj,
         'wallets_with_balance': agg['cnt'] or 0,
         'total_wallet_balance': agg['total'] or 0,
-        'free_age_limit': FREE_AGE_LIMIT,
-        'free_tickets_so_far': free_tickets,
+        'free_age_limit': _fa(FREE_AGE_LIMIT),
+        'free_tickets_so_far': _fa(free_tickets),
     }
     return render(request, 'accounts/admin_site_settings.html', context)
