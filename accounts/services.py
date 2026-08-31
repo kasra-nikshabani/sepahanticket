@@ -145,13 +145,17 @@ def create_otp(phone_number):
 
     code = generate_otp_code()
 
-    # ===== لاگ قوی برای دیباگ =====
-    print(f"\n{'=' * 50}")
-    print(f"📱 NEW OTP GENERATED")
-    print(f"📞 Phone: {phone_number}")
-    print(f"🔑 Code: {code}")
-    print(f"⏰ Expires in 1 minute")
-    print(f"{'=' * 50}\n")
+    # ===== کد OTP هرگز در لاگ نوشته نمی‌شود =====
+    # قبلاً کد و شماره‌ی موبایل با print چاپ می‌شدند و چون gunicorn با
+    # --capture-output اجرا می‌شود، مستقیم داخل logs/gunicorn-error.log
+    # می‌نشستند: بیش از ۲۳ هزار جفتِ «شماره + کد» در یک فایل با دسترسی
+    # ۶۴۴ (خواندنی برای هر کاربر سرور). هرکسی که آن فایل را می‌خواند
+    # می‌توانست به‌جای کاربر وارد شود.
+    # فقط در حالت DEBUG (توسعه‌ی محلی، بدون کاربر واقعی) چاپ می‌شود.
+    if settings.DEBUG:
+        print(f"[DEV] OTP for {phone_number}: {code}")
+    else:
+        logger.info("OTP generated for %s***", phone_number[:6])
 
     otp = OTP.objects.create(
         phone_number=phone_number,
