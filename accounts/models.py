@@ -128,14 +128,36 @@ class SiteSettings(models.Model):
         self.pk = 1
         super().save(*args, **kwargs)
         cache.delete(SITE_SETTINGS_CACHE_KEY)
+        # حافظه‌ی محلیِ همین پروسه را هم باطل کن، وگرنه پروسه‌ای که تغییر را
+        # ذخیره کرده تا SOLO_LOCAL_TTL ثانیه مقدار قدیمی خودش را می‌بیند.
+        SiteSettings._local_cache = (0.0, None)
+
+    # ===== حافظه‌ی محلیِ هر پروسه =====
+    # get_solo روی *هر* درخواست حداقل دو بار صدا زده می‌شود (میدل‌ور کنترل
+    # دسترسی جغرافیایی + context processor کیف پول). حتی با کش Redis، هر
+    # فراخوانی یعنی یک رفت‌وبرگشت شبکه به‌علاوه‌ی unpickle کردن یک شیء مدل --
+    # و در نمونه‌برداری از CPU روز دربی همین دو نقطه بالاترین سهم را داشتند،
+    # چون روی ۱۰۰٪ ترافیک اجرا می‌شوند. چند ثانیه نگه‌داشتن نتیجه داخل خودِ
+    # پروسه، این هزینه را عملاً صفر می‌کند. تأخیر انتشار تغییرات حداکثر
+    # SOLO_LOCAL_TTL ثانیه است (کش Redis از قبل هم ۳۰ ثانیه تأخیر داشت).
+    SOLO_LOCAL_TTL = 5
+    _local_cache = (0.0, None)
 
     @classmethod
     def get_solo(cls):
+        import time
         from django.core.cache import cache
+
+        ts, cached = SiteSettings._local_cache
+        now = time.monotonic()
+        if cached is not None and (now - ts) < cls.SOLO_LOCAL_TTL:
+            return cached
+
         obj = cache.get(SITE_SETTINGS_CACHE_KEY)
         if obj is None:
             obj, _ = cls.objects.get_or_create(pk=1)
             cache.set(SITE_SETTINGS_CACHE_KEY, obj, 30)
+        SiteSettings._local_cache = (now, obj)
         return obj
 
 

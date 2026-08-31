@@ -13,10 +13,18 @@ SESSION_SAVE_EVERY_REQUEST را خاموش نگه داشته تا نوشتن ا�
 - «بازدید ۲۴ ساعته»: حداکثر یک ردیف در دیتابیس به‌ازای هر بازدیدکننده در هر
   بازه‌ی ۲۴ ساعته (با یک فلگ در Redis از نوشتن‌های تکراری جلوگیری می‌شود).
 """
+import time as _time
+
 from django.core.cache import cache
 from django.shortcuts import render
 
 ONLINE_TTL = 300  # ۵ دقیقه -> «الان آنلاینه»
+# هر چند ثانیه یک‌بار کلیدِ «آنلاین» یک بازدیدکننده در Redis تازه شود.
+# باید خیلی کمتر از ONLINE_TTL باشد تا کسی که واقعاً آنلاین است از شمارش
+# نیفتد.
+ONLINE_REFRESH = 60
+_online_seen = {}
+_ONLINE_SEEN_MAX = 50000
 VISIT_DEDUPE_TTL = 60 * 60 * 24  # ۲۴ ساعت -> حداکثر یک ردیف دیتابیس در این بازه
 
 EXCLUDED_PREFIXES = ('/admin/', '/static/', '/media/', '/tickets/api/')
@@ -41,6 +49,25 @@ class VisitTrackingMiddleware:
     def _track(self, request):
         visitor_id = _get_visitor_id(request)
 
+        # ===== محدودکردن نوشتن روی Redis =====
+        # قبلاً این SET روی *هر* درخواست GET اجرا می‌شد. با ~۶۵۰ درخواست بر
+        # ثانیه یعنی ۶۵۰ نوشتن در ثانیه فقط برای شمارنده‌ی «آنلاین» -- و چون
+        # Redis تک‌نخی است و سشن‌ها هم روی همان Redis‌اند، این هزینه روی کل
+        # سایت پخش می‌شد. کلید TTL پنج‌دقیقه‌ای دارد، پس تازه‌کردنش در هر
+        # درخواست لازم نیست؛ یک بار در هر ONLINE_REFRESH ثانیه کافی است و
+        # نتیجه‌ی شمارنده دقیقاً همان می‌ماند. حافظه‌ی این throttle داخل خودِ
+        # پروسه است و سقف اندازه دارد تا در ترافیک بالا رشد بی‌پایان نکند.
+        now = _time.monotonic()
+        last = _online_seen.get(visitor_id)
+        if last is not None and (now - last) < ONLINE_REFRESH:
+            # این بازدیدکننده را همین چند ثانیه‌ی پیش ثبت کرده‌ایم؛ نه کلید
+            # «آنلاین» نیاز به تازه‌سازی دارد و نه چکِ «امروز آمده؟» -- هر دو
+            # نتیجه‌ی یکسانی می‌دهند. پس این درخواست اصلاً به Redis نمی‌رود.
+            return
+
+        if len(_online_seen) > _ONLINE_SEEN_MAX:
+            _online_seen.clear()
+        _online_seen[visitor_id] = now
         cache.set(f'online_visitor:{visitor_id}', 1, timeout=ONLINE_TTL)
 
         dedupe_key = f'visited_today:{visitor_id}'
