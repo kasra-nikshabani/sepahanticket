@@ -1262,13 +1262,38 @@ def get_seats_status(request, match_id):
 
     current_user_id = request.user.id if request.user.is_authenticated else None
 
+    # ===== مسیر سریع برای اکثریت قاطع کاربران =====
+    # تقریباً همه‌ی کسانی که این اندپوینت را صدا می‌زنند در همان بلوک هیچ
+    # رزروی ندارند؛ برای آن‌ها reserved_by_me همه‌جا False است و پاسخ
+    # بایت‌به‌بایت یکسان. پس متنِ JSON را یک بار می‌سازیم و همان را
+    # برمی‌گردانیم -- بدون ساختن دوباره‌ی ۹۳۰ دیکشنری و بدون سریال‌سازی
+    # مجدد در هر درخواست. فقط کسی که واقعاً صندلی رزرو کرده مسیر کند را
+    # می‌رود.
+    holders = {h for _sid, _n, _a, h in shared if h is not None}
+
+    if current_user_id not in holders:
+        body = cache.get(cache_key + ':json')
+        if body is None:
+            body = json.dumps({'seats': [
+                {
+                    'id': sid,
+                    'number': number,
+                    'is_available': available,
+                    'is_reserved': holder is not None,
+                    'reserved_by_me': False,
+                }
+                for sid, number, available, holder in shared
+            ]})
+            cache.set(cache_key + ':json', body, SEATS_STATUS_TTL)
+        return HttpResponse(body, content_type='application/json')
+
     data = {'seats': [
         {
             'id': sid,
             'number': number,
             'is_available': available,
             'is_reserved': holder is not None,
-            'reserved_by_me': holder is not None and holder == current_user_id,
+            'reserved_by_me': holder == current_user_id,
         }
         for sid, number, available, holder in shared
     ]}
