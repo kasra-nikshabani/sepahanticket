@@ -5,8 +5,13 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
+    # ===== عمداً به 0009 وصل است، نه به 0010 =====
+    # 0010 (fan_id_subject) فقط روی شاخه‌ی feature/keycloak-sso وجود دارد و
+    # روی main/پروداکشن نیست. این مایگریشن فیلدی به SiteSettings اضافه می‌کند
+    # و هیچ ربطی به User ندارد، پس وابستگی واقعی‌اش همان 0009 است. روی شاخه‌ی
+    # فیچر، مایگریشنِ merge دو سرِ 0010 و 0011 را به هم می‌رساند.
     dependencies = [
-        ('accounts', '0010_user_fan_id_subject'),
+        ('accounts', '0009_user_is_basa_member'),
     ]
 
     operations = [
