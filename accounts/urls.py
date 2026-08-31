@@ -30,5 +30,6 @@ urlpatterns = [
 
     # ===== پنل ادمین: تنظیمات اضطراری =====
     path('admin/emergency-settings/', views.admin_emergency_settings, name='admin_emergency_settings'),
+    path('admin/site-settings/', views.admin_site_settings, name='admin_site_settings'),
 
 ]

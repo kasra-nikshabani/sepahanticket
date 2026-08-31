@@ -11,6 +11,7 @@ from .models import Payment
 from tickets.views import get_age_from_jalali, get_verified_age  # ایمپورت تابع محاسبه سن از tickets
 from matches.models import Match
 from tickets.models import Ticket
+from wallet.models import is_wallet_enabled, WALLET_DISABLED_MESSAGE
 logger = logging.getLogger(__name__)
 
 
@@ -87,6 +88,18 @@ def payment_request(request):
         except (TypeError, ValueError):
             wallet_amount_used = 0
 
+        # ===== اگر کیف پول غیرفعال است، سهم کیف پول نادیده گرفته می‌شود =====
+        # فرم می‌تواند wallet_amount را با DevTools هم بفرستد؛ اینجا سمت سرور
+        # صفر می‌شود. مبلغ درگاه دست‌نخورده می‌ماند، پس کاربر کمتر از قیمت
+        # واقعی پرداخت نمی‌کند و _finalize_ticket_purchase هم مابه‌التفاوت
+        # احتمالی را به کیف پول برمی‌گرداند.
+        if wallet_amount_used and not is_wallet_enabled():
+            logger.warning(
+                "wallet_amount=%s ignored for user %s: wallet is disabled site-wide",
+                wallet_amount_used, request.user.id,
+            )
+            wallet_amount_used = 0
+
         # ===== ذخیره تمام اطلاعات خریدار در دیتابیس =====
         buyer_info = {}
         for key, value in request.POST.items():
@@ -131,6 +144,14 @@ def payment_request(request):
         )
         description = "پرداخت بلیط"
     else:
+        # ===== شارژ کیف پول: آخرین و مهم‌ترین نقطه‌ی جلوگیری =====
+        # صفحه‌ی wallet:charge فقط فرم را نشان می‌دهد؛ شارژ واقعی از همین‌جا
+        # شروع می‌شود. اگر فقط آن صفحه بسته می‌شد، یک POST مستقیم به این
+        # آدرس هنوز کاربر را به درگاه می‌برد.
+        if not is_wallet_enabled():
+            messages.error(request, WALLET_DISABLED_MESSAGE)
+            return redirect('wallet:dashboard')
+
         payment = Payment.objects.create(
             user=request.user,
             purpose='wallet_charge',
@@ -234,8 +255,18 @@ def payment_verify(request):
         user = payment.user
 
         if payment.purpose == 'wallet_charge':
+            # ===== اینجا عمداً is_wallet_enabled چک نمی‌شود =====
+            # اگر ادمین دقیقاً وقتی کاربر روی صفحه‌ی زیبال بوده کیف پول را
+            # خاموش کرده باشد، پول از حساب کاربر کم شده است. رد کردن واریز
+            # یعنی گم شدن پول واقعی. جلوگیری در payment_request انجام می‌شود
+            # (قبل از رفتن به درگاه)، نه اینجا.
             from wallet.models import Wallet
             wallet, _ = Wallet.objects.get_or_create(user=user)
+            if not is_wallet_enabled():
+                logger.warning(
+                    "Crediting wallet_charge payment %s (track %s) although wallet is disabled: "
+                    "money was already captured at the gateway.", payment.id, track_id,
+                )
             wallet.add_balance(amount=amount, description=f'شارژ کیف پول از طریق زیبال - تراکنش {track_id}', reference_id=track_id)
             messages.success(request, f"✅ کیف پول شما با موفقیت به مبلغ {amount:,} ریال شارژ شد.")
 

@@ -829,11 +829,13 @@
                         <span>بلیط‌ها</span>
                     </a>
                     <!-- کیف پول -->
+                    {% if wallet_enabled %}
                     <a href="{% url 'wallet:dashboard' %}"
                        class="bottom-nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                         <i class="fas fa-wallet"></i>
                         <span>کیف پول</span>
                     </a>
+                    {% endif %}
                     <!-- پروفایل -->
                     <a href="{% url 'accounts:profile' %}"
                        class="bottom-nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">

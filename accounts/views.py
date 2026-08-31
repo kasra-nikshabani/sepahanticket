@@ -463,3 +463,48 @@ def admin_emergency_settings(request):
 
     context = {'settings_obj': settings_obj}
     return render(request, 'accounts/admin_emergency_settings.html', context)
+
+
+@login_required
+@staff_member_required
+def admin_site_settings(request):
+    """
+    تنظیمات عمومی سایت -- فعلاً فقط سوییچ فعال/غیرفعال بودن کیف پول.
+
+    عمداً از «تنظیمات اضطراری» جداست: آن صفحه یک کلید بحرانی و موقتی است،
+    این‌جا تنظیماتی است که ممکن است مدت‌ها در یک حالت بماند.
+    """
+    from .models import SiteSettings
+    from django.db.models import Sum, Count
+    from wallet.models import Wallet
+
+    settings_obj = SiteSettings.get_solo()
+
+    if request.method == 'POST':
+        new_value = 'wallet_enabled' in request.POST
+        if new_value != settings_obj.wallet_enabled:
+            settings_obj.wallet_enabled = new_value
+            settings_obj.save()
+            if new_value:
+                messages.success(
+                    request,
+                    'کیف پول فعال شد: کاربران دوباره می‌توانند کیف پولشان را شارژ کنند '
+                    'و از موجودی آن برای خرید بلیط استفاده کنند.'
+                )
+            else:
+                messages.warning(
+                    request,
+                    'کیف پول غیرفعال شد: از این پس نه شارژ ممکن است و نه پرداخت از کیف پول. '
+                    'موجودی کاربران دست‌نخورده باقی می‌ماند و با فعال کردن دوباره، قابل استفاده می‌شود.'
+                )
+        return redirect('accounts:admin_site_settings')
+
+    # آماری که تصمیم‌گیری را برای ادمین روشن می‌کند: خاموش کردن کیف پول یعنی
+    # این مقدار پول تا اطلاع ثانوی بلااستفاده می‌ماند.
+    agg = Wallet.objects.filter(balance__gt=0).aggregate(total=Sum('balance'), cnt=Count('id'))
+    context = {
+        'settings_obj': settings_obj,
+        'wallets_with_balance': agg['cnt'] or 0,
+        'total_wallet_balance': agg['total'] or 0,
+    }
+    return render(request, 'accounts/admin_site_settings.html', context)

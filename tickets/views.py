@@ -41,7 +41,7 @@ from matches.models import (
     find_new_orphan_seats, get_block_zone_for_match, ZONE_CHOICES,
 )
 from accounts.models import User
-from wallet.models import Wallet
+from wallet.models import Wallet, is_wallet_enabled, WALLET_DISABLED_MESSAGE
 from .utils import get_access_token
 
 logger = logging.getLogger(__name__)
@@ -1033,6 +1033,7 @@ def ticket_info(request, match_id):
             return redirect('matches:block_map', match_id=match_id)
 
     wallet, created = Wallet.objects.get_or_create(user=request.user)
+    wallet_enabled = is_wallet_enabled()
 
     from accounts.models import SiteSettings
     context = {
@@ -1041,6 +1042,7 @@ def ticket_info(request, match_id):
         'total_price': total_price,
         'remaining_time': remaining_time,
         'wallet_balance': wallet.balance,
+        'wallet_enabled': wallet_enabled,
         'bypass_civil_registry_inquiry': SiteSettings.get_solo().bypass_civil_registry_inquiry,
     }
 
@@ -1049,6 +1051,14 @@ def ticket_info(request, match_id):
         try:
             wallet_amount = int(request.POST.get('wallet_amount', 0))
         except (ValueError, TypeError):
+            wallet_amount = 0
+
+        # ===== کیف پول غیرفعال: سهم کیف پول سمت سرور صفر می‌شود =====
+        # چک‌باکس در تمپلیت پنهان است، ولی use_wallet/wallet_amount ورودی
+        # کاربرند و قابل جعل. بدون این خط، کاربر می‌توانست با یک POST دستی
+        # از موجودی کیف پول خرج کند در حالی که کیف پول خاموش است.
+        if not wallet_enabled:
+            use_wallet = False
             wallet_amount = 0
 
         discount_code = request.POST.get('discount_code', '').strip()

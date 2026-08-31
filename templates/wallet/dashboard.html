@@ -527,15 +527,29 @@
                     <span>کیف پول من</span>
                 </div>
                 <div class="header-actions">
+                    {% if wallet_enabled %}
                     <a href="{% url 'wallet:charge' %}" class="btn-charge">
                         <i class="fas fa-plus-circle"></i> شارژ کیف پول
                     </a>
+                    {% endif %}
                     <a href="{% url 'matches:home' %}" class="btn-back">
                         <i class="fas fa-arrow-right"></i> بازگشت
                     </a>
                 </div>
             </div>
         </div>
+
+        {% if not wallet_enabled %}
+        <!-- ===== کیف پول توسط مدیریت غیرفعال شده ===== -->
+        <div style="background:#fdeceb; border:1px solid #f5b7b1; border-right:4px solid #c0392b;
+                    border-radius:12px; padding:14px 18px; margin-bottom:18px;
+                    font-size:.9rem; color:#922b21; line-height:1.95;">
+            <i class="fas fa-ban"></i>
+            <strong>کیف پول در حال حاضر غیرفعال است.</strong>
+            امکان شارژ کیف پول و پرداخت هزینه‌ی بلیط از کیف پول وجود ندارد.
+            موجودی شما محفوظ است و به محض فعال شدن دوباره، قابل استفاده خواهد بود.
+        </div>
+        {% endif %}
 
         <!-- ===== موجودی ===== -->
         <div class="balance-card">
@@ -672,11 +686,15 @@
                     <div class="empty-state">
                         <i class="fas fa-receipt"></i>
                         <h4>هیچ تراکنشی انجام نشده است</h4>
+                        {% if wallet_enabled %}
                         <p>کیف پول شما خالی است. برای شروع، کیف پول خود را شارژ کنید.</p>
                         <a href="{% url 'wallet:charge' %}" class="btn-charge"
                            style="display:inline-flex; margin-top:12px; border:none;">
                             <i class="fas fa-plus-circle"></i> شارژ کیف پول
                         </a>
+                        {% else %}
+                        <p>کیف پول در حال حاضر غیرفعال است.</p>
+                        {% endif %}
                     </div>
                 {% endif %}
             </div>

@@ -5,6 +5,26 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+# پیامی که همه‌جا -- شارژ، خرید بلیط، درگاه -- به کاربر نشان داده می‌شود تا
+# دلیلِ کار نکردن کیف پول یکسان و روشن باشد.
+WALLET_DISABLED_MESSAGE = (
+    'کیف پول در حال حاضر توسط مدیریت غیرفعال شده است؛ '
+    'امکان شارژ یا پرداخت از کیف پول وجود ندارد.'
+)
+
+
+def is_wallet_enabled():
+    """
+    آیا کیف پول برای استفاده (شارژ و پرداخت) فعال است؟
+
+    تک‌منبعِ حقیقت برای همه‌ی مسیرها -- ویوی شارژ، درگاه پرداخت و خرید بلیط --
+    تا اگر ادمین کیف پول را خاموش کند هیچ راه فرعی‌ای باز نماند.
+    توجه: این فقط جلوی *استفاده* را می‌گیرد، نه واریزهای برگشتی؛ بازگشت وجه
+    باید حتی در حالت غیرفعال هم انجام شود وگرنه پول واقعیِ کاربر گم می‌شود.
+    """
+    from accounts.models import SiteSettings
+    return SiteSettings.get_solo().wallet_enabled
+
 
 class Wallet(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='wallet')

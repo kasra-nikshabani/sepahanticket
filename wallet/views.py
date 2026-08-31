@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.cache import never_cache
 
-from .models import Wallet, Transaction
+from .models import Wallet, Transaction, is_wallet_enabled, WALLET_DISABLED_MESSAGE
 
 
 @never_cache
@@ -64,6 +64,9 @@ def wallet_dashboard(request):
         'total_ticket_purchases': total_ticket_purchases,
         'total_refunds': total_refunds,
         'total_transactions': total_transactions,
+        # داشبورد در حالت غیرفعال هم باز می‌ماند (کاربر باید موجودی و تاریخچه‌اش
+        # را ببیند)، ولی دکمه‌های شارژ جای خود را به یک توضیح می‌دهند.
+        'wallet_enabled': is_wallet_enabled(),
     }
     return render(request, 'wallet/dashboard.html', context)
 
@@ -81,6 +84,13 @@ def wallet_charge(request):
     if request.user.user_type == 'vip':
         messages.error(request, 'کاربران ویژه به این بخش دسترسی ندارند.')
         return redirect('matches:home')
+
+    # ===== کیف پول غیرفعال یعنی صفحه‌ی شارژ اصلاً باز نشود =====
+    # پنهان کردن دکمه در تمپلیت کافی نیست؛ آدرس این صفحه ممکن است بوکمارک
+    # شده باشد یا مستقیم تایپ شود.
+    if not is_wallet_enabled():
+        messages.error(request, WALLET_DISABLED_MESSAGE)
+        return redirect('wallet:dashboard')
 
     wallet = get_object_or_404(Wallet, user=request.user)
 

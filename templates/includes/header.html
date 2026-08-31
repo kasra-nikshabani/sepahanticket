@@ -38,11 +38,13 @@
                                     <i class="fas fa-ticket-alt"></i> بلیط‌های من
                                 </a>
                             </li>
+                            {% if wallet_enabled %}
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'wallet:dashboard' %}">
                                     <i class="fas fa-wallet"></i> کیف پول
                                 </a>
                             </li>
+                            {% endif %}
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'accounts:profile' %}">
                                     <i class="fas fa-user"></i> حساب کاربری
