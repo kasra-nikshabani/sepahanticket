@@ -1,0 +1,81 @@
+{# ===== صفحه‌ی خطای CSRF =====
+   جنگو این قالب را با Context ساده رندر می‌کند، نه RequestContext -- یعنی
+   نه context processorها اجرا می‌شوند و نه request/user در دسترس‌اند.
+   برای همین عمداً مستقل و بدون extends نوشته شده (هم‌الگوی geo_blocked.html)
+   تا هیچ وابستگی‌ای نتواند این صفحه را بشکند و به‌جای ۴۰۳، خطای ۵۰۰ بدهد.
+   به همین دلیل از وب‌فونت هم استفاده نمی‌کند. #}<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نشست منقضی شده — بلیط سپاهان</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        font-family: Tahoma, 'Segoe UI', sans-serif;
+        background: linear-gradient(145deg, #1A1A2E 0%, #2a2a44 100%);
+        color: #fff; margin: 0; min-height: 100vh;
+        display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .box {
+        background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+        border-radius: 20px; max-width: 520px; width: 100%; overflow: hidden;
+        box-shadow: 0 18px 50px rgba(0,0,0,.35);
+    }
+    .top {
+        background: rgba(0,0,0,.25); border-bottom: 3px solid #D4AF37;
+        padding: 30px 24px 24px; text-align: center;
+    }
+    .code {
+        font-size: 3.6rem; font-weight: 800; color: #D4AF37; margin: 0; line-height: 1;
+        letter-spacing: 3px; text-shadow: 0 4px 18px rgba(212,175,55,.3);
+    }
+    .top h1 { font-size: 1.15rem; margin: 14px 0 0; font-weight: 700; }
+    .body { padding: 24px; }
+    .body p { line-height: 2.1; font-size: .93rem; color: #dcdfe6; margin: 0 0 14px; }
+    .why {
+        background: rgba(212,175,55,.1); border: 1px solid rgba(212,175,55,.3);
+        border-radius: 12px; padding: 14px 16px; font-size: .87rem;
+        line-height: 2; color: #f0e2b8; margin-bottom: 20px;
+    }
+    .why b { color: #D4AF37; }
+    .acts { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn {
+        flex: 1; min-width: 150px; text-align: center; text-decoration: none;
+        border: none; border-radius: 11px; padding: 12px 18px;
+        font-weight: 700; font-size: .9rem; cursor: pointer;
+        font-family: inherit; transition: transform .15s, filter .15s;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn.gold { background: linear-gradient(135deg, #D4AF37, #b8960f); color: #1A1A2E; }
+    .btn.ghost { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.18); }
+    @media (max-width: 420px) { .btn { flex: 1 1 100%; } }
+</style>
+</head>
+<body>
+<div class="box">
+    <div class="top">
+        <p class="code">۴۰۳</p>
+        <h1>درخواست شما تأیید نشد</h1>
+    </div>
+    <div class="body">
+        <p>
+            به دلایل امنیتی، این درخواست پذیرفته نشد. اطلاعاتی که فرستادید ثبت نشده
+            و هیچ تغییری در حساب شما ایجاد نشده است.
+        </p>
+        <div class="why">
+            <b>چرا این اتفاق افتاد؟</b><br>
+            معمولاً وقتی پیش می‌آید که صفحه مدت زیادی باز مانده باشد و نشست شما
+            منقضی شده باشد، یا در یک تب دیگر از حساب خارج و دوباره وارد شده باشید.
+        </div>
+        <p style="font-size:.9rem;">
+            کافی است صفحه را تازه کنید و دوباره تلاش کنید.
+        </p>
+        <div class="acts">
+            <button type="button" class="btn gold" onclick="location.reload(true)">تازه کردن صفحه</button>
+            <a href="/" class="btn ghost">صفحه اصلی</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>
