@@ -539,6 +539,15 @@
             (function pollPendingPdfs() {
                 let attempts = 0;
                 const maxAttempts = 40;
+                // ===== فاصله‌ی پرسش با عقب‌نشینی تدریجی =====
+                // قبلاً هر ۳ ثانیه، تا ۲ دقیقه، بدون توجه به اینکه تب دیده می‌شود یا نه.
+                // روز دربی این اندپوینت به ۷۱ درخواست بر ثانیه رسید. PDF معمولاً در چند
+                // ثانیه‌ی اول آماده می‌شود، پس اول سریع می‌پرسیم و بعد فاصله را زیاد
+                // می‌کنیم؛ و در تبِ مخفی اصلاً نمی‌پرسیم.
+                function nextDelay() {
+                    if (document.hidden) return 8000;
+                    return Math.min(3000 + attempts * 700, 12000);
+                }
 
                 function pendingIds() {
                     return Array.from(document.querySelectorAll('tr[data-ticket-id]:not([data-pdf-url])'))
@@ -566,13 +575,13 @@
                                     slot.outerHTML = `<a href="${info.pdf_url}" target="_blank" class="btn-action pdf-slot" title="دانلود PDF"><i class="fas fa-file-pdf"></i></a>`;
                                 }
                             });
-                            setTimeout(tick, 3000);
+                            setTimeout(tick, nextDelay());
                         })
                         .catch(() => setTimeout(tick, 5000));
                 }
 
                 if (pendingIds().length > 0) {
-                    setTimeout(tick, 3000);
+                    setTimeout(tick, nextDelay());
                 }
             })();
 
