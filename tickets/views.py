@@ -42,7 +42,10 @@ from matches.models import (
 )
 from accounts.models import User
 from wallet.models import Wallet, is_wallet_enabled, WALLET_DISABLED_MESSAGE
-from .utils import get_access_token, FAN_API_TIMEOUT
+from .utils import (
+    get_access_token, FAN_API_TIMEOUT, FanAPIDownError,
+    fan_api_is_down, record_fan_api_failure, record_fan_api_success,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1593,7 +1596,18 @@ def inquiry_fan(request):
             "tarikheTavallod": tarikhe_tavallod
         }
 
-        response = requests.post(url, json=payload, headers=headers, timeout=FAN_API_TIMEOUT)
+        # مدار شکن: اگر سرویس بیرونی خراب است اصلاً تماس نگیر (نخ را قفل نکن)
+        if fan_api_is_down():
+            raise FanAPIDownError()
+
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=FAN_API_TIMEOUT)
+        except requests.exceptions.RequestException:
+            record_fan_api_failure()
+            raise FanAPIDownError()
+
+        # پاسخ گرفتیم؛ سرویس زنده است (حتی اگر جواب منفی باشد)
+        record_fan_api_success()
 
         # ===== بررسی اینکه آیا سرور پاسخ JSON داده یا خیر =====
         try:
@@ -1650,6 +1664,10 @@ def inquiry_fan(request):
         else:
             error_msg = data.get('message', data.get('error', 'اطلاعات با ثبت احوال تطابق ندارد.'))
             return JsonResponse({'success': False, 'error': error_msg}, status=response.status_code)
+
+    except FanAPIDownError as e:
+        # خرابیِ سرویس بیرونی، نه خرابیِ ما: ۵۰۳ به‌جای ۵۰۰
+        return JsonResponse({'success': False, 'error': e.message}, status=503)
 
     except Exception as e:
         return JsonResponse({'success': False, 'error': 'خطا در ارتباط با سامانه هواداری. لطفاً مجددا تلاش کنید.'},
