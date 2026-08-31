@@ -485,7 +485,7 @@ def vip_issue_manual(request, match_id):
                 return redirect('tickets:vip_dashboard')
 
             try:
-                match_seat = MatchSeat.objects.select_for_update().select_related('seat__row__block').get(
+                match_seat = MatchSeat.objects.select_for_update(of=('self',)).select_related('seat__row__block').get(
                     id=match_seat_id, match=match, is_available=True, is_enabled=True
                 )
             except MatchSeat.DoesNotExist:
@@ -619,7 +619,7 @@ def vip_issue_excel(request, match_id):
                 quota = VIPQuota.objects.select_for_update().get(pk=quota.pk)
 
                 available_match_seats = list(
-                    MatchSeat.objects.select_for_update().filter(
+                    MatchSeat.objects.select_for_update(of=('self',)).filter(
                         match=match, is_available=True, is_enabled=True,
                         seat__row__block_id__in=get_active_block_ids(match),
                         seat__row_id__in=get_active_row_ids(match),
@@ -800,10 +800,19 @@ def reserve_seats(request, match_id):
 
     try:
         with transaction.atomic():
-            # قفل ردیف‌های MatchSeat تا پایان تراکنش — جلوگیری از double-booking
+            # ===== قفل ردیف‌های MatchSeat تا پایان تراکنش — جلوگیری از double-booking
+            #
+            # of=('self',) اینجا حیاتی است: select_for_update به‌تنهایی همراه با
+            # select_related، ردیفِ *همه‌ی* جدول‌های join‌شده را قفل می‌کند --
+            # یعنی علاوه بر خودِ صندلی، ردیفِ matches_block هم قفل می‌شود. نتیجه
+            # این بود که هر کسی در یک بلوک صندلی می‌گرفت پشت همان یک ردیفِ بلوک
+            # صف می‌کشید و کل رزروِ آن بلوک سریالی می‌شد. روز دربی همین باعث شد
+            # کوئری رزرو تا ۱۶ ثانیه طول بکشد و سایت عملاً بخوابد. of=('self',)
+            # به پستگرس می‌گوید فقط ردیفِ MatchSeat قفل شود -- همان چیزی که
+            # برای جلوگیری از double-booking لازم است، نه بیشتر. =====
             locked = (
                 MatchSeat.objects
-                .select_for_update()
+                .select_for_update(of=('self',))
                 .select_related('seat__row__block')
                 .filter(id__in=selected_seats, match=match)
             )

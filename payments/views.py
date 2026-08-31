@@ -403,7 +403,7 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             ms.id: ms
             for ms in (
                 MatchSeat.objects
-                .select_for_update()
+                .select_for_update(of=('self',))
                 .select_related('seat__row__block')
                 .filter(id__in=match_seat_pks, match=match)
             )

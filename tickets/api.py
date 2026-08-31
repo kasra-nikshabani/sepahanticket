@@ -132,7 +132,7 @@ def scan_ticket(request):
         # برگردونن -- یعنی با یک بلیط دو نفر وارد بشن. با select_for_update
         # تراکنش دوم منتظر اولی می‌مونه و درست 'used' می‌بینه.
         with transaction.atomic():
-            ticket = Ticket.objects.select_for_update().select_related(
+            ticket = Ticket.objects.select_for_update(of=('self',)).select_related(
                 'seat__row__block', 'match', 'user'
             ).get(ticket_number=ticket_number)
 
