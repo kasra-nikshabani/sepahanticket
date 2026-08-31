@@ -796,6 +796,24 @@
                 <div class="stat-number">{{ women_sold }}</div>
                 <p class="stat-label">بلیط بانوان میزبان</p>
             </div>
+            <div class="stat-card pink">
+                <span class="stat-icon"><i class="fas fa-venus"></i></span>
+                <div class="stat-number">{{ women_away_sold }}</div>
+                <p class="stat-label">بلیط بانوان میهمان</p>
+            </div>
+            <div class="stat-card blue">
+                <span class="stat-icon"><i class="fas fa-calculator"></i></span>
+                <div class="stat-number">{{ zones_sold_total }}</div>
+                <p class="stat-label">جمع تفکیک سکوها</p>
+                <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">
+                    میزبان + میهمان + VIP + کلاس ۱ + بانوان میزبان + بانوان میهمان
+                    {% if zones_unassigned %}
+                        — ⚠️ {{ zones_unassigned }} بلیط در بلوکی است که نوع جایگاه ندارد
+                    {% else %}
+                        — با «کل بلیط صادرشده» می‌خواند ✓
+                    {% endif %}
+                </small>
+            </div>
             <!-- ===== پایان آمار سکوها ===== -->
 
             <div class="stat-card red">

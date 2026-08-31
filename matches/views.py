@@ -1500,19 +1500,26 @@ def _compute_match_report_stats(match):
     )
     attendance_percent = round((used_tickets / total_issued_tickets * 100) if total_issued_tickets > 0 else 0, 1)
 
-    # ظرفیت/اشغال بر اساس بلوک‌ها و ردیف‌هایی که برای همین مسابقه فعال‌اند
+    # ===== ظرفیت = صندلی‌هایی که واقعاً برای این مسابقه قابل فروش‌اند =====
+    # علاوه بر فعال بودن بلوک و ردیف، خودِ صندلی هم باید فعال باشد:
+    #   MatchSeat.is_enabled  -> ادمین برای همین مسابقه خاموشش نکرده
+    #   Seat.is_available     -> به‌صورت کلی هم از رده خارج نشده
+    # بدون این دو شرط، صندلیِ خاموش‌شده در ظرفیت شمرده می‌شد و درصد اشغال
+    # همیشه کمی کمتر از واقعیت درمی‌آمد.
     active_block_ids = get_active_block_ids(match)
     active_row_ids = get_active_row_ids(match)
-    total_match_seats = Seat.objects.filter(
-        row__block__stadium=match.stadium,
-        row__block_id__in=active_block_ids,
-        row_id__in=active_row_ids,
-    ).count()
-    occupied = MatchSeat.objects.filter(
-        match=match, is_available=False,
+    sellable_qs = MatchSeat.objects.filter(
+        match=match,
         seat__row__block_id__in=active_block_ids,
         seat__row_id__in=active_row_ids,
-    ).count()
+        is_enabled=True,
+        seat__is_available=True,
+    )
+    total_match_seats = sellable_qs.count()
+    # اشغال فقط از میان همان صندلی‌های قابل فروش شمرده می‌شود -- وگرنه یک
+    # صندلیِ خاموشِ ادمین (که is_available=False دارد) به‌اشتباه «فروخته‌شده»
+    # حساب می‌شد و بلوک بدون هیچ بلیطی «۱ فروش» نشان می‌داد.
+    occupied = sellable_qs.filter(is_available=False).count()
     available = total_match_seats - occupied
     occupancy_percent = round((occupied / total_match_seats * 100) if total_match_seats > 0 else 0, 1)
 
@@ -1525,8 +1532,16 @@ def _compute_match_report_stats(match):
     blocks_data = []
     block_price_map = get_block_price_map(match)
     for block in blocks:
-        total_seats = Seat.objects.filter(row__block=block, row_id__in=active_row_ids).count()
-        occupied_seats = MatchSeat.objects.filter(match=match, seat__row__block=block, is_available=False).count()
+        # همان تعریفِ بالا، این‌بار به تفکیک بلوک: ظرفیت = صندلیِ قابل فروش،
+        # اشغال = از میان همان‌ها. قبلاً ظرفیت از روی Seat خام شمرده می‌شد
+        # (بدون توجه به خاموش بودن صندلی) و اشغال بدون فیلترِ ردیف‌های فعال --
+        # یعنی یک صندلیِ خاموش هم ظرفیت را بالا می‌برد و هم «فروش» جعلی می‌ساخت.
+        block_sellable = MatchSeat.objects.filter(
+            match=match, seat__row__block=block, seat__row_id__in=active_row_ids,
+            is_enabled=True, seat__is_available=True,
+        )
+        total_seats = block_sellable.count()
+        occupied_seats = block_sellable.filter(is_available=False).count()
         available_seats = total_seats - occupied_seats
         occupancy = round((occupied_seats / total_seats * 100) if total_seats > 0 else 0, 1)
         block_revenue = sum(
@@ -1573,11 +1588,20 @@ def _compute_match_report_stats(match):
             'attendance_percent': round((zone_used / zone_sold * 100) if zone_sold > 0 else 0, 1),
         })
         zones_data[-1]['not_used_percent'] = round(100 - zones_data[-1]['attendance_percent'], 1) if zone_sold > 0 else 0
-    home_sold = next(z['sold'] for z in zones_data if z['key'] == 'home')
-    away_sold = next(z['sold'] for z in zones_data if z['key'] == 'away')
-    women_sold = next(z['sold'] for z in zones_data if z['key'] == 'women')
-    class1_sold = next(z['sold'] for z in zones_data if z['key'] == 'class1')
-    vip_sold = next(z['sold'] for z in zones_data if z['key'] == 'vip')
+    # ===== هر شش جایگاه باید از zones_data بیرون کشیده شود =====
+    # قبلاً women_away این‌جا جا افتاده بود: کارت‌های خلاصه‌ی صفحه‌ی جزئیات
+    # فقط پنج‌تای اول را نشان می‌دادند، پس بلیط‌های «بانوان میهمان» در تفکیک
+    # سکوها اصلاً دیده نمی‌شدند و جمعِ کارت‌ها با «کل بلیط صادرشده» نمی‌خواند.
+    _by_key = {z['key']: z['sold'] for z in zones_data}
+    home_sold = _by_key['home']
+    away_sold = _by_key['away']
+    women_sold = _by_key['women']
+    women_away_sold = _by_key['women_away']
+    class1_sold = _by_key['class1']
+    vip_sold = _by_key['vip']
+    # جمعِ تفکیک سکوها -- باید همیشه با total_issued_tickets برابر باشد؛
+    # اگر نبود یعنی بلیطی در بلوکی است که هیچ نوع جایگاهی ندارد.
+    zones_sold_total = sum(_by_key.values())
 
     # ===== درصدهای مکملِ «حاضر نشدند»، برای نمودارهای میله‌ای CSS در PDF
     # (WeasyPrint جاوااسکریپت اجرا نمی‌کند، پس Chart.js کار نمی‌کند؛ به‌جاش
@@ -1599,7 +1623,10 @@ def _compute_match_report_stats(match):
         'used_tickets': used_tickets, 'not_used_tickets': not_used_tickets,
         'total_issued_tickets': total_issued_tickets, 'attendance_percent': attendance_percent,
         'home_sold': home_sold, 'away_sold': away_sold, 'women_sold': women_sold,
+        'women_away_sold': women_away_sold,
         'class1_sold': class1_sold, 'vip_sold': vip_sold, 'zones_data': zones_data,
+        'zones_sold_total': zones_sold_total,
+        'zones_unassigned': total_issued_tickets - zones_sold_total,
         'free_age_count': category_stats['free_age_count'],
         'free_age_used_count': category_stats['free_age_used_count'],
         'free_age_not_used_count': free_age_not_used_count,
