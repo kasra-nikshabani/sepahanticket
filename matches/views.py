@@ -116,16 +116,25 @@ def home(request):
             cache.set(ck, val, 600)
         match_capacity[m.id] = val
 
-    # تعداد صندلی‌های غیرفعال (فروخته/رزرو) per match
-    sold_map = {
-        row['match_id']: row['c']
-        for row in (
-            MatchSeat.objects
-            .filter(match_id__in=[m.id for m in matches_list], is_available=False)
-            .values('match_id')
-            .annotate(c=Count('id'))
-        )
-    }
+    # ===== تعداد فروخته/رزرو هم کش می‌شود (کوتاه) =====
+    # این GROUP BY روی صدها هزار ردیف MatchSeat است و مثل ظرفیت، در هر
+    # بازدید از صفحه‌ی اصلی اجرا می‌شد. برخلاف ظرفیت، این عدد با هر خرید
+    # عوض می‌شود؛ پس TTL کوتاه است -- ۳۰ ثانیه تأخیر در نمایش درصد اشغال
+    # روی صفحه‌ی اصلی کاملاً قابل قبول است و بار دیتابیس را چند مرتبه
+    # کم می‌کند. تصمیم‌های واقعیِ فروش هیچ‌وقت از این عدد خوانده نمی‌شوند.
+    sold_ck = 'home_sold_map:' + ','.join(str(m.id) for m in matches_list)
+    sold_map = cache.get(sold_ck)
+    if sold_map is None:
+        sold_map = {
+            row['match_id']: row['c']
+            for row in (
+                MatchSeat.objects
+                .filter(match_id__in=[m.id for m in matches_list], is_available=False)
+                .values('match_id')
+                .annotate(c=Count('id'))
+            )
+        }
+        cache.set(sold_ck, sold_map, 30)
 
     for match in matches_list:
         total_seats = match_capacity.get(match.id, 0)
