@@ -10,7 +10,7 @@ from zibal_payment.client import ZibalClient
 from .models import Payment
 from tickets.views import get_age_from_jalali, get_verified_age  # ایمپورت تابع محاسبه سن از tickets
 from matches.models import Match
-from tickets.models import Ticket
+from tickets.models import Ticket, is_free_for_age
 from wallet.models import is_wallet_enabled, WALLET_DISABLED_MESSAGE
 logger = logging.getLogger(__name__)
 
@@ -436,7 +436,7 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             # محسوب نمی‌شود. raw_age فقط برای نمایش روی خودِ بلیط استفاده می‌شود.
             raw_age = get_age_from_jalali(tarikhe_tavallod)
             verified_age = get_verified_age(user.id, national_code)
-            is_free = verified_age is not None and verified_age < 15
+            is_free = is_free_for_age(verified_age)
             age = verified_age if verified_age is not None else raw_age
 
             block = match_seat.seat.row.block

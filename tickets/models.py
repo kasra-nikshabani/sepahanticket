@@ -19,6 +19,35 @@ from accounts.models import User
 from wallet.models import Transaction as WalletTransaction
 
 
+# ===== رایگان بودن بلیط بر اساس سن =====
+# سقف سن و «آیا اصلاً این قانون فعال است» هر دو یک‌جا جمع شده‌اند تا هر چهار
+# مسیری که قیمت را حساب می‌کنند (استعلام عادی، حالت اضطراری، تسویه‌ی رایگان،
+# و نهایی‌سازی بعد از درگاه) دقیقاً یک تصمیم بگیرند. اگر این پراکنده بماند،
+# کافی است یکی از مسیرها جا بیفتد تا قیمتی که به کاربر نشان داده می‌شود با
+# قیمتی که واقعاً ثبت می‌شود فرق کند.
+FREE_AGE_LIMIT = 15
+
+
+def is_under15_free_enabled():
+    """آیا قانون «رایگان برای زیر ۱۵ سال» از تنظیمات سایت روشن است؟"""
+    from accounts.models import SiteSettings
+    return SiteSettings.get_solo().free_under_15
+
+
+def is_free_for_age(age):
+    """
+    آیا بلیطِ فردی با این سن رایگان است؟
+
+    age=None یعنی سنِ تأییدشده‌ای در دست نیست -- در آن حالت عمداً رایگان
+    محسوب نمی‌شود (پیش‌فرض امن)، همان رفتاری که قبلاً هم بود.
+    """
+    if age is None:
+        return False
+    if not is_under15_free_enabled():
+        return False
+    return age < FREE_AGE_LIMIT
+
+
 # tickets/models.py
 class Ticket(models.Model):
     TICKET_STATUS = (

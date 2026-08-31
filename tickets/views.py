@@ -32,7 +32,7 @@ from weasyprint.text.fonts import FontConfiguration
 import pytz
 
 import matches
-from .models import Ticket, VIPQuota, DiscountCode, Order, SpecialCode
+from .models import Ticket, VIPQuota, DiscountCode, Order, SpecialCode, is_free_for_age
 from .forms import BulkTicketForm, VIPQuotaForm, DiscountCodeForm
 from .reservation import SeatReservation
 from matches.models import Match, Seat, Row, MatchSeat, Block, get_block_price_map, get_basa_discount_percent
@@ -1154,7 +1154,7 @@ def ticket_info(request, match_id):
             # محسوب نمی‌شود. raw_age فقط برای نمایش روی خودِ بلیط استفاده می‌شود. =====
             raw_age = get_age_from_jalali(tarikhe_tavallod)
             verified_age = get_verified_age(request.user.id, national_code)
-            is_free = verified_age is not None and verified_age < 15
+            is_free = is_free_for_age(verified_age)
             age = verified_age if verified_age is not None else raw_age
 
             basa_discount_amount = 0
@@ -1550,7 +1550,7 @@ def inquiry_fan(request):
                 return JsonResponse({'success': False, 'error': 'کد ملی وارد شده معتبر نیست.'}, status=400)
 
             age = get_age_from_jalali(tarikhe_tavallod)
-            is_free = age < 15
+            is_free = is_free_for_age(age)
 
             is_basa = False
             basa_discount_percent = 0
@@ -1620,7 +1620,7 @@ def inquiry_fan(request):
 
         if response.status_code in [200, 201]:
             age = get_age_from_jalali(tarikhe_tavallod)
-            is_free = age < 15
+            is_free = is_free_for_age(age)
 
             # ===== تخفیف باسا -- باید همینجا (قبل از پرداخت) به کاربر نشون
             # داده بشه، وگرنه قیمتی که سمت مرورگر محاسبه و به درگاه فرستاده

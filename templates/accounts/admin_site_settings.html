@@ -136,15 +136,82 @@
 
             <form method="post">
                 {% csrf_token %}
+                <input type="hidden" name="setting" value="wallet_enabled">
                 {% if settings_obj.wallet_enabled %}
+                    <input type="hidden" name="value" value="off">
                     <button type="submit" class="btn-toggle turn-off"
                             onclick="return confirm('کیف پول غیرفعال شود؟ از این پس کاربران نه می‌توانند شارژ کنند و نه از کیف پول برای خرید بلیط استفاده کنند. موجودی‌ها پاک نمی‌شود.');">
                         <i class="fas fa-power-off"></i> غیرفعال کردن کیف پول
                     </button>
                 {% else %}
-                    <input type="hidden" name="wallet_enabled" value="1">
+                    <input type="hidden" name="value" value="on">
                     <button type="submit" class="btn-toggle turn-on">
                         <i class="fas fa-power-off"></i> فعال کردن کیف پول
+                    </button>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <!-- ===== رایگان بودن زیر ۱۵ سال ===== -->
+    <div class="card-custom">
+        <div class="card-header-custom">
+            <h4><i class="fas fa-child"></i> بلیط رایگان برای زیر {{ free_age_limit }} سال</h4>
+        </div>
+        <div class="card-body-custom">
+
+            {% if settings_obj.free_under_15 %}
+                <span class="status-badge-big on">
+                    <i class="fas fa-check-circle"></i> فعال است — زیر {{ free_age_limit }} سال رایگان
+                </span>
+            {% else %}
+                <span class="status-badge-big off">
+                    <i class="fas fa-ban"></i> غیرفعال است — زیر {{ free_age_limit }} سال هم پول می‌دهد
+                </span>
+            {% endif %}
+
+            <div class="stat-strip">
+                <div class="stat-box">
+                    <div class="num">{{ free_tickets_so_far }}</div>
+                    <div class="lbl">بلیط رایگانِ صادرشده تا امروز</div>
+                </div>
+                <div class="stat-box">
+                    <div class="num">{{ free_age_limit }}</div>
+                    <div class="lbl">سقف سن (سال)</div>
+                </div>
+            </div>
+
+            <div class="explain-box">
+                با <strong>غیرفعال کردن</strong> این گزینه:
+                <ul>
+                    <li>افراد زیر {{ free_age_limit }} سال هم <strong>قیمت کامل بلوک</strong> را می‌پردازند، دقیقاً مثل بقیه.</li>
+                    <li>تخفیف باسا و کد تخفیف طبق روال عادی روی همان قیمت اعمال می‌شود.</li>
+                    <li>قیمتی که هنگام استعلام به کاربر نشان داده می‌شود هم بلافاصله به‌روز می‌شود — نه اینکه رایگان نشان دهد و بعد پول بگیرد.</li>
+                    <li><strong>بلیط‌هایی که قبلاً رایگان صادر شده‌اند تغییر نمی‌کنند</strong> و مبلغی از کسی گرفته نمی‌شود.</li>
+                </ul>
+            </div>
+
+            <div class="warning-strip">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>
+                    تصمیم «رایگان است یا نه» همیشه بر اساس <strong>سنِ تأییدشده‌ی ثبت‌احوال</strong> گرفته می‌شود،
+                    نه تاریخ تولدی که در فرم تایپ شده — این گزینه آن رفتار امن را تغییر نمی‌دهد.
+                </span>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="setting" value="free_under_15">
+                {% if settings_obj.free_under_15 %}
+                    <input type="hidden" name="value" value="off">
+                    <button type="submit" class="btn-toggle turn-off"
+                            onclick="return confirm('رایگان بودن بلیط زیر {{ free_age_limit }} سال غیرفعال شود؟ از این پس زیر {{ free_age_limit }} ساله‌ها هم قیمت کامل را می‌پردازند.');">
+                        <i class="fas fa-power-off"></i> غیرفعال کردن رایگانِ زیر {{ free_age_limit }} سال
+                    </button>
+                {% else %}
+                    <input type="hidden" name="value" value="on">
+                    <button type="submit" class="btn-toggle turn-on">
+                        <i class="fas fa-power-off"></i> فعال کردن رایگانِ زیر {{ free_age_limit }} سال
                     </button>
                 {% endif %}
             </form>

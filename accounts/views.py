@@ -535,42 +535,65 @@ def admin_emergency_settings(request):
 @staff_member_required
 def admin_site_settings(request):
     """
-    تنظیمات عمومی سایت -- فعلاً فقط سوییچ فعال/غیرفعال بودن کیف پول.
+    تنظیمات عمومی سایت (کیف پول، رایگان بودن زیر ۱۵ سال، ...).
 
     عمداً از «تنظیمات اضطراری» جداست: آن صفحه یک کلید بحرانی و موقتی است،
     این‌جا تنظیماتی است که ممکن است مدت‌ها در یک حالت بماند.
+
+    هر کارت فرم مستقل خودش را دارد و با فیلد مخفیِ `setting` مشخص می‌کند کدام
+    گزینه را عوض می‌کند -- تا زدن یکی، بقیه را بی‌صدا خاموش نکند.
     """
     from .models import SiteSettings
     from django.db.models import Sum, Count
     from wallet.models import Wallet
+    from tickets.models import Ticket, FREE_AGE_LIMIT
 
     settings_obj = SiteSettings.get_solo()
 
+    TOGGLES = {
+        'wallet_enabled': {
+            'on': 'کیف پول فعال شد: کاربران دوباره می‌توانند کیف پولشان را شارژ کنند '
+                  'و از موجودی آن برای خرید بلیط استفاده کنند.',
+            'off': 'کیف پول غیرفعال شد: از این پس نه شارژ ممکن است و نه پرداخت از کیف پول. '
+                   'موجودی کاربران دست‌نخورده باقی می‌ماند و با فعال کردن دوباره، قابل استفاده می‌شود.',
+        },
+        'free_under_15': {
+            'on': f'بلیط زیر {FREE_AGE_LIMIT} سال دوباره رایگان شد.',
+            'off': f'رایگان بودن بلیط زیر {FREE_AGE_LIMIT} سال غیرفعال شد: از این پس '
+                   'زیر ۱۵ ساله‌ها هم قیمت کامل بلوک را می‌پردازند. بلیط‌هایی که '
+                   'قبلاً رایگان صادر شده‌اند تغییر نمی‌کنند.',
+        },
+    }
+
     if request.method == 'POST':
-        new_value = 'wallet_enabled' in request.POST
-        if new_value != settings_obj.wallet_enabled:
-            settings_obj.wallet_enabled = new_value
+        field = request.POST.get('setting')
+        if field not in TOGGLES:
+            messages.error(request, 'درخواست نامعتبر است.')
+            return redirect('accounts:admin_site_settings')
+
+        new_value = request.POST.get('value') == 'on'
+        if new_value != getattr(settings_obj, field):
+            setattr(settings_obj, field, new_value)
             settings_obj.save()
-            if new_value:
-                messages.success(
-                    request,
-                    'کیف پول فعال شد: کاربران دوباره می‌توانند کیف پولشان را شارژ کنند '
-                    'و از موجودی آن برای خرید بلیط استفاده کنند.'
-                )
-            else:
-                messages.warning(
-                    request,
-                    'کیف پول غیرفعال شد: از این پس نه شارژ ممکن است و نه پرداخت از کیف پول. '
-                    'موجودی کاربران دست‌نخورده باقی می‌ماند و با فعال کردن دوباره، قابل استفاده می‌شود.'
-                )
+            msg = TOGGLES[field]['on' if new_value else 'off']
+            (messages.success if new_value else messages.warning)(request, msg)
         return redirect('accounts:admin_site_settings')
 
     # آماری که تصمیم‌گیری را برای ادمین روشن می‌کند: خاموش کردن کیف پول یعنی
     # این مقدار پول تا اطلاع ثانوی بلااستفاده می‌ماند.
     agg = Wallet.objects.filter(balance__gt=0).aggregate(total=Sum('balance'), cnt=Count('id'))
+    # چند بلیط تا امروز به‌خاطر سن رایگان شده -- تا ادمین بداند این گزینه
+    # روی چه حجمی اثر می‌گذارد.
+    free_tickets = Ticket.objects.filter(
+        price=0, age__isnull=False, age__lt=FREE_AGE_LIMIT,
+        status__in=['paid', 'admin_assigned', 'vip_issued'],
+    ).count()
+
     context = {
         'settings_obj': settings_obj,
         'wallets_with_balance': agg['cnt'] or 0,
         'total_wallet_balance': agg['total'] or 0,
+        'free_age_limit': FREE_AGE_LIMIT,
+        'free_tickets_so_far': free_tickets,
     }
     return render(request, 'accounts/admin_site_settings.html', context)
