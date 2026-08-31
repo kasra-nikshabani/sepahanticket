@@ -982,14 +982,15 @@
                                     <!-- نوع جایگاه -->
                                     <div class="block-info-row">
                                         <span class="info-label"><i class="fas fa-tag"></i> نوع جایگاه</span>
+                                        {# نوع جایگاهِ همین مسابقه، نه zone_type گلوبالِ بلوک #}
                                         <span class="badge
-                                {% if block_data.block.zone_type == 'home' %}bg-success
-                                {% elif block_data.block.zone_type == 'away' %}bg-warning text-dark
-                                {% elif block_data.block.zone_type == 'class1' %}bg-primary
-                                {% elif block_data.block.zone_type == 'women' %}bg-pink
-                                {% elif block_data.block.zone_type == 'vip' %}bg-purple
+                                {% if block_data.zone == 'home' %}bg-success
+                                {% elif block_data.zone == 'away' %}bg-warning text-dark
+                                {% elif block_data.zone == 'class1' %}bg-primary
+                                {% elif block_data.zone == 'women' or block_data.zone == 'women_away' %}bg-pink
+                                {% elif block_data.zone == 'vip' %}bg-purple
                                 {% else %}bg-secondary{% endif %}">
-                                {{ block_data.block.get_zone_type_display }}
+                                {{ block_data.zone_label }}
                             </span>
                                     </div>
 

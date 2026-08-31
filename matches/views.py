@@ -1531,6 +1531,11 @@ def _compute_match_report_stats(match):
     ).order_by('order')
     blocks_data = []
     block_price_map = get_block_price_map(match)
+    # نوع جایگاهِ مخصوصِ همین مسابقه -- پایین‌تر برای zones_data هم دوباره
+    # ساخته می‌شود، ولی این‌جا لازم است تا هر ردیفِ blocks_data برچسب درست
+    # خودش را همراه داشته باشد و قالب مجبور نباشد از zone_type گلوبال بخواند.
+    zone_map = get_block_zone_map(match)
+    zone_labels = dict(ZONE_CHOICES)
     for block in blocks:
         # همان تعریفِ بالا، این‌بار به تفکیک بلوک: ظرفیت = صندلیِ قابل فروش،
         # اشغال = از میان همان‌ها. قبلاً ظرفیت از روی Seat خام شمرده می‌شد
@@ -1553,6 +1558,7 @@ def _compute_match_report_stats(match):
             match=match, seat__row__block=block, is_used=True
         ).count()
         block.price = block_price_map.get(block.id, block.price)
+        _zone = zone_map.get(block.id, block.zone_type)
         blocks_data.append({
             'block': block, 'total_seats': total_seats, 'occupied_seats': occupied_seats,
             'available_seats': available_seats, 'occupancy': occupancy,
@@ -1560,6 +1566,11 @@ def _compute_match_report_stats(match):
             'revenue': block_revenue, 'used': block_used,
             # وضعیت فعال/غیرفعالِ مخصوصِ همین مسابقه (نه وضعیت گلوبالِ بلوک)
             'is_active_for_match': block.id in active_block_ids,
+            # نوع جایگاهِ همین مسابقه -- قالب نباید از block.zone_type گلوبال
+            # بخواند، وگرنه تغییر جایگاه برای این مسابقه در گزارش دیده نمی‌شود
+            # و «بانوان میهمان» هم اصلاً برچسب درستی نمی‌گیرد.
+            'zone': _zone,
+            'zone_label': zone_labels.get(_zone, _zone),
         })
 
     # نگاشت نوع جایگاه -> شناسه‌ی بلوک‌ها، مخصوصِ همین مسابقه

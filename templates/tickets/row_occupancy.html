@@ -360,17 +360,21 @@
                                         <div class="block-name-cell">
                                             <strong>{{ item.row.name }}</strong>
 
-                                                                                        <!-- برچسب نوع سکو (اصلاح شده بر اساس فیلدهای مدل Block) -->
-                                            {% if item.row.is_vip or item.row.zone_type == 'vip' %}
-                                                <span class="zone-badge zone-vip"><i class="fas fa-star"></i> VIP</span>
-                                            {% elif item.row.is_class1 or item.row.zone_type == 'class1' %}
-                                                <span class="zone-badge zone-class1"><i class="fas fa-star"></i> کلاس ۱</span>
-                                            {% elif item.row.zone_type == 'women' %}
-                                                <span class="zone-badge zone-women"><i class="fas fa-venus"></i> بانوان میزبان</span>
-                                            {% elif item.row.zone_type == 'home' %}
-                                                <span class="zone-badge zone-home"><i class="fas fa-home"></i> میزبان</span>
+                                            {# برچسب نوع جایگاه -- از item.zone می‌آید که
+                                               ویو آن را مخصوصِ همین مسابقه حساب کرده است،
+                                               نه از zone_type گلوبالِ بلوک. #}
+                                            {% if item.zone == 'vip' %}
+                                                <span class="zone-badge zone-vip"><i class="fas fa-star"></i> {{ item.zone_label }}</span>
+                                            {% elif item.zone == 'class1' %}
+                                                <span class="zone-badge zone-class1"><i class="fas fa-star"></i> {{ item.zone_label }}</span>
+                                            {% elif item.zone == 'women' %}
+                                                <span class="zone-badge zone-women"><i class="fas fa-venus"></i> {{ item.zone_label }}</span>
+                                            {% elif item.zone == 'women_away' %}
+                                                <span class="zone-badge zone-women"><i class="fas fa-venus"></i> {{ item.zone_label }}</span>
+                                            {% elif item.zone == 'home' %}
+                                                <span class="zone-badge zone-home"><i class="fas fa-home"></i> {{ item.zone_label }}</span>
                                             {% else %}
-                                                <span class="zone-badge zone-away"><i class="fas fa-flag"></i> میهمان</span>
+                                                <span class="zone-badge zone-away"><i class="fas fa-flag"></i> {{ item.zone_label }}</span>
                                             {% endif %}
 
                                         </div>

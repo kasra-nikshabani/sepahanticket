@@ -38,7 +38,7 @@ from .reservation import SeatReservation
 from matches.models import Match, Seat, Row, MatchSeat, Block, get_block_price_map, get_basa_discount_percent
 from matches.models import (
     get_active_block_ids, get_active_row_ids, is_block_active_for_match, is_row_active_for_match,
-    find_new_orphan_seats, get_block_zone_for_match, ZONE_CHOICES,
+    find_new_orphan_seats, get_block_zone_for_match, get_block_zone_map, ZONE_CHOICES,
 )
 from accounts.models import User
 from wallet.models import Wallet, is_wallet_enabled, WALLET_DISABLED_MESSAGE
@@ -2146,9 +2146,23 @@ def row_occupancy_report(request):
         ).order_by('order')
         active_row_ids = get_active_row_ids(match)
 
+        # ===== نوع جایگاه مخصوصِ همین مسابقه =====
+        # قالب قبلاً خودش از روی block.zone_type گلوبال برچسب می‌ساخت -- یعنی
+        # اگر ادمین برای این مسابقه جایگاه بلوکی را عوض کرده بود (مثلاً کلاس ۱
+        # را میهمان کرده بود)، این گزارش همچنان برچسب قدیمی را نشان می‌داد.
+        # ضمناً «بانوان میهمان» اصلاً در آن شرط‌ها نبود و در شاخه‌ی else
+        # به‌اشتباه «میهمان» برچسب می‌خورد.
+        zone_map = get_block_zone_map(match)
+        zone_labels = dict(ZONE_CHOICES)
+
         for block in blocks:
-            # ۱. کل صندلی‌های فعال این بلوک
-            total_seats = Seat.objects.filter(row__block=block, row_id__in=active_row_ids).count()
+            # ۱. صندلی‌هایی که واقعاً برای این مسابقه قابل فروش‌اند
+            #    (ردیف فعال + صندلی خاموش‌نشده + صندلیِ از رده خارج‌نشده)
+            sellable = MatchSeat.objects.filter(
+                match=match, seat__row__block=block, seat__row_id__in=active_row_ids,
+                is_enabled=True, seat__is_available=True,
+            )
+            total_seats = sellable.count()
 
             # ۲. بلیط‌های قطعا فروخته شده برای این مسابقه در این بلوک
             sold_tickets = Ticket.objects.filter(
@@ -2158,9 +2172,7 @@ def row_occupancy_report(request):
             ).count()
 
             # ۳. صندلی‌هایی که الان در سبد خرید هستند (رزرو موقت) برای این مسابقه
-            reserved_seats = MatchSeat.objects.filter(
-                match=match,
-                seat__row__block=block,
+            reserved_seats = sellable.filter(
                 is_available=False,
                 reserved_until__gt=timezone.now()
             ).count()
@@ -2169,8 +2181,10 @@ def row_occupancy_report(request):
             occupied = sold_tickets + reserved_seats
             available = max(0, total_seats - occupied)
 
+            zone = zone_map.get(block.id, block.zone_type)
             report_data.append({
                 'row': block, 'total': total_seats, 'occupied': occupied, 'available': available,
+                'zone': zone, 'zone_label': zone_labels.get(zone, zone),
                 'occupancy_percent': round((occupied / total_seats * 100) if total_seats > 0 else 0, 1)
             })
 
