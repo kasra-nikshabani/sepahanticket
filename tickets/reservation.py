@@ -256,10 +256,13 @@ class SeatReservation:
         MatchSeatهای منقضی که در Redis کلید ندارند را آزاد می‌کند.
         """
         from matches.models import MatchSeat
+        from tickets.models import Ticket
         from django.db import transaction
 
         now = timezone.now()
         freed = 0
+        skipped_ticketed = 0
+        scanned = set()
 
         while True:
             expired_ids = list(
@@ -267,13 +270,58 @@ class SeatReservation:
                     is_available=False,
                     reserved_until__isnull=False,
                     reserved_until__lt=now,
-                ).values_list('id', flat=True)[:batch_size]
+                ).exclude(id__in=scanned)
+                .values_list('id', flat=True)[:batch_size]
             )
             if not expired_ids:
                 break
+            scanned.update(expired_ids)
 
             reserved_map = cls.get_reserved_map(expired_ids)
-            to_free = [sid for sid in expired_ids if not reserved_map.get(sid)]
+            candidates = [sid for sid in expired_ids if not reserved_map.get(sid)]
+
+            # ===== صندلی‌ای که بلیط صادرشده دارد هرگز آزاد نمی‌شود =====
+            # این تابع تا اینجا فقط «مهلت گذشته + کلید Redis نیست» را می‌دید و
+            # اصلاً نمی‌پرسید آیا برای این صندلی بلیطی صادر شده یا نه. یعنی هر
+            # مسیری که روی یک صندلیِ فروخته‌شده reserved_until را پاک نکند،
+            # ۵ دقیقه بعد باعث می‌شود همین job صندلی را «آزاد» کند و نفر بعدی
+            # همان صندلی را بخرد -- دو بلیط روی یک صندلی. (روی مسابقه‌ی ۲۲
+            # ۱۲۱ صندلی و روی ۲۷ ۳۲ صندلی دقیقاً همین شکلی دو بار فروخته شدند؛
+            # فاصله‌ی زمانی بین دو بلیط دقیقه/ساعت بود، نه میلی‌ثانیه، پس
+            # race condition نبوده.) مسیر خرید فعلی reserved_until را پاک
+            # می‌کند، ولی این‌جا آخرین خط دفاع است و نباید به آن تکیه کرد.
+            ISSUED = ('paid', 'admin_assigned', 'vip_issued')
+            rows = list(
+                MatchSeat.objects.filter(id__in=candidates)
+                .values_list('id', 'match_id', 'seat_id')
+            )
+            pair_of = {mid_: (m, s) for mid_, m, s in rows}
+            ticketed_ms_ids = set(
+                Ticket.objects.filter(status__in=ISSUED, match_seat_id__in=candidates)
+                .values_list('match_seat_id', flat=True)
+            )
+            # بلیط‌های قدیمی‌تر ممکن است match_seat نداشته باشند؛ با جفتِ
+            # (مسابقه، صندلی) هم چک می‌شود.
+            ticketed_pairs = set(
+                Ticket.objects.filter(
+                    status__in=ISSUED,
+                    match_id__in={m for _, m, _ in rows},
+                    seat_id__in={s for _, _, s in rows},
+                ).values_list('match_id', 'seat_id')
+            )
+            to_free = [
+                sid for sid in candidates
+                if sid not in ticketed_ms_ids and pair_of.get(sid) not in ticketed_pairs
+            ]
+            blocked = len(candidates) - len(to_free)
+            if blocked:
+                skipped_ticketed += blocked
+                logger.error(
+                    "cleanup_expired_db_reservations: %d صندلیِ دارای بلیط از آزادسازی محافظت شد "
+                    "-- یعنی جایی reserved_until روی صندلیِ فروخته‌شده پاک نشده است: %s",
+                    blocked,
+                    [sid for sid in candidates if sid not in to_free][:20],
+                )
 
             if to_free:
                 with transaction.atomic():

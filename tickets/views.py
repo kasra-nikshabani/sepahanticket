@@ -831,6 +831,31 @@ def reserve_seats(request, match_id):
                     messages.error(request, 'یکی از صندلی‌های انتخاب‌شده برای این مسابقه در دسترس نیست.')
                     return redirect('matches:block_map', match_id=match_id)
 
+            # ===== صندلی‌ای که از قبل بلیط صادرشده دارد هرگز دوباره رزرو نمی‌شود =====
+            # تا اینجا فقط is_available چک می‌شد. اگر به هر دلیلی یک صندلیِ
+            # فروخته‌شده دوباره is_available=True بشود (مثلاً job پاکسازی آزادش
+            # کند)، همین‌جا دو نفر روی یک صندلی بلیط می‌گرفتند -- چیزی که واقعاً
+            # روی مسابقه‌ی ۲۲ (۱۲۱ صندلی) و ۲۷ (۳۲ صندلی) اتفاق افتاد. این چک
+            # مستقل از is_available است تا حتی اگر آن فلگ خراب شود، دوفروشی
+            # ممکن نباشد.
+            already_ticketed = set(
+                Ticket.objects.filter(
+                    match=match,
+                    seat_id__in=[ms.seat_id for ms in locked_map.values()],
+                    status__in=['paid', 'admin_assigned', 'vip_issued'],
+                ).values_list('seat_id', flat=True)
+            )
+            if already_ticketed:
+                logger.error(
+                    "reserve_seats: تلاش برای رزرو صندلیِ دارای بلیط -- match=%s seats=%s user=%s",
+                    match.id, sorted(already_ticketed), getattr(request.user, 'id', None),
+                )
+                SeatReservation.release_many(
+                    reserved_seats, user_id=getattr(request.user, 'id', None), force=True
+                )
+                messages.error(request, 'یکی از صندلی‌های انتخاب‌شده قبلاً فروخته شده است.')
+                return redirect('matches:block_map', match_id=match_id)
+
             # ===== قانون «صندلی تکی»: انتخابی که دقیقاً یک صندلی خالی را
             # بین پرها گیر می‌اندازد رد می‌شود، چون آن صندلی عملاً دیگر
             # فروش نمی‌رود. تکی‌هایی که از قبل وجود داشته‌اند مانعی ندارند
