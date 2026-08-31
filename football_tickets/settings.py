@@ -8,6 +8,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'change-me')
+
+# ===== چرخش امنِ SECRET_KEY =====
+# کلیدهای قبلی این‌جا (جدا شده با کاما) گذاشته می‌شوند تا داده‌ای که با
+# کلید قدیمی امضا شده -- سشن‌های باز، توکن‌های امضاشده -- بلافاصله بعد از
+# تعویض کلید بی‌اعتبار نشود. بعد از چند روز می‌شود این مقدار را خالی کرد.
+SECRET_KEY_FALLBACKS = [
+    k.strip() for k in os.getenv('SECRET_KEY_FALLBACKS', '').split(',') if k.strip()
+]
 # DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 CSRF_TRUSTED_ORIGINS = [
