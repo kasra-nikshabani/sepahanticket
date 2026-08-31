@@ -65,9 +65,25 @@
                                     <label for="id_stadium" class="form-label">ورزشگاه</label>
                                     {{ form.stadium }}
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="id_date_time" class="form-label">تاریخ و ساعت</label>
-                                    {{ form.date_time }}
+                                <div class="col-md-3 mb-3">
+                                    <label for="id_match_date" class="form-label">تاریخ برگزاری</label>
+                                    {{ form.match_date }}
+                                    {% for e in form.match_date.errors %}
+                                        <div class="text-danger small mt-1">{{ e }}</div>
+                                    {% endfor %}
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="id_match_time" class="form-label">
+                                        ساعت برگزاری
+                                        <span class="text-muted" style="font-weight:400;">(اختیاری)</span>
+                                    </label>
+                                    {{ form.match_time }}
+                                    <small class="text-muted d-block mt-1">
+                                        اگر خالی بماند، ساعت بازی در بنر مسابقه و روی بلیط نمایش داده نمی‌شود.
+                                    </small>
+                                    {% for e in form.match_time.errors %}
+                                        <div class="text-danger small mt-1">{{ e }}</div>
+                                    {% endfor %}
                                 </div>
                             </div>
 

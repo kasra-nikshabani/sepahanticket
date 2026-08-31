@@ -157,7 +157,8 @@
             {{ match.home_team }} <span style="font-weight:normal;color:#888;">vs</span> {{ match.away_team }}
         </div>
         <div class="match-datetime">
-            {{ match.date_time|date:"Y/m/d - H:i" }}
+            {# ساعت فقط وقتی چاپ می‌شود که واقعاً مشخص شده باشد #}
+            {{ match.date_time|date:"Y/m/d" }}{% if match.has_time %} - {{ match.date_time|date:"H:i" }}{% endif %}
         </div>
     </div>
 

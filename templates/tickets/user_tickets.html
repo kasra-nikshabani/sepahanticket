@@ -135,7 +135,7 @@
                                 </h5>
                                 <p class="card-text">
                                     <small class="text-muted">
-                                        <i class="fas fa-calendar-day"></i> {{ ticket.match.date_time|date:"Y/m/d - H:i" }}
+                                        <i class="fas fa-calendar-day"></i> {{ ticket.match.date_time|date:"Y/m/d" }}{% if ticket.match.has_time %} - {{ ticket.match.date_time|date:"H:i" }}{% endif %}
                                         <br>
                                         <i class="fas fa-map-marker-alt"></i> {{ ticket.match.stadium.name }}
                                     </small>

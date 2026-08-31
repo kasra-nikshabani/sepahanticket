@@ -617,7 +617,7 @@
             <h2>{{ match.home_team }} <span class="vs-badge">VS</span> {{ match.away_team }}</h2>
             <div class="header-meta">
                 <span class="meta-chip"><i class="far fa-calendar"></i> {{ match.date_time|date:"Y/m/d" }}</span>
-                <span class="meta-chip"><i class="far fa-clock"></i> {{ match.date_time|date:"H:i" }}</span>
+                {% if match.has_time %}<span class="meta-chip"><i class="far fa-clock"></i> {{ match.date_time|date:"H:i" }}</span>{% endif %}
                 <span class="meta-chip"><i class="fas fa-location-dot"></i> {{ match.stadium.name }}</span>
             </div>
             <div class="header-badges">

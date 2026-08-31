@@ -507,10 +507,12 @@
                     <span class="value">{{ match.date_time|to_jalali_date }}</span>
                 </span>
 
+                {% if match.has_time %}
                 <span class="match-meta-item">
                     <i class="far fa-clock"></i>
                     <span class="value">{{ match.date_time|date:"H:i" }}</span>
                 </span>
+                {% endif %}
 
                 <span class="match-meta-item">
                     <i class="fas fa-map-marker-alt"></i>

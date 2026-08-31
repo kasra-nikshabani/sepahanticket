@@ -21,6 +21,60 @@ class BlockForm(forms.ModelForm):
 
 
 class MatchForm(forms.ModelForm):
+    """
+    تاریخ و ساعت به دو ورودی جدا شکسته شده‌اند: تاریخ اجباری است ولی ساعت
+    می‌تواند خالی بماند (وقتی هنوز اعلام نشده). چون مدل یک فیلد واحد
+    date_time دارد، این دو در clean() به هم چسبانده می‌شوند و فلگ has_time
+    مشخص می‌کند ساعتِ ذخیره‌شده واقعی است یا فقط جای‌پرکن.
+    """
+    match_date = forms.DateField(
+        label='تاریخ برگزاری',
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        error_messages={'required': 'تاریخ مسابقه را وارد کنید.',
+                        'invalid': 'فرمت تاریخ نامعتبر است.'},
+    )
+    match_time = forms.TimeField(
+        label='ساعت برگزاری',
+        required=False,
+        widget=forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+        help_text='اختیاری — اگر خالی بماند، ساعت بازی هیچ‌جا نمایش داده نمی‌شود.',
+        error_messages={'invalid': 'فرمت ساعت نامعتبر است.'},
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # فیلد اصلی مدل از فرم برداشته می‌شود؛ مقدارش را خودمان در clean می‌سازیم
+        self.fields.pop('date_time', None)
+        inst = kwargs.get('instance') or getattr(self, 'instance', None)
+        if inst and inst.pk and inst.date_time:
+            from django.utils import timezone as _tz
+            local = _tz.localtime(inst.date_time)
+            self.fields['match_date'].initial = local.date()
+            # ساعتِ جای‌پرکن را در فرم نشان نمی‌دهیم تا ادمین فکر نکند واقعی است
+            self.fields['match_time'].initial = local.time() if inst.has_time else None
+
+    def clean(self):
+        cleaned = super().clean()
+        d = cleaned.get('match_date')
+        t = cleaned.get('match_time')
+        if d:
+            from datetime import datetime, time as _time
+            from django.utils import timezone as _tz
+            # ساعت نامشخص -> ۱۲ ظهر ذخیره می‌شود (نه نیمه‌شب) تا پنجره‌ی
+            # ±۱۲ ساعتِ گیت همان یک روز تقویمی را بپوشاند.
+            naive = datetime.combine(d, t if t else _time(12, 0))
+            cleaned['date_time'] = _tz.make_aware(naive, _tz.get_current_timezone())
+            cleaned['has_time'] = t is not None
+        return cleaned
+
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        obj.date_time = self.cleaned_data['date_time']
+        obj.has_time = self.cleaned_data['has_time']
+        if commit:
+            obj.save()
+        return obj
+
     class Meta:
         model = Match
         fields = [

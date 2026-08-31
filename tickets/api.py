@@ -150,9 +150,18 @@ def scan_ticket(request):
                 return JsonResponse({'status': 'invalid', 'message': 'مسابقه‌ی این بلیط لغو شده است'})
 
             window = getattr(settings, 'GATE_MATCH_WINDOW_HOURS', 12)
-            delta = timezone.now() - ticket.match.date_time
-            if abs(delta.total_seconds()) > window * 3600:
+            now = timezone.now()
+            if ticket.match.has_time:
+                too_far = abs((now - ticket.match.date_time).total_seconds()) > window * 3600
                 when = timezone.localtime(ticket.match.date_time).strftime('%Y/%m/%d %H:%M')
+            else:
+                # ساعت بازی اعلام نشده -- کل همان روزِ تقویمی (به‌وقت تهران)
+                # پذیرفته می‌شود، وگرنه پنجره‌ی ساعتی حول ساعتِ جای‌پرکن
+                # تماشاگرِ یک بازی شبانه را دم گیت رد می‌کرد.
+                match_day = timezone.localtime(ticket.match.date_time).date()
+                too_far = timezone.localtime(now).date() != match_day
+                when = match_day.strftime('%Y/%m/%d')
+            if too_far:
                 return JsonResponse({
                     'status': 'invalid',
                     'message': f'این بلیط برای مسابقه‌ی {when} است، نه مسابقه‌ی امروز',

@@ -272,6 +272,16 @@ class Match(models.Model):
     away_team_logo = models.ImageField(upload_to='team_logos/', blank=True, null=True)
     stadium = models.ForeignKey(Stadium, on_delete=models.CASCADE)
     date_time = models.DateTimeField(verbose_name="تاریخ و ساعت برگزاری")
+    # ===== آیا ساعت بازی مشخص شده؟ =====
+    # تاریخ همیشه لازم است، ولی ساعت گاهی هنوز اعلام نشده. چون date_time یک
+    # فیلد واحد است و نمی‌شود نیمه‌خالی نگهش داشت، ساعت را ساعت ۱۲ ظهر ذخیره
+    # می‌کنیم و با این فلگ یادمان می‌ماند که واقعی نیست -- ظهر انتخاب شده تا
+    # پنجره‌ی ±۱۲ ساعتِ گیت دقیقاً همان یک روز تقویمی را بپوشاند.
+    has_time = models.BooleanField(
+        default=True,
+        verbose_name="ساعت بازی مشخص است",
+        help_text="اگر خاموش باشد، ساعت بازی هیچ‌جا (بنر، بلیط، PDF) نمایش داده نمی‌شود.",
+    )
     is_active = models.BooleanField(default=True)
     ticket_sales_enabled = models.BooleanField(default=True, verbose_name="فروش بلیط فعال")
     is_cancelled = models.BooleanField(default=False, verbose_name="لغو شده")
