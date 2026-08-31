@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}دسترسی مجاز نیست{% endblock %}
+
+{% block extra_css %}
+<style>
+    .err-wrap { max-width: 640px; margin: 40px auto 60px; padding: 0 16px; text-align: center; }
+
+    .err-card {
+        background: #fff; border-radius: 20px; border: 1px solid #e8eaed;
+        box-shadow: 0 8px 30px rgba(0,0,0,.07); overflow: hidden;
+    }
+    .err-top {
+        background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
+        border-bottom: 3px solid #c0392b; padding: 34px 24px 28px; color: #fff;
+    }
+    .err-code {
+        font-size: 5rem; font-weight: 800; color: #e8735f; line-height: 1;
+        letter-spacing: 4px; margin: 0;
+        text-shadow: 0 4px 18px rgba(192,57,43,.3);
+    }
+    .err-icon { font-size: 2rem; color: #e8735f; opacity: .9; margin-bottom: 6px; }
+    .err-title { font-size: 1.25rem; font-weight: 800; margin: 12px 0 0; }
+
+    .err-body { padding: 26px 24px 28px; }
+    .err-text { color: #5a6570; font-size: .95rem; line-height: 2.1; margin: 0; }
+
+    .err-hint {
+        background: #fff8e1; border: 1px solid #f0dfa0; border-right: 4px solid #D4AF37;
+        border-radius: 12px; padding: 13px 16px; margin: 18px 0 0;
+        color: #6b5500; font-size: .87rem; line-height: 2; text-align: right;
+    }
+
+    .err-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 22px; }
+    .err-btn {
+        border: none; border-radius: 11px; padding: 11px 22px; font-weight: 700; font-size: .9rem;
+        text-decoration: none; display: inline-flex; align-items: center; gap: 7px;
+        transition: transform .15s, filter .15s; font-family: inherit; cursor: pointer;
+    }
+    .err-btn:hover { transform: translateY(-2px); }
+    .err-btn.primary { background: linear-gradient(135deg, #D4AF37, #b8960f); color: #1A1A2E; }
+    .err-btn.ghost { background: #f1f3f4; color: #1A1A2E; }
+    .err-btn.ghost:hover { background: #e8eaed; color: #1A1A2E; }
+
+    @media (max-width: 480px) {
+        .err-code { font-size: 3.6rem; }
+        .err-btn { width: 100%; justify-content: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="err-wrap">
+    <div class="err-card">
+        <div class="err-top">
+            <div class="err-icon"><i class="fas fa-lock"></i></div>
+            <p class="err-code">۴۰۳</p>
+            <h1 class="err-title">دسترسی به این صفحه مجاز نیست</h1>
+        </div>
+        <div class="err-body">
+            {% if user.is_authenticated %}
+                <p class="err-text">
+                    حساب کاربری شما اجازه‌ی دیدن این صفحه را ندارد.
+                    اگر فکر می‌کنید این یک اشتباه است، با مدیر سامانه تماس بگیرید.
+                </p>
+            {% else %}
+                <p class="err-text">
+                    برای دیدن این صفحه باید وارد حساب کاربری خود شوید.
+                </p>
+                <div class="err-hint">
+                    <i class="fas fa-info-circle"></i>
+                    اگر قبلاً وارد شده بودید، ممکن است نشست شما به دلیل بی‌فعالیتی منقضی شده باشد.
+                    کافی است دوباره وارد شوید.
+                </div>
+            {% endif %}
+
+            <div class="err-actions">
+                {% if not user.is_authenticated %}
+                    <a href="{% url 'accounts:phone_login' %}" class="err-btn primary">
+                        <i class="fas fa-sign-in-alt"></i> ورود به حساب
+                    </a>
+                {% endif %}
+                <a href="{% url 'matches:home' %}" class="err-btn {% if user.is_authenticated %}primary{% else %}ghost{% endif %}">
+                    <i class="fas fa-home"></i> صفحه اصلی
+                </a>
+                <a href="javascript:history.back()" class="err-btn ghost">
+                    <i class="fas fa-arrow-right"></i> صفحه قبل
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
