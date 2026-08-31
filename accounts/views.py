@@ -10,13 +10,30 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.views.decorators.cache import never_cache
 from django.core.paginator import Paginator
+from django.core.cache import cache
 from django.db.models import Q
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .forms import RegisterForm, LoginForm, PhoneLoginForm, OTPVerifyForm, PhoneRegisterForm
 from .models import OTP
 from .services import create_otp, get_valid_otp, OTPRateLimitError
 
 User = get_user_model()
+
+# ===== محدودیت تلاش ناموفقِ ورود با رمز =====
+# هم‌الگوی همان چیزی که برای گیت (tickets/api.py) استفاده می‌شود.
+LOGIN_MAX_ATTEMPTS = 5           # به‌ازای هر نام کاربری
+LOGIN_MAX_ATTEMPTS_PER_IP = 20   # به‌ازای هر آی‌پی -- بالاتر، چون کاربران
+                                 # ایرانی پشت NAT اپراتور آی‌پی مشترک دارند
+LOGIN_LOCKOUT_SECONDS = 300      # ۵ دقیقه
+
+
+def _client_ip(request):
+    """آی‌پی واقعی کاربر از پشت nginx."""
+    fwd = request.META.get('HTTP_X_FORWARDED_FOR', '')
+    if fwd:
+        return fwd.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR', '')
 
 import logging
 
@@ -302,7 +319,33 @@ def login_view(request):
         if form.is_valid():
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password')
+
+            # ===== محدودیت تلاش ناموفق =====
+            # این تنها مسیر ورود با رمز است و حساب‌های مدیر از همین‌جا وارد
+            # می‌شوند؛ بدون این محدودیت، حدس زدن رمز مدیر فقط به سرعت شبکه
+            # محدود بود. هم روی نام کاربری قفل می‌شود (جلوی حمله به یک حساب)
+            # و هم روی آی‌پی (جلوی امتحان‌کردن رمز مشترک روی حساب‌های زیاد).
+            ip = _client_ip(request)
+            u_key = f'login_fail:u:{username}'
+            ip_key = f'login_fail:ip:{ip}'
+            if (cache.get(u_key, 0) >= LOGIN_MAX_ATTEMPTS
+                    or cache.get(ip_key, 0) >= LOGIN_MAX_ATTEMPTS_PER_IP):
+                logger.warning("ورود مسدود شد (تلاش زیاد) username=%s ip=%s", username, ip)
+                messages.error(
+                    request,
+                    'به دلیل تلاش‌های ناموفق زیاد، ورود موقتاً مسدود شده است. '
+                    'چند دقیقه دیگر دوباره تلاش کنید.'
+                )
+                return render(request, 'accounts/login_password.html', {'form': form})
+
             user = authenticate(request, username=username, password=password)
+            if user is None:
+                cache.set(u_key, cache.get(u_key, 0) + 1, timeout=LOGIN_LOCKOUT_SECONDS)
+                cache.set(ip_key, cache.get(ip_key, 0) + 1, timeout=LOGIN_LOCKOUT_SECONDS)
+            else:
+                cache.delete(u_key)
+                cache.delete(ip_key)
+
             if user is not None:
                 if user.user_type in ['admin', 'vip']:
                     login(request, user)
@@ -313,7 +356,18 @@ def login_view(request):
                     messages.success(request, f'خوش آمدید {user.get_full_name() or user.username}!')
 
                     # ===== بازگشت به صفحه قبلی =====
-                    next_url = request.GET.get('next', 'matches:home')
+                    # next از URL می‌آید؛ بدون اعتبارسنجی، لینکی مثل
+                    # /accounts/login-password/?next=https://evil.com مدیر را
+                    # بعد از ورود به سایت مهاجم می‌برد (فیشینگِ مؤثر، چون
+                    # کاربر همین الان با موفقیت وارد شده و اعتماد دارد).
+                    next_url = request.GET.get('next') or ''
+                    if not url_has_allowed_host_and_scheme(
+                        next_url, allowed_hosts={request.get_host()},
+                        require_https=request.is_secure(),
+                    ):
+                        if next_url:
+                            logger.warning("next نامعتبر در ورود رد شد: %r", next_url[:120])
+                        next_url = 'matches:home'
 
                     response = redirect(next_url)
                     response["Cache-Control"] = "no-cache, no-store, must-revalidate"
