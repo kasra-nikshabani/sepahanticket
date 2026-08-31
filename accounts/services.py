@@ -1,5 +1,6 @@
 # accounts/services/sms.py
 import random
+import re
 import requests
 from django.conf import settings
 from django.core.cache import cache
@@ -18,6 +19,22 @@ OTP_COOLDOWN_SECONDS = 60
 # منقضی شده بود و مجبور می‌شد دوباره درخواست بدهد -- که هم تجربه‌ی بدی بود
 # و هم روز مسابقه بار اضافی روی سرویس پیامک و خودِ سایت می‌گذاشت.
 OTP_VALIDITY_MINUTES = 5
+
+# ===== احترام به مهلتی که خودِ سرویس پیامک اعلام می‌کند =====
+# وقتی sms.ir حساب را محدود می‌کند، در متن خطا می‌گوید چند ثانیه بعد
+# دوباره تلاش کنیم. تا وقتی این را نادیده می‌گرفتیم، هر کاربری که دکمه را
+# می‌زد یک درخواست تازه می‌فرستاد، دوباره رد می‌شد و جریمه از نو شروع
+# می‌شد -- مهلتِ اعلام‌شده از ۳۵ ثانیه به ۳۵ دقیقه رسیده بود، یعنی عملاً
+# خودمان نمی‌گذاشتیم محدودیت تمام شود. حالا تا پایان آن مهلت اصلاً تماسی
+# گرفته نمی‌شود.
+#
+# سقف عمداً کوتاه است: اگر عددِ اعلامی خیلی بزرگ باشد کورکورانه صبر
+# نمی‌کنیم، بلکه حداکثر SMS_BLOCK_MAX_SECONDS صبر می‌کنیم و بعد یک تماس
+# آزمایشی می‌زنیم تا اگر محدودیت زودتر برداشته شده بود، سرویس بلافاصله
+# برگردد.
+SMS_BLOCK_KEY = 'sms_provider_blocked_until'
+SMS_BLOCK_MAX_SECONDS = 180
+SMS_BLOCK_MIN_SECONDS = 20
 
 
 # ===== تایم‌اوت تماس با سرویس پیامک =====
@@ -161,6 +178,32 @@ def send_sms_via_smsir(phone_number, code):
         return False, str(e)
 
 
+def _sms_block_remaining():
+    """چند ثانیه دیگر تا پایان محدودیتِ اعلام‌شده مانده؟ صفر یعنی آزادیم."""
+    try:
+        ttl = cache.ttl(SMS_BLOCK_KEY) if hasattr(cache, 'ttl') else None
+    except Exception:
+        return 0
+    return int(ttl) if ttl and ttl > 0 else 0
+
+
+def _set_sms_block(msg):
+    """مهلت اعلام‌شده در متن خطا را بخوان و تا آن زمان تماس نگیر."""
+    seconds = SMS_BLOCK_MIN_SECONDS
+    m = re.search(r'(\d+)\s*ثانیه', msg or '')
+    if m:
+        try:
+            seconds = int(m.group(1))
+        except ValueError:
+            pass
+    seconds = max(SMS_BLOCK_MIN_SECONDS, min(seconds, SMS_BLOCK_MAX_SECONDS))
+    try:
+        cache.set(SMS_BLOCK_KEY, 1, timeout=seconds)
+    except Exception:
+        pass
+    return seconds
+
+
 def create_otp(phone_number):
     """ایجاد کد OTP جدید و ارسال آن"""
     # ===== Rate limit سمت بک‌اند (مستقل از session) =====
@@ -196,6 +239,18 @@ def create_otp(phone_number):
         expires_at=timezone.now() + timezone.timedelta(minutes=OTP_VALIDITY_MINUTES)
     )
 
+    # اگر سرویس پیامک خودش گفته «فعلاً نه»، تماس نگیر -- هر تماسِ اضافه
+    # فقط مهلت را تمدید می‌کند.
+    blocked_ttl = _sms_block_remaining()
+    if blocked_ttl:
+        otp.delete()
+        cache.delete(cooldown_key)
+        raise SMSProviderBusyError(
+            'ارسال پیامک موقتاً از سمت اپراتور محدود شده است. '
+            f'لطفاً حدود {blocked_ttl} ثانیه دیگر دوباره تلاش کنید.',
+            retry_after=blocked_ttl,
+        )
+
     # ارسال پیامک
     success, msg = send_sms_via_smsir(phone_number, code)
     if not success:
@@ -207,9 +262,11 @@ def create_otp(phone_number):
         # نه خرابی سرور -- نباید به کاربر صفحه‌ی ۵۰۰ نشان داده شود.
         low = (msg or '').lower()
         if 'بیشتر از حد مجاز' in (msg or '') or 'too many' in low or 'limit' in low:
+            wait = _set_sms_block(msg)
             raise SMSProviderBusyError(
-                'در حال حاضر تعداد درخواست‌های پیامک زیاد است. چند لحظه صبر کنید و دوباره تلاش کنید.',
-                retry_after=30,
+                'ارسال پیامک موقتاً از سمت اپراتور محدود شده است. '
+                f'لطفاً حدود {wait} ثانیه دیگر دوباره تلاش کنید.',
+                retry_after=wait,
             )
         raise Exception(f"خطا در ارسال پیامک: {msg}")
 
