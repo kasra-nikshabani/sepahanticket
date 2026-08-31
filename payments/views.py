@@ -15,6 +15,21 @@ from wallet.models import is_wallet_enabled, WALLET_DISABLED_MESSAGE
 logger = logging.getLogger(__name__)
 
 
+def _safe_next_url(candidate, fallback):
+    """
+    فقط مسیرهای داخلیِ همین سایت را برمی‌گرداند؛ هر چیز دیگری (آدرس مطلق،
+    //evil.com، javascript: و ...) با مقدار پیش‌فرض جایگزین می‌شود.
+    """
+    candidate = (candidate or '').strip()
+    if not candidate:
+        return fallback
+    # باید مسیر نسبی باشد و با // شروع نشود (که مرورگر آن را دامنه‌ی دیگر می‌فهمد)
+    if not candidate.startswith('/') or candidate.startswith('//') or '\\' in candidate:
+        logger.warning("next_url غیرمجاز رد شد: %r", candidate[:120])
+        return fallback
+    return candidate
+
+
 def _build_callback_url(request):
     """
     آدرس callback رو همیشه از روی همون دامنه‌ای که کاربر الان داره سایت رو
@@ -49,7 +64,13 @@ def payment_request(request):
         return redirect('wallet:dashboard')
 
     match_id = request.POST.get('match_id')
-    next_url = request.POST.get('next_url') or reverse('tickets:user_tickets')
+
+    # ===== next_url فقط می‌تواند یک مسیر داخلی باشد =====
+    # این مقدار از فرم می‌آید، روی Payment ذخیره می‌شود و بعد از بازگشت از
+    # درگاه مستقیم به redirect() داده می‌شود. بدون این اعتبارسنجی، یک لینک
+    # دستکاری‌شده کاربر را بعد از پرداخت به سایت مهاجم می‌برد -- جای بسیار
+    # مناسبی برای فیشینگ («پرداخت ناموفق بود، دوباره کارت را وارد کنید»).
+    next_url = _safe_next_url(request.POST.get('next_url'), reverse('tickets:user_tickets'))
 
     if match_id:
         # ===== بررسی محدودیت خرید قبل از رفتن به درگاه بانک =====
@@ -204,7 +225,9 @@ def payment_verify(request):
         messages.error(request, "تراکنش یافت نشد")
         return redirect('matches:home')
 
-    next_url = payment.next_url or reverse('matches:home')
+    # دوباره اعتبارسنجی می‌شود، نه فقط موقع ذخیره -- رکوردهای قدیمیِ Payment
+    # ممکن است آدرس بیرونیِ اعتبارسنجی‌نشده داشته باشند.
+    next_url = _safe_next_url(payment.next_url, reverse('matches:home'))
 
     if payment.status == 'success':
         messages.info(request, "این تراکنش قبلاً با موفقیت پردازش شده است.")

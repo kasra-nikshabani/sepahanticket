@@ -122,6 +122,8 @@ def scan_ticket(request):
     except:
         return JsonResponse({'status': 'invalid', 'message': 'بلیط نامعتبر است'})
 
+    qr_match_id = parts.get('Match', '')
+
     try:
         # ===== قفل ردیف بلیط قبل از چک is_used (جلوگیری از race condition) =====
         # اگر دو گیت (یا دو اسکن سریع پشت‌سرهم روی همون بلیط -- مثلاً یک نفر
@@ -137,6 +139,29 @@ def scan_ticket(request):
             # چک وضعیت بلیط
             if ticket.status not in ['paid', 'admin_assigned', 'vip_issued']:
                 return JsonResponse({'status': 'invalid', 'message': f'وضعیت بلیط: {ticket.get_status_display()}'})
+
+            # ===== بلیط باید مالِ همین مسابقه باشد =====
+            # تا پیش از این، گیت فقط شماره‌ی بلیط را نگاه می‌کرد و هیچ‌وقت
+            # نمی‌پرسید این بلیط برای کدام مسابقه است. یعنی هر بلیطِ
+            # اسکن‌نشده‌ی مسابقات قبلی (فقط در مسابقات ۲۲ و ۲۷ بیش از ۱۰ هزار
+            # بلیط) در گیتِ مسابقه‌ی بعدی «معتبر» شمرده می‌شد و دارنده‌اش
+            # می‌توانست دوباره وارد ورزشگاه شود.
+            if ticket.match.is_cancelled:
+                return JsonResponse({'status': 'invalid', 'message': 'مسابقه‌ی این بلیط لغو شده است'})
+
+            window = getattr(settings, 'GATE_MATCH_WINDOW_HOURS', 12)
+            delta = timezone.now() - ticket.match.date_time
+            if abs(delta.total_seconds()) > window * 3600:
+                when = timezone.localtime(ticket.match.date_time).strftime('%Y/%m/%d %H:%M')
+                return JsonResponse({
+                    'status': 'invalid',
+                    'message': f'این بلیط برای مسابقه‌ی {when} است، نه مسابقه‌ی امروز',
+                })
+
+            # QR خودش هم شناسه‌ی مسابقه را دارد؛ اگر با بلیط نخواند یعنی QR
+            # دستکاری شده و باید رد شود (دفاع لایه‌ی دوم).
+            if qr_match_id and str(ticket.match_id) != str(qr_match_id):
+                return JsonResponse({'status': 'invalid', 'message': 'بلیط نامعتبر است'})
 
             # چک جایگاه
             ticket_zone = get_ticket_zone(ticket)

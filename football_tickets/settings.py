@@ -26,6 +26,17 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 # nginx<->gunicorn روی http هست.
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+# ===== HSTS =====
+# بدون این هدر، اولین درخواست کاربر (که معمولاً http:// تایپ می‌شود) قابل
+# شنود/دستکاری است حتی با وجود ریدایرکت nginx به https. با HSTS مرورگر از
+# دفعه‌ی بعد خودش مستقیم https می‌رود.
+# عمداً بدون preload و بدون includeSubDomains شروع می‌شود: preload عملاً
+# برگشت‌ناپذیر است و includeSubDomains می‌تواند زیردامنه‌ای را که هنوز
+# گواهی ندارد از دسترس خارج کند.
+SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', str(60 * 60 * 24 * 30)))  # ۳۰ روز
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+SECURE_HSTS_PRELOAD = False
+
 # settings.py
 # ===== تنظیمات سشن =====
 # مقدار واقعی SESSION_COOKIE_AGE/SESSION_SAVE_EVERY_REQUEST پایین‌تر (کنار
@@ -256,6 +267,14 @@ GATE_USERS = {
     'gate_vip': {'password': os.getenv('GATE_PASSWORD_VIP', ''), 'zone': 'vip'},
 }
 GATE_TOKEN_TTL = int(os.getenv('GATE_TOKEN_TTL', str(12 * 60 * 60)))  # ۱۲ ساعت
+
+# ===== پنجره‌ی زمانی پذیرش بلیط در گیت =====
+# بلیط فقط وقتی در گیت معتبر است که فاصله‌ی «الان» تا زمان شروع مسابقه‌اش
+# کمتر از این مقدار (ساعت) باشد. بدون این محدودیت، هر بلیطِ اسکن‌نشده‌ی
+# مسابقات قبلی در گیتِ مسابقه‌ی بعدی هم پذیرفته می‌شد.
+# عمداً سخاوتمندانه (۱۲ ساعت قبل تا ۱۲ ساعت بعد از شروع) تا ورود زودهنگام
+# تماشاگر یا تأخیر مسابقه باعث رد شدن بلیط واقعی نشود.
+GATE_MATCH_WINDOW_HOURS = int(os.getenv('GATE_MATCH_WINDOW_HOURS', '12'))
 
 ZIBAL_MERCHANT_ID = os.getenv('ZIBAL_MERCHANT_ID', 'zibal')
 ZIBAL_SANDBOX = os.getenv('ZIBAL_SANDBOX', 'True') == 'True'

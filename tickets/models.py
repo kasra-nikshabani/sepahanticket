@@ -112,20 +112,25 @@ class Ticket(models.Model):
 
     # ===== متدها =====
     def generate_ticket_number(self):
-        import random
+        import secrets
         import string
 
-        # فضای ۶ رقمی خیلی کوچیک‌تر از حالت قبلی (۱۲ رقمی) است، پس برخلاف قبل
-        # باید صریحاً چک کنیم کد تکراری نباشد؛ وگرنه ذخیره‌سازی با خطای
-        # یکتایی (IntegrityError) روی ticket_number مواجه می‌شود.
+        # ===== secrets به‌جای random =====
+        # شماره‌ی بلیط عملاً یک اعتبارنامه است: گیت با همین عدد تصمیم می‌گیرد
+        # کسی وارد ورزشگاه بشود یا نه. random (Mersenne Twister) قابل پیش‌بینی
+        # است -- با دیدن تعداد کافی خروجی می‌شود حالت مولد را بازسازی و
+        # شماره‌های بعدی را حدس زد. secrets از منبع تصادفیِ سیستم‌عامل
+        # می‌خواند و این حمله را ناممکن می‌کند.
+        # فضای ۶ رقمی کوچک است، پس باید صریحاً چک کنیم کد تکراری نباشد؛
+        # وگرنه ذخیره‌سازی با خطای یکتایی مواجه می‌شود.
         for _ in range(30):
-            candidate = ''.join(random.choices(string.digits, k=6))
+            candidate = ''.join(secrets.choice(string.digits) for _ in range(6))
             if not Ticket.objects.filter(ticket_number=candidate).exists():
                 return candidate
 
         # اگر فضای ۶ رقمی تقریباً پر شده باشد (خیلی بعید)، برای جلوگیری از
         # خطا یک کد طولانی‌تر و تقریباً بدون‌برخورد تولید می‌کنیم.
-        return ''.join(random.choices(string.digits, k=10))
+        return ''.join(secrets.choice(string.digits) for _ in range(10))
 
     @property
     def block_type_label(self):
