@@ -7,6 +7,12 @@ from django.db import transaction, IntegrityError
 from django.db.models import Q, Count, Prefetch, Sum
 from django.http import JsonResponse
 from django.core.cache import cache
+
+# ===== عمر کشِ وضعیت صندلی‌ها (ثانیه) =====
+# عمداً کوتاه: فقط برای اینکه ده‌ها کاربری که هم‌زمان یک بلوک را باز
+# کرده‌اند، یک بار محاسبه شود نه ده‌ها بار. صفحه هر ۱۵ ثانیه تازه می‌شود،
+# پس این مقدار عملاً چیزی به تأخیرِ دیده‌شدن تغییرات اضافه نمی‌کند.
+SEATS_STATUS_TTL = 4
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
@@ -1197,62 +1203,75 @@ def get_seats_status(request, match_id):
     # به‌روز نمی‌شدند و از لحظه‌ی باز شدن صفحه سبز می‌ماندند، حتی اگر ادمین
     # ردیف/صندلی را غیرفعال می‌کرد یا کس دیگری آن را می‌خرید. حالا با
     # block_id کلِ بلوک برگردانده می‌شود. =====
-    if block_id:
-        block = get_object_or_404(Block, id=block_id)
-        match_seats = MatchSeat.objects.filter(
-            match=match, seat__row__block=block
-        ).select_related('seat__row').order_by('seat__row__number', 'seat__number')
-        block_ok = is_block_active_for_match(match, block)
-        active_row_ids = set(get_active_row_ids(match, block=block))
-    else:
-        match_seats = MatchSeat.objects.filter(
-            match=match, seat__row_id=row_id
-        ).select_related('seat__row__block').order_by('seat__number')
-        first = match_seats.first()
-        if first is None:
-            return JsonResponse({'seats': []})
-        block_ok = is_block_active_for_match(match, first.seat.row.block)
-        active_row_ids = (
-            {first.seat.row_id} if is_row_active_for_match(match, first.seat.row) else set()
-        )
+    # ===== بخش مشترک این پاسخ برای همه‌ی کاربران یکسان است =====
+    # تنها چیزی که از کاربری به کاربر دیگر فرق می‌کند reserved_by_me است؛
+    # لیست صندلی‌ها، شماره‌ها و وضعیت آزاد/رزرو کاملاً مشترک است. این
+    # اندپوینت اما سنگین‌ترین مسیر سایت بود (میانگین ۲۳ ثانیه روز دربی):
+    # یک کوئری چند-هزار-ردیفی به‌علاوه‌ی چندین MGET، و همه‌ی کاربرانی که
+    # روی یک بلوک هستند دقیقاً همان کار را هم‌زمان تکرار می‌کردند. با چند
+    # ثانیه کش، آن کار یک بار انجام می‌شود و بقیه از حافظه می‌خوانند.
+    # کهنگی چند ثانیه‌ای اینجا بی‌خطر است: این فقط نمایش است، و جلوگیری از
+    # فروش دوباره‌ی یک صندلی در لحظه‌ی رزرو با قفل دیتابیس انجام می‌شود.
+    cache_key = 'seatstatus:%s:%s' % (
+        match.id, ('b%s' % block_id) if block_id else ('r%s' % row_id)
+    )
+    shared = cache.get(cache_key)
 
-    match_seats = list(match_seats)
+    if shared is None:
+        if block_id:
+            block = get_object_or_404(Block, id=block_id)
+            match_seats = MatchSeat.objects.filter(
+                match=match, seat__row__block=block
+            ).select_related('seat__row').order_by('seat__row__number', 'seat__number')
+            block_ok = is_block_active_for_match(match, block)
+            active_row_ids = set(get_active_row_ids(match, block=block))
+        else:
+            match_seats = MatchSeat.objects.filter(
+                match=match, seat__row_id=row_id
+            ).select_related('seat__row__block').order_by('seat__number')
+            first = match_seats.first()
+            if first is None:
+                return JsonResponse({'seats': []})
+            block_ok = is_block_active_for_match(match, first.seat.row.block)
+            active_row_ids = (
+                {first.seat.row_id} if is_row_active_for_match(match, first.seat.row) else set()
+            )
 
-    # ===== وضعیت رزرو با یک رفت‌وبرگشت به Redis، نه یکی به‌ازای هر صندلی =====
-    # قبلاً get_reservation داخل حلقه صدا زده می‌شد؛ برای یک بلوکِ ۹۳۰ صندلی
-    # یعنی ۹۳۰ رفت‌وبرگشت به Redis در هر درخواست. و این اندپوینت هر ۵ ثانیه
-    # توسط هر کاربرِ روی صفحه‌ی نقشه صدا زده می‌شود -- یعنی روی یک مسابقه‌ی
-    # پرترافیک همین حلقه تبدیل به گلوگاه کل سامانه می‌شد (اندازه‌گیری‌شده:
-    # ~۴۰۰ms و سقف ~۲۲ درخواست بر ثانیه). get_reserved_map همان کار را با یک
-    # MGET انجام می‌دهد.
-    reserved_map = SeatReservation.get_reserved_map([ms.id for ms in match_seats])
+        match_seats = list(match_seats)
+
+        # ===== وضعیت رزرو با یک رفت‌وبرگشت به Redis، نه یکی به‌ازای هر صندلی =====
+        # قبلاً get_reservation داخل حلقه صدا زده می‌شد؛ برای یک بلوکِ ۹۳۰ صندلی
+        # یعنی ۹۳۰ رفت‌وبرگشت به Redis در هر درخواست.
+        reserved_map = SeatReservation.get_reserved_map([ms.id for ms in match_seats])
+
+        # هر عضو: (شناسه، شماره، آزاد؟، شناسه‌ی کاربرِ رزروکننده یا None)
+        shared = []
+        for ms in match_seats:
+            available = (
+                ms.is_available          # فروخته/رزرو نشده
+                and ms.is_enabled        # ادمین برای این مسابقه خاموشش نکرده
+                and ms.seat.is_available  # خودِ صندلی به‌صورت کلی فعال است
+                and block_ok                              # بلوکش برای این مسابقه فعال است
+                and ms.seat.row_id in active_row_ids      # ردیفِ خودش هم فعال است
+            )
+            reservation = reserved_map.get(ms.id)
+            holder = reservation.get('user_id') if reservation else None
+            shared.append((ms.id, ms.seat.number, available, holder))
+
+        cache.set(cache_key, shared, SEATS_STATUS_TTL)
+
     current_user_id = request.user.id if request.user.is_authenticated else None
 
-    data = {'seats': []}
-
-    for ms in match_seats:
-        available = (
-            ms.is_available          # فروخته/رزرو نشده
-            and ms.is_enabled        # ادمین برای این مسابقه خاموشش نکرده
-            and ms.seat.is_available  # خودِ صندلی به‌صورت کلی فعال است
-            and block_ok                              # بلوکش برای این مسابقه فعال است
-            and ms.seat.row_id in active_row_ids      # ردیفِ خودش هم فعال است
-        )
-        seat_info = {
-            'id': ms.id,
-            'number': ms.seat.number,
+    data = {'seats': [
+        {
+            'id': sid,
+            'number': number,
             'is_available': available,
-            'is_reserved': False,
-            'reserved_by_me': False,
+            'is_reserved': holder is not None,
+            'reserved_by_me': holder is not None and holder == current_user_id,
         }
-
-        reservation = reserved_map.get(ms.id)
-        if reservation:
-            seat_info['is_reserved'] = True
-            if current_user_id is not None and reservation.get('user_id') == current_user_id:
-                seat_info['reserved_by_me'] = True
-
-        data['seats'].append(seat_info)
+        for sid, number, available, holder in shared
+    ]}
 
     return JsonResponse(data)
 
