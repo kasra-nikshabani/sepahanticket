@@ -13,6 +13,12 @@ logger = logging.getLogger(__name__)
 
 OTP_COOLDOWN_SECONDS = 60
 
+# ===== مدت اعتبار کد ورود =====
+# یک دقیقه خیلی کوتاه بود: کاربر تا پیامک برسد و کد را وارد کند، اغلب کد
+# منقضی شده بود و مجبور می‌شد دوباره درخواست بدهد -- که هم تجربه‌ی بدی بود
+# و هم روز مسابقه بار اضافی روی سرویس پیامک و خودِ سایت می‌گذاشت.
+OTP_VALIDITY_MINUTES = 5
+
 
 # ===== تایم‌اوت تماس با سرویس پیامک =====
 # عمداً کوتاه: این تماس داخل چرخه‌ی درخواست انجام می‌شود و هر ثانیه‌ای که
@@ -176,7 +182,7 @@ def create_otp(phone_number):
     otp = OTP.objects.create(
         phone_number=phone_number,
         code=code,
-        expires_at=timezone.now() + timezone.timedelta(minutes=1)
+        expires_at=timezone.now() + timezone.timedelta(minutes=OTP_VALIDITY_MINUTES)
     )
 
     # ارسال پیامک

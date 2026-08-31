@@ -578,7 +578,7 @@
             <p class="info-text">
                 کد <strong class="highlight">۴ رقمی</strong> ارسال‌شده را در کادر زیر وارد کنید.
                 <br>
-                <span style="font-size: 12px; color: #8a9aaa;">این کد تا ۱ دقیقه اعتبار دارد.</span>
+                <span style="font-size: 12px; color: #8a9aaa;">این کد تا ۵ دقیقه اعتبار دارد.</span>
             </p>
 
             <!-- ===== فرم ===== -->
@@ -645,7 +645,9 @@
         const resendFeedback = document.getElementById('resendFeedback');
         const btnSpinner = document.getElementById('btnSpinner');
 
-        // ===== تایمر یکپارچه‌ی ارسال مجدد (کد هم دقیقاً همین ۱ دقیقه اعتبار دارد) =====
+        // ===== تایمر ارسال مجدد: ۶۰ ثانیه فاصله تا درخواست کد جدید.
+        // اعتبار خودِ کد جداست و ۵ دقیقه است (OTP_VALIDITY_MINUTES) -- یعنی بعد
+        // از پایان این تایمر، کد قبلی هنوز معتبر است. =====
         const START_SECONDS = 60;
         const INITIAL_REMAINING = parseInt('{{ remaining_time|default:60 }}');
         let remaining = INITIAL_REMAINING > 0 ? INITIAL_REMAINING : 0;
