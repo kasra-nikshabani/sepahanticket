@@ -1182,6 +1182,18 @@ def get_seats_status(request, match_id):
             {first.seat.row_id} if is_row_active_for_match(match, first.seat.row) else set()
         )
 
+    match_seats = list(match_seats)
+
+    # ===== وضعیت رزرو با یک رفت‌وبرگشت به Redis، نه یکی به‌ازای هر صندلی =====
+    # قبلاً get_reservation داخل حلقه صدا زده می‌شد؛ برای یک بلوکِ ۹۳۰ صندلی
+    # یعنی ۹۳۰ رفت‌وبرگشت به Redis در هر درخواست. و این اندپوینت هر ۵ ثانیه
+    # توسط هر کاربرِ روی صفحه‌ی نقشه صدا زده می‌شود -- یعنی روی یک مسابقه‌ی
+    # پرترافیک همین حلقه تبدیل به گلوگاه کل سامانه می‌شد (اندازه‌گیری‌شده:
+    # ~۴۰۰ms و سقف ~۲۲ درخواست بر ثانیه). get_reserved_map همان کار را با یک
+    # MGET انجام می‌دهد.
+    reserved_map = SeatReservation.get_reserved_map([ms.id for ms in match_seats])
+    current_user_id = request.user.id if request.user.is_authenticated else None
+
     data = {'seats': []}
 
     for ms in match_seats:
@@ -1200,10 +1212,10 @@ def get_seats_status(request, match_id):
             'reserved_by_me': False,
         }
 
-        reservation = SeatReservation.get_reservation(ms.id)
+        reservation = reserved_map.get(ms.id)
         if reservation:
             seat_info['is_reserved'] = True
-            if request.user.is_authenticated and reservation.get('user_id') == request.user.id:
+            if current_user_id is not None and reservation.get('user_id') == current_user_id:
                 seat_info['reserved_by_me'] = True
 
         data['seats'].append(seat_info)
