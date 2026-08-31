@@ -206,6 +206,21 @@ def _set_sms_block(msg):
 
 def create_otp(phone_number):
     """ایجاد کد OTP جدید و ارسال آن"""
+    # ===== این بررسی باید *اولین* کار باشد =====
+    # اگر اپراتور ما را محدود کرده، همین‌جا برمی‌گردیم -- قبل از اینکه کدِ
+    # قبلیِ کاربر پاک شود. وقتی این بررسی پایین‌تر بود، کاربری که کد را
+    # گرفته بود و دکمه‌ی «ارسال مجدد» را می‌زد، کد سالمش حذف می‌شد و کد
+    # جدیدی هم نمی‌آمد؛ یعنی درست همان کسانی که پیامک را دریافت کرده بودند
+    # هم از ورود جا می‌ماندند. (نشانه‌اش این بود: ۲۵۰ پیامک موفق در ۹۰
+    # ثانیه، ولی صفر کاربر جدید.)
+    blocked_ttl = _sms_block_remaining()
+    if blocked_ttl:
+        raise SMSProviderBusyError(
+            'ارسال پیامک موقتاً از سمت اپراتور محدود شده است. '
+            f'لطفاً حدود {blocked_ttl} ثانیه دیگر دوباره تلاش کنید.',
+            retry_after=blocked_ttl,
+        )
+
     # ===== Rate limit سمت بک‌اند (مستقل از session) =====
     # cache.add اتمیک است: اگر کلید از قبل موجود باشد False برمی‌گرداند، پس
     # حتی دو درخواست هم‌زمان هم نمی‌توانند هر دو رد شوند.
@@ -214,11 +229,12 @@ def create_otp(phone_number):
         ttl = cache.ttl(cooldown_key) if hasattr(cache, 'ttl') else None
         raise OTPRateLimitError(retry_after=int(ttl) if ttl else OTP_COOLDOWN_SECONDS)
 
-    # چون قفل بالا از تولید بیش‌ازحد کد جلوگیری می‌کند، خیالمان راحت است که
-    # کدهای قبلیِ استفاده‌نشده‌ی این شماره را هم پاک کنیم -- فقط آخرین کد
-    # صادرشده معتبر باشد (چه هنوز منقضی نشده باشد چه شده باشد).
-    OTP.objects.filter(phone_number=phone_number, is_used=False).delete()
-
+    # ===== کد قبلی فقط بعد از ارسالِ *موفقِ* کد جدید پاک می‌شود =====
+    # قبلاً همین‌جا (قبل از ارسال) پاک می‌شد. نتیجه این بود که اگر ارسال
+    # شکست می‌خورد، کاربر هم کد قبلی‌اش را از دست می‌داد و هم کد جدیدی
+    # نمی‌گرفت -- یعنی یک خرابیِ گذرای اپراتور، کسی را که کد سالم در دست
+    # داشت هم از ورود محروم می‌کرد. حالا حذف به پایین (بعد از تأیید ارسال)
+    # منتقل شده و در مسیر شکست، کد قبلی دست‌نخورده می‌ماند.
     code = generate_otp_code()
 
     # ===== کد OTP هرگز در لاگ نوشته نمی‌شود =====
@@ -239,20 +255,14 @@ def create_otp(phone_number):
         expires_at=timezone.now() + timezone.timedelta(minutes=OTP_VALIDITY_MINUTES)
     )
 
-    # اگر سرویس پیامک خودش گفته «فعلاً نه»، تماس نگیر -- هر تماسِ اضافه
-    # فقط مهلت را تمدید می‌کند.
-    blocked_ttl = _sms_block_remaining()
-    if blocked_ttl:
-        otp.delete()
-        cache.delete(cooldown_key)
-        raise SMSProviderBusyError(
-            'ارسال پیامک موقتاً از سمت اپراتور محدود شده است. '
-            f'لطفاً حدود {blocked_ttl} ثانیه دیگر دوباره تلاش کنید.',
-            retry_after=blocked_ttl,
-        )
-
     # ارسال پیامک
     success, msg = send_sms_via_smsir(phone_number, code)
+    if success:
+        # ارسال تأیید شد: حالا کدهای قبلیِ همین شماره را باطل کن تا فقط
+        # تازه‌ترین کد معتبر باشد.
+        OTP.objects.filter(
+            phone_number=phone_number, is_used=False
+        ).exclude(pk=otp.pk).delete()
     if not success:
         otp.delete()
         # چون پیامک واقعاً ارسال نشده، قفل ۶۰ ثانیه‌ای را هم آزاد می‌کنیم
