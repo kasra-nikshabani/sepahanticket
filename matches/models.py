@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.core.cache import cache
 from django.db import models
 from django.db.models import Sum
 from django.utils import timezone
@@ -468,18 +469,71 @@ def get_block_zone_map(match):
     return state
 
 
+def _zone_cache_version(match_id):
+    """شماره‌ی نسخه‌ی کشِ جایگاه‌ها برای یک مسابقه.
+
+    به‌جای پاک کردن تک‌تک کلیدها (که نیاز به شمردن همه‌ی بلوک‌ها دارد)،
+    این شماره را یکی زیاد می‌کنیم و همه‌ی کلیدهای قدیمی خودبه‌خود بی‌اثر
+    می‌شوند."""
+    try:
+        return cache.get(f'bzone_ver:{match_id}', 0)
+    except Exception:
+        return 0
+
+
+def invalidate_block_zone_cache(match_id):
+    """بعد از هر تغییر در نوع جایگاهِ بلوک‌های یک مسابقه صدا زده شود."""
+    try:
+        key = f'bzone_ver:{match_id}'
+        if cache.get(key) is None:
+            cache.set(key, 1, None)
+        else:
+            cache.incr(key)
+    except Exception:
+        pass
+
+
 def get_block_zone_for_match(match, block):
-    """نوع جایگاه یک بلوک برای یک مسابقهٔ مشخص."""
+    """نوع جایگاه یک بلوک برای یک مسابقهٔ مشخص.
+
+    ===== چرا کش دارد =====
+    این تابع از داخل Ticket.block_type_label صدا زده می‌شود و آن پراپرتی
+    در قالب user_tickets.html هفت بار برای هر بلیط ارزیابی می‌شود -- یعنی
+    هفت کوئری به ازای هر بلیط، داخل حلقه‌ی رندر قالب. روز مسابقه همین
+    N+1 کافی بود که نخ‌های گانیکورن تماماً روی دیتابیس معطل بمانند و صفحات
+    ۱۵ ثانیه طول بکشند (با ۵۰٪ CPU بیکار و دیتابیسِ کاملاً سالم -- مشکل
+    تعدادِ کوئری بود، نه سنگینیِ کوئری).
+
+    نتیجه فقط با تغییر MatchBlockZone عوض می‌شود، پس امن است که کش شود؛
+    هر تغییری invalidate_block_zone_cache را صدا می‌زند.
+    """
+    match_id = match.id if hasattr(match, 'id') else match
+    block_id = block.id if hasattr(block, 'id') else block
+    ck = f'bzone:{match_id}:{block_id}:{_zone_cache_version(match_id)}'
+    try:
+        cached = cache.get(ck)
+    except Exception:
+        cached = None
+    if cached is not None:
+        return cached
+
     override = MatchBlockZone.objects.filter(
-        match=match, block=block
+        match_id=match_id, block_id=block_id
     ).values_list('zone_type', flat=True).first()
     if override is not None:
-        return override
-    if block.is_vip:
-        return 'vip'
-    if block.is_class1:
-        return 'class1'
-    return block.zone_type
+        zone = override
+    elif getattr(block, 'is_vip', False):
+        zone = 'vip'
+    elif getattr(block, 'is_class1', False):
+        zone = 'class1'
+    else:
+        zone = block.zone_type
+
+    try:
+        cache.set(ck, zone, 900)
+    except Exception:
+        pass
+    return zone
 
 
 def get_block_ids_by_zone(match, zone_type):

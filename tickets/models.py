@@ -10,6 +10,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.functional import cached_property
 from weasyprint import HTML
 import tempfile
 import os
@@ -161,13 +162,19 @@ class Ticket(models.Model):
         # خطا یک کد طولانی‌تر و تقریباً بدون‌برخورد تولید می‌کنیم.
         return ''.join(secrets.choice(string.digits) for _ in range(10))
 
-    @property
+    @cached_property
     def block_type_label(self):
         """پراپرتی برای دریافت نام فارسی نوع سکو برای استفاده در PDF و سایت.
 
         نوع جایگاه مخصوصِ همین مسابقه خوانده می‌شود (نه مقدار گلوبالِ بلوک)،
         چون سهمیه‌ی میزبان/میهمان از بازی به بازی فرق می‌کند. باید دقیقاً با
-        get_ticket_zone در tickets/api.py (که گیت استفاده می‌کند) یکی بماند."""
+        get_ticket_zone در tickets/api.py (که گیت استفاده می‌کند) یکی بماند.
+
+        ===== چرا cached_property =====
+        قالب user_tickets.html این مقدار را هفت بار پشت سر هم ارزیابی
+        می‌کند (یک بار برای هر شرطِ رنگ + یک بار برای خودِ متن). با
+        property ساده، هر ارزیابی یک کوئری جدا بود. حالا فقط یک بار
+        برای هر شیء بلیط محاسبه می‌شود."""
         if self.seat and self.seat.row and self.seat.row.block:
             from matches.models import get_block_zone_for_match
             zone = get_block_zone_for_match(self.match, self.seat.row.block)

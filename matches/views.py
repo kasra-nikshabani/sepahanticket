@@ -36,6 +36,7 @@ from .models import (
     MatchBlockActive, MatchRowActive, get_block_active_map, get_active_block_ids,
     get_row_active_map, get_active_row_ids, is_block_active_for_match, is_row_active_for_match,
     MatchBlockZone, get_block_zone_map, get_block_zone_for_match, get_block_ids_by_zone,
+    invalidate_block_zone_cache,
     AWAY_ZONE_TYPES,
 )
 from .models import ZONE_CHOICES
@@ -2362,7 +2363,8 @@ def admin_match_set_block_zone(request, match_id, block_id):
     if zone == '':
         deleted, _ = MatchBlockZone.objects.filter(match=match, block=block).delete()
         if deleted:
-            messages.success(request, f'نوع جایگاه بلوک «{block.name}» به پیش‌فرض برگشت.')
+            invalidate_block_zone_cache(match.id)
+        messages.success(request, f'نوع جایگاه بلوک «{block.name}» به پیش‌فرض برگشت.')
         return redirect('matches:admin_match_stadium_layout', match_id=match.id)
 
     valid_zones = {z for z, _ in ZONE_CHOICES}
@@ -2373,6 +2375,7 @@ def admin_match_set_block_zone(request, match_id, block_id):
     MatchBlockZone.objects.update_or_create(
         match=match, block=block, defaults={'zone_type': zone}
     )
+    invalidate_block_zone_cache(match.id)
     label = dict(ZONE_CHOICES).get(zone, zone)
     msg = f'نوع جایگاه بلوک «{block.name}» فقط برای این مسابقه به «{label}» تغییر کرد.'
 
