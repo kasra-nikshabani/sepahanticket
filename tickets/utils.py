@@ -3,6 +3,9 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 
+# تایم‌اوت تماس با سرویس بیرونیِ هواداری (ثانیه)
+FAN_API_TIMEOUT = 5
+
 
 def get_access_token():
     """دریافت توکن از API و ذخیره در کش"""
@@ -19,7 +22,11 @@ def get_access_token():
         "password": settings.FAN_API_PASSWORD
     }
 
-    response = requests.post(url, json=payload)
+    # ===== تایم‌اوت حیاتی است =====
+    # این تماس داخل چرخه‌ی درخواستِ کاربر انجام می‌شود. بدون تایم‌اوت، اگر
+    # سرویس بیرونی کند یا قطع باشد، worker گانیکورن تا ابد همان‌جا می‌ماند --
+    # چند تای این‌ها کافی است تا کل سایت از کار بیفتد.
+    response = requests.post(url, json=payload, timeout=FAN_API_TIMEOUT)
     if response.status_code == 200:
         data = response.json()
         token = data.get('token')

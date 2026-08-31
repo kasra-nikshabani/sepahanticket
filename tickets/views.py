@@ -42,7 +42,7 @@ from matches.models import (
 )
 from accounts.models import User
 from wallet.models import Wallet, is_wallet_enabled, WALLET_DISABLED_MESSAGE
-from .utils import get_access_token
+from .utils import get_access_token, FAN_API_TIMEOUT
 
 logger = logging.getLogger(__name__)
 
@@ -1593,7 +1593,7 @@ def inquiry_fan(request):
             "tarikheTavallod": tarikhe_tavallod
         }
 
-        response = requests.post(url, json=payload, headers=headers, timeout=10)
+        response = requests.post(url, json=payload, headers=headers, timeout=FAN_API_TIMEOUT)
 
         # ===== بررسی اینکه آیا سرور پاسخ JSON داده یا خیر =====
         try:
