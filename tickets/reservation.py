@@ -230,19 +230,32 @@ class SeatReservation:
         except Exception:
             return None
 
+    # ===== چرا تکه‌تکه =====
+    # این متد یک get_many روی همه‌ی صندلی‌های یک بلوک می‌زد -- برای بلوک‌های
+    # بزرگ یعنی یک MGET با چند هزار کلید. Redis تک‌نخی است، پس آن یک دستور
+    # کل سرور Redis را قفل می‌کند؛ در slowlog روز مسابقه یک نمونه ۲۴۴
+    # میلی‌ثانیه دیده شد. چون سشن جنگو هم روی همین Redis است، *هر* درخواست
+    # سایت پشت آن قفل می‌ماند -- یعنی یک صفحه‌ی نقشه‌ی صندلی کل سایت را
+    # کند می‌کرد. با تکه‌تکه کردن، مجموع کار همان است ولی Redis بین تکه‌ها
+    # به بقیه‌ی کلاینت‌ها می‌رسد و صف سر-به-سر از بین می‌رود.
+    MGET_CHUNK = 200
+
     @classmethod
     def get_reserved_map(cls, match_seat_ids):
         result = {sid: None for sid in match_seat_ids}
         if not match_seat_ids:
             return result
         try:
-            keys = {sid: cls._get_seat_key(sid) for sid in match_seat_ids}
-            values = cache.get_many(list(keys.values()))
-            inv = {v: k for k, v in keys.items()}
-            for redis_key, data in values.items():
-                sid = inv.get(redis_key)
-                if sid is not None:
-                    result[sid] = data
+            ids = list(match_seat_ids)
+            for i in range(0, len(ids), cls.MGET_CHUNK):
+                chunk = ids[i:i + cls.MGET_CHUNK]
+                keys = {sid: cls._get_seat_key(sid) for sid in chunk}
+                values = cache.get_many(list(keys.values()))
+                inv = {v: k for k, v in keys.items()}
+                for redis_key, data in values.items():
+                    sid = inv.get(redis_key)
+                    if sid is not None:
+                        result[sid] = data
         except Exception as e:
             logger.error(f"get_reserved_map error: {e}", exc_info=True)
         return result
