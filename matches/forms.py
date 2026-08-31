@@ -36,7 +36,13 @@ class MatchForm(forms.ModelForm):
     match_time = forms.TimeField(
         label='ساعت برگزاری',
         required=False,
-        widget=forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+        # format='%H:%M' حیاتی است: بدون آن جنگو مقدار را «19:30:00» رندر
+        # می‌کند و <input type="time"> (که ثانیه نمی‌پذیرد مگر با step) آن را
+        # خالی نشان می‌دهد -- یعنی ادمین فرم را باز می‌کرد، ساعت را خالی
+        # می‌دید و با یک ذخیره‌ی ساده ساعتِ واقعی پاک می‌شد.
+        widget=forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'},
+                               format='%H:%M'),
+        input_formats=['%H:%M', '%H:%M:%S'],
         help_text='اختیاری — اگر خالی بماند، ساعت بازی هیچ‌جا نمایش داده نمی‌شود.',
         error_messages={'invalid': 'فرمت ساعت نامعتبر است.'},
     )
