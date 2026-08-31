@@ -1,9 +1,16 @@
-{# ===== صفحه‌ی خطای CSRF =====
-   جنگو این قالب را با Context ساده رندر می‌کند، نه RequestContext -- یعنی
-   نه context processorها اجرا می‌شوند و نه request/user در دسترس‌اند.
-   برای همین عمداً مستقل و بدون extends نوشته شده (هم‌الگوی geo_blocked.html)
-   تا هیچ وابستگی‌ای نتواند این صفحه را بشکند و به‌جای ۴۰۳، خطای ۵۰۰ بدهد.
-   به همین دلیل از وب‌فونت هم استفاده نمی‌کند. #}<!DOCTYPE html>
+{% comment %}
+===== صفحه‌ی خطای CSRF =====
+جنگو این قالب را با Context ساده رندر می‌کند، نه RequestContext -- یعنی
+نه context processorها اجرا می‌شوند و نه request/user در دسترس‌اند.
+برای همین عمداً مستقل و بدون extends نوشته شده (هم‌الگوی geo_blocked.html)
+تا هیچ وابستگی‌ای نتواند این صفحه را بشکند و به‌جای ۴۰۳، خطای ۵۰۰ بدهد.
+به همین دلیل از وب‌فونت هم استفاده نمی‌کند.
+
+توجه: این بلوک با {% templatetag openblock %} comment {% templatetag closeblock %}
+نوشته شده، نه با کامنتِ تک‌خطیِ {% templatetag openbrace %}#...#{% templatetag closebrace %}
+-- آن نوع کامنت چندخطی نیست و اگر چندخطی نوشته شود عیناً در خروجی چاپ می‌شود و
+چون قبل از DOCTYPE می‌افتد، مرورگر را به quirks mode می‌برد و صفحه به‌هم می‌ریزد.
+{% endcomment %}<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
