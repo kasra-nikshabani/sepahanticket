@@ -315,28 +315,40 @@ def login_view(request):
         return redirect('matches:home')
 
     if request.method == 'POST':
+        # ===== محدودیت تلاش ناموفق =====
+        # این تنها مسیر ورود با رمز است و حساب‌های مدیر از همین‌جا وارد
+        # می‌شوند؛ بدون این محدودیت، حدس زدن رمز مدیر فقط به سرعت شبکه
+        # محدود بود. هم روی نام کاربری قفل می‌شود (جلوی حمله به یک حساب)
+        # و هم روی آی‌پی (جلوی امتحان‌کردن رمز مشترک روی حساب‌های زیاد).
+        #
+        # نکته: این چک عمداً *قبل* از form.is_valid() است. LoginForm از روی
+        # AuthenticationForm ساخته شده و خودش داخل is_valid() احراز هویت
+        # می‌کند؛ یعنی با رمز اشتباه is_valid() مقدار False برمی‌گرداند و
+        # هر شمارنده‌ای که داخل شاخه‌ی موفق باشد هیچ‌وقت اجرا نمی‌شود.
+        ip = _client_ip(request)
+        attempted_username = (request.POST.get('username') or '').strip()
+        u_key = f'login_fail:u:{attempted_username}'
+        ip_key = f'login_fail:ip:{ip}'
+
+        if (cache.get(u_key, 0) >= LOGIN_MAX_ATTEMPTS
+                or cache.get(ip_key, 0) >= LOGIN_MAX_ATTEMPTS_PER_IP):
+            logger.warning("ورود مسدود شد (تلاش زیاد) username=%s ip=%s", attempted_username, ip)
+            messages.error(
+                request,
+                'به دلیل تلاش‌های ناموفق زیاد، ورود موقتاً مسدود شده است. '
+                'چند دقیقه دیگر دوباره تلاش کنید.'
+            )
+            return render(request, 'accounts/login_password.html', {'form': LoginForm()})
+
         form = LoginForm(request, data=request.POST)
+        if not form.is_valid():
+            # رمز اشتباه، کاربر ناموجود، یا فرم ناقص -- همه تلاش ناموفق‌اند
+            cache.set(u_key, cache.get(u_key, 0) + 1, timeout=LOGIN_LOCKOUT_SECONDS)
+            cache.set(ip_key, cache.get(ip_key, 0) + 1, timeout=LOGIN_LOCKOUT_SECONDS)
+
         if form.is_valid():
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password')
-
-            # ===== محدودیت تلاش ناموفق =====
-            # این تنها مسیر ورود با رمز است و حساب‌های مدیر از همین‌جا وارد
-            # می‌شوند؛ بدون این محدودیت، حدس زدن رمز مدیر فقط به سرعت شبکه
-            # محدود بود. هم روی نام کاربری قفل می‌شود (جلوی حمله به یک حساب)
-            # و هم روی آی‌پی (جلوی امتحان‌کردن رمز مشترک روی حساب‌های زیاد).
-            ip = _client_ip(request)
-            u_key = f'login_fail:u:{username}'
-            ip_key = f'login_fail:ip:{ip}'
-            if (cache.get(u_key, 0) >= LOGIN_MAX_ATTEMPTS
-                    or cache.get(ip_key, 0) >= LOGIN_MAX_ATTEMPTS_PER_IP):
-                logger.warning("ورود مسدود شد (تلاش زیاد) username=%s ip=%s", username, ip)
-                messages.error(
-                    request,
-                    'به دلیل تلاش‌های ناموفق زیاد، ورود موقتاً مسدود شده است. '
-                    'چند دقیقه دیگر دوباره تلاش کنید.'
-                )
-                return render(request, 'accounts/login_password.html', {'form': form})
 
             user = authenticate(request, username=username, password=password)
             if user is None:
