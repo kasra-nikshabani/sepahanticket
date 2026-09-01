@@ -24,7 +24,27 @@ class Command(BaseCommand):
             help='فقط بلیط‌هایی که بیش از این مقدار دقیقه از ایجادشان گذشته را در نظر بگیر (پیش‌فرض ۱۰)',
         )
 
+    # ===== سقف‌ها: این دستور باید شبکه‌ی ایمنی باشد، نه منبع سیل =====
+    # نسخه‌ی اول هر ۵ دقیقه *همه‌ی* بلیط‌های بی‌PDF را دوباره enqueue می‌کرد،
+    # بدون توجه به اینکه چقدر از آن‌ها همین الان در صف منتظرند. وقتی یک
+    # انباشت واقعی پیش آمد (شب دربی، ۸۳۰۰ بلیط)، هر اجرا ۸۳۰۰ کار اضافه
+    # می‌کرد در حالی که worker ها در همان ۵ دقیقه فقط ~۱۵۰۰ تا را تمام
+    # می‌کردند -- صف به‌جای کوچک شدن، بزرگ‌تر می‌شد و خودِ شبکه‌ی ایمنی به
+    # مشکل تبدیل شده بود.
+    MAX_QUEUE_DEPTH = 2000   # اگر صف از این عمیق‌تر است، چیزی اضافه نکن
+    BATCH = 500              # در هر اجرا حداکثر همین تعداد
+
     def handle(self, *args, **options):
+        from tickets.queue import pdf_queue
+
+        depth = len(pdf_queue)
+        if depth > self.MAX_QUEUE_DEPTH:
+            self.stdout.write(
+                f'صف از قبل {depth:,} کار دارد (بیشتر از سقف {self.MAX_QUEUE_DEPTH:,}) — '
+                'چیزی اضافه نمی‌شود تا worker ها عقب‌ماندگی را جبران کنند.'
+            )
+            return
+
         cutoff = timezone.now() - timedelta(minutes=options['older_than_minutes'])
         stuck = Ticket.objects.filter(pdf_file='', purchase_date__lt=cutoff)
         count = stuck.count()
@@ -33,11 +53,14 @@ class Command(BaseCommand):
             self.stdout.write('همه‌ی بلیط‌ها PDF دارند.')
             return
 
+        batch = list(stuck[:self.BATCH])
         self.stdout.write(self.style.WARNING(
-            f'{count} بلیط بدون PDF پیدا شد (قدیمی‌تر از {options["older_than_minutes"]} دقیقه) — دوباره enqueue می‌شود...'
+            f'{count} بلیط بدون PDF پیدا شد (قدیمی‌تر از {options["older_than_minutes"]} دقیقه) — '
+            f'{len(batch)} تای اول دوباره enqueue می‌شود...'
         ))
-        for ticket in stuck:
+        for ticket in batch:
             ticket.save(update_fields=['pdf_file'])
-            self.stdout.write(f'  - بلیط {ticket.id} ({ticket.ticket_number}) دوباره enqueue شد')
 
-        self.stdout.write(self.style.SUCCESS(f'{count} بلیط دوباره در صف قرار گرفت.'))
+        self.stdout.write(self.style.SUCCESS(
+            f'{len(batch)} بلیط دوباره در صف قرار گرفت (از {count} بلیطِ بی‌PDF).'
+        ))
