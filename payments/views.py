@@ -153,6 +153,20 @@ def payment_request(request):
             except DiscountCode.DoesNotExist:
                 discount_code = ''
 
+        # ===== تمدید رزرو برای مدت حضور در درگاه =====
+        # رزرو صندلی ۱۰ دقیقه اعتبار دارد و تا امروز موقع رفتن به درگاه
+        # تمدید نمی‌شد. کاربری که در درگاه بانک معطل می‌شد (رمز پویا، تلاش
+        # دوباره) رزروش منقضی می‌شد، صندلی آزاد و به دیگری فروخته می‌شد، و
+        # وقتی برمی‌گشت پولش رفته بود ولی صندلی نبود -- این پرتکرارترین علتِ
+        # «پرداخت موفق، بلیط صادر نشده» بود (۲۱ مورد در یک روز).
+        from tickets.reservation import SeatReservation
+        for _key in buyer_info:
+            if _key.startswith('match_seat_id_'):
+                try:
+                    SeatReservation.extend_reservation(int(buyer_info[_key]), request.user.id)
+                except (TypeError, ValueError):
+                    continue
+
         payment = Payment.objects.create(
             user=request.user,
             purpose='ticket_purchase',
@@ -305,16 +319,47 @@ def payment_verify(request):
                 # دلیل دیگری) و تراکنش را ناموفق علامت می‌زنیم -- قبلاً در این
                 # حالت payment.status بدون قید و شرط 'success' ثبت می‌شد ولی
                 # هیچ بلیطی صادر نشده بود و صندلی‌ها هم هیچ‌وقت آزاد نمی‌شدند.
+                # ===== پول از قبل در درگاه گرفته شده -- نباید گم شود =====
+                # تا امروز این شاخه فقط status='failed' می‌گذاشت؛ نتیجه این
+                # بود که تراکنش دقیقاً شبیه کسی می‌شد که اصلاً پرداخت نکرده،
+                # پول کاربر بلاتکلیف می‌ماند و پیدا کردنش فقط با استعلام
+                # تک‌تک تراکنش‌ها از زیبال ممکن بود (۶۴۰ مورد، ۳.۵ میلیارد
+                # ریال). حالا مبلغ بلافاصله به کیف پول همان کاربر برمی‌گردد.
+                # عمداً مستقل از is_wallet_enabled است: این بازگشت وجه است،
+                # نه استفاده از کیف پول -- رد کردنش یعنی گم شدن پول واقعی.
                 logger.error(f"❌ Ticket finalize failed for payment {payment.id}: {error_msg}")
                 _release_payment_seats(payment)
+
+                refunded = False
+                try:
+                    from wallet.models import Wallet as _Wallet
+                    _w, _ = _Wallet.objects.get_or_create(user=payment.user)
+                    refunded = _w.add_balance(
+                        amount=amount,
+                        description=f'بازگشت وجه -- بلیط صادر نشد (تراکنش {track_id})',
+                        reference_id=f'refund-{track_id}',
+                    )
+                except Exception as exc:            # noqa: BLE001
+                    logger.error("بازگشت وجه به کیف پول برای پرداخت %s شکست خورد: %s",
+                                 payment.id, exc)
+
                 payment.status = 'failed'
                 payment.processed_at = timezone.now()
                 payment.save(update_fields=['status', 'processed_at', 'updated_at'])
-                messages.error(
-                    request,
-                    f"❌ در صدور بلیط مشکلی پیش آمد: {error_msg} "
-                    f"اگر مبلغی از حساب شما کسر شده، با پشتیبانی تماس بگیرید و شماره تراکنش {track_id} را اعلام کنید."
-                )
+
+                if refunded:
+                    messages.error(
+                        request,
+                        f"❌ در صدور بلیط مشکلی پیش آمد: {error_msg} "
+                        f"مبلغ {amount:,} ریال به کیف پول شما بازگردانده شد."
+                    )
+                else:
+                    messages.error(
+                        request,
+                        f"❌ در صدور بلیط مشکلی پیش آمد: {error_msg} "
+                        f"اگر مبلغی از حساب شما کسر شده، با پشتیبانی تماس بگیرید و "
+                        f"شماره تراکنش {track_id} را اعلام کنید."
+                    )
                 return redirect(next_url)
 
         payment.status = 'success'
