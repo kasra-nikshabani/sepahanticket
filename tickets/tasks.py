@@ -19,7 +19,22 @@ def generate_ticket_pdf_task(ticket_id):
         return
 
     ticket.generate_pdf()
-    ticket.save(update_fields=['pdf_file'])
+
+    # ===== چرا update() و نه save() =====
+    # Ticket.save() هر بار که pdf_file خالی باشد دوباره همین کار را در صف
+    # می‌گذارد. پس اگر تولید PDF ناموفق بماند، همین save یک حلقه‌ی بی‌پایان
+    # می‌سازد: کار اجرا می‌شود -> PDF ساخته نمی‌شود -> save -> دوباره در صف.
+    # با قفلِ ۱۲۰ ثانیه‌ایِ enqueue یعنی هر بلیطِ بی‌PDF هر دو دقیقه یک کار
+    # تازه تولید می‌کند. شب دربی همین حلقه صف را به ۱.۳۹ میلیون کار رساند
+    # (برای ۳۲ هزار بلیط) و بلیط‌های واقعی ساعت‌ها پشت آن ماندند.
+    # update() مستقیم روی دیتابیس می‌نویسد و save() را اصلاً صدا نمی‌زند.
+    if ticket.pdf_file:
+        Ticket.objects.filter(pk=ticket.pk).update(pdf_file=ticket.pdf_file.name)
+    else:
+        # عمداً دوباره در صف گذاشته نمی‌شود -- یک خطای پایدار نباید به
+        # سیلِ کار تبدیل شود. بلیط‌های بی‌PDF از طریق گزارش قابل شناسایی و
+        # با دستور مدیریتی قابل تولید مجددند.
+        logger.error("generate_ticket_pdf_task: PDF تولید نشد برای بلیط %s", ticket_id)
 
 
 def enqueue_pdf_generation(ticket_id):
