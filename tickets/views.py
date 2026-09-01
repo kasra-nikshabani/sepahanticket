@@ -185,21 +185,14 @@ def tickets_pdf_status(request):
     return JsonResponse(result)
 
 
-# ===== جستجو و صفحه‌بندی لیست بلیط‌های کاربر ویژه =====
-# یک کاربر ویژه می‌تواند هزاران بلیط داشته باشد (بزرگ‌ترین موردِ واقعی:
-# ۲۱۰۰ بلیط برای یک مسابقه). قبلاً کل لیست یک‌جا رندر می‌شد -- هم صفحه
-# سنگین بود و هم پیدا کردن یک نفر بین هزاران ردیف عملاً ناممکن.
-VIP_TICKETS_PER_PAGE = 50
-
-
-def _search_and_paginate_tickets(request, tickets_qs):
-    """جستجو روی نام/کد ملی/شماره بلیط + صفحه‌بندی.
-
-    خروجی: (page_obj, query, querystring_بدون_page)
-    querystring برای لینک‌های صفحه‌بندی لازم است تا فیلتر مسابقه و عبارت
-    جستجو با رفتن به صفحه‌ی بعد از دست نروند.
-    """
-    from django.core.paginator import Paginator
+# ===== جستجو و فیلتر لیست بلیط‌های کاربر ویژه =====
+# عمداً صفحه‌بندی ندارد. کاربر ویژه لیست را یک‌جا می‌خواهد تا بتواند با
+# «انتخاب همه» کل یک دسته (مثلاً همه‌ی بلیط‌های بانوان) را در یک ZIP
+# بگیرد؛ با صفحه‌بندی، «انتخاب همه» فقط همان صفحه را می‌گرفت و همین
+# کارِ اصلی‌اش را خراب می‌کرد. به‌جای صفحه‌بندی، فیلتر جایگاه و جستجو
+# لیست را کوچک می‌کنند.
+def _search_and_filter_tickets(request, tickets_qs):
+    """جستجو + فیلتر جایگاه. خروجی: (tickets, query, zone)"""
     from django.db.models import Q as _Q
 
     query = (request.GET.get('q') or '').strip()
@@ -249,14 +242,24 @@ def _search_and_paginate_tickets(request, tickets_qs):
                 zone_filter |= _Q(match_id=mt.id, seat__row__block_id__in=block_ids)
         tickets_qs = tickets_qs.filter(zone_filter)
 
-    paginator = Paginator(tickets_qs, VIP_TICKETS_PER_PAGE)
-    page_obj = paginator.get_page(request.GET.get('page'))
+    # ===== برچسب جایگاه را یک‌بار برای همه حساب کن =====
+    # اگر هر بلیط خودش جایگاهش را بپرسد، روی لیستی که چند هزار ردیف دارد
+    # چند هزار رفت‌وبرگشت به کش در یک درخواست انجام می‌شود. نقشه‌ی
+    # بلوک->جایگاه برای هر مسابقه یک‌بار گرفته و در حافظه به بلیط‌ها
+    # چسبانده می‌شود.
+    from matches.models import get_block_zone_map, ZONE_CHOICES as _ZC
 
-    params = request.GET.copy()
-    params.pop('page', None)
-    querystring = params.urlencode()
+    tickets = list(tickets_qs)
+    labels = dict(_ZC)
+    zone_maps = {}
+    for t in tickets:
+        if t.match_id not in zone_maps:
+            zone_maps[t.match_id] = get_block_zone_map(t.match)
+        z = zone_maps[t.match_id].get(t.seat.row.block_id, '')
+        t.zone_code = z
+        t.zone_label = labels.get(z, 'نامشخص')
 
-    return page_obj, query, querystring, zone
+    return tickets, query, zone
 
 
 @login_required
@@ -273,15 +276,13 @@ def vip_tickets(request):
         tickets_qs = tickets_qs.filter(match_id=match_id)
 
     matches = Match.objects.filter(is_active=True).order_by('-date_time')
-    page_obj, query, querystring, selected_zone = _search_and_paginate_tickets(request, tickets_qs)
+    tickets, query, selected_zone = _search_and_filter_tickets(request, tickets_qs)
     context = {
-        'tickets': page_obj,          # فقط بلیط‌های همین صفحه
-        'page_obj': page_obj,
+        'tickets': tickets,
         'search_query': query,
-        'querystring': querystring,
         'selected_zone': selected_zone,
         'zone_choices': ZONE_CHOICES,
-        'total_count': page_obj.paginator.count,
+        'total_count': len(tickets),
         'matches': matches,
         'selected_match_id': int(match_id) if match_id else None,
     }
@@ -332,15 +333,13 @@ def vip_issued_tickets(request):
     elif not tickets_qs.exists() and match_id:
         messages.info(request, f'هیچ بلیطی برای مسابقه "{selected_match}" صادر نشده است.')
 
-    page_obj, query, querystring, selected_zone = _search_and_paginate_tickets(request, tickets_qs)
+    tickets, query, selected_zone = _search_and_filter_tickets(request, tickets_qs)
     context = {
-        'tickets': page_obj,
-        'page_obj': page_obj,
+        'tickets': tickets,
         'search_query': query,
-        'querystring': querystring,
         'selected_zone': selected_zone,
         'zone_choices': ZONE_CHOICES,
-        'total_count': page_obj.paginator.count,
+        'total_count': len(tickets),
         'matches': matches,
         'selected_match': selected_match,
         'selected_match_id': int(match_id) if match_id else None,

@@ -239,31 +239,6 @@
             font-size: 14px;
             color: #5a6a7a;
         }
-        .pagination-bar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            align-items: center;
-            justify-content: center;
-            margin-top: 18px;
-        }
-        .pagination-bar a, .pagination-bar span {
-            padding: 7px 12px;
-            border-radius: 7px;
-            border: 1px solid #d5dbe3;
-            text-decoration: none;
-            color: #33475b;
-            font-size: 14px;
-        }
-        .pagination-bar .current {
-            background: #0d6efd;
-            border-color: #0d6efd;
-            color: #fff;
-            font-weight: bold;
-        }
-        .pagination-bar .disabled {
-            opacity: .45;
-        }
         .bulk-actions {
             display: flex;
             gap: 10px;
@@ -393,25 +368,6 @@
                         <a href="{% url 'tickets:vip_issued_tickets' %}" class="btn btn-secondary">حذف فیلتر</a>
                     {% endif %}
 
-                    {% if page_obj.paginator.num_pages > 1 %}
-                        <div class="pagination-bar">
-                            {% if page_obj.has_previous %}
-                                <a href="?{{ querystring }}&page=1">« اول</a>
-                                <a href="?{{ querystring }}&page={{ page_obj.previous_page_number }}">قبلی</a>
-                            {% else %}
-                                <span class="disabled">« اول</span>
-                                <span class="disabled">قبلی</span>
-                            {% endif %}
-                            <span class="current">صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
-                            {% if page_obj.has_next %}
-                                <a href="?{{ querystring }}&page={{ page_obj.next_page_number }}">بعدی</a>
-                                <a href="?{{ querystring }}&page={{ page_obj.paginator.num_pages }}">آخر »</a>
-                            {% else %}
-                                <span class="disabled">بعدی</span>
-                                <span class="disabled">آخر »</span>
-                            {% endif %}
-                        </div>
-                    {% endif %}
                 </form>
 
                 <div class="result-summary">
@@ -419,9 +375,6 @@
                         نتیجه‌ی جستجوی «{{ search_query }}»:
                     {% endif %}
                     مجموع <strong>{{ total_count }}</strong> بلیط
-                    {% if page_obj.paginator.num_pages > 1 %}
-                        — نمایش {{ page_obj.start_index }} تا {{ page_obj.end_index }}
-                    {% endif %}
                 </div>
 
                 <form method="post" id="ticketForm" action="{% url 'tickets:bulk_download_user_tickets' %}">
@@ -431,7 +384,7 @@
                     <div class="bulk-actions">
                         <div>
                             <input type="checkbox" id="select-all">
-                            <label for="select-all" style="margin-right: 5px;">انتخاب همه (این صفحه)</label>
+                            <label for="select-all" style="margin-right: 5px;">انتخاب همه</label>
                         </div>
                         <span class="selected-count" id="selectedCount">0</span> بلیط انتخاب شده
                         <button type="submit" class="btn-download" id="downloadBtn">
@@ -473,7 +426,7 @@
                                         <td>{{ ticket.full_name }}</td>
                                         <td>{{ ticket.national_code }}</td>
                                         <td>{{ ticket.seat.row.name }} - {{ ticket.seat.number }}</td>
-                                        <td><span class="zone-badge zone-{{ ticket.block_zone|default:'unknown' }}">{{ ticket.block_type_label }}</span></td>
+                                        <td><span class="zone-badge zone-{{ ticket.zone_code|default:'unknown' }}">{{ ticket.zone_label }}</span></td>
                                         <td>
                                             {% if ticket.is_used %}
                                                 <span class="badge-used">استفاده شده</span>
