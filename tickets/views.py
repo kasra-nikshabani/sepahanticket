@@ -204,11 +204,31 @@ def _search_and_paginate_tickets(request, tickets_qs):
 
     query = (request.GET.get('q') or '').strip()
     if query:
-        tickets_qs = tickets_qs.filter(
+        # ===== چرا صندلی هم جستجو می‌شود =====
+        # بلیط‌های ویژه/تخصیصی کد ملی ندارند و full_name همه‌شان نام همان
+        # سازمان است (مثلاً «کانون هواداران باشگاه آقایان» روی هر ۴۱۱۰
+        # بلیط). یعنی ردیف‌ها عملاً یکسان به نظر می‌رسند و تنها چیزی که
+        # آن‌ها را از هم جدا می‌کند شماره‌ی بلیط و جای صندلی است -- پس
+        # جستجو باید روی بلوک/ردیف/شماره‌ی صندلی هم کار کند، وگرنه برای
+        # همین کاربرانی که بیشترین بلیط را دارند بی‌فایده است.
+        conditions = (
             _Q(full_name__icontains=query)
             | _Q(national_code__icontains=query)
             | _Q(ticket_number__icontains=query)
+            | _Q(seat__row__block__name__icontains=query)
         )
+        if query.isdigit():
+            conditions |= _Q(seat__number=int(query)) | _Q(seat__row__number=int(query))
+        tickets_qs = tickets_qs.filter(conditions)
+
+    # ===== ترتیب بر اساس جای صندلی =====
+    # مرتب‌سازی قبلی بر اساس تاریخ خرید بود؛ برای صدور گروهی که همه در یک
+    # لحظه ثبت می‌شوند این یعنی ترتیبی بی‌معنا بین ردیف‌هایی که ظاهرشان هم
+    # یکسان است. مرتب‌سازی بر اساس بلوک/ردیف/صندلی، بلیط‌های مجاور را کنار
+    # هم می‌آورد و لیست را قابل دنبال‌کردن می‌کند.
+    tickets_qs = tickets_qs.select_related('seat__row__block', 'match').order_by(
+        'seat__row__block__order', 'seat__row__number', 'seat__number'
+    )
 
     paginator = Paginator(tickets_qs, VIP_TICKETS_PER_PAGE)
     page_obj = paginator.get_page(request.GET.get('page'))

@@ -364,7 +364,7 @@
                         {% endfor %}
                     </select>
                     <input type="search" name="q" value="{{ search_query }}"
-                           placeholder="جستجو: نام، کد ملی یا شماره بلیط">
+                           placeholder="جستجو: شماره بلیط، بلوک، شماره ردیف یا صندلی، نام">
                     <button type="submit" class="btn btn-primary">اعمال فیلتر</button>
                     {% if selected_match_id or search_query %}
                         <a href="{% url 'tickets:vip_issued_tickets' %}" class="btn btn-secondary">حذف فیلتر</a>
