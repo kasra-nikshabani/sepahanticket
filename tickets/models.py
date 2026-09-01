@@ -163,6 +163,20 @@ class Ticket(models.Model):
         return ''.join(secrets.choice(string.digits) for _ in range(10))
 
     @cached_property
+    def block_zone(self):
+        """کدِ خامِ نوع جایگاه برای همین مسابقه ('home' / 'away' / ...).
+
+        block_type_label برچسبِ فارسیِ نمایشی است؛ این یکی مقدارِ ماشینی
+        است که قالب‌ها برای انتخاب رنگ و کلاس CSS لازم دارند. هر دو از یک
+        منبع می‌آیند (get_block_zone_for_match) پس هیچ‌وقت با هم اختلاف
+        پیدا نمی‌کنند.
+        """
+        if self.seat and self.seat.row and self.seat.row.block:
+            from matches.models import get_block_zone_for_match
+            return get_block_zone_for_match(self.match, self.seat.row.block)
+        return ''
+
+    @cached_property
     def block_type_label(self):
         """پراپرتی برای دریافت نام فارسی نوع سکو برای استفاده در PDF و سایت.
 

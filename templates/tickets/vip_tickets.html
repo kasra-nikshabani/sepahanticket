@@ -183,6 +183,23 @@
             accent-color: #D4AF37;
         }
 
+        .filter-form select[name="zone"] { min-width: 170px; }
+        .zone-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+            color: #fff;
+        }
+        .zone-home       { background: #28a745; }
+        .zone-away       { background: #ffc107; color: #212529; }
+        .zone-women      { background: #e83e8c; }
+        .zone-women_away { background: #c2185b; }
+        .zone-class1     { background: #0d6efd; }
+        .zone-vip        { background: #9b59b6; }
+        .zone-unknown    { background: #6c757d; }
         /* ===== جستجو و صفحه‌بندی ===== */
         .filter-form input[type="search"] {
             padding: 10px 14px;
@@ -365,10 +382,16 @@
                             </option>
                         {% endfor %}
                     </select>
+                    <select name="zone">
+                        <option value="">همه جایگاه‌ها</option>
+                        {% for value, label in zone_choices %}
+                            <option value="{{ value }}" {% if selected_zone == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
                     <input type="search" name="q" value="{{ search_query }}"
                            placeholder="جستجو: شماره بلیط، بلوک، شماره ردیف یا صندلی، نام">
                     <button type="submit" class="btn btn-primary">اعمال فیلتر</button>
-                    {% if selected_match_id or search_query %}
+                    {% if selected_match_id or search_query or selected_zone %}
                         <a href="{% url 'tickets:vip_tickets' %}" class="btn btn-secondary">حذف فیلتر</a>
                     {% endif %}
 
@@ -430,6 +453,8 @@
                                 <th>مسابقه</th>
                                 <th>نام خریدار</th>
                                 <th>کد ملی</th>
+                                <th>صندلی</th>
+                                <th>جایگاه</th>
                                 <th>تاریخ دریافت</th>
                                 <th>فایل PDF</th>
                             </tr>
@@ -447,6 +472,8 @@
                                     <td data-label="مسابقه">{{ ticket.match.home_team }} vs {{ ticket.match.away_team }}</td>
                                     <td data-label="نام خریدار">{{ ticket.full_name }}</td>
                                     <td data-label="کد ملی">{{ ticket.national_code }}</td>
+                                    <td data-label="صندلی">{{ ticket.seat.row.block.name }} — ردیف {{ ticket.seat.row.number }} — صندلی {{ ticket.seat.number }}</td>
+                                    <td data-label="جایگاه"><span class="zone-badge zone-{{ ticket.block_zone|default:'unknown' }}">{{ ticket.block_type_label }}</span></td>
                                     <td data-label="تاریخ دریافت">{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
                                     <td data-label="فایل PDF">
                                         {% if ticket.pdf_file %}

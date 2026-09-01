@@ -230,6 +230,25 @@ def _search_and_paginate_tickets(request, tickets_qs):
         'seat__row__block__order', 'seat__row__number', 'seat__number'
     )
 
+    # ===== فیلتر نوع جایگاه (میزبان / میهمان / بانوان / ...) =====
+    # نوع جایگاه یک ستون دیتابیس نیست: برای هر مسابقه جداگانه محاسبه
+    # می‌شود (override اختصاصی مسابقه، وگرنه مقدار پیش‌فرض بلوک). پس
+    # نمی‌شود مستقیم فیلتر کرد؛ باید برای هر مسابقه‌ای که بلیطی از آن در
+    # لیست هست، مجموعه‌ی بلوک‌های آن جایگاه را جدا حساب کنیم و با OR به هم
+    # وصل کنیم. همین باعث می‌شود فیلتر حتی وقتی بلیط‌ها از چند مسابقه‌اند
+    # هم درست کار کند.
+    zone = (request.GET.get('zone') or '').strip()
+    if zone:
+        from matches.models import Match as _Match, get_block_ids_by_zone
+
+        match_ids = tickets_qs.values_list('match_id', flat=True).distinct()
+        zone_filter = _Q(pk__in=[])          # پیش‌فرض: هیچ‌کدام
+        for mt in _Match.objects.filter(id__in=list(match_ids)):
+            block_ids = get_block_ids_by_zone(mt, zone)
+            if block_ids:
+                zone_filter |= _Q(match_id=mt.id, seat__row__block_id__in=block_ids)
+        tickets_qs = tickets_qs.filter(zone_filter)
+
     paginator = Paginator(tickets_qs, VIP_TICKETS_PER_PAGE)
     page_obj = paginator.get_page(request.GET.get('page'))
 
@@ -237,7 +256,7 @@ def _search_and_paginate_tickets(request, tickets_qs):
     params.pop('page', None)
     querystring = params.urlencode()
 
-    return page_obj, query, querystring
+    return page_obj, query, querystring, zone
 
 
 @login_required
@@ -254,12 +273,14 @@ def vip_tickets(request):
         tickets_qs = tickets_qs.filter(match_id=match_id)
 
     matches = Match.objects.filter(is_active=True).order_by('-date_time')
-    page_obj, query, querystring = _search_and_paginate_tickets(request, tickets_qs)
+    page_obj, query, querystring, selected_zone = _search_and_paginate_tickets(request, tickets_qs)
     context = {
         'tickets': page_obj,          # فقط بلیط‌های همین صفحه
         'page_obj': page_obj,
         'search_query': query,
         'querystring': querystring,
+        'selected_zone': selected_zone,
+        'zone_choices': ZONE_CHOICES,
         'total_count': page_obj.paginator.count,
         'matches': matches,
         'selected_match_id': int(match_id) if match_id else None,
@@ -311,12 +332,14 @@ def vip_issued_tickets(request):
     elif not tickets_qs.exists() and match_id:
         messages.info(request, f'هیچ بلیطی برای مسابقه "{selected_match}" صادر نشده است.')
 
-    page_obj, query, querystring = _search_and_paginate_tickets(request, tickets_qs)
+    page_obj, query, querystring, selected_zone = _search_and_paginate_tickets(request, tickets_qs)
     context = {
         'tickets': page_obj,
         'page_obj': page_obj,
         'search_query': query,
         'querystring': querystring,
+        'selected_zone': selected_zone,
+        'zone_choices': ZONE_CHOICES,
         'total_count': page_obj.paginator.count,
         'matches': matches,
         'selected_match': selected_match,
