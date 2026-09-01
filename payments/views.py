@@ -11,7 +11,8 @@ from .models import Payment
 from tickets.views import get_age_from_jalali, get_verified_age  # ایمپورت تابع محاسبه سن از tickets
 from matches.models import Match
 from tickets.models import Ticket, is_free_for_age
-from wallet.models import is_wallet_enabled, WALLET_DISABLED_MESSAGE
+from wallet.models import (is_wallet_enabled, is_wallet_charge_enabled,
+                           WALLET_DISABLED_MESSAGE, WALLET_CHARGE_DISABLED_MESSAGE)
 logger = logging.getLogger(__name__)
 
 
@@ -169,8 +170,10 @@ def payment_request(request):
         # صفحه‌ی wallet:charge فقط فرم را نشان می‌دهد؛ شارژ واقعی از همین‌جا
         # شروع می‌شود. اگر فقط آن صفحه بسته می‌شد، یک POST مستقیم به این
         # آدرس هنوز کاربر را به درگاه می‌برد.
-        if not is_wallet_enabled():
-            messages.error(request, WALLET_DISABLED_MESSAGE)
+        # این شاخه فقط مسیر *شارژ* است، پس کلید شارژ را چک می‌کند نه کلید
+        # کلیِ کیف پول -- خرید با موجودی موجود بالاتر و جداگانه کنترل می‌شود.
+        if not is_wallet_charge_enabled():
+            messages.error(request, WALLET_CHARGE_DISABLED_MESSAGE)
             return redirect('wallet:dashboard')
 
         payment = Payment.objects.create(

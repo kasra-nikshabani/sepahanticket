@@ -150,6 +150,35 @@
                     </button>
                 {% endif %}
             </form>
+
+            {# ===== شارژ، کلید جدا از خرج کردن =====
+               ممکن است بخواهیم موجودی موجود خرج شود ولی پول تازه‌ای وارد
+               کیف پول نشود؛ با یک کلید مشترک این حالت قابل بیان نبود. #}
+            <p style="margin-top:18px; color:#5a6a7a; font-size:14px;">
+                <strong>شارژ کیف پول:</strong>
+                {% if settings_obj.wallet_charge_enabled %}
+                    فعال — کاربر می‌تواند از درگاه کیف پولش را شارژ کند.
+                {% else %}
+                    غیرفعال — کاربر نمی‌تواند پول تازه‌ای وارد کیف پول کند،
+                    ولی موجودی فعلی‌اش برای خرید بلیط قابل استفاده است.
+                {% endif %}
+            </p>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="setting" value="wallet_charge_enabled">
+                {% if settings_obj.wallet_charge_enabled %}
+                    <input type="hidden" name="value" value="off">
+                    <button type="submit" class="btn-toggle turn-off"
+                            onclick="return confirm('شارژ کیف پول غیرفعال شود؟ موجودی فعلی کاربران همچنان قابل استفاده می‌ماند.');">
+                        <i class="fas fa-ban"></i> غیرفعال کردن شارژ
+                    </button>
+                {% else %}
+                    <input type="hidden" name="value" value="on">
+                    <button type="submit" class="btn-toggle turn-on">
+                        <i class="fas fa-plus-circle"></i> فعال کردن شارژ
+                    </button>
+                {% endif %}
+            </form>
         </div>
     </div>
 
