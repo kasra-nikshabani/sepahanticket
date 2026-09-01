@@ -185,6 +185,41 @@ def tickets_pdf_status(request):
     return JsonResponse(result)
 
 
+# ===== جستجو و صفحه‌بندی لیست بلیط‌های کاربر ویژه =====
+# یک کاربر ویژه می‌تواند هزاران بلیط داشته باشد (بزرگ‌ترین موردِ واقعی:
+# ۲۱۰۰ بلیط برای یک مسابقه). قبلاً کل لیست یک‌جا رندر می‌شد -- هم صفحه
+# سنگین بود و هم پیدا کردن یک نفر بین هزاران ردیف عملاً ناممکن.
+VIP_TICKETS_PER_PAGE = 50
+
+
+def _search_and_paginate_tickets(request, tickets_qs):
+    """جستجو روی نام/کد ملی/شماره بلیط + صفحه‌بندی.
+
+    خروجی: (page_obj, query, querystring_بدون_page)
+    querystring برای لینک‌های صفحه‌بندی لازم است تا فیلتر مسابقه و عبارت
+    جستجو با رفتن به صفحه‌ی بعد از دست نروند.
+    """
+    from django.core.paginator import Paginator
+    from django.db.models import Q as _Q
+
+    query = (request.GET.get('q') or '').strip()
+    if query:
+        tickets_qs = tickets_qs.filter(
+            _Q(full_name__icontains=query)
+            | _Q(national_code__icontains=query)
+            | _Q(ticket_number__icontains=query)
+        )
+
+    paginator = Paginator(tickets_qs, VIP_TICKETS_PER_PAGE)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    params = request.GET.copy()
+    params.pop('page', None)
+    querystring = params.urlencode()
+
+    return page_obj, query, querystring
+
+
 @login_required
 def vip_tickets(request):
     if request.user.user_type != 'vip':
@@ -199,8 +234,13 @@ def vip_tickets(request):
         tickets_qs = tickets_qs.filter(match_id=match_id)
 
     matches = Match.objects.filter(is_active=True).order_by('-date_time')
+    page_obj, query, querystring = _search_and_paginate_tickets(request, tickets_qs)
     context = {
-        'tickets': tickets_qs,
+        'tickets': page_obj,          # فقط بلیط‌های همین صفحه
+        'page_obj': page_obj,
+        'search_query': query,
+        'querystring': querystring,
+        'total_count': page_obj.paginator.count,
         'matches': matches,
         'selected_match_id': int(match_id) if match_id else None,
     }
@@ -251,8 +291,13 @@ def vip_issued_tickets(request):
     elif not tickets_qs.exists() and match_id:
         messages.info(request, f'هیچ بلیطی برای مسابقه "{selected_match}" صادر نشده است.')
 
+    page_obj, query, querystring = _search_and_paginate_tickets(request, tickets_qs)
     context = {
-        'tickets': tickets_qs,
+        'tickets': page_obj,
+        'page_obj': page_obj,
+        'search_query': query,
+        'querystring': querystring,
+        'total_count': page_obj.paginator.count,
         'matches': matches,
         'selected_match': selected_match,
         'selected_match_id': int(match_id) if match_id else None,
