@@ -73,6 +73,8 @@ ALLOCATION = {
 
 
 class Command(BaseCommand):
+    OCCUPIED = ['paid', 'admin_assigned', 'vip_issued']
+
     help = 'صدور بلیط جایگزین برای پرداخت‌هایی که پول کم شد ولی بلیط صادر نشد'
 
     def add_arguments(self, parser):
@@ -133,12 +135,20 @@ class Command(BaseCommand):
                 '\nصندلی کافی نیست — هیچ بلیطی صادر نشد.'))
             return
 
+        # ===== مسیر دوم: واریز به کیف پول =====
+        per_user = defaultdict(int)
+        for p in self.wallet_track:
+            per_user[p.user_id] += p.gateway_amount
+        self.stdout.write('\n=== واریز به کیف پول (کاربرانی که بلیط دارند) ===')
+        self.stdout.write(f'  کاربر: {len(per_user):,}   مبلغ کل: {sum(per_user.values()):,} ریال')
+
         if self.dry:
             self.stdout.write(self.style.WARNING(
                 '\n[حالت آزمایشی] هیچ چیزی نوشته نشد. برای اجرای واقعی --execute بدهید.'))
             return
 
         self._issue(demand, pools)
+        self._credit(per_user)
 
     # ------------------------------------------------------------------
     def _load_payments(self, path, match):
@@ -153,15 +163,22 @@ class Command(BaseCommand):
                 if d.get('zibal_status') in (1, 2):
                     ids.append(d['payment_id'])
 
+        # ===== دو مسیر جبران =====
+        # کاربری که هیچ بلیطی برای این مسابقه ندارد، بلیط جایگزین می‌گیرد.
+        # کاربری که بلیط دارد (خرید دومش موفق شده) بلیط دوم نمی‌گیرد --
+        # پولِ پرداختِ تحویل‌نشده به کیف پولش واریز می‌شود. این تصمیم باشگاه
+        # است، نه پیش‌فرض کد.
+        from django.db.models import Count
+        have = dict(
+            Ticket.objects.filter(match=match, status__in=self.OCCUPIED)
+            .values_list('user_id').annotate(n=Count('id'))
+        )
         qs = Payment.objects.filter(id__in=ids, match=match).select_related('user')
-        out = []
+        ticket_track, wallet_track = [], []
         for p in qs:
-            # idempotent: اگر از قبل بلیطی برای این پرداخت صادر شده، ردش کن
-            if Ticket.objects.filter(user=p.user, match=match,
-                                     purchase_date__gte=p.created_at).exists():
-                continue
-            out.append(p)
-        return out
+            (wallet_track if have.get(p.user_id, 0) else ticket_track).append(p)
+        self.wallet_track = wallet_track
+        return ticket_track
 
     def _seat_pks(self, payment):
         return [int(m.group(1)) for k in (payment.buyer_info or {})
@@ -275,3 +292,33 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(
             f'\nصادر شد: {issued:,}   ناموفق: {failed:,}'))
+
+    # ------------------------------------------------------------------
+    def _credit(self, per_user):
+        """واریز مبلغ پرداخت‌های تحویل‌نشده به کیف پول کاربر.
+
+        idempotent با reference_id: اگر این جبران قبلاً برای همین کاربر و
+        همین مسابقه ثبت شده باشد، دوباره واریز نمی‌شود.
+        """
+        from wallet.models import Wallet, Transaction
+
+        ok = skip = fail = 0
+        for uid, amount in per_user.items():
+            ref = f'compensate-{self.match.id}-{uid}'
+            try:
+                if Transaction.objects.filter(reference_id=ref).exists():
+                    skip += 1
+                    continue
+                with transaction.atomic():
+                    wallet, _ = Wallet.objects.get_or_create(user_id=uid)
+                    wallet.add_balance(
+                        amount=amount,
+                        description=f'جبران پرداخت بدون صدور بلیط -- مسابقه {self.match.id}',
+                        reference_id=ref,
+                    )
+                ok += 1
+            except Exception as exc:            # noqa: BLE001
+                fail += 1
+                self.stdout.write(self.style.ERROR(f'  کاربر {uid}: {type(exc).__name__}: {exc}'))
+        self.stdout.write(self.style.SUCCESS(
+            f'واریز شد: {ok:,}   قبلاً واریز شده: {skip:,}   ناموفق: {fail:,}'))
