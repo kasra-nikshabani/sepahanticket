@@ -18,6 +18,15 @@ def generate_ticket_pdf_task(ticket_id):
         logger.warning(f"generate_ticket_pdf_task: ticket {ticket_id} not found")
         return
 
+    # اگر PDF از قبل ساخته شده، دوباره نساز. کارهای تکراری برای یک بلیط
+    # اجتناب‌ناپذیرند (چند مسیر می‌توانند enqueue کنند)، ولی رندر دوباره‌ی
+    # WeasyPrint گران است؛ در پاکسازیِ شب دربی صف دو برابرِ تعداد بلیط‌های
+    # واقعاً بی‌PDF بود، یعنی نصف کار هدر می‌رفت. تولید مجدد عمدی همچنان
+    # ممکن است: کافی است pdf_file پاک شود (همان کاری که ویوی تولید مجدد
+    # می‌کند).
+    if ticket.pdf_file:
+        return
+
     ticket.generate_pdf()
 
     # ===== چرا update() و نه save() =====
