@@ -708,6 +708,36 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
         if not tickets_created:
             return False, "هیچ بلیطی صادر نشد (صندلی‌ها یافت نشدند یا محدودیت خرید)"
 
+        # ===== صدور ناقص نباید بی‌صدا بماند =====
+        # حلقه‌ی بالا صندلی‌هایی را که دیگر وجود ندارند با `continue` رد
+        # می‌کند. تا امروز نتیجه این بود که کاربری که پول ۱۲ صندلی را داده
+        # بود ۷ بلیط می‌گرفت و پرداختش «موفق» علامت می‌خورد -- هیچ خطایی،
+        # هیچ لاگی، و مابه‌التفاوت فقط در صورتی برمی‌گشت که حسابِ
+        # overpaid_amount بالا اتفاقاً درست درمی‌آمد (در عمل روی ۱۶۳ کاربر
+        # درنیامد). حالا کسری صریحاً سنجیده و پولش برگردانده می‌شود.
+        missing = len(match_seat_pks) - len(tickets_created)
+        if missing > 0:
+            unit = (payment.gateway_amount // len(match_seat_pks)) if match_seat_pks else 0
+            shortfall = unit * missing
+            logger.error(
+                "PARTIAL ISSUE on payment %s (user %s): پول %s صندلی گرفته شد ولی %s بلیط صادر شد؛ "
+                "بازگشت %s ریال به کیف پول.",
+                payment.id, user.id, len(match_seat_pks), len(tickets_created), shortfall,
+            )
+            if shortfall > 0:
+                try:
+                    wallet.add_balance(
+                        amount=shortfall,
+                        description=(
+                            f"بازگشت وجه صندلی‌های صادرنشده -- "
+                            f"{missing} از {len(match_seat_pks)} صندلی (سفارش #{order.order_number})"
+                        ),
+                        reference_id=f"SHORTFALL-{payment.id}",
+                        tx_type='refund',
+                    )
+                except Exception as exc:            # noqa: BLE001
+                    logger.error("بازگشت کسری برای پرداخت %s شکست خورد: %s", payment.id, exc)
+
         return True, None
 
     except Exception as e:
