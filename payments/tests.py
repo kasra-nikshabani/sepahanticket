@@ -135,9 +135,8 @@ class SweeperTests(MoneyFixture):
         self.assertTrue(self.match_seats[0].is_available, 'صندلی آزاد نشد')
         self.assertEqual(self.wallet.balance, 0)
 
-    @patch('tickets.management.commands.sweep_pending_payments.ZibalClient', create=True)
     @patch('requests.Session.post')
-    def test_unverified_transaction_is_verified_before_anything_else(self, post, _client):
+    def test_unverified_transaction_is_verified_before_anything_else(self, post):
         """status=1 یعنی پرداخت‌شده ولی تأییدنشده.
 
         اگر verify نکنیم، زیبال خودش تراکنش را برمی‌گرداند؛ بازگشت وجهِ ما
@@ -146,13 +145,60 @@ class SweeperTests(MoneyFixture):
         Match.objects.filter(pk=self.match.pk).update(
             date_time=timezone.now() - timedelta(hours=3))
         self.make_payment(self.match_seats[0])
-        post.return_value = zibal_says(1)
-        with patch('zibal_payment.client.ZibalClient.payment_verify',
-                   return_value={'result': 100}) as verify:
-            self._sweep()
-        self.assertTrue(verify.called, 'تراکنش تأییدنشده بدون verify پردازش شد')
+        calls = []
+
+        def fake_post(url, **kw):
+            calls.append(url)
+            return zibal_says(1) if 'inquiry' in url else zibal_says(1, amount=1_000_000)
+        post.side_effect = fake_post
+        self._sweep()
+        self.assertTrue(any('verify' in u for u in calls),
+                        'تراکنش تأییدنشده بدون verify پردازش شد')
         self.wallet.refresh_from_db()
         self.assertEqual(self.wallet.balance, 1_000_000)
+
+    @patch('requests.Session.post')
+    def test_previously_verified_code_201_counts_as_captured(self, post):
+        """۲۰۱ («قبلاً تأیید شده») مطمئن‌ترین شکلِ «پول گرفته شده» است.
+
+        نسخه‌ی اول این را خطا می‌گرفت و تراکنش را رها می‌کرد -- یعنی دقیقاً
+        همان پولی که مطمئن بودیم گرفته شده، بلاتکلیف می‌ماند.
+        """
+        Match.objects.filter(pk=self.match.pk).update(
+            date_time=timezone.now() - timedelta(hours=3))
+        p = self.make_payment(self.match_seats[0])
+
+        class R201:
+            @staticmethod
+            def json():
+                return {'result': 201, 'message': 'previously verifed'}
+
+        def fake_post(url, **kw):
+            return zibal_says(1) if 'inquiry' in url else R201()
+        post.side_effect = fake_post
+        self._sweep()
+        p.refresh_from_db()
+        self.wallet.refresh_from_db()
+        self.assertIsNotNone(p.gateway_captured_at)
+        self.assertEqual(self.wallet.balance, 1_000_000)
+
+    @patch('requests.Session.post')
+    def test_a_second_instance_refuses_to_run(self, post):
+        """دو نسخه‌ی هم‌زمان می‌توانند یک بدهی را دو بار ببینند و دو بار بپردازند."""
+        from django.core.cache import cache
+        from tickets.management.commands.sweep_pending_payments import LOCK_KEY
+        Match.objects.filter(pk=self.match.pk).update(
+            date_time=timezone.now() - timedelta(hours=3))
+        self.make_payment(self.match_seats[0])
+        post.return_value = zibal_says(2)
+        cache.set(LOCK_KEY, 1, 600)                     # نسخه‌ی دیگری در حال اجراست
+        try:
+            out = self._sweep()
+        finally:
+            cache.delete(LOCK_KEY)
+        self.assertIn('در حال اجراست', out)
+        self.wallet.refresh_from_db()
+        self.assertEqual(self.wallet.balance, 0)
 
     @patch('requests.Session.post')
     def test_gateway_error_leaves_the_payment_untouched(self, post):

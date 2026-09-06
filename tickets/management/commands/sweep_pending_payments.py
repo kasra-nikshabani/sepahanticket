@@ -27,13 +27,17 @@ payment_verify بود، و payment_verify فقط وقتی اجرا می‌شود
   زده باشیم، کاربر دو بار پول می‌گیرد.
 * برای مسابقه‌ای که وقتش گذشته بلیط صادر نمی‌شود -- پول برمی‌گردد. بلیطِ
   بازیِ تمام‌شده به درد کسی نمی‌خورد.
-* فقط پرداخت‌های تازه (پیش‌فرض ۷ روز) بررسی می‌شوند. رکوردهای قدیمی‌تر قبلاً
-  دستی تسویه شده‌اند و بازکردنشان یعنی خطر پرداخت دوباره.
+* هیچ‌وقت بیشتر از بدهیِ باقی‌مانده‌ی کاربر پرداخت نمی‌شود (سقف از
+  payments/reconciliation می‌آید). این تنها چیزی است که جلوی پرداخت دوباره
+  به کسانی را می‌گیرد که قبلاً دستی جبران شده‌اند.
+* در هر لحظه فقط یک نسخه اجرا می‌شود؛ دو نسخه‌ی هم‌زمان می‌توانند یک بدهی را
+  دو بار ببینند و جمعاً بیشتر از آن بپردازند.
 """
 import time
 
 import requests
 from django.conf import settings
+from django.core.cache import cache
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
@@ -42,10 +46,20 @@ from datetime import timedelta
 from payments.models import Payment
 
 INQUIRY_URL = 'https://gateway.zibal.ir/v1/inquiry'
+VERIFY_URL = 'https://gateway.zibal.ir/v1/verify'
 
 # در پاسخ استعلام زیبال: ۱ = پرداخت‌شده و تأییدنشده، ۲ = پرداخت‌شده و تأییدشده
 ZIBAL_PAID_UNVERIFIED = 1
 ZIBAL_PAID_VERIFIED = 2
+
+# پاسخ verify: ۱۰۰ = همین حالا تأیید شد، ۱۰۱/۲۰۱ = قبلاً تأیید شده بود.
+# هر سه یعنی «پول قطعاً گرفته شده». نسخه‌ی اول فقط ۱۰۰ و ۱۰۱ را می‌پذیرفت و
+# ZibalClient برای ۲۰۱ استثنا پرتاب می‌کرد؛ نتیجه این بود که تراکنشی که
+# مطمئن‌ترین حالتِ «پول گرفته شده» را داشت، دست‌نخورده رها می‌شد.
+VERIFY_OK = (100, 101, 201)
+
+LOCK_KEY = 'sweep_pending_payments:running'
+LOCK_TTL = 30 * 60
 
 
 class Command(BaseCommand):
@@ -63,6 +77,23 @@ class Command(BaseCommand):
 
     # ------------------------------------------------------------------
     def handle(self, *args, **opts):
+        # ===== فقط یک نسخه در هر لحظه =====
+        # سقفِ بازگشت وجه از بدهیِ باقی‌مانده حساب می‌شود. اگر دو نسخه هم‌زمان
+        # روی دو پرداختِ *یک کاربر* کار کنند، هر دو همان بدهی را می‌بینند و
+        # جمعاً بیشتر از آن پرداخت می‌کنند -- قفلِ ردیفِ پرداخت جلوی این را
+        # نمی‌گیرد چون ردیف‌ها متفاوت‌اند. این دقیقاً موقع نصب تایمر پیش آمد:
+        # اجرای دستی و اولین شلیک تایمر با هم روی داده‌ی واقعی افتادند.
+        if opts['execute'] and not cache.add(LOCK_KEY, 1, LOCK_TTL):
+            self.stdout.write(self.style.WARNING(
+                'یک نسخه‌ی دیگر از این دستور در حال اجراست -- این اجرا رد شد.'))
+            return
+        try:
+            self._handle(opts)
+        finally:
+            if opts['execute']:
+                cache.delete(LOCK_KEY)
+
+    def _handle(self, opts):
         now = timezone.now()
         qs = (Payment.objects
               .filter(status__in=['pending', 'failed'],
@@ -163,22 +194,26 @@ class Command(BaseCommand):
     def _resolve_captured(self, payment, zstatus, amount, session):
         """پول گرفته شده -- یا بلیط بده، یا پول را برگردان. هیچ حالت سومی نیست."""
         from payments.views import _finalize_ticket_purchase, _release_payment_seats
-        from zibal_payment.client import ZibalClient
 
         # تراکنشِ تأییدنشده را اول قطعی کن، وگرنه زیبال خودش برش می‌گرداند و
         # بازگشت وجهِ ما روی آن، پرداخت دوباره به کاربر می‌شود.
         if zstatus == ZIBAL_PAID_UNVERIFIED:
+            # عمداً از ZibalClient استفاده نمی‌شود: آن کلاس برای کد ۲۰۱
+            # («قبلاً تأیید شده») استثنا پرتاب می‌کند، در حالی که ۲۰۱
+            # مطمئن‌ترین شکلِ «پول گرفته شده» است. اینجا خودمان پاسخ را
+            # می‌خوانیم تا هیچ پولی به‌خاطر شکلِ پاسخ گم نشود.
             try:
-                client = ZibalClient(merchant_id=settings.ZIBAL_MERCHANT_ID,
-                                     sandbox=settings.ZIBAL_SANDBOX)
-                res = client.payment_verify(track_id=payment.track_id)
-                if res.get('result') not in (100, 101):
-                    self.stdout.write(self.style.WARNING(
-                        f'  پرداخت {payment.id}: verify نشد (کد {res.get("result")}) -- دست‌نخورده ماند'))
-                    return 'unknown'
+                res = session.post(VERIFY_URL,
+                                   json={'merchant': settings.ZIBAL_MERCHANT_ID,
+                                         'trackId': int(payment.track_id)},
+                                   timeout=12).json()
             except Exception as exc:                    # noqa: BLE001
                 self.stdout.write(self.style.WARNING(
                     f'  پرداخت {payment.id}: خطای verify ({exc}) -- دست‌نخورده ماند'))
+                return 'unknown'
+            if res.get('result') not in VERIFY_OK:
+                self.stdout.write(self.style.WARNING(
+                    f'  پرداخت {payment.id}: verify نشد (کد {res.get("result")}) -- دست‌نخورده ماند'))
                 return 'unknown'
 
         with transaction.atomic():
