@@ -1,96 +1,159 @@
-"""تراز پول و بلیط: آیا کسی پول داده و بلیطش را نگرفته؟
+"""تراز پول و بلیط: آیا کسی پول داده و چیزی که خریده را نگرفته؟
 
-چرا لازم است
-------------
-تا امروز این وضعیت فقط وقتی کشف می‌شد که کاربر شکایت کند یا کسی دستی
-دنبالش بگردد. شب دربی ۶۴۰ پرداخت و بعد ۱۶۳ کاربر دیگر از همین راه پیدا
-شدند -- بعد از اینکه ساعت‌ها پول مردم بلاتکلیف مانده بود.
+چرا این نسخه با نسخه‌ی قبلی فرق دارد
+------------------------------------
+نسخه‌ی اول *صندلی* می‌شمرد و فقط پرداخت‌های status='success' را می‌دید. هر دو
+انتخاب، نقطه‌ی کور داشتند و هر دو نقطه‌ی کور در بازی ۶۶ فعال شدند:
 
-این دستور همان تراز را خودکار حساب می‌کند و برای اجرای دوره‌ای (systemd
-timer / cron) ساخته شده. اگر چیزی پیدا نشود ساکت است؛ اگر پیدا شود با کد
-خروجی ۱ برمی‌گردد تا مانیتورینگ آن را ببیند.
+۱) پرداختی که کاربر انجام داده ولی به سایت برنگشته، تا ابد 'pending' می‌ماند.
+   گزارش قبلی آن را «پرداخت‌نشده» می‌دید و با اطمینان می‌گفت «تراز درست است»
+   در حالی که پول دو کاربر نزد باشگاه مانده بود.
 
-تراز هر کاربر:
-    کسری = صندلی‌هایی که پولش داده شده − بلیط‌هایی که واقعاً دارد
-    طلب  = کسری × قیمت − هر جبرانی که قبلاً گرفته
+۲) شمردنِ صندلی وقتی جواب می‌دهد که همه‌ی بلیط‌ها هم‌قیمت باشند. کاربری که
+   ۷٬۰۰۰٬۰۰۰ ریال پرداخت کرده بود و ۱۲ بلیط داشت (۸ تای رایگانِ زیر ۱۵ سال)
+   از نظر «تعداد صندلی» بستانکار به‌نظر می‌رسید، در حالی که ۲٬۰۰۰٬۰۰۰ ریال
+   طلبکار بود.
+
+این نسخه به‌جای صندلی، *پول* را می‌شمارد و مبنای «پول گرفته شد» را
+Payment.gateway_captured_at می‌گذارد -- فیلدی که فقط یک چیز می‌گوید: زیبال
+تأیید کرده پول از کاربر کم شده، مستقل از اینکه بلیط صادر شد یا نه.
+
+    تراز هر کاربر = (پولِ گرفته‌شده از درگاه + پرداختی از کیف پول)
+                    − ارزش بلیط‌های تحویل‌شده
+                    − هر بازگشتی که قبلاً گرفته
+
+برای اجرای دوره‌ای (systemd timer) ساخته شده: اگر چیزی پیدا نشود ساکت است،
+اگر پیدا شود با کد خروجی ۱ برمی‌گردد تا مانیتورینگ ببیند.
 """
-import re
 import sys
 from collections import defaultdict
 
 from django.core.management.base import BaseCommand
-from django.db.models import Count, Sum
+from django.db.models import Q, Sum
+from django.utils import timezone
+from datetime import timedelta
 
 from matches.models import Match
 from payments.models import Payment
 from tickets.models import Ticket
 from wallet.models import Transaction as WalletTx
 
-# پیشوندهای همه‌ی مسیرهایی که پول را به کاربر برمی‌گردانند
-COMPENSATION_PREFIXES = ('compensate-', 'refund-', 'OVERPAY-', 'SHORTFALL-')
+# اختلاف کمتر از این مقدار، خطای گِردکردن است نه بدهی (ریال)
+TOLERANCE = 1_000
 
 
 class Command(BaseCommand):
     OCCUPIED = ['paid', 'admin_assigned', 'vip_issued']
-    help = 'گزارش کاربرانی که پول داده‌اند ولی بلیط کاملشان صادر نشده'
+    help = 'گزارش کاربرانی که پول داده‌اند ولی معادلش را نگرفته‌اند'
 
     def add_arguments(self, parser):
         parser.add_argument('--match-id', type=int,
                             help='فقط یک مسابقه؛ بدون آن، همه‌ی مسابقات فعال')
-        parser.add_argument('--price', type=int, default=3000000,
-                            help='قیمت مبنا برای محاسبه‌ی طلب (ریال)')
+        parser.add_argument('--stale-minutes', type=int, default=45,
+                            help='پرداخت معلقِ قدیمی‌تر از این، «وضعیت نامعلوم» شمرده می‌شود')
+        parser.add_argument('--verbose-ok', action='store_true',
+                            help='حتی وقتی همه‌چیز سالم است، جزئیات را چاپ کن')
 
     def handle(self, *args, **opts):
         matches = ([Match.objects.get(id=opts['match_id'])] if opts['match_id']
                    else list(Match.objects.filter(is_active=True)))
-        price = opts['price']
-        found_any = False
+        problems = False
 
         for match in matches:
-            rows = self._audit(match, price)
-            if not rows:
-                continue
-            found_any = True
-            total = sum(r[3] for r in rows)
-            self.stdout.write(self.style.ERROR(
-                f'\n[مسابقه {match.id}] {len(rows)} کاربر طلبکار — {total:,} ریال'))
-            for uid, paid_n, got, owed in sorted(rows, key=lambda r: -r[3])[:20]:
-                self.stdout.write(
-                    f'   کاربر {uid}: پرداخت={paid_n} صندلی  بلیط={got}  طلب={owed:,} ریال')
-            if len(rows) > 20:
-                self.stdout.write(f'   ... و {len(rows) - 20} کاربر دیگر')
+            rows = self._audit(match)
+            stale = self._stale_pending(match, opts['stale_minutes'])
 
-        if not found_any:
+            if rows:
+                problems = True
+                total = sum(r[1] for r in rows)
+                self.stdout.write(self.style.ERROR(
+                    f'\n[مسابقه {match.id}] {len(rows)} کاربر طلبکار — {total:,} ریال'))
+                for uid, owed, captured, wallet_used, delivered, refunded, phone in rows[:20]:
+                    self.stdout.write(
+                        f'   کاربر {uid} ({phone or "-"}): طلب={owed:,} '
+                        f'[گرفته‌شده={captured:,} کیف‌پول={wallet_used:,} '
+                        f'تحویل‌شده={delivered:,} برگشته={refunded:,}]')
+                if len(rows) > 20:
+                    self.stdout.write(f'   ... و {len(rows) - 20} کاربر دیگر')
+
+            # ===== وضعیت نامعلوم هم باید دیده شود =====
+            # پرداختی که مدت‌هاست معلق مانده یعنی «نمی‌دانیم پول گرفته شد یا
+            # نه». سکوت درباره‌اش همان اشتباهی است که یک بار کردیم؛ اینجا
+            # صریحاً گزارش می‌شود تا جاروکش سراغش برود.
+            if stale:
+                problems = True
+                self.stdout.write(self.style.WARNING(
+                    f'[مسابقه {match.id}] {len(stale)} پرداختِ معلقِ تعیین‌تکلیف‌نشده '
+                    f'({sum(s[1] for s in stale):,} ریال) — '
+                    f'sweep_pending_payments باید اجرا شود'))
+                for pid, amt, uid in stale[:10]:
+                    self.stdout.write(f'   پرداخت {pid} کاربر {uid} مبلغ {amt:,} ریال')
+
+            if not rows and not stale and opts['verbose_ok']:
+                self.stdout.write(self.style.SUCCESS(f'[مسابقه {match.id}] تراز درست است.'))
+
+        if not problems:
             self.stdout.write(self.style.SUCCESS(
-                'تراز درست است: هیچ کاربری پول داده‌ی بدون بلیط ندارد.'))
+                'تراز درست است: هیچ کاربری پول داده‌ی بی‌معادل ندارد و پرداخت بلاتکلیفی نمانده.'))
             return
-        # کد خروجی غیرصفر تا تایمر/مانیتورینگ متوجه شود
         sys.exit(1)
 
     # ------------------------------------------------------------------
-    def _audit(self, match, price):
-        seats = defaultdict(int)
-        for p in Payment.objects.filter(match=match, purpose='ticket_purchase',
-                                        status='success'):
-            seats[p.user_id] += len([k for k in (p.buyer_info or {})
-                                     if k.startswith('match_seat_id_')])
+    def _stale_pending(self, match, minutes):
+        cutoff = timezone.now() - timedelta(minutes=minutes)
+        return list(Payment.objects
+                    .filter(match=match, purpose='ticket_purchase', status='pending',
+                            gateway_captured_at__isnull=True, created_at__lte=cutoff)
+                    .exclude(track_id__isnull=True).exclude(track_id='')
+                    .values_list('id', 'gateway_amount', 'user_id'))
 
-        tickets = dict(Ticket.objects.filter(match=match, status__in=self.OCCUPIED)
-                       .values_list('user_id').annotate(n=Count('id')))
+    def _audit(self, match):
+        # ===== ۱) پولی که واقعاً گرفته شده =====
+        # gateway_captured_at مبنای اصلی است. شرط status='success' فقط برای
+        # رکوردهای قدیمی‌ای است که پیش از افزوده‌شدن این فیلد ثبت شده‌اند.
+        payments = list(Payment.objects
+                        .filter(match=match, purpose='ticket_purchase')
+                        .filter(Q(gateway_captured_at__isnull=False) | Q(status='success'))
+                        .values_list('id', 'user_id', 'gateway_amount',
+                                     'wallet_amount_used', 'track_id'))
 
-        compensated = defaultdict(int)
-        for pre in COMPENSATION_PREFIXES:
-            for uid, s in (WalletTx.objects.filter(reference_id__startswith=pre)
-                           .values_list('user_id').annotate(s=Sum('amount'))):
-                compensated[uid] += s or 0
+        captured = defaultdict(int)
+        wallet_used = defaultdict(int)
+        refs = set()
+        for pid, uid, amount, w_used, track_id in payments:
+            captured[uid] += amount or 0
+            wallet_used[uid] += w_used or 0
+            refs.update({f'refund-{track_id}', f'SHORTFALL-{pid}', f'OVERPAY-{pid}'})
+
+        # پرداخت‌هایی که پولشان گرفته نشده هم ممکن است بازگشتِ ثبت‌شده داشته
+        # باشند (مثلاً جبران دستی)؛ مرجعشان باید شناخته شود وگرنه آن بازگشت
+        # در محاسبه نمی‌آید و کاربر اشتباهاً طلبکار به‌نظر می‌رسد.
+        for pid, track_id in Payment.objects.filter(
+                match=match, purpose='ticket_purchase').values_list('id', 'track_id'):
+            refs.update({f'refund-{track_id}', f'SHORTFALL-{pid}', f'OVERPAY-{pid}'})
+
+        # ===== ۲) ارزش بلیط‌هایی که تحویل داده شده =====
+        delivered = defaultdict(int)
+        for uid, price in Ticket.objects.filter(
+                match=match, status__in=self.OCCUPIED).values_list('user_id', 'price'):
+            delivered[uid] += price or 0
+
+        # ===== ۳) پولی که قبلاً برگشته =====
+        refunded = defaultdict(int)
+        credits = WalletTx.objects.filter(is_wallet=True, amount__gt=0).filter(
+            Q(reference_id__in=refs) | Q(reference_id__startswith=f'compensate-{match.id}-')
+        ).values_list('user_id', 'reference_id').annotate(s=Sum('amount'))
+        for uid, _ref, s in credits:
+            refunded[uid] += s or 0
+
+        phones = dict(Payment.objects.filter(match=match).values_list(
+            'user_id', 'user__phone_number'))
 
         out = []
-        for uid, paid_n in seats.items():
-            got = tickets.get(uid, 0)
-            gap = paid_n - got
-            if gap <= 0:
-                continue
-            owed = gap * price - compensated.get(uid, 0)
-            if owed > 0:
-                out.append((uid, paid_n, got, owed))
+        for uid in captured:
+            owed = (captured[uid] + wallet_used[uid]) - delivered[uid] - refunded[uid]
+            if owed > TOLERANCE:
+                out.append((uid, owed, captured[uid], wallet_used[uid],
+                            delivered[uid], refunded[uid], phones.get(uid)))
+        out.sort(key=lambda r: -r[1])
         return out

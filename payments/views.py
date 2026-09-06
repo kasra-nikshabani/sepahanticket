@@ -292,6 +292,15 @@ def payment_verify(request):
             messages.info(request, "این تراکنش قبلاً پردازش شده است.")
             return redirect(next_url)
 
+        # ===== اول «پول گرفته شد» را ثبت کن، بعد سراغ بلیط برو =====
+        # زیبال همین الان تأیید کرد که پول از کاربر کم شده. این واقعیت نباید
+        # به سرنوشت صدور بلیط گره بخورد؛ هر شاخه‌ای که پایین‌تر برود -- موفق،
+        # شکست‌خورده، یا حتی استثنای پیش‌بینی‌نشده -- این ثبت باید انجام شده
+        # باشد، وگرنه دوباره پولی داریم که هیچ گزارشی نمی‌بیندش.
+        if payment.gateway_captured_at is None:
+            payment.gateway_captured_at = timezone.now()
+            payment.save(update_fields=['gateway_captured_at', 'updated_at'])
+
         user = payment.user
 
         if payment.purpose == 'wallet_charge':

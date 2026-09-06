@@ -104,18 +104,17 @@ class WithdrawalFlowTests(TestCase):
     def test_reject_reference_does_not_pollute_the_payment_audit(self):
         """بازگشتِ ردِ درخواست نباید به‌عنوان «جبران پرداخت» شمرده شود.
 
-        دستور audit_payment_ticket_balance هر تراکنشی با پیشوند 'refund-' را
-        جبرانِ یک بلیطِ صادرنشده حساب می‌کند. اگر این بازگشت همان پیشوند را
-        می‌گرفت، یک بدهیِ واقعیِ باشگاه در گزارش پنهان می‌شد.
+        دستور audit_payment_ticket_balance هر تراکنشی با این پیشوندها را
+        «پولی که به کاربر برگشته» حساب می‌کند. اگر بازگشتِ ردِ درخواستِ برداشت
+        هم همان پیشوند را می‌گرفت، یک بدهیِ واقعیِ باشگاه در گزارش پنهان
+        می‌شد -- کاربر پولش را در کیف پول دارد، نه از باشگاه طلبکار است.
         """
-        from tickets.management.commands.audit_payment_ticket_balance import (
-            COMPENSATION_PREFIXES)
         req = WithdrawalRequest.create_for(self.user, 3_000_000, VALID_IBAN, 'کسری ن')
         req.reject(self.admin, reason='تست')
         ref = Transaction.objects.filter(amount__gt=0).exclude(
             reference_id='compensate-64-9').first().reference_id
         self.assertEqual(ref, f'WD-REJECT-{req.pk}')
-        self.assertFalse(ref.startswith(COMPENSATION_PREFIXES))
+        self.assertFalse(ref.startswith(WITHDRAWABLE_PREFIXES))
 
     def test_paid_keeps_the_money_out(self):
         req = WithdrawalRequest.create_for(self.user, 3_000_000, VALID_IBAN, 'کسری ن')
