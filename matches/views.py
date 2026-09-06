@@ -2284,6 +2284,11 @@ def admin_match_stadium_layout(request, match_id):
     )
     zone_labels = dict(ZONE_CHOICES)
 
+    match_row_override_ids = set(
+        MatchRowActive.objects.filter(match=match, is_active=True)
+        .values_list('row_id', flat=True)
+    )
+
     blocks_data = []
     for block in blocks:
         zone = zone_map.get(block.id, block.zone_type)
@@ -2293,7 +2298,11 @@ def admin_match_stadium_layout(request, match_id):
             'has_override': block.id in override_ids,
             'global_is_active': block.is_active,
             'sold_count': sold_by_block.get(block.id, 0),
-            'row_count': Row.objects.filter(block=block).count(),
+            # فقط ردیف‌هایی که واقعاً بخشی از چیدمان این مسابقه‌اند
+            # (به همان دلیلِ توضیح‌داده‌شده در admin_match_block_layout).
+            'row_count': Row.objects.filter(block=block).filter(
+                Q(is_active=True) | Q(id__in=match_row_override_ids)
+            ).count(),
             'zone': zone,
             'zone_label': zone_labels.get(zone, zone),
             'has_zone_override': block.id in zone_override_ids,
@@ -2453,7 +2462,19 @@ def admin_match_block_layout(request, match_id, block_id):
         MatchRowActive.objects.filter(match=match, row__block=block).values_list('row_id', flat=True)
     )
 
-    rows = list(Row.objects.filter(block=block).order_by('number'))
+    # ===== ردیف‌هایی که از ساختار ورزشگاه خارج شده‌اند نمایش داده نمی‌شوند =====
+    # بعد از دربی چند ردیف موقت ساخته شد و بعد با Row.is_active=False از
+    # چیدمان پیش‌فرض خارج شد (حذفشان ممکن نبود، چون بلیط‌های صادرشده‌ی آن
+    # مسابقه روی همان صندلی‌هاست و Ticket.seat رابطه‌ی CASCADE دارد). این
+    # صفحه اما همه‌ی ردیف‌ها را می‌شمرد، پس مسابقه‌ی جدید همچنان ۳۸ ردیف
+    # نشان می‌داد در حالی که واقعاً ۳۳ ردیف داشت.
+    # مسابقه‌ای که صریحاً چنین ردیفی را فعال کرده (مثل خودِ دربی) همچنان
+    # آن را می‌بیند.
+    rows = list(
+        Row.objects.filter(block=block)
+        .filter(Q(is_active=True) | Q(id__in=row_override_ids))
+        .order_by('number')
+    )
     seats = list(
         Seat.objects.filter(row__block=block).select_related('row').order_by('row__number', 'number')
     )
