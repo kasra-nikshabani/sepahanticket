@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block title %}درخواست‌های برداشت{% endblock %}
+
+{% block extra_css %}
+<style>
+    .wdadm-page { max-width: 1280px; margin: 30px auto; padding: 0 16px 40px; }
+
+    .page-header {
+        background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
+        border-radius: 20px; padding: 26px 32px; color: #fff; margin-bottom: 22px;
+        border-bottom: 3px solid #D4AF37; display: flex; justify-content: space-between;
+        align-items: center; flex-wrap: wrap; gap: 16px;
+    }
+    .page-header h2 { margin: 0; color: #D4AF37; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+    .page-header p { margin: 6px 0 0; opacity: .7; font-size: .9rem; }
+
+    .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 22px; }
+    .kpi-card {
+        background: #fff; border-radius: 16px; padding: 18px; text-align: center;
+        box-shadow: 0 4px 18px rgba(0,0,0,.06); border: 1px solid #eee; border-top: 4px solid #D4AF37;
+    }
+    .kpi-card .num { font-size: 24px; font-weight: 800; color: #1A1A2E; }
+    .kpi-card .lbl { font-size: 13px; color: #6c757d; margin-top: 4px; }
+    .kpi-card.warn { border-top-color: #dc3545; }
+    .kpi-card.warn .num { color: #dc3545; }
+
+    .off-banner {
+        background: #fdeceb; border: 1px solid #f5b7b1; border-right: 4px solid #c0392b;
+        border-radius: 12px; padding: 13px 18px; margin-bottom: 20px; font-size: .9rem;
+        color: #922b21; line-height: 1.95;
+    }
+
+    .toolbar {
+        display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+        background: #fff; border: 1px solid #e8eaed; border-radius: 14px;
+        padding: 14px 18px; margin-bottom: 20px;
+    }
+    .toolbar .tab {
+        padding: 8px 18px; border-radius: 50px; text-decoration: none; font-size: 13.5px;
+        font-weight: 600; color: #1A1A2E; border: 1px solid #e8eaed; background: #fafafa;
+    }
+    .toolbar .tab.active { background: linear-gradient(135deg, #D4AF37, #B8960F); border-color: #D4AF37; }
+    .toolbar form { display: flex; gap: 8px; margin: 0 0 0 auto; }
+    .toolbar input[type=text] {
+        padding: 9px 14px; border: 1px solid #dfe3e8; border-radius: 10px; font-family: inherit;
+        font-size: 14px; min-width: 240px;
+    }
+    .toolbar button {
+        padding: 9px 20px; border: none; border-radius: 10px; background: #1A1A2E; color: #fff;
+        font-weight: 600; font-family: inherit; cursor: pointer;
+    }
+
+    .req-card {
+        background: #fff; border: 1px solid #e8eaed; border-radius: 16px; padding: 20px 24px;
+        margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,.04);
+        border-right: 5px solid #D4AF37;
+    }
+    .req-card.status-paid { border-right-color: #28a745; opacity: .85; }
+    .req-card.status-rejected { border-right-color: #dc3545; opacity: .85; }
+    .req-card.status-approved { border-right-color: #17a2b8; }
+
+    .req-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; }
+    .req-amount { font-size: 25px; font-weight: 800; color: #1A1A2E; }
+    .req-amount small { font-size: 13px; color: #6c757d; font-weight: 400; }
+    .badge {
+        display: inline-flex; align-items: center; gap: 5px; padding: 5px 15px; border-radius: 50px;
+        font-size: 12.5px; font-weight: 700;
+    }
+    .badge.pending { background: #fff3cd; color: #856404; }
+    .badge.approved { background: #cce5ff; color: #004085; }
+    .badge.paid { background: #d4edda; color: #155724; }
+    .badge.rejected { background: #f8d7da; color: #721c24; }
+
+    .req-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 10px 22px; margin: 16px 0 0; font-size: 14px;
+    }
+    .req-grid .k { color: #6c757d; font-size: 12.5px; }
+    .req-grid .v { color: #1A1A2E; font-weight: 600; }
+    .req-grid .v.ltr { direction: ltr; text-align: left; letter-spacing: .5px; font-family: monospace; font-size: 13.5px; }
+
+    .name-check {
+        margin-top: 14px; background: #fff8e6; border: 1px solid #f0dca8;
+        border-radius: 10px; padding: 10px 15px; font-size: 13.5px; color: #6b5400; line-height: 1.9;
+    }
+    .name-check.match { background: #eaf7ee; border-color: #bfe3c9; color: #1e5c30; }
+
+    .actions { margin-top: 16px; padding-top: 16px; border-top: 1px dashed #e8eaed; }
+    .actions form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+    .actions input[type=text] {
+        padding: 8px 13px; border: 1px solid #dfe3e8; border-radius: 9px; font-family: inherit;
+        font-size: 13.5px; flex: 1; min-width: 190px;
+    }
+    .btn-act {
+        padding: 8px 20px; border: none; border-radius: 9px; font-weight: 700; font-size: 13.5px;
+        font-family: inherit; cursor: pointer; color: #fff; white-space: nowrap;
+    }
+    .btn-act.approve { background: #17a2b8; }
+    .btn-act.paid { background: #28a745; }
+    .btn-act.reject { background: #dc3545; }
+
+    .empty { text-align: center; padding: 60px 20px; color: #6c757d; }
+    .empty i { font-size: 52px; color: #e8eaed; display: block; margin-bottom: 14px; }
+
+    .pager { display: flex; gap: 6px; justify-content: center; margin-top: 22px; flex-wrap: wrap; }
+    .pager a, .pager .current {
+        min-width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 8px; border: 1px solid #e8eaed; background: #fff; color: #1A1A2E;
+        text-decoration: none; font-size: 13.5px; padding: 0 10px;
+    }
+    .pager .current { background: linear-gradient(135deg, #D4AF37, #B8960F); border-color: #D4AF37; font-weight: 700; }
+
+    @media (max-width: 768px) {
+        .toolbar form { margin-right: 0; width: 100%; }
+        .toolbar input[type=text] { min-width: 0; flex: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wdadm-page">
+
+    <div class="page-header">
+        <div>
+            <h2><i class="fas fa-money-bill-transfer"></i> درخواست‌های برداشت</h2>
+            <p>تأیید و ثبت واریزِ پولی که کاربران از کیف پولشان درخواست کرده‌اند</p>
+        </div>
+        <a href="{% url 'accounts:admin_site_settings' %}" class="tab"
+           style="background:#fff; padding:10px 22px; border-radius:10px;">
+            <i class="fas fa-sliders-h"></i> تنظیمات برداشت
+        </a>
+    </div>
+
+    {% if not withdrawal_enabled %}
+    <div class="off-banner">
+        <i class="fas fa-ban"></i>
+        <strong>برداشت وجه در تنظیمات سایت غیرفعال است</strong> — کاربران نمی‌توانند درخواست تازه
+        ثبت کنند. درخواست‌های زیر همچنان باید تعیین تکلیف شوند.
+    </div>
+    {% endif %}
+
+    <div class="kpi-row">
+        <div class="kpi-card {% if counts.pending %}warn{% endif %}">
+            <div class="num">{{ counts.pending }}</div>
+            <div class="lbl">در انتظار بررسی</div>
+        </div>
+        <div class="kpi-card">
+            <div class="num">{{ counts.approved }}</div>
+            <div class="lbl">تأیید شده — در انتظار واریز</div>
+        </div>
+        <div class="kpi-card">
+            <div class="num">{{ open_total|rial_display }}</div>
+            <div class="lbl">مبلغ در جریان (ریال)</div>
+        </div>
+        <div class="kpi-card">
+            <div class="num">{{ paid_total|rial_display }}</div>
+            <div class="lbl">مجموع واریزشده تا امروز (ریال)</div>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <a class="tab {% if status == 'open' %}active{% endif %}" href="?status=open">در جریان</a>
+        <a class="tab {% if status == 'pending' %}active{% endif %}" href="?status=pending">در انتظار بررسی</a>
+        <a class="tab {% if status == 'approved' %}active{% endif %}" href="?status=approved">در انتظار واریز</a>
+        <a class="tab {% if status == 'paid' %}active{% endif %}" href="?status=paid">واریز شده</a>
+        <a class="tab {% if status == 'rejected' %}active{% endif %}" href="?status=rejected">رد شده</a>
+        <a class="tab {% if status == 'all' %}active{% endif %}" href="?status=all">همه</a>
+        <form method="get">
+            <input type="hidden" name="status" value="{{ status }}">
+            <input type="text" name="q" value="{{ q }}" placeholder="نام کاربری، موبایل، کد ملی، شبا…">
+            <button type="submit"><i class="fas fa-search"></i> جستجو</button>
+        </form>
+    </div>
+
+    {% for r in requests %}
+    <div class="req-card status-{{ r.status }}">
+        <div class="req-top">
+            <div>
+                <div class="req-amount">{{ r.amount|rial_display }} <small>ریال</small></div>
+                <div style="color:#6c757d; font-size:13px; margin-top:3px;">
+                    درخواست #{{ r.id }} — {{ r.created_at|date:"Y/m/d - H:i" }}
+                </div>
+            </div>
+            <span class="badge {{ r.status }}">{{ r.get_status_display }}</span>
+        </div>
+
+        <div class="req-grid">
+            <div>
+                <div class="k">کاربر</div>
+                <div class="v">
+                    <a href="{% url 'accounts:admin_user_detail' r.user.id %}"
+                       style="color:#1A1A2E; text-decoration:none; border-bottom:1px dotted #D4AF37;">
+                        {{ r.user.get_full_name|default:r.user.username }}
+                    </a>
+                </div>
+            </div>
+            <div>
+                <div class="k">موبایل</div>
+                <div class="v ltr">{{ r.user.phone_number|default:"—" }}</div>
+            </div>
+            <div>
+                <div class="k">کد ملی</div>
+                <div class="v ltr">{{ r.user.national_code|default:"—" }}</div>
+            </div>
+            <div>
+                <div class="k">شماره شبا</div>
+                <div class="v ltr">{{ r.iban_display }}</div>
+            </div>
+            <div>
+                <div class="k">نام صاحب حساب (اعلام کاربر)</div>
+                <div class="v">{{ r.account_holder }}</div>
+            </div>
+            {% if r.bank_reference %}
+            <div>
+                <div class="k">شماره پیگیری واریز</div>
+                <div class="v ltr">{{ r.bank_reference }}</div>
+            </div>
+            {% endif %}
+            {% if r.processed_by %}
+            <div>
+                <div class="k">رسیدگی توسط</div>
+                <div class="v">{{ r.processed_by.username }} — {{ r.processed_at|date:"Y/m/d H:i" }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if r.admin_note %}
+        <div style="margin-top:12px; font-size:13.5px; color:#6c757d;">
+            <i class="fas fa-comment-dots"></i> یادداشت: {{ r.admin_note }}
+        </div>
+        {% endif %}
+
+        {# مقایسه‌ی نام، تنها کنترل مالکیت حساب است -- سیستم شبا را استعلام
+           نمی‌کند، پس این خط باید همیشه جلوی چشم اپراتور باشد. #}
+        {% if r.status == 'pending' or r.status == 'approved' %}
+        <div class="name-check">
+            <i class="fas fa-user-check"></i>
+            <strong>قبل از واریز، نام را مقایسه کنید:</strong>
+            نام کاربر در سامانه «{{ r.user.get_full_name|default:"—" }}» /
+            نام اعلامی صاحب حساب «{{ r.account_holder }}».
+            در صورت مغایرت، درخواست را با ذکر دلیل رد کنید.
+        </div>
+        {% endif %}
+
+        {% if r.status == 'pending' or r.status == 'approved' %}
+        <div class="actions">
+            {% if r.status == 'pending' %}
+            <form method="post" action="{% url 'wallet:admin_withdrawal_action' r.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="approve">
+                <input type="hidden" name="back_query" value="status={{ status }}&q={{ q }}&page={{ requests.number }}">
+                <input type="text" name="note" placeholder="یادداشت (اختیاری)">
+                <button type="submit" class="btn-act approve"
+                        onclick="return confirm('این درخواست تأیید شود و به صف واریز برود؟');">
+                    <i class="fas fa-check"></i> تأیید
+                </button>
+            </form>
+            {% endif %}
+
+            <form method="post" action="{% url 'wallet:admin_withdrawal_action' r.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="paid">
+                <input type="hidden" name="back_query" value="status={{ status }}&q={{ q }}&page={{ requests.number }}">
+                <input type="text" name="bank_reference" placeholder="شماره پیگیری واریز بانکی (الزامی)" required>
+                <button type="submit" class="btn-act paid"
+                        onclick="return confirm('واریز این درخواست ثبت شود؟ این کار به معنای آن است که پول واقعاً به حساب کاربر واریز شده است.');">
+                    <i class="fas fa-money-check-dollar"></i> ثبت واریز
+                </button>
+            </form>
+
+            <form method="post" action="{% url 'wallet:admin_withdrawal_action' r.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="reject">
+                <input type="hidden" name="back_query" value="status={{ status }}&q={{ q }}&page={{ requests.number }}">
+                <input type="text" name="note" placeholder="دلیل رد (الزامی — به کاربر نمایش داده می‌شود)" required>
+                <button type="submit" class="btn-act reject"
+                        onclick="return confirm('این درخواست رد شود؟ مبلغ به کیف پول کاربر برمی‌گردد.');">
+                    <i class="fas fa-xmark"></i> رد درخواست
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    {% empty %}
+    <div class="empty">
+        <i class="fas fa-inbox"></i>
+        <h4 style="color:#1A1A2E; font-weight:600;">درخواستی در این فهرست نیست</h4>
+        <p>{% if q %}جستجوی «{{ q }}» نتیجه‌ای نداشت.{% else %}هیچ درخواست برداشتی با این وضعیت ثبت نشده است.{% endif %}</p>
+    </div>
+    {% endfor %}
+
+    {% if requests.has_other_pages %}
+    <div class="pager">
+        {% if requests.has_previous %}
+            <a href="?status={{ status }}&q={{ q }}&page={{ requests.previous_page_number }}">
+                <i class="fas fa-angle-right"></i></a>
+        {% endif %}
+        <span class="current">{{ requests.number }} از {{ requests.paginator.num_pages }}</span>
+        {% if requests.has_next %}
+            <a href="?status={{ status }}&q={{ q }}&page={{ requests.next_page_number }}">
+                <i class="fas fa-angle-left"></i></a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

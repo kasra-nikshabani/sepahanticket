@@ -1,7 +1,7 @@
 # wallet/admin.py
 from django.contrib import admin
 from django.db.models import Sum
-from .models import Wallet, Transaction
+from .models import Wallet, Transaction, WithdrawalRequest
 
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
@@ -86,3 +86,36 @@ class WalletModelAdmin(admin.ModelAdmin):  # ← نام را تغییر دادی
     def balance_display(self, obj):
         return f"{obj.balance:,} ریال"
     balance_display.short_description = 'موجودی'
+
+
+@admin.register(WithdrawalRequest)
+class WithdrawalRequestAdmin(admin.ModelAdmin):
+    """فقط برای مشاهده و جست‌وجو.
+
+    تغییر وضعیت عمداً از این‌جا ممکن نیست: تأیید/رد باید از صفحه‌ی
+    «درخواست‌های برداشت» در پنل انجام شود، چون آن مسیر است که پول را در
+    صورت رد به کیف پول برمی‌گرداند. ویرایش مستقیم status در این‌جا وضعیت را
+    عوض می‌کرد ولی پول را جابه‌جا نمی‌کرد.
+    """
+    list_display = ['id', 'user', 'amount_display', 'status', 'account_holder',
+                    'iban', 'bank_reference', 'created_at', 'processed_at']
+    list_filter = ['status', 'created_at']
+    search_fields = ['user__username', 'user__phone_number', 'user__national_code',
+                     'iban', 'account_holder', 'bank_reference']
+    ordering = ['-created_at']
+    date_hierarchy = 'created_at'
+    raw_id_fields = ['user', 'processed_by']
+    list_per_page = 50
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'processed_by')
+
+    def amount_display(self, obj):
+        return f"{obj.amount:,} ریال"
+    amount_display.short_description = 'مبلغ'

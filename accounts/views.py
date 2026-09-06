@@ -588,6 +588,13 @@ def admin_site_settings(request):
             'off': 'شارژ کیف پول غیرفعال شد: کاربر نمی‌تواند پول تازه‌ای وارد کیف پول کند، '
                    'ولی موجودی فعلی‌اش همچنان برای خرید بلیط قابل استفاده است.',
         },
+        'withdrawal_enabled': {
+            'on': 'برداشت وجه فعال شد: کاربران می‌توانند برای پولی که باشگاه به کیف پولشان '
+                  'برگردانده، درخواست واریز به شبا ثبت کنند. درخواست‌ها در صفحه‌ی '
+                  '«درخواست‌های برداشت» منتظر تأیید و واریز دستی می‌مانند.',
+            'off': 'برداشت وجه غیرفعال شد: درخواست تازه‌ای ثبت نمی‌شود. درخواست‌هایی که '
+                   'قبلاً ثبت شده‌اند سر جایشان می‌مانند و باید تعیین تکلیف شوند.',
+        },
         'free_under_15': {
             'on': f'بلیط زیر {FREE_AGE_LIMIT} سال دوباره رایگان شد.',
             'off': f'رایگان بودن بلیط زیر {FREE_AGE_LIMIT} سال غیرفعال شد: از این پس '
@@ -624,11 +631,42 @@ def admin_site_settings(request):
     def _fa(n):
         return f'{n:,}'.translate(str.maketrans('0123456789,', '۰۱۲۳۴۵۶۷۸۹٬'))
 
+    # ===== برداشت وجه: چقدر پول واقعاً می‌تواند از خزانه خارج شود =====
+    # روشن کردن این کلید یک تصمیم مالی است، پس ادمین باید *قبل* از زدنش عدد
+    # واقعی را ببیند، نه بعدش. محاسبه روی چند صد کیف پولِ دارای موجودی انجام
+    # می‌شود و در پایتون جوین می‌خورد تا به‌ازای هر کاربر یک کوئری نزنیم.
+    from django.db.models import Q as _Q
+    from wallet.models import Transaction as _WalletTx, WithdrawalRequest, WITHDRAWABLE_PREFIXES
+
+    balances = dict(Wallet.objects.filter(balance__gt=0).values_list('user_id', 'balance'))
+    _prefix_q = _Q()
+    for _pre in WITHDRAWABLE_PREFIXES:
+        _prefix_q |= _Q(reference_id__startswith=_pre)
+    credited = dict(
+        _WalletTx.objects.filter(_prefix_q, is_wallet=True, amount__gt=0)
+        .values_list('user_id').annotate(s=Sum('amount')).values_list('user_id', 's')
+    )
+    committed = dict(
+        WithdrawalRequest.objects.filter(status__in=WithdrawalRequest.COMMITTED_STATUSES)
+        .values_list('user_id').annotate(s=Sum('amount')).values_list('user_id', 's')
+    )
+    withdrawable_total = 0
+    withdrawable_users = 0
+    for uid, bal in balances.items():
+        amt = min(bal, (credited.get(uid, 0) or 0) - (committed.get(uid, 0) or 0))
+        if amt > 0:
+            withdrawable_total += amt
+            withdrawable_users += 1
+
     context = {
         'settings_obj': settings_obj,
         'wallets_with_balance': agg['cnt'] or 0,
         'total_wallet_balance': agg['total'] or 0,
         'free_age_limit': _fa(FREE_AGE_LIMIT),
         'free_tickets_so_far': _fa(free_tickets),
+        'withdrawable_total': withdrawable_total,
+        'withdrawable_users': withdrawable_users,
+        'open_withdrawals': WithdrawalRequest.objects.filter(
+            status__in=WithdrawalRequest.OPEN_STATUSES).count(),
     }
     return render(request, 'accounts/admin_site_settings.html', context)

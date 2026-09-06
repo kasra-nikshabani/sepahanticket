@@ -100,6 +100,88 @@
             color: #1A1A2E;
         }
 
+        .btn-withdraw {
+            background: rgba(255, 255, 255, 0.08);
+            color: #D4AF37;
+            border: 1px solid rgba(212, 175, 55, 0.45);
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-withdraw:hover {
+            background: rgba(212, 175, 55, 0.15);
+            color: #D4AF37;
+            transform: translateY(-3px);
+        }
+
+        .withdrawals-section {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid #e8eaed;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            margin-bottom: 24px;
+        }
+
+        .withdrawals-section .section-header {
+            padding: 16px 24px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e8eaed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .withdrawals-section .section-header h5 {
+            margin: 0;
+            font-weight: 700;
+            color: #1A1A2E;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .withdrawals-section .section-header h5 i {
+            color: #D4AF37;
+        }
+
+        .wd-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 14px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .wd-status.pending { background: #fff3cd; color: #856404; }
+        .wd-status.approved { background: #cce5ff; color: #004085; }
+        .wd-status.paid { background: #d4edda; color: #155724; }
+        .wd-status.rejected { background: #f8d7da; color: #721c24; }
+
+        .withdrawable-note {
+            background: #f4f8fb;
+            border: 1px solid #d6e4ef;
+            border-right: 4px solid #17a2b8;
+            border-radius: 12px;
+            padding: 13px 18px;
+            margin-bottom: 24px;
+            font-size: .9rem;
+            color: #2c4a5a;
+            line-height: 1.95;
+        }
+
         .btn-back {
             background: rgba(255, 255, 255, 0.08);
             color: #fff;
@@ -527,9 +609,17 @@
                     <span>کیف پول من</span>
                 </div>
                 <div class="header-actions">
-                    {% if wallet_enabled %}
+                    {# شرط عمداً wallet_charge_enabled است نه wallet_enabled: قبلاً
+                       دکمه در حالتی که شارژ خاموش بود هم دیده می‌شد و کلیک روی آن
+                       فقط به یک پیام خطا می‌رسید. #}
+                    {% if wallet_charge_enabled %}
                     <a href="{% url 'wallet:charge' %}" class="btn-charge">
                         <i class="fas fa-plus-circle"></i> شارژ کیف پول
+                    </a>
+                    {% endif %}
+                    {% if withdrawal_enabled and withdrawable %}
+                    <a href="{% url 'wallet:withdraw' %}" class="btn-withdraw">
+                        <i class="fas fa-money-bill-transfer"></i> برداشت وجه
                     </a>
                     {% endif %}
                     <a href="{% url 'matches:home' %}" class="btn-back">
@@ -587,6 +677,65 @@
                 <div class="stat-label">تعداد تراکنش‌ها</div>
             </div>
         </div>
+
+        {% if withdrawal_enabled and withdrawable %}
+        <div class="withdrawable-note">
+            <i class="fas fa-money-bill-transfer"></i>
+            از موجودی شما <strong>{{ withdrawable|rial_display }} ریال</strong> قابل برداشت به حساب
+            بانکی است. (فقط مبلغی که باشگاه به کیف پول شما برگردانده — مثل جبران بلیط صادرنشده یا
+            بازگشت وجه — قابل برداشت است؛ مبلغی که خودتان شارژ کرده‌اید برای خرید بلیط قابل استفاده
+            است ولی برداشت نمی‌شود.)
+            <a href="{% url 'wallet:withdraw' %}" style="color:#0a58ca; font-weight:700;">ثبت درخواست برداشت</a>
+        </div>
+        {% endif %}
+
+        <!-- ===== درخواست‌های برداشت ===== -->
+        {% if withdrawals %}
+        <div class="withdrawals-section">
+            <div class="section-header">
+                <h5><i class="fas fa-money-bill-transfer"></i> درخواست‌های برداشت</h5>
+            </div>
+            <div class="table-responsive-custom">
+                <table class="table-custom">
+                    <thead>
+                    <tr>
+                        <th><i class="fas fa-calendar-day"></i> تاریخ</th>
+                        <th><i class="fas fa-money-bill"></i> مبلغ (ریال)</th>
+                        <th><i class="fas fa-building-columns"></i> شبا</th>
+                        <th><i class="fas fa-circle-info"></i> وضعیت</th>
+                        <th><i class="fas fa-comment-dots"></i> توضیح</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for w in withdrawals %}
+                        <tr>
+                            <td style="white-space:nowrap;">
+                                {{ w.created_at|date:"Y/m/d" }}<br>
+                                <small style="color:#999;">{{ w.created_at|date:"H:i" }}</small>
+                            </td>
+                            <td style="font-weight:700;">{{ w.amount|rial_display }}</td>
+                            <td style="direction:ltr; text-align:left; font-family:monospace; font-size:13px;">
+                                {{ w.iban_display }}
+                            </td>
+                            <td><span class="wd-status {{ w.status }}">{{ w.get_status_display }}</span></td>
+                            <td style="font-size:13px; color:#6c757d;">
+                                {% if w.status == 'paid' and w.bank_reference %}
+                                    پیگیری: <span style="direction:ltr; display:inline-block;">{{ w.bank_reference }}</span>
+                                {% elif w.status == 'rejected' %}
+                                    {{ w.admin_note|default:"—" }}
+                                {% elif w.status == 'approved' %}
+                                    تأیید شد؛ در انتظار واریز بانکی
+                                {% else %}
+                                    در حال بررسی
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- ===== لیست تراکنش‌ها ===== -->
         <div class="transactions-section">
@@ -686,14 +835,16 @@
                     <div class="empty-state">
                         <i class="fas fa-receipt"></i>
                         <h4>هیچ تراکنشی انجام نشده است</h4>
-                        {% if wallet_enabled %}
+                        {% if wallet_charge_enabled %}
                         <p>کیف پول شما خالی است. برای شروع، کیف پول خود را شارژ کنید.</p>
                         <a href="{% url 'wallet:charge' %}" class="btn-charge"
                            style="display:inline-flex; margin-top:12px; border:none;">
                             <i class="fas fa-plus-circle"></i> شارژ کیف پول
                         </a>
-                        {% else %}
+                        {% elif not wallet_enabled %}
                         <p>کیف پول در حال حاضر غیرفعال است.</p>
+                        {% else %}
+                        <p>شارژ کیف پول در حال حاضر غیرفعال است.</p>
                         {% endif %}
                     </div>
                 {% endif %}

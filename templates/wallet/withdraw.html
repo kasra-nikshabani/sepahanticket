@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load currency_filters %}
+{% block title %}برداشت وجه{% endblock %}
+
+{% block extra_css %}
+<style>
+    .wd-wrap { max-width: 640px; margin: 30px auto; padding: 0 15px 40px; }
+
+    .wd-header {
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+        margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid rgba(212,175,55,.3);
+    }
+    .wd-header h2 {
+        margin: 0; font-size: 23px; font-weight: 700; color: #1A1A2E;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .wd-header h2 i { color: #D4AF37; }
+    .btn-back {
+        background: #1A1A2E; color: #fff; border: none; padding: 10px 22px; border-radius: 10px;
+        font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-back:hover { color: #D4AF37; }
+
+    .amount-card {
+        background: linear-gradient(135deg, #0f0f1f 0%, #1a1a2e 100%);
+        border: 1px solid rgba(212,175,55,.18); border-radius: 18px;
+        padding: 24px 28px; margin-bottom: 22px;
+    }
+    .amount-card .lbl { color: #8a8a9a; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    .amount-card .val { color: #D4AF37; font-size: 34px; font-weight: 700; }
+    .amount-card .val small { font-size: 15px; color: #8a8a9a; font-weight: 400; }
+
+    .note-box {
+        background: #f4f8fb; border: 1px solid #d6e4ef; border-right: 4px solid #17a2b8;
+        border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;
+        font-size: 14px; color: #2c4a5a; line-height: 2;
+    }
+    .note-box ul { margin: 8px 0 0; padding-right: 20px; }
+
+    .warn-box {
+        background: #fff8e6; border: 1px solid #f0dca8; border-right: 4px solid #D4AF37;
+        border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;
+        font-size: 14px; color: #6b5400; line-height: 2;
+    }
+
+    .form-card {
+        background: #fff; border: 1px solid #e8eaed; border-radius: 16px;
+        padding: 26px; box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    }
+    .form-card label { font-weight: 700; color: #1A1A2E; margin-bottom: 6px; display: block; font-size: 14px; }
+    .form-card .hint { color: #6c757d; font-size: 12.5px; margin-top: 5px; display: block; }
+    .form-card input[type=text], .form-card input[type=number] {
+        width: 100%; padding: 12px 14px; border: 1px solid #dfe3e8; border-radius: 10px;
+        font-size: 15px; font-family: inherit; background: #fbfcfd;
+    }
+    .form-card input:focus { outline: none; border-color: #D4AF37; background: #fff; }
+    .field { margin-bottom: 20px; }
+    .iban-field { direction: ltr; text-align: left; letter-spacing: 1px; }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #D4AF37, #B8960F); color: #1A1A2E; border: none;
+        padding: 13px 30px; border-radius: 12px; font-weight: 700; font-size: 15px; width: 100%;
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
+    }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(212,175,55,.35); }
+
+    .pending-card {
+        background: #fff; border: 1px solid #f0dca8; border-right: 5px solid #D4AF37;
+        border-radius: 16px; padding: 22px 26px; line-height: 2.1; color: #1A1A2E;
+    }
+    .pending-card .amt { font-size: 22px; font-weight: 700; color: #D4AF37; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wd-wrap">
+
+    <div class="wd-header">
+        <h2><i class="fas fa-money-bill-transfer"></i> برداشت وجه</h2>
+        <a href="{% url 'wallet:dashboard' %}" class="btn-back">
+            <i class="fas fa-arrow-right"></i> بازگشت به کیف پول
+        </a>
+    </div>
+
+    {% if pending %}
+        {# یک درخواست باز در جریان است -- فرم تازه نشان داده نمی‌شود تا کاربر
+           تصور نکند می‌تواند دوباره همان پول را درخواست دهد. #}
+        <div class="pending-card">
+            <div style="font-weight:700; margin-bottom:8px;">
+                <i class="fas fa-hourglass-half" style="color:#D4AF37;"></i>
+                یک درخواست برداشت در جریان دارید
+            </div>
+            <div class="amt">{{ pending.amount|rial_display }} <small style="font-size:14px;">ریال</small></div>
+            <div>وضعیت: <strong>{{ pending.get_status_display }}</strong></div>
+            <div>شبا: <span style="direction:ltr; display:inline-block;">{{ pending.iban_display }}</span></div>
+            <div>تاریخ ثبت: {{ pending.created_at|date:"Y/m/d - H:i" }}</div>
+            <div style="margin-top:12px; color:#6c757d; font-size:13.5px;">
+                پس از تأیید و واریز، مبلغ معمولاً طی یک تا سه روز کاری بانکی به حساب شما می‌نشیند.
+                تا تعیین تکلیف این درخواست، امکان ثبت درخواست تازه وجود ندارد.
+            </div>
+        </div>
+
+    {% elif withdrawable < min_amount %}
+        <div class="warn-box">
+            <i class="fas fa-circle-info"></i>
+            مبلغ قابل برداشت شما <strong>{{ withdrawable|rial_display }} ریال</strong> است که از
+            حداقل مجاز ({{ min_amount|rial_display }} ریال) کمتر است.
+            <br>
+            توجه: فقط مبلغی که <strong>باشگاه به کیف پول شما برگردانده</strong> — مثل جبران بلیط
+            صادرنشده یا بازگشت وجه — قابل برداشت است. مبلغی که خودتان کیف پول را با آن شارژ
+            کرده‌اید قابل برداشت نیست ولی برای خرید بلیط قابل استفاده است.
+        </div>
+
+    {% else %}
+        <div class="amount-card">
+            <div class="lbl"><i class="fas fa-coins"></i> حداکثر مبلغ قابل برداشت</div>
+            <div class="val">{{ withdrawable|rial_display }} <small>ریال</small></div>
+        </div>
+
+        <div class="note-box">
+            <i class="fas fa-circle-info"></i> پیش از ثبت درخواست بخوانید:
+            <ul>
+                <li>حساب باید <strong>به نام خودتان</strong> باشد؛ واریز به حساب شخص دیگر انجام نمی‌شود.</li>
+                <li>مبلغ درخواست <strong>همان لحظه از کیف پول کسر می‌شود</strong> تا تا زمان واریز
+                    محفوظ بماند. اگر درخواست رد شود، تمام مبلغ به کیف پول شما برمی‌گردد.</li>
+                <li>واریز پس از تأیید، به‌صورت بانکی انجام می‌شود و معمولاً یک تا سه روز کاری زمان می‌برد.</li>
+                <li>در هر زمان فقط یک درخواست باز می‌توانید داشته باشید.</li>
+            </ul>
+        </div>
+
+        <form method="post" class="form-card">
+            {% csrf_token %}
+
+            <div class="field">
+                <label for="amount">مبلغ برداشت (ریال)</label>
+                <input type="number" name="amount" id="amount" required
+                       min="{{ min_amount }}" max="{{ withdrawable }}" step="1"
+                       value="{{ form.amount }}" placeholder="{{ withdrawable }}">
+                <span class="hint">
+                    حداقل {{ min_amount|rial_display }} و حداکثر {{ withdrawable|rial_display }} ریال
+                </span>
+            </div>
+
+            <div class="field">
+                <label for="iban">شماره شبا</label>
+                <input type="text" name="iban" id="iban" required class="iban-field"
+                       value="{{ form.iban }}" placeholder="IR000000000000000000000000"
+                       autocomplete="off" spellcheck="false">
+                <span class="hint">۲۴ رقم پس از IR. فاصله و خط تیره اشکالی ندارد.</span>
+            </div>
+
+            <div class="field">
+                <label for="account_holder">نام صاحب حساب</label>
+                <input type="text" name="account_holder" id="account_holder" required
+                       value="{{ form.account_holder }}" placeholder="نام و نام خانوادگی دقیقاً مطابق حساب بانکی">
+                <span class="hint">
+                    این نام هنگام واریز با نام شما مقایسه می‌شود؛ در صورت مغایرت، درخواست رد خواهد شد.
+                </span>
+            </div>
+
+            <button type="submit" class="btn-submit"
+                    onclick="return confirm('درخواست برداشت ثبت شود؟ مبلغ تا زمان واریز از کیف پول شما کسر می‌ماند.');">
+                <i class="fas fa-paper-plane"></i> ثبت درخواست برداشت
+            </button>
+        </form>
+    {% endif %}
+
+</div>
+{% endblock %}

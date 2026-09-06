@@ -182,6 +182,92 @@
         </div>
     </div>
 
+    <!-- ===== برداشت وجه از کیف پول ===== -->
+    <div class="card-custom">
+        <div class="card-header-custom">
+            <h4><i class="fas fa-money-bill-transfer"></i> برداشت وجه از کیف پول</h4>
+        </div>
+        <div class="card-body-custom">
+
+            {% if settings_obj.withdrawal_enabled %}
+                <span class="status-badge-big on">
+                    <i class="fas fa-check-circle"></i> برداشت وجه فعال است
+                </span>
+            {% else %}
+                <span class="status-badge-big off">
+                    <i class="fas fa-ban"></i> برداشت وجه غیرفعال است
+                </span>
+            {% endif %}
+
+            <div class="stat-strip">
+                <div class="stat-box">
+                    <div class="num">{{ withdrawable_users }}</div>
+                    <div class="lbl">کاربر با پول قابل برداشت</div>
+                </div>
+                <div class="stat-box">
+                    <div class="num">{{ withdrawable_total|rial_display }}</div>
+                    <div class="lbl">مجموع قابل برداشت (ریال)</div>
+                </div>
+                <div class="stat-box">
+                    <div class="num">{{ open_withdrawals }}</div>
+                    <div class="lbl">درخواست در جریان</div>
+                </div>
+            </div>
+
+            <div class="explain-box">
+                در حالت <strong>فعال</strong>:
+                <ul>
+                    <li>کاربر می‌تواند برای پولی که <strong>باشگاه به کیف پولش برگردانده</strong>
+                        (جبران بلیط صادرنشده، بازگشت وجه، پرداخت دوباره) درخواست واریز به شبا ثبت کند.</li>
+                    <li>پولی که <strong>خودِ کاربر از درگاه شارژ کرده قابل برداشت نیست</strong> —
+                        وگرنه می‌شد با کارت یک نفر شارژ کرد و به حساب نفر دیگری برداشت کرد.</li>
+                    <li>مبلغ درخواست <strong>همان لحظه از کیف پول کسر می‌شود</strong> تا تا زمان
+                        واریز، دوباره خرج بلیط نشود. اگر درخواست رد شود، پول خودکار برمی‌گردد.</li>
+                    <li>واریز <strong>خودکار نیست</strong>؛ هر درخواست باید در صفحه‌ی
+                        «درخواست‌های برداشت» تأیید و پس از واریز بانکی، با شماره پیگیری ثبت شود.</li>
+                    <li>هنگام واریز، <strong>نام صاحب حساب را با نام کاربر مقایسه کنید</strong> —
+                        سیستم مالکیت شبا را استعلام نمی‌کند و این کنترل بر عهده‌ی خزانه‌داری است.</li>
+                </ul>
+            </div>
+
+            {% if not settings_obj.withdrawal_enabled and withdrawable_total %}
+            <div class="warning-strip">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>
+                    با فعال کردن این گزینه، تا <strong>{{ withdrawable_total|rial_display }} ریال</strong>
+                    (متعلق به {{ withdrawable_users }} کاربر) قابل درخواست برداشت می‌شود.
+                    پیش از فعال‌سازی مطمئن شوید خزانه‌داری آماده‌ی واریز است.
+                </span>
+            </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="setting" value="withdrawal_enabled">
+                {% if settings_obj.withdrawal_enabled %}
+                    <input type="hidden" name="value" value="off">
+                    <button type="submit" class="btn-toggle turn-off"
+                            onclick="return confirm('برداشت وجه غیرفعال شود؟ درخواست تازه‌ای ثبت نمی‌شود، ولی درخواست‌های در جریان باقی می‌مانند و باید تعیین تکلیف شوند.');">
+                        <i class="fas fa-ban"></i> غیرفعال کردن برداشت
+                    </button>
+                {% else %}
+                    <input type="hidden" name="value" value="on">
+                    <button type="submit" class="btn-toggle turn-on"
+                            onclick="return confirm('برداشت وجه فعال شود؟ از این پس کاربران می‌توانند برای پول جبرانی خود درخواست واریز به شبا ثبت کنند.');">
+                        <i class="fas fa-money-bill-transfer"></i> فعال کردن برداشت
+                    </button>
+                {% endif %}
+            </form>
+
+            <p style="margin-top:16px;">
+                <a href="{% url 'wallet:admin_withdrawal_list' %}"
+                   style="color:#1A1A2E; font-weight:600; text-decoration:none;">
+                    <i class="fas fa-list-check"></i> مشاهده‌ی صف درخواست‌های برداشت
+                </a>
+            </p>
+        </div>
+    </div>
+
     <!-- ===== رایگان بودن زیر ۱۵ سال ===== -->
     <div class="card-custom">
         <div class="card-header-custom">
