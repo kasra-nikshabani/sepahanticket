@@ -609,9 +609,11 @@
                     <span>کیف پول من</span>
                 </div>
                 <div class="header-actions">
-                    {# شرط عمداً wallet_charge_enabled است نه wallet_enabled: قبلاً
-                       دکمه در حالتی که شارژ خاموش بود هم دیده می‌شد و کلیک روی آن
-                       فقط به یک پیام خطا می‌رسید. #}
+                    {% comment %}
+                        شرط عمداً wallet_charge_enabled است نه wallet_enabled: قبلاً
+                        دکمه در حالتی که شارژ خاموش بود هم دیده می‌شد و کلیک روی آن
+                        فقط به یک پیام خطا می‌رسید.
+                    {% endcomment %}
                     {% if wallet_charge_enabled %}
                     <a href="{% url 'wallet:charge' %}" class="btn-charge">
                         <i class="fas fa-plus-circle"></i> شارژ کیف پول

@@ -290,6 +290,72 @@ class PageRenderTests(TestCase):
         self.assertNotEqual(resp.status_code, 200)
 
 
+class TemplateCommentLintTests(TestCase):
+    """کامنت `{# ... #}` چندخطی نباید در هیچ تمپلیتی وجود داشته باشد.
+
+    لکسر جنگو (django/template/base.py) با الگوی
+    `({%.*?%}|{{.*?}}|{#.*?#})` و **بدون** فلگ DOTALL کار می‌کند، یعنی نقطه
+    خط جدید را نمی‌گیرد. پس `{#` که تا خط بعد ادامه پیدا کند اصلاً کامنت
+    شناخته نمی‌شود و متنش خام به کاربر نمایش داده می‌شود. این دقیقاً روی
+    صفحه‌ی کیف پول در پروداکشن اتفاق افتاد.
+
+    برای توضیح چندخطی باید از {% comment %}...{% endcomment %} استفاده شود.
+    """
+
+    def test_no_multiline_hash_comments_in_templates(self):
+        from pathlib import Path
+        from django.conf import settings
+
+        # همان رفتار لکسر تقلید می‌شود: از چپ به راست، و هر `{#` که بسته شد،
+        # مکان‌نما بعد از `#}` می‌پرد. بدون این پرش، `{#` هایی که *داخل* یک
+        # کامنت بسته‌شده‌اند (مثل `{# setTimeout(function () {#}`) اشتباهاً
+        # خطا گزارش می‌شوند -- همان‌طور که جنگو هم آن‌ها را نمی‌بیند.
+        offenders = []
+        for tpl_dir in settings.TEMPLATES[0]['DIRS']:
+            for path in sorted(Path(tpl_dir).rglob('*.html')):
+                for lineno, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
+                    pos = 0
+                    while (start := line.find('{#', pos)) != -1:
+                        close = line.find('#}', start + 2)
+                        if close == -1:
+                            offenders.append(f'{path}:{lineno}  {line.strip()[:80]}')
+                            break
+                        pos = close + 2
+        self.assertEqual(offenders, [], 'کامنت {# #} چندخطی پیدا شد (خام رندر می‌شود):\n'
+                                        + '\n'.join(offenders))
+
+
+class RenderedPagesHaveNoLeakedCommentsTests(TestCase):
+    """هیچ متنِ توضیحیِ داخل کد نباید در خروجی صفحه دیده شود."""
+
+    def setUp(self):
+        from accounts.models import SiteSettings
+        self.user = User.objects.create_user(username='u5', password='pw12345')
+        self.admin = User.objects.create_user(username='adm3', password='pw12345',
+                                              is_staff=True, is_superuser=True)
+        Wallet.objects.get(user=self.user).add_balance(
+            amount=4_000_000, reference_id='compensate-64-5')
+        s = SiteSettings.get_solo()
+        s.withdrawal_enabled = True
+        s.block_foreign_ips = False
+        s.save()
+
+    def test_wallet_pages_do_not_show_source_comments(self):
+        self.client.force_login(self.user)
+        for url in ['/wallet/dashboard/', '/wallet/withdraw/']:
+            body = self.client.get(url).content.decode()
+            self.assertNotIn('{#', body, url)
+            self.assertNotIn('wallet_charge_enabled', body, url)
+
+    def test_admin_pages_do_not_show_source_comments(self):
+        self.client.force_login(self.admin)
+        WithdrawalRequest.create_for(self.user, 1_000_000, VALID_IBAN, 'کسری نیک‌شبانی')
+        for url in ['/wallet/admin/withdrawals/', '/accounts/admin/site-settings/']:
+            body = self.client.get(url).content.decode()
+            self.assertNotIn('{#', body, url)
+            self.assertNotIn('سیستم شبا را استعلام', body, url)
+
+
 class IbanValidationTests(TestCase):
     def test_accepts_common_input_shapes(self):
         body = VALID_IBAN[2:]

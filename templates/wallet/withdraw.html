@@ -83,8 +83,10 @@
     </div>
 
     {% if pending %}
-        {# یک درخواست باز در جریان است -- فرم تازه نشان داده نمی‌شود تا کاربر
-           تصور نکند می‌تواند دوباره همان پول را درخواست دهد. #}
+        {% comment %}
+            یک درخواست باز در جریان است -- فرم تازه نشان داده نمی‌شود تا کاربر
+            تصور نکند می‌تواند دوباره همان پول را درخواست دهد.
+        {% endcomment %}
         <div class="pending-card">
             <div style="font-weight:700; margin-bottom:8px;">
                 <i class="fas fa-hourglass-half" style="color:#D4AF37;"></i>

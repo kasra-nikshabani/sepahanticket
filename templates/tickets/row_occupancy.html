@@ -360,9 +360,11 @@
                                         <div class="block-name-cell">
                                             <strong>{{ item.row.name }}</strong>
 
-                                            {# برچسب نوع جایگاه -- از item.zone می‌آید که
-                                               ویو آن را مخصوصِ همین مسابقه حساب کرده است،
-                                               نه از zone_type گلوبالِ بلوک. #}
+                                            {% comment %}
+                                                برچسب نوع جایگاه -- از item.zone می‌آید که
+                                                ویو آن را مخصوصِ همین مسابقه حساب کرده است،
+                                                نه از zone_type گلوبالِ بلوک.
+                                            {% endcomment %}
                                             {% if item.zone == 'vip' %}
                                                 <span class="zone-badge zone-vip"><i class="fas fa-star"></i> {{ item.zone_label }}</span>
                                             {% elif item.zone == 'class1' %}
