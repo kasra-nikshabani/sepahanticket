@@ -175,6 +175,65 @@ class SweeperTests(MoneyFixture):
         self.assertFalse(post.called)
 
 
+class OverpaymentGuardTests(MoneyFixture):
+    """جاروکش هرگز نباید بیشتر از بدهیِ واقعی پرداخت کند.
+
+    این تست‌ها از یک اشتباه واقعی آمده‌اند: نسخه‌ی اول جاروکش، هر پرداختی را
+    که زیبال تأیید کرده بود بی‌قید و شرط برمی‌گرداند. ۲۱٬۷۱۴ پرداختِ شب دربی
+    از قبل دستی جبران شده بودند و آن نسخه به صدها نفر دوباره پول می‌داد.
+    اجرای آزمایشی جلویش را گرفت، ولی چیزی که باید جلویش را بگیرد کد است نه
+    شانس.
+    """
+
+    def setUp(self):
+        super().setUp()
+        Match.objects.filter(pk=self.match.pk).update(
+            date_time=timezone.now() - timedelta(hours=3))
+
+    def _sweep(self):
+        out = StringIO()
+        call_command('sweep_pending_payments', '--execute', '--min-age', '1',
+                     stdout=out, stderr=out)
+        return out.getvalue()
+
+    @patch('requests.Session.post')
+    def test_already_compensated_user_gets_nothing_more(self, post):
+        """کاربری که قبلاً دستی جبران شده -- دقیقاً حالت شب دربی."""
+        self.make_payment(self.match_seats[0])
+        self.wallet.add_balance(amount=1_000_000,
+                                reference_id=f'compensate-{self.match.id}-1',
+                                tx_type='refund')
+        post.return_value = zibal_says(2)
+        out = self._sweep()
+        self.wallet.refresh_from_db()
+        self.assertEqual(self.wallet.balance, 1_000_000, 'پول دوباره پرداخت شد')
+        self.assertIn('از قبل تسویه شده', out)
+
+    @patch('requests.Session.post')
+    def test_user_who_already_has_the_ticket_gets_nothing(self, post):
+        """پرداخت دوم برای همان صندلی، وقتی بلیطش را دارد."""
+        self.make_payment(self.match_seats[0], status='success', captured=True,
+                          track='1000050')
+        self.make_ticket(self.seats[0], price=1_000_000)
+        self.make_payment(self.match_seats[0], track='1000051')
+        post.return_value = zibal_says(2)
+        self._sweep()
+        self.wallet.refresh_from_db()
+        self.assertEqual(self.wallet.balance, 1_000_000,
+                         'باید فقط مابه‌التفاوتِ پرداخت دوم برگردد، نه بیشتر')
+
+    @patch('requests.Session.post')
+    def test_refund_is_capped_at_the_outstanding_debt(self, post):
+        """پرداختِ ۲٬۰۰۰٬۰۰۰ ولی بدهی فقط ۱٬۰۰۰٬۰۰۰ -> همان یک میلیون برمی‌گردد."""
+        self.make_payment([self.match_seats[0], self.match_seats[1]],
+                          amount=2_000_000, track='1000060')
+        self.make_ticket(self.seats[0], price=1_000_000)
+        post.return_value = zibal_says(2)
+        self._sweep()
+        self.wallet.refresh_from_db()
+        self.assertEqual(self.wallet.balance, 1_000_000)
+
+
 class AuditTests(MoneyFixture):
     """ممیزی: هیچ حالتی از «پول گرفتیم و معادلش را ندادیم» نباید بی‌صدا بماند."""
 

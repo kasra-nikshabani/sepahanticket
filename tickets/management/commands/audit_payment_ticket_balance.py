@@ -26,20 +26,14 @@ Payment.gateway_captured_at می‌گذارد -- فیلدی که فقط یک چ�
 اگر پیدا شود با کد خروجی ۱ برمی‌گردد تا مانیتورینگ ببیند.
 """
 import sys
-from collections import defaultdict
+from datetime import timedelta
 
 from django.core.management.base import BaseCommand
-from django.db.models import Q, Sum
 from django.utils import timezone
-from datetime import timedelta
 
 from matches.models import Match
 from payments.models import Payment
-from tickets.models import Ticket
-from wallet.models import Transaction as WalletTx
-
-# اختلاف کمتر از این مقدار، خطای گِردکردن است نه بدهی (ریال)
-TOLERANCE = 1_000
+from payments.reconciliation import TOLERANCE, match_balances
 
 
 class Command(BaseCommand):
@@ -108,52 +102,18 @@ class Command(BaseCommand):
                     .values_list('id', 'gateway_amount', 'user_id'))
 
     def _audit(self, match):
-        # ===== ۱) پولی که واقعاً گرفته شده =====
-        # gateway_captured_at مبنای اصلی است. شرط status='success' فقط برای
-        # رکوردهای قدیمی‌ای است که پیش از افزوده‌شدن این فیلد ثبت شده‌اند.
-        payments = list(Payment.objects
-                        .filter(match=match, purpose='ticket_purchase')
-                        .filter(Q(gateway_captured_at__isnull=False) | Q(status='success'))
-                        .values_list('id', 'user_id', 'gateway_amount',
-                                     'wallet_amount_used', 'track_id'))
-
-        captured = defaultdict(int)
-        wallet_used = defaultdict(int)
-        refs = set()
-        for pid, uid, amount, w_used, track_id in payments:
-            captured[uid] += amount or 0
-            wallet_used[uid] += w_used or 0
-            refs.update({f'refund-{track_id}', f'SHORTFALL-{pid}', f'OVERPAY-{pid}'})
-
-        # پرداخت‌هایی که پولشان گرفته نشده هم ممکن است بازگشتِ ثبت‌شده داشته
-        # باشند (مثلاً جبران دستی)؛ مرجعشان باید شناخته شود وگرنه آن بازگشت
-        # در محاسبه نمی‌آید و کاربر اشتباهاً طلبکار به‌نظر می‌رسد.
-        for pid, track_id in Payment.objects.filter(
-                match=match, purpose='ticket_purchase').values_list('id', 'track_id'):
-            refs.update({f'refund-{track_id}', f'SHORTFALL-{pid}', f'OVERPAY-{pid}'})
-
-        # ===== ۲) ارزش بلیط‌هایی که تحویل داده شده =====
-        delivered = defaultdict(int)
-        for uid, price in Ticket.objects.filter(
-                match=match, status__in=self.OCCUPIED).values_list('user_id', 'price'):
-            delivered[uid] += price or 0
-
-        # ===== ۳) پولی که قبلاً برگشته =====
-        refunded = defaultdict(int)
-        credits = WalletTx.objects.filter(is_wallet=True, amount__gt=0).filter(
-            Q(reference_id__in=refs) | Q(reference_id__startswith=f'compensate-{match.id}-')
-        ).values_list('user_id', 'reference_id').annotate(s=Sum('amount'))
-        for uid, _ref, s in credits:
-            refunded[uid] += s or 0
-
+        # محاسبه در payments/reconciliation انجام می‌شود -- همان کدی که
+        # sweep_pending_payments سقفِ بازگشت وجه را از آن می‌گیرد. اگر این دو
+        # نسخه‌ی جدا داشتند، دیر یا زود از هم واگرا می‌شدند و آن واگرایی روی
+        # پول واقعی مردم می‌نشست.
+        balances = match_balances(match)
         phones = dict(Payment.objects.filter(match=match).values_list(
             'user_id', 'user__phone_number'))
 
-        out = []
-        for uid in captured:
-            owed = (captured[uid] + wallet_used[uid]) - delivered[uid] - refunded[uid]
-            if owed > TOLERANCE:
-                out.append((uid, owed, captured[uid], wallet_used[uid],
-                            delivered[uid], refunded[uid], phones.get(uid)))
+        out = [
+            (uid, b['owed'], b['captured'], b['wallet_used'],
+             b['delivered'], b['refunded'], phones.get(uid))
+            for uid, b in balances.items() if b['owed'] > TOLERANCE
+        ]
         out.sort(key=lambda r: -r[1])
         return out

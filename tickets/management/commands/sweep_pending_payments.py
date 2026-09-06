@@ -104,8 +104,17 @@ class Command(BaseCommand):
 
             stats['captured'] += 1
             if not opts['execute']:
-                self.stdout.write(f'  پرداخت {p.id} (کاربر {p.user_id}): '
-                                  f'زیبال پول را گرفته -- {p.gateway_amount:,} ریال')
+                # در حالت آزمایشی هم سقفِ واقعی نشان داده می‌شود، وگرنه گزارش
+                # ترسناک‌تر از واقعیت به‌نظر می‌رسد: بیشترِ این پرداخت‌ها از قبل
+                # تسویه شده‌اند و چیزی بابتشان پرداخت نخواهد شد.
+                owed = self._owed(p)
+                stats['would_pay'] = stats.get('would_pay', 0) + min(p.gateway_amount, owed)
+                if owed <= 0:
+                    stats['already_settled'] = stats.get('already_settled', 0) + 1
+                else:
+                    self.stdout.write(
+                        f'  پرداخت {p.id} (کاربر {p.user_id}): زیبال پول را گرفته '
+                        f'{p.gateway_amount:,} ریال -- بدهیِ باقی‌مانده {owed:,} ریال')
                 continue
 
             outcome = self._resolve_captured(p, zstatus, amount, session)
@@ -122,7 +131,12 @@ class Command(BaseCommand):
 
         if stats['captured'] and not opts['execute']:
             self.stdout.write(self.style.WARNING(
-                '\nبرای اعمال واقعی دوباره با --execute اجرا کنید.'))
+                '  از این پول‌گرفته‌شده‌ها، %d مورد از قبل تسویه شده‌اند'
+                % stats.get('already_settled', 0)))
+            self.stdout.write(self.style.WARNING(
+                '  مجموع پولی که واقعاً پرداخت می‌شود: %s ریال'
+                % format(stats.get('would_pay', 0), ',')))
+            self.stdout.write('\nبرای اعمال واقعی دوباره با --execute اجرا کنید.')
 
     # ------------------------------------------------------------------
     def _inquire(self, session, payment):
@@ -203,8 +217,24 @@ class Command(BaseCommand):
                 return 'issued'
 
             _release_payment_seats(p)
+
+            # ===== هرگز بیشتر از بدهیِ واقعی پرداخت نکن =====
+            # نسخه‌ی اول این دستور، مبلغ پرداخت را بی‌قید و شرط برمی‌گرداند.
+            # ولی ۲۱٬۷۱۴ پرداختِ شب دربی از قبل دستی جبران شده بودند؛ آن نسخه
+            # به صدها نفر دوباره پول می‌داد. محدودکردن به بازه‌ی زمانی کافی
+            # نبود (دربی فقط شش روز قبل بود). تنها نگهبانِ درست همین است:
+            # سقفِ هر بازگشت، بدهیِ باقی‌مانده‌ی همان کاربر در همان مسابقه.
+            payable = min(amount, self._owed(p))
+            if payable <= 0:
+                p.status = 'failed'
+                p.processed_at = timezone.now()
+                p.save(update_fields=['status', 'processed_at', 'updated_at'])
+                self.stdout.write(
+                    f'  پرداخت {p.id}: از قبل تسویه شده -- فقط ثبت شد، پولی پرداخت نشد')
+                return 'already_refunded'
+
             done = self._credit_wallet(
-                p, amount, f'refund-{p.track_id}',
+                p, payable, f'refund-{p.track_id}',
                 f'بازگشت وجه -- بلیط صادر نشد ({reason}) (تراکنش {p.track_id})',
                 tx_type='refund')
             p.status = 'failed'
@@ -212,8 +242,16 @@ class Command(BaseCommand):
             p.save(update_fields=['status', 'processed_at', 'updated_at'])
             self.stdout.write(self.style.WARNING(
                 f'  پرداخت {p.id}: بلیط صادر نشد ({reason}) -- '
-                f'{amount:,} ریال {"به کیف پول کاربر برگشت" if done else "از قبل برگشته بود"}'))
+                f'{payable:,} ریال {"به کیف پول کاربر برگشت" if done else "از قبل برگشته بود"}'))
             return 'refunded' if done else 'already_refunded'
+
+    @staticmethod
+    def _owed(payment):
+        """بدهیِ باقی‌مانده‌ی این کاربر در این مسابقه (تازه محاسبه می‌شود)."""
+        from payments.reconciliation import amount_still_owed
+        if payment.match_id is None:
+            return payment.gateway_amount
+        return amount_still_owed(payment.match, payment.user_id)
 
     # ------------------------------------------------------------------
     @staticmethod
