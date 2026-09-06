@@ -212,6 +212,18 @@ class SweeperTests(MoneyFixture):
         self.assertEqual(self.wallet.balance, 0)
 
     @patch('requests.Session.post')
+    def test_an_already_asked_payment_is_not_asked_again(self, post):
+        """وگرنه تایمر هر ده دقیقه همان ابتدای صف را می‌پرسد و هرگز جلو نمی‌رود."""
+        p = self.make_payment(self.match_seats[0])
+        post.return_value = zibal_says(-1)
+        self._sweep()
+        p.refresh_from_db()
+        self.assertIsNotNone(p.gateway_checked_at, 'زمان استعلام ثبت نشد')
+        first = post.call_count
+        self._sweep()
+        self.assertEqual(post.call_count, first, 'همان پرداخت دوباره استعلام شد')
+
+    @patch('requests.Session.post')
     def test_old_payments_are_out_of_scope(self, post):
         """رکوردهای قدیمی قبلاً دستی تسویه شده‌اند؛ بازکردنشان خطر پرداخت دوباره است."""
         self.make_payment(self.match_seats[0], age_minutes=60 * 24 * 40)

@@ -72,6 +72,8 @@ class Command(BaseCommand):
                             help='پرداخت‌های قدیمی‌تر از این تعداد روز نادیده گرفته می‌شوند')
         parser.add_argument('--limit', type=int, default=300,
                             help='حداکثر تعداد استعلام در هر اجرا')
+        parser.add_argument('--recheck', action='store_true',
+                            help='پرداخت‌هایی که قبلاً استعلام شده‌اند را هم دوباره بپرس')
         parser.add_argument('--execute', action='store_true',
                             help='بدون این گزینه فقط گزارش می‌دهد و چیزی را تغییر نمی‌دهد')
 
@@ -102,6 +104,11 @@ class Command(BaseCommand):
                       created_at__gte=now - timedelta(days=opts['max_age_days']))
               .exclude(track_id__isnull=True).exclude(track_id='')
               .order_by('created_at'))
+        if not opts['recheck']:
+            # پرداختی که یک بار پرسیده شده و جواب «پرداخت نشده» گرفته، جوابش
+            # عوض نمی‌شود. بدون این شرط، هر اجرا دوباره همان ابتدای صف را
+            # استعلام می‌کرد و تایمر هیچ‌وقت به انتهای فهرست نمی‌رسید.
+            qs = qs.filter(gateway_checked_at__isnull=True)
 
         total = qs.count()
         rows = list(qs[:opts['limit']])
@@ -126,6 +133,10 @@ class Command(BaseCommand):
                 continue
             finally:
                 time.sleep(0.12)                        # فشار نیاوردن به درگاه
+
+            if opts['execute']:
+                # همین‌که پرسیدیم ثبت می‌شود، هر نتیجه‌ای که داشته باشد.
+                Payment.objects.filter(pk=p.pk).update(gateway_checked_at=timezone.now())
 
             if zstatus not in (ZIBAL_PAID_UNVERIFIED, ZIBAL_PAID_VERIFIED):
                 stats['not_paid'] += 1
