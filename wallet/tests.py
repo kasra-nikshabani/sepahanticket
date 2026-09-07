@@ -384,7 +384,7 @@ class UserVisibilityAndCorrectionTests(TestCase):
 
 
 class StatusFlowTests(TestCase):
-    """چرخه‌ی وضعیت: در انتظار تأیید -> در حال پرداخت -> پرداخت انجام شد،
+    """چرخه‌ی وضعیت: در انتظار تأیید -> در انتظار پرداخت -> پرداخت انجام شد،
     و انشعابِ «نیاز به اصلاح اطلاعات»."""
 
     def setUp(self):
@@ -446,10 +446,10 @@ class StatusFlowTests(TestCase):
         self.assertIn(VALID_IBAN, body)
         self.assertIn('کسری نیک‌شبانی', body)
 
-    # ---------------- در حال پرداخت: قفل ----------------
+    # ---------------- در انتظار پرداخت: قفل ----------------
     def test_approved_request_is_locked_for_the_user(self):
         self.req.approve(self.admin)
-        self.assertEqual(self.req.get_status_display(), 'در حال پرداخت')
+        self.assertEqual(self.req.get_status_display(), 'در انتظار پرداخت')
         self.client.post('/wallet/withdraw/', {
             'amount': '1000000', 'iban': self.OTHER_IBAN, 'account_holder': 'نام دیگر',
             'national_code': '1234567890'})
@@ -691,7 +691,7 @@ class IbanInquiryTests(TestCase):
         self.assertTrue(req.iban_verified)
         # تأیید قطعیِ بانک یعنی دیگر منتظر اپراتور نمی‌ماند
         self.assertEqual(req.status, 'approved')
-        self.assertEqual(req.get_status_display(), 'در حال پرداخت')
+        self.assertEqual(req.get_status_display(), 'در انتظار پرداخت')
 
     def test_happy_path_costs_only_one_inquiry(self):
         """در مسیر عادی نباید دو بار کارمزد بدهیم."""

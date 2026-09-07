@@ -191,7 +191,7 @@ def wallet_withdraw(request):
         return _render()
 
     if pending and not editing:
-        return _render('درخواست شما تأیید شده و در حال پرداخت است؛ در این مرحله '
+        return _render('درخواست شما تأیید شده و در انتظار پرداخت است؛ در این مرحله '
                        'امکان تغییر یا ثبت درخواست تازه وجود ندارد.')
 
     if max_amount < MIN_WITHDRAWAL_AMOUNT:
@@ -247,7 +247,7 @@ def wallet_withdraw(request):
             messages.warning(request, problem)
         elif editing.status == 'approved':
             messages.success(request, '✅ شماره شبا توسط بانک تأیید شد و درخواست '
-                                      'در صف پرداخت قرار گرفت.')
+                                      'در انتظار پرداخت قرار گرفت.')
         else:
             messages.success(
                 request,
@@ -269,7 +269,7 @@ def wallet_withdraw(request):
         messages.success(
             request,
             f'✅ شماره شبا توسط بانک تأیید شد. درخواست #{req.pk} به مبلغ '
-            f'{amount:,} ریال در صف پرداخت قرار گرفت.')
+            f'{amount:,} ریال در انتظار پرداخت قرار گرفت.')
     else:
         messages.success(
             request,

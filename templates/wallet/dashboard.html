@@ -212,6 +212,18 @@
             user-select: all;
         }
 
+        .await-box {
+            background: #eef6fb;
+            border: 1px solid #cfe2f0;
+            border-radius: 10px;
+            padding: 9px 12px;
+            color: #1a4a63;
+            font-size: 12.5px;
+            line-height: 1.9;
+        }
+
+        .await-box i { color: #17a2b8; }
+
         .reject-box {
             background: #fdeceb;
             border: 1px solid #f5b7b1;
@@ -876,7 +888,17 @@
                                         </div>
                                     </div>
                                 {% elif w.status == 'approved' %}
-                                    تأیید شد؛ در انتظار واریز بانکی (معمولاً ۱ تا ۳ روز کاری)
+                                    <div class="await-box">
+                                        <i class="fas fa-circle-check"></i>
+                                        <strong>شماره شبا تأیید شد.</strong>
+                                        درخواست شما <strong>در انتظار پرداخت</strong> است و
+                                        مبلغ طی <strong>۱ تا ۳ روز کاری</strong> به همان حساب
+                                        واریز می‌شود.
+                                        <div style="margin-top:5px;">
+                                            پس از واریز، شناسه‌ی پیگیری در همین صفحه نمایش داده می‌شود.
+                                            در این مرحله امکان تغییر اطلاعات وجود ندارد.
+                                        </div>
+                                    </div>
                                 {% elif w.status == 'cancelled' %}
                                     شما این درخواست را لغو کردید؛ مبلغ برگشت.
                                 {% elif w.status == 'needs_correction' %}

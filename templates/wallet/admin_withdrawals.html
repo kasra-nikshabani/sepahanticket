@@ -183,7 +183,7 @@
         </div>
         <div class="kpi-card">
             <div class="num">{{ counts.approved }}</div>
-            <div class="lbl">در حال پرداخت</div>
+            <div class="lbl">در انتظار پرداخت</div>
         </div>
         <div class="kpi-card">
             <div class="num">{{ open_total|rial_display }}</div>
@@ -241,7 +241,7 @@
         <a class="tab {% if status == 'open' %}active{% endif %}" href="?status=open">در جریان</a>
         <a class="tab {% if status == 'pending' %}active{% endif %}" href="?status=pending">در انتظار تأیید</a>
         <a class="tab {% if status == 'needs_correction' %}active{% endif %}" href="?status=needs_correction">نیاز به اصلاح</a>
-        <a class="tab {% if status == 'approved' %}active{% endif %}" href="?status=approved">در حال پرداخت</a>
+        <a class="tab {% if status == 'approved' %}active{% endif %}" href="?status=approved">در انتظار پرداخت</a>
         <a class="tab {% if status == 'paid' %}active{% endif %}" href="?status=paid">پرداخت شد</a>
         <a class="tab {% if status == 'rejected' %}active{% endif %}" href="?status=rejected">رد شده</a>
         <a class="tab {% if status == 'all' %}active{% endif %}" href="?status=all">همه</a>

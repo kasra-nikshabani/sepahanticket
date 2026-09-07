@@ -80,7 +80,7 @@ class Command(BaseCommand):
 
         if opts['execute']:
             self.stdout.write('')
-            self.stdout.write('  تأیید و وارد صف پرداخت : %d' % stats['approved'])
+            self.stdout.write('  تأیید و در انتظار پرداخت : %d' % stats['approved'])
             self.stdout.write('  برگشت برای اصلاح       : %d' % stats['correction'])
             self.stdout.write('  همچنان نامعلوم         : %d' % stats['unknown'])
         else:
