@@ -520,6 +520,79 @@ class FinanceFileTests(TestCase):
         self.assertNotEqual(self._download().status_code, 200)
 
 
+class AdminCreditTests(TestCase):
+    """پولی که باشگاه از پنل واریز می‌کند باید قابل برداشت باشد.
+
+    بدون این صفحه، تنها راهِ در دسترسِ ادمین ویرایش مستقیم موجودی در پنل
+    جنگو بود -- کاری که عدد را عوض می‌کند ولی هیچ تراکنشی نمی‌سازد، پس آن
+    پول نه در تاریخچه دیده می‌شود، نه ممیزی می‌بیندش، و نه قابل برداشت
+    می‌شود. یعنی دقیقاً همان چیزی که باشگاه می‌خواست، کار نمی‌کرد.
+    """
+
+    def setUp(self):
+        from accounts.models import SiteSettings
+        self.admin = User.objects.create_user(username='adm5', password='pw12345',
+                                              is_staff=True, is_superuser=True)
+        self.user = User.objects.create_user(username='u8', password='pw12345',
+                                             phone_number='09121234567',
+                                             national_code='2222222222')
+        s = SiteSettings.get_solo()
+        s.block_foreign_ips = False
+        s.save()
+        self.client.force_login(self.admin)
+
+    def _credit(self, **over):
+        data = {'action': 'credit', 'user_id': self.user.id, 'amount': '2000000',
+                'reason': 'بلیط به دلیل خطای سامانه صادر نشد', 'q': '09121234567'}
+        data.update(over)
+        return self.client.post('/wallet/admin/wallet-credit/', data, follow=True)
+
+    def test_credited_money_is_immediately_withdrawable(self):
+        self._credit()
+        w = Wallet.objects.get(user=self.user)
+        self.assertEqual(w.balance, 2_000_000)
+        self.assertEqual(get_withdrawable_amount(self.user), 2_000_000)
+
+    def test_it_leaves_a_traceable_transaction(self):
+        self._credit()
+        tx = Transaction.objects.get(user=self.user, amount=2_000_000)
+        self.assertIn('خطای سامانه', tx.description)
+        self.assertIn(self.admin.username, tx.description)
+        self.assertTrue(tx.reference_id.startswith('ADMIN-CREDIT-'))
+
+    def test_attaching_a_match_makes_the_audit_see_it(self):
+        from datetime import timedelta
+        from django.utils import timezone as tz
+        from matches.models import Match, Stadium
+        st = Stadium.objects.create(name='ورزشگاه', capacity=100)
+        m = Match.objects.create(home_team='الف', away_team='ب', stadium=st,
+                                 date_time=tz.now() + timedelta(days=1))
+        self._credit(match_id=str(m.id))
+        tx = Transaction.objects.get(user=self.user, amount=2_000_000)
+        self.assertTrue(tx.reference_id.startswith(f'compensate-{m.id}-'))
+        self.assertEqual(get_withdrawable_amount(self.user), 2_000_000)
+
+    def test_reason_is_required(self):
+        self._credit(reason='کم')
+        self.assertEqual(Wallet.objects.get(user=self.user).balance, 0)
+
+    def test_zero_or_negative_is_refused(self):
+        self._credit(amount='0')
+        self._credit(amount='-500000')
+        self.assertEqual(Wallet.objects.get(user=self.user).balance, 0)
+
+    def test_non_staff_cannot_open_it(self):
+        self.client.force_login(self.user)
+        r = self.client.get('/wallet/admin/wallet-credit/')
+        self.assertNotEqual(r.status_code, 200)
+
+    def test_cancelled_match_refund_is_withdrawable(self):
+        """پولی که بابت لغو مسابقه برگشته هم مال باشگاه است، نه شارژ کاربر."""
+        Wallet.objects.get(user=self.user).add_balance(
+            amount=1_500_000, reference_id='CANCEL-MATCH-64', tx_type='refund')
+        self.assertEqual(get_withdrawable_amount(self.user), 1_500_000)
+
+
 class IbanValidationTests(TestCase):
     def test_accepts_common_input_shapes(self):
         body = VALID_IBAN[2:]

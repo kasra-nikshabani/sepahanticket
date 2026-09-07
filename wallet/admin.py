@@ -78,10 +78,21 @@ class TransactionAdmin(admin.ModelAdmin):
 # ===== تغییر نام کلاس ادمین از WalletAdmin به WalletModelAdmin =====
 @admin.register(Wallet)
 class WalletModelAdmin(admin.ModelAdmin):  # ← نام را تغییر دادیم
+    """فقط مشاهده -- موجودی از اینجا قابل ویرایش نیست.
+
+    ویرایش مستقیم `balance` عدد را عوض می‌کرد ولی هیچ تراکنشی نمی‌ساخت:
+    نه ردی در تاریخچه‌ی کاربر می‌ماند، نه ممیزیِ تراز آن را می‌دید، و نه آن
+    پول قابل برداشت می‌شد (چون «قابل برداشت» از روی مرجعِ تراکنش تشخیص
+    داده می‌شود، نه از روی عددِ موجودی). برای واریز درست از صفحه‌ی
+    «شارژ جبرانی کیف پول» در پنل استفاده کنید.
+    """
     list_display = ['user', 'balance_display', 'created_at', 'updated_at']
     search_fields = ['user__username', 'user__phone_number']
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = ['user', 'balance', 'created_at', 'updated_at']
     raw_id_fields = ['user']
+
+    def has_add_permission(self, request):
+        return False
 
     def balance_display(self, obj):
         return f"{obj.balance:,} ریال"

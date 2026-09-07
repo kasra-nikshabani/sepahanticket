@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load currency_filters %}
+{% block title %}شارژ جبرانی کیف پول{% endblock %}
+
+{% block extra_css %}
+<style>
+    .credit-page { max-width: 900px; margin: 30px auto; padding: 0 16px 40px; }
+
+    .page-header {
+        background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
+        border-radius: 20px; padding: 26px 32px; color: #fff; margin-bottom: 22px;
+        border-bottom: 3px solid #D4AF37;
+    }
+    .page-header h2 { margin: 0; color: #D4AF37; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+    .page-header p { margin: 6px 0 0; opacity: .75; font-size: .9rem; line-height: 1.9; }
+
+    .note {
+        background: #f4f8fb; border: 1px solid #d6e4ef; border-right: 4px solid #17a2b8;
+        border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;
+        font-size: 13.5px; color: #2c4a5a; line-height: 2;
+    }
+    .note ul { margin: 6px 0 0; padding-right: 20px; }
+
+    .card-box {
+        background: #fff; border: 1px solid #e8eaed; border-radius: 16px;
+        padding: 22px 26px; margin-bottom: 18px; box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    }
+    .card-box h5 { margin: 0 0 14px; font-weight: 700; color: #1A1A2E; font-size: 15px; }
+
+    .search-form { display: flex; gap: 8px; flex-wrap: wrap; }
+    .search-form input[type=text] {
+        flex: 1; min-width: 220px; padding: 11px 14px; border: 1px solid #dfe3e8;
+        border-radius: 10px; font-family: inherit; font-size: 14.5px; background: #fbfcfd;
+    }
+    .btn-gold {
+        background: linear-gradient(135deg, #D4AF37, #B8960F); color: #1A1A2E; border: none;
+        padding: 11px 24px; border-radius: 10px; font-weight: 700; font-size: 14px;
+        font-family: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
+    }
+    .btn-gold:hover { transform: translateY(-2px); }
+
+    .user-row {
+        border: 1px solid #e8eaed; border-radius: 12px; padding: 16px 18px; margin-bottom: 12px;
+        border-right: 4px solid #D4AF37;
+    }
+    .user-row .who { font-weight: 700; color: #1A1A2E; margin-bottom: 4px; }
+    .user-row .meta { color: #6c757d; font-size: 13px; direction: ltr; text-align: right; }
+    .user-row .bal { color: #1A1A2E; font-size: 13.5px; margin-top: 6px; }
+    .user-row .bal strong { color: #B8960F; }
+
+    .credit-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-top: 14px; }
+    .credit-form input, .credit-form select {
+        padding: 10px 13px; border: 1px solid #dfe3e8; border-radius: 9px;
+        font-family: inherit; font-size: 13.5px; background: #fbfcfd; width: 100%;
+    }
+    .credit-form .full { grid-column: 1 / -1; }
+
+    .empty { text-align: center; padding: 40px 20px; color: #6c757d; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="credit-page">
+
+    <div class="page-header">
+        <h2><i class="fas fa-hand-holding-dollar"></i> شارژ جبرانی کیف پول</h2>
+        <p>
+            واریز پول به کیف پول کاربر بابت مشکلی که از سمت باشگاه/سامانه بوده.
+            این مبلغ برای کاربر <strong>قابل برداشت</strong> خواهد بود.
+        </p>
+    </div>
+
+    <div class="note">
+        <i class="fas fa-circle-info"></i> چند نکته:
+        <ul>
+            <li>هر واریز یک <strong>تراکنش با شرح و مرجع</strong> می‌سازد و در تاریخچه‌ی کاربر دیده می‌شود.
+                برای همین موجودی را از پنل جنگو مستقیم ویرایش نکنید — آن کار عدد را عوض می‌کند
+                ولی نه ردی می‌گذارد، نه قابل برداشت می‌شود، و نه ممیزی می‌بیندش.</li>
+            <li>اگر واریز بابت یک مسابقه‌ی مشخص است، آن را انتخاب کنید تا
+                <strong>ممیزی تراز همان مسابقه</strong> هم این جبران را حساب کند.</li>
+            <li>مبلغی که کاربر <strong>خودش</strong> از درگاه شارژ کرده هیچ‌وقت قابل برداشت نمی‌شود؛
+                فقط پولی که از این‌جا یا از مسیرهای خودکارِ جبران واریز شده.</li>
+        </ul>
+    </div>
+
+    <div class="card-box">
+        <h5><i class="fas fa-magnifying-glass"></i> پیدا کردن کاربر</h5>
+        <form method="get" class="search-form">
+            <input type="text" name="q" value="{{ q }}" required
+                   placeholder="شماره موبایل، کد ملی یا نام کاربری">
+            <button type="submit" class="btn-gold"><i class="fas fa-search"></i> جستجو</button>
+        </form>
+    </div>
+
+    {% if q %}
+        {% if found %}
+            {% for u in found %}
+            <div class="card-box">
+                <div class="user-row">
+                    <div class="who">{{ u.get_full_name|default:u.username }}</div>
+                    <div class="meta">{{ u.phone_number|default:"—" }} · کد ملی {{ u.national_code|default:"—" }}</div>
+                    <div class="bal">
+                        موجودی فعلی: <strong>{{ u.wallet.balance|rial_display }} ریال</strong>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="credit">
+                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                    <input type="hidden" name="q" value="{{ q }}">
+                    <div class="credit-form">
+                        <input type="number" name="amount" min="1" step="1" required
+                               placeholder="مبلغ به ریال">
+                        <select name="match_id">
+                            <option value="">بدون مسابقه‌ی مشخص</option>
+                            {% for m in matches %}
+                                <option value="{{ m.id }}">{{ m.home_team }} — {{ m.away_team }}</option>
+                            {% endfor %}
+                        </select>
+                        <input class="full" type="text" name="reason" required minlength="5"
+                               placeholder="دلیل واریز — مثلاً: بلیط به دلیل خطای سامانه صادر نشد">
+                        <div class="full">
+                            <button type="submit" class="btn-gold"
+                                    onclick="return confirm('این مبلغ به کیف پول کاربر واریز شود؟ پس از واریز قابل برداشت خواهد بود.');">
+                                <i class="fas fa-plus-circle"></i> واریز به کیف پول
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="card-box">
+                <div class="empty">
+                    <i class="fas fa-user-slash" style="font-size:40px; color:#e8eaed; display:block; margin-bottom:12px;"></i>
+                    کاربری با «{{ q }}» پیدا نشد.
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+
+</div>
+{% endblock %}

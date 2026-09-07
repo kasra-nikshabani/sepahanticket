@@ -1,6 +1,6 @@
 # wallet/views.py
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -307,6 +307,83 @@ def admin_withdrawal_action(request, request_id):
     back = (request.POST.get('back_query') or '').lstrip('?')
     url = reverse('wallet:admin_withdrawal_list')
     return redirect(f'{url}?{back}' if back else url)
+
+
+# ============================================================
+#  شارژ جبرانیِ دستی از پنل
+# ============================================================
+# چرا لازم شد
+# -----------
+# تا امروز هیچ راهِ درستی برای «باشگاه بابت مشکل سامانه پول به کیف پول
+# کاربر بریزد» از داخل پنل وجود نداشت. تنها راه‌ها دستورهای مدیریتی روی
+# سرور بودند. تنها گزینه‌ی به‌ظاهر موجود -- ویرایش مستقیم موجودی در پنل
+# جنگو -- عملاً خراب است: عدد را عوض می‌کند ولی هیچ تراکنشی نمی‌سازد، پس
+# نه ردی در تاریخچه می‌ماند، نه ممیزی آن را می‌بیند، و نه آن پول قابل
+# برداشت می‌شود (چون «قابل برداشت» از روی مرجعِ تراکنش تشخیص داده می‌شود).
+# این ویو همان کار را درست انجام می‌دهد.
+
+@never_cache
+@staff_member_required
+def admin_wallet_credit(request):
+    from matches.models import Match
+    from accounts.models import User
+
+    matches = Match.objects.filter(is_active=True).order_by('-id')[:20]
+    found = None
+    query = (request.GET.get('q') or request.POST.get('q') or '').strip()
+    if query:
+        digits = query.translate(str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789'))
+        found = list(User.objects.filter(
+            Q(phone_number__icontains=digits) | Q(national_code__icontains=digits)
+            | Q(username__icontains=query)
+        ).exclude(user_type='vip')[:10])
+
+    if request.method == 'POST' and request.POST.get('action') == 'credit':
+        user_id = request.POST.get('user_id')
+        reason = (request.POST.get('reason') or '').strip()
+        match_id = request.POST.get('match_id') or ''
+        try:
+            amount = int(str(request.POST.get('amount', '')).translate(
+                str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789')
+            ).replace(',', '').replace('٬', '').strip())
+        except (TypeError, ValueError):
+            amount = 0
+
+        target = User.objects.filter(pk=user_id).first()
+        if target is None:
+            messages.error(request, 'کاربر پیدا نشد.')
+        elif amount <= 0:
+            messages.error(request, 'مبلغ باید بزرگ‌تر از صفر باشد.')
+        elif len(reason) < 5:
+            messages.error(request, 'دلیل شارژ را بنویسید — در تاریخچه‌ی کاربر ثبت می‌شود.')
+        else:
+            # مرجع تعیین می‌کند این پول «برگشتیِ باشگاه» شمرده شود و در نتیجه
+            # قابل برداشت باشد. اگر به مسابقه‌ای وصل شود، ممیزیِ همان مسابقه
+            # هم آن را به‌عنوان جبرانِ پرداخت حساب می‌کند.
+            stamp = timezone.now().strftime('%Y%m%d%H%M%S')
+            if match_id.isdigit():
+                reference = f'compensate-{match_id}-manual{stamp}'
+            else:
+                reference = f'ADMIN-CREDIT-{stamp}-{target.id}'
+
+            wallet, _ = Wallet.objects.get_or_create(user=target)
+            ok = wallet.add_balance(
+                amount=amount,
+                description=f'{reason} (ثبت توسط {request.user.username})',
+                reference_id=reference,
+                tx_type='refund',
+            )
+            if ok:
+                messages.success(
+                    request,
+                    f'{amount:,} ریال به کیف پول {target.phone_number or target.username} '
+                    f'اضافه شد و قابل برداشت است.')
+                return redirect(f"{reverse('wallet:admin_wallet_credit')}?q={query}")
+            messages.error(request, 'واریز انجام نشد.')
+
+    return render(request, 'wallet/admin_wallet_credit.html', {
+        'q': query, 'found': found, 'matches': matches,
+    })
 
 
 # ============================================================

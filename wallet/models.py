@@ -179,7 +179,14 @@ MIN_WITHDRAWAL_AMOUNT = 100_000  # ریال (۱۰ هزار تومان)
 # کاربر برگردانده‌اند. عمداً با COMPENSATION_PREFIXES در دستور
 # audit_payment_ticket_balance یکی است -- هر دو یک سؤال را می‌پرسند:
 # «کدام بخش از این موجودی، پولِ خودِ کاربر بوده که باشگاه نگه داشته؟»
-WITHDRAWABLE_PREFIXES = ('compensate-', 'SHORTFALL-', 'OVERPAY-', 'refund-')
+WITHDRAWABLE_PREFIXES = (
+    'compensate-',      # جبران دستی (دستورهای مدیریتی)
+    'SHORTFALL-',       # بلیط کمتر از آنچه پولش داده شده
+    'OVERPAY-',         # پرداخت دوباره
+    'refund-',          # بازگشت خودکار وقتی صدور بلیط شکست خورد
+    'CANCEL-MATCH-',    # لغو مسابقه از سمت باشگاه
+    'ADMIN-CREDIT-',    # شارژ جبرانیِ دستی از پنل
+)
 
 _DIGIT_MAP = str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789')
 
