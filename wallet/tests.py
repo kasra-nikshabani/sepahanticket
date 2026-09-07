@@ -283,6 +283,39 @@ class UserVisibilityAndCorrectionTests(TestCase):
         self.req = WithdrawalRequest.create_for(
             self.user, 3_000_000, VALID_IBAN, 'کسری نیک‌شبانی')
 
+    def test_user_sees_how_much_is_withdrawable(self):
+        """کاربر باید بدون رفتن به فرم، عددِ قابل برداشت را ببیند."""
+        self.client.post(f'/wallet/withdraw/{self.req.pk}/cancel/')   # درخواست باز نباشد
+        body = self.client.get('/wallet/dashboard/').content.decode()
+        self.assertIn('قابل برداشت به حساب بانکی', body)
+        self.assertIn('4٬000٬000', body)          # کل مبلغ جبرانی
+
+    def test_held_amount_is_explained_not_silently_missing(self):
+        """وقتی درخواستی باز است، «قابل برداشت» کمتر می‌شود -- باید توضیح بدهیم."""
+        body = self.client.get('/wallet/dashboard/').content.decode()
+        self.assertIn('نگه داشته شده', body)
+        self.assertIn('3٬000٬000', body)          # مبلغِ نگه‌داشته‌شده
+
+    def test_zero_withdrawable_is_explained(self):
+        """کاربری که فقط شارژ شخصی دارد باید بفهمد چرا صفر است."""
+        self.client.post(f'/wallet/withdraw/{self.req.pk}/cancel/')
+        other = User.objects.create_user(username='u12', password='pw12345')
+        Wallet.objects.get(user=other).add_balance(
+            amount=3_000_000, reference_id='4734690099')   # شارژ از درگاه
+        self.client.force_login(other)
+        body = self.client.get('/wallet/dashboard/').content.decode()
+        self.assertIn('چیزی قابل برداشت نیست', body)
+        self.assertIn('خودتان شارژ کرده‌اید', body)
+
+    def test_nothing_is_shown_while_withdrawal_is_disabled(self):
+        """تا وقتی کلید خاموش است، عددی که نمی‌شود رویش اقدام کرد نشان داده نشود."""
+        from accounts.models import SiteSettings
+        s = SiteSettings.get_solo()
+        s.withdrawal_enabled = False
+        s.save()
+        body = self.client.get('/wallet/dashboard/').content.decode()
+        self.assertNotIn('قابل برداشت به حساب بانکی', body)
+
     def test_bank_reference_reaches_the_user_wallet(self):
         self.req.mark_paid(self.admin, bank_reference='PAYA-556677')
         body = self.client.get('/wallet/dashboard/').content.decode()

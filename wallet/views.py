@@ -79,6 +79,12 @@ def wallet_dashboard(request):
         'wallet_charge_enabled': is_wallet_charge_enabled(),
         'withdrawal_enabled': is_withdrawal_enabled(),
         'withdrawable': get_withdrawable_amount(request.user),
+        # مبلغی که همین حالا درگیرِ یک درخواست باز است. بدون نشان‌دادنش،
+        # کاربری که درخواست داده «قابل برداشت» را کمتر می‌بیند و فکر می‌کند
+        # پولش کم شده -- در حالی که فقط نگه داشته شده.
+        'held_amount': WithdrawalRequest.objects.filter(
+            user=request.user, status__in=WithdrawalRequest.OPEN_STATUSES
+        ).aggregate(s=Sum('amount'))['s'] or 0,
         'withdrawals': WithdrawalRequest.objects.filter(user=request.user)[:10],
     }
     return render(request, 'wallet/dashboard.html', context)

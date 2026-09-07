@@ -236,18 +236,6 @@
 
         .btn-cancel-wd:hover { background: #fdeceb; }
 
-        .withdrawable-note {
-            background: #f4f8fb;
-            border: 1px solid #d6e4ef;
-            border-right: 4px solid #17a2b8;
-            border-radius: 12px;
-            padding: 13px 18px;
-            margin-bottom: 24px;
-            font-size: .9rem;
-            color: #2c4a5a;
-            line-height: 1.95;
-        }
-
         .btn-back {
             background: rgba(255, 255, 255, 0.08);
             color: #fff;
@@ -322,6 +310,56 @@
             align-items: center;
             gap: 6px;
         }
+
+        .wd-strip {
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(212, 175, 55, 0.18);
+        }
+
+        .wd-strip .wd-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .wd-strip .wd-lbl { color: #8a8a9a; font-size: 13.5px; font-weight: 600; }
+        .wd-strip .wd-lbl i { color: #D4AF37; }
+
+        .wd-strip .wd-val {
+            color: #fff;
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .wd-strip .wd-val small { font-size: 13px; color: #8a8a9a; font-weight: 400; }
+
+        .wd-strip .wd-sub {
+            color: #9a9aaa;
+            font-size: 12.5px;
+            line-height: 1.95;
+            margin-top: 8px;
+        }
+
+        .wd-strip .wd-sub strong { color: #D4AF37; }
+
+        .wd-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin-top: 12px;
+            padding: 9px 20px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #D4AF37, #B8960F);
+            color: #1A1A2E;
+            font-weight: 700;
+            font-size: 13.5px;
+            text-decoration: none;
+        }
+
+        .wd-cta:hover { color: #1A1A2E; transform: translateY(-2px); }
 
         .stats-grid {
             display: grid;
@@ -623,6 +661,8 @@
                 grid-template-columns: repeat(2, 1fr);
             }
 
+            .wd-strip .wd-val { font-size: 21px; }
+
             .table-custom {
                 font-size: 13px;
             }
@@ -645,6 +685,8 @@
         }
 
         @media (max-width: 480px) {
+            .wd-strip .wd-val { font-size: 19px; }
+
             .stats-grid {
                 grid-template-columns: 1fr;
             }
@@ -720,6 +762,36 @@
                 <i class="fas fa-clock"></i>
                 آخرین به‌روزرسانی: {{ wallet.updated_at|date:"Y/m/d - H:i" }}
             </div>
+
+            {% if withdrawal_enabled %}
+            <div class="wd-strip">
+                <div class="wd-main">
+                    <span class="wd-lbl"><i class="fas fa-money-bill-transfer"></i> قابل برداشت به حساب بانکی</span>
+                    <span class="wd-val">{{ withdrawable|rial_display }} <small>ریال</small></span>
+                </div>
+
+                {% if held_amount %}
+                <div class="wd-sub">
+                    <i class="fas fa-lock"></i>
+                    {{ held_amount|rial_display }} ریال بابت درخواست در جریان نگه داشته شده و
+                    به موجودی برنمی‌گردد مگر درخواست لغو یا رد شود.
+                </div>
+                {% endif %}
+
+                {% if withdrawable %}
+                    <a href="{% url 'wallet:withdraw' %}" class="wd-cta">
+                        <i class="fas fa-paper-plane"></i> درخواست برداشت
+                    </a>
+                {% elif not held_amount and wallet.balance %}
+                <div class="wd-sub">
+                    <i class="fas fa-circle-info"></i>
+                    از موجودی فعلی شما چیزی قابل برداشت نیست. فقط مبلغی که <strong>باشگاه</strong>
+                    به کیف پول شما برگردانده — بابت بلیط صادرنشده، لغو مسابقه یا بازگشت وجه —
+                    قابل برداشت است؛ مبلغی که خودتان شارژ کرده‌اید برای خرید بلیط قابل استفاده است.
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
 
         <!-- ===== کارت‌های آمار ===== -->
@@ -739,23 +811,19 @@
                 <div class="stat-number">{{ total_withdrawals|rial_display }}</div>
                 <div class="stat-label">کل برداشت‌ها (ریال)</div>
             </div>
+            {% if withdrawal_enabled %}
+            <div class="stat-card gold">
+                <span class="stat-icon"><i class="fas fa-money-bill-transfer"></i></span>
+                <div class="stat-number">{{ withdrawable|rial_display }}</div>
+                <div class="stat-label">قابل برداشت (ریال)</div>
+            </div>
+            {% endif %}
             <div class="stat-card blue">
                 <span class="stat-icon"><i class="fas fa-exchange-alt"></i></span>
                 <div class="stat-number">{{ total_transactions|default:"۰" }}</div>
                 <div class="stat-label">تعداد تراکنش‌ها</div>
             </div>
         </div>
-
-        {% if withdrawal_enabled and withdrawable %}
-        <div class="withdrawable-note">
-            <i class="fas fa-money-bill-transfer"></i>
-            از موجودی شما <strong>{{ withdrawable|rial_display }} ریال</strong> قابل برداشت به حساب
-            بانکی است. (فقط مبلغی که باشگاه به کیف پول شما برگردانده — مثل جبران بلیط صادرنشده یا
-            بازگشت وجه — قابل برداشت است؛ مبلغی که خودتان شارژ کرده‌اید برای خرید بلیط قابل استفاده
-            است ولی برداشت نمی‌شود.)
-            <a href="{% url 'wallet:withdraw' %}" style="color:#0a58ca; font-weight:700;">ثبت درخواست برداشت</a>
-        </div>
-        {% endif %}
 
         <!-- ===== درخواست‌های برداشت ===== -->
         {% if withdrawals %}
