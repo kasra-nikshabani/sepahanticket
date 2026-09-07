@@ -7,6 +7,8 @@ urlpatterns = [
     path('dashboard/', views.wallet_dashboard, name='dashboard'),
     path('charge/', views.wallet_charge, name='charge'),
     path('withdraw/', views.wallet_withdraw, name='withdraw'),
+    path('withdraw/<int:request_id>/cancel/', views.wallet_withdraw_cancel,
+         name='withdraw_cancel'),
 
     # ===== پنل مدیریت =====
     path('admin/withdrawals/', views.admin_withdrawal_list, name='admin_withdrawal_list'),

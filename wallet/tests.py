@@ -265,6 +265,87 @@ class WithdrawalViewTests(TestCase):
         self.assertEqual(WithdrawalRequest.objects.count(), 0)
 
 
+class UserVisibilityAndCorrectionTests(TestCase):
+    """آنچه کاربر می‌بیند و راهی که برای اصلاح اشتباهش دارد."""
+
+    def setUp(self):
+        from accounts.models import SiteSettings
+        self.user = User.objects.create_user(username='u9', password='pw12345')
+        self.admin = User.objects.create_user(username='adm6', password='pw12345',
+                                              is_staff=True, is_superuser=True)
+        self.wallet = Wallet.objects.get(user=self.user)
+        self.wallet.add_balance(amount=4_000_000, reference_id='compensate-64-90')
+        s = SiteSettings.get_solo()
+        s.withdrawal_enabled = True
+        s.block_foreign_ips = False
+        s.save()
+        self.client.force_login(self.user)
+        self.req = WithdrawalRequest.create_for(
+            self.user, 3_000_000, VALID_IBAN, 'کسری نیک‌شبانی')
+
+    def test_bank_reference_reaches_the_user_wallet(self):
+        self.req.mark_paid(self.admin, bank_reference='PAYA-556677')
+        body = self.client.get('/wallet/dashboard/').content.decode()
+        self.assertIn('PAYA-556677', body)
+        self.assertIn('شناسه پیگیری واریز', body)
+
+    def test_bank_reference_also_lands_in_the_transaction_history(self):
+        """کاربر در تاریخچه‌ی تراکنش‌ها هم باید شماره‌ی پیگیری را ببیند."""
+        self.req.mark_paid(self.admin, bank_reference='PAYA-998877')
+        tx = Transaction.objects.get(user=self.user, reference_id=f'WD-{self.req.pk}')
+        self.assertIn('PAYA-998877', tx.description)
+
+    def test_rejection_reason_is_shown_to_the_user(self):
+        self.req.reject(self.admin, reason='نام صاحب حساب با نام شما یکی نیست')
+        body = self.client.get('/wallet/dashboard/').content.decode()
+        self.assertIn('نام صاحب حساب با نام شما یکی نیست', body)
+        self.assertIn('دلیل رد', body)
+
+    def test_user_can_cancel_a_pending_request_and_get_the_money_back(self):
+        resp = self.client.post(f'/wallet/withdraw/{self.req.pk}/cancel/')
+        self.assertEqual(resp.status_code, 302)
+        self.req.refresh_from_db()
+        self.wallet.refresh_from_db()
+        self.assertEqual(self.req.status, 'cancelled')
+        self.assertEqual(self.wallet.balance, 4_000_000)
+        self.assertEqual(get_withdrawable_amount(self.user), 4_000_000)
+
+    def test_after_cancelling_a_new_request_is_possible(self):
+        self.client.post(f'/wallet/withdraw/{self.req.pk}/cancel/')
+        self.client.post('/wallet/withdraw/', {
+            'amount': '2000000', 'iban': VALID_IBAN, 'account_holder': 'کسری نیک‌شبانی'})
+        self.assertEqual(WithdrawalRequest.objects.filter(
+            user=self.user, status='pending').count(), 1)
+
+    def test_an_approved_request_can_no_longer_be_cancelled_by_the_user(self):
+        """خزانه‌داری ممکن است همین حالا در حال واریز باشد."""
+        self.req.approve(self.admin)
+        self.client.post(f'/wallet/withdraw/{self.req.pk}/cancel/')
+        self.req.refresh_from_db()
+        self.assertEqual(self.req.status, 'approved')
+        self.assertEqual(Wallet.objects.get(user=self.user).balance, 1_000_000)
+
+    def test_a_user_cannot_cancel_someone_elses_request(self):
+        other = User.objects.create_user(username='u10', password='pw12345')
+        self.client.force_login(other)
+        resp = self.client.post(f'/wallet/withdraw/{self.req.pk}/cancel/')
+        self.assertEqual(resp.status_code, 404)
+        self.req.refresh_from_db()
+        self.assertEqual(self.req.status, 'pending')
+
+    def test_cancelling_twice_does_not_return_the_money_twice(self):
+        self.client.post(f'/wallet/withdraw/{self.req.pk}/cancel/')
+        self.client.post(f'/wallet/withdraw/{self.req.pk}/cancel/')
+        self.assertEqual(Wallet.objects.get(user=self.user).balance, 4_000_000)
+
+    def test_the_guide_is_on_the_withdraw_page(self):
+        self.client.post(f'/wallet/withdraw/{self.req.pk}/cancel/')
+        body = self.client.get('/wallet/withdraw/').content.decode()
+        self.assertIn('برداشت در سه مرحله', body)
+        self.assertIn('شماره شبا را از بانک خودتان بگیرید', body)
+        self.assertIn('اگر شبا را اشتباه وارد کنم', body)
+
+
 class PageRenderTests(TestCase):
     """صفحه‌ها واقعاً رندر شوند.
 

@@ -169,6 +169,56 @@
         .wd-status.approved { background: #cce5ff; color: #004085; }
         .wd-status.paid { background: #d4edda; color: #155724; }
         .wd-status.rejected { background: #f8d7da; color: #721c24; }
+        .wd-status.cancelled { background: #e9ecef; color: #495057; }
+
+        .paid-ref {
+            background: #eaf7ee;
+            border: 1px solid #bfe3c9;
+            border-radius: 10px;
+            padding: 9px 12px;
+            color: #1e5c30;
+            font-size: 12.5px;
+            line-height: 1.9;
+        }
+
+        .paid-ref .ref-value {
+            direction: ltr;
+            text-align: left;
+            font-family: monospace;
+            font-size: 15px;
+            font-weight: 700;
+            color: #155724;
+            background: #fff;
+            border: 1px dashed #bfe3c9;
+            border-radius: 7px;
+            padding: 5px 9px;
+            margin: 5px 0 3px;
+            user-select: all;
+        }
+
+        .reject-box {
+            background: #fdeceb;
+            border: 1px solid #f5b7b1;
+            border-radius: 10px;
+            padding: 9px 12px;
+            color: #922b21;
+            font-size: 12.5px;
+            line-height: 1.9;
+        }
+
+        .btn-cancel-wd {
+            background: #fff;
+            border: 1px solid #f5b7b1;
+            color: #c0392b;
+            border-radius: 8px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .btn-cancel-wd:hover { background: #fdeceb; }
 
         .withdrawable-note {
             background: #f4f8fb;
@@ -721,14 +771,40 @@
                             </td>
                             <td><span class="wd-status {{ w.status }}">{{ w.get_status_display }}</span></td>
                             <td style="font-size:13px; color:#6c757d;">
-                                {% if w.status == 'paid' and w.bank_reference %}
-                                    پیگیری: <span style="direction:ltr; display:inline-block;">{{ w.bank_reference }}</span>
+                                {% if w.status == 'paid' %}
+                                    {% if w.bank_reference %}
+                                        <div class="paid-ref">
+                                            <i class="fas fa-receipt"></i> شناسه پیگیری واریز
+                                            <div class="ref-value">{{ w.bank_reference }}</div>
+                                            <small>این شماره را برای پیگیری در بانک نگه دارید.</small>
+                                        </div>
+                                    {% else %}
+                                        واریز شد
+                                    {% endif %}
                                 {% elif w.status == 'rejected' %}
-                                    {{ w.admin_note|default:"—" }}
+                                    <div class="reject-box">
+                                        <i class="fas fa-circle-exclamation"></i>
+                                        <strong>دلیل رد:</strong> {{ w.admin_note|default:"اعلام نشده" }}
+                                        <div style="margin-top:6px;">
+                                            مبلغ به کیف پول شما برگشت. می‌توانید با اطلاعات درست
+                                            <a href="{% url 'wallet:withdraw' %}" style="color:#0a58ca; font-weight:700;">درخواست تازه</a>
+                                            ثبت کنید.
+                                        </div>
+                                    </div>
                                 {% elif w.status == 'approved' %}
-                                    تأیید شد؛ در انتظار واریز بانکی
+                                    تأیید شد؛ در انتظار واریز بانکی (معمولاً ۱ تا ۳ روز کاری)
+                                {% elif w.status == 'cancelled' %}
+                                    شما این درخواست را لغو کردید؛ مبلغ برگشت.
                                 {% else %}
                                     در حال بررسی
+                                    <form method="post" action="{% url 'wallet:withdraw_cancel' w.id %}"
+                                          style="display:inline; margin-right:6px;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-cancel-wd"
+                                                onclick="return confirm('درخواست لغو شود؟ مبلغ به کیف پول شما برمی‌گردد و می‌توانید دوباره با اطلاعات درست ثبت کنید.');">
+                                            <i class="fas fa-xmark"></i> لغو و اصلاح
+                                        </button>
+                                    </form>
                                 {% endif %}
                             </td>
                         </tr>

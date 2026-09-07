@@ -64,6 +64,32 @@
     }
     .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(212,175,55,.35); }
 
+    .guide {
+        background: #fff; border: 1px solid #e8eaed; border-radius: 16px;
+        padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    }
+    .guide-title { font-weight: 700; color: #1A1A2E; margin-bottom: 14px; font-size: 15px; }
+    .guide-title i { color: #D4AF37; margin-left: 6px; }
+    .steps { display: grid; gap: 14px; }
+    .step { display: flex; gap: 12px; align-items: flex-start; }
+    .step .num {
+        flex: 0 0 30px; height: 30px; border-radius: 50%; background: #1A1A2E; color: #D4AF37;
+        display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;
+    }
+    .step strong { color: #1A1A2E; font-size: 14px; }
+    .step p { margin: 3px 0 0; color: #6c757d; font-size: 13px; line-height: 1.95; }
+    .mono { font-family: monospace; direction: ltr; display: inline-block; }
+
+    .fix-box {
+        margin-top: 14px; background: #f6f8fa; border: 1px solid #e3e8ee;
+        border-radius: 10px; padding: 12px 15px; font-size: 13px; color: #44515f; line-height: 1.95;
+    }
+    .btn-cancel {
+        background: #fff; border: 1px solid #f5b7b1; color: #c0392b; border-radius: 9px;
+        padding: 8px 18px; font-weight: 700; font-size: 13px; font-family: inherit; cursor: pointer;
+    }
+    .btn-cancel:hover { background: #fdeceb; }
+
     .pending-card {
         background: #fff; border: 1px solid #f0dca8; border-right: 5px solid #D4AF37;
         border-radius: 16px; padding: 22px 26px; line-height: 2.1; color: #1A1A2E;
@@ -100,6 +126,29 @@
                 پس از تأیید و واریز، مبلغ معمولاً طی یک تا سه روز کاری بانکی به حساب شما می‌نشیند.
                 تا تعیین تکلیف این درخواست، امکان ثبت درخواست تازه وجود ندارد.
             </div>
+
+            {% if pending.status == 'pending' %}
+            <div class="fix-box">
+                <strong><i class="fas fa-pen-to-square"></i> اطلاعات را اشتباه وارد کرده‌اید؟</strong>
+                تا وقتی درخواست بررسی نشده می‌توانید خودتان لغوش کنید؛ مبلغ بلافاصله به کیف پول
+                برمی‌گردد و می‌توانید درخواست تازه با شبای درست ثبت کنید.
+                <form method="post" action="{% url 'wallet:withdraw_cancel' pending.id %}" style="margin-top:10px;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-cancel"
+                            onclick="return confirm('درخواست لغو شود؟ مبلغ به کیف پول شما برمی‌گردد.');">
+                        <i class="fas fa-xmark"></i> لغو درخواست و اصلاح اطلاعات
+                    </button>
+                </form>
+            </div>
+            {% else %}
+            <div class="fix-box">
+                <strong><i class="fas fa-circle-info"></i> اطلاعات اشتباه است؟</strong>
+                این درخواست تأیید شده و ممکن است همین حالا در حال واریز باشد، پس دیگر خودتان
+                نمی‌توانید لغوش کنید. با پشتیبانی تماس بگیرید و شماره‌ی درخواست
+                <strong>#{{ pending.id }}</strong> را اعلام کنید؛ اگر هنوز واریز نشده باشد،
+                رد می‌شود و مبلغ به کیف پولتان برمی‌گردد.
+            </div>
+            {% endif %}
         </div>
 
     {% elif withdrawable < min_amount %}
@@ -119,14 +168,51 @@
             <div class="val">{{ withdrawable|rial_display }} <small>ریال</small></div>
         </div>
 
+        <div class="guide">
+            <div class="guide-title"><i class="fas fa-list-check"></i> برداشت در سه مرحله</div>
+            <div class="steps">
+                <div class="step">
+                    <div class="num">۱</div>
+                    <div>
+                        <strong>شماره شبا را از بانک خودتان بگیرید</strong>
+                        <p>در اپلیکیشن یا اینترنت‌بانک، بخش «مشخصات حساب» شماره‌ی شبا را نشان می‌دهد.
+                           روی کارت بانکی نوشته نشده. شبا با <span class="mono">IR</span> شروع می‌شود
+                           و ۲۴ رقم دارد.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="num">۲</div>
+                    <div>
+                        <strong>فرم زیر را پر کنید</strong>
+                        <p>مبلغ، شماره شبا و نام صاحب حساب. حساب باید
+                           <strong>به نام خودتان</strong> باشد — واریز به حساب شخص دیگر انجام نمی‌شود.
+                           فاصله و خط تیره در شبا اشکالی ندارد.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="num">۳</div>
+                    <div>
+                        <strong>منتظر واریز بمانید</strong>
+                        <p>مبلغ همان لحظه از کیف پول کسر و تا زمان واریز محفوظ می‌شود.
+                           پس از تأیید، واریز بانکی معمولاً <strong>۱ تا ۳ روز کاری</strong> طول می‌کشد.
+                           <strong>شناسه‌ی پیگیری واریز</strong> در همین صفحه‌ی کیف پول به شما نشان
+                           داده می‌شود.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="note-box">
-            <i class="fas fa-circle-info"></i> پیش از ثبت درخواست بخوانید:
+            <i class="fas fa-circle-question"></i> چند سؤال رایج:
             <ul>
-                <li>حساب باید <strong>به نام خودتان</strong> باشد؛ واریز به حساب شخص دیگر انجام نمی‌شود.</li>
-                <li>مبلغ درخواست <strong>همان لحظه از کیف پول کسر می‌شود</strong> تا تا زمان واریز
-                    محفوظ بماند. اگر درخواست رد شود، تمام مبلغ به کیف پول شما برمی‌گردد.</li>
-                <li>واریز پس از تأیید، به‌صورت بانکی انجام می‌شود و معمولاً یک تا سه روز کاری زمان می‌برد.</li>
-                <li>در هر زمان فقط یک درخواست باز می‌توانید داشته باشید.</li>
+                <li><strong>اگر شبا را اشتباه وارد کنم؟</strong> تا وقتی درخواست بررسی نشده،
+                    خودتان می‌توانید از صفحه‌ی کیف پول لغوش کنید و دوباره ثبت کنید. اگر هم
+                    کارشناس متوجه مغایرت شود، درخواست را با ذکر دلیل رد می‌کند و
+                    <strong>تمام مبلغ به کیف پول شما برمی‌گردد</strong>.</li>
+                <li><strong>چرا همه‌ی موجودی‌ام قابل برداشت نیست؟</strong> فقط مبلغی که باشگاه به
+                    کیف پول شما برگردانده (بابت بلیط صادرنشده، لغو مسابقه یا بازگشت وجه) قابل
+                    برداشت است. مبلغی که خودتان شارژ کرده‌اید برای خرید بلیط قابل استفاده است.</li>
+                <li><strong>می‌توانم چند درخواست هم‌زمان بدهم؟</strong> نه، در هر زمان یک درخواست باز.</li>
             </ul>
         </div>
 

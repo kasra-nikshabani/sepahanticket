@@ -315,6 +315,7 @@ class WithdrawalRequest(models.Model):
         ('approved', 'تأیید شده — در انتظار واریز'),
         ('paid', 'واریز شد'),
         ('rejected', 'رد شد'),
+        ('cancelled', 'لغو شده توسط شما'),
     )
     # درخواستی که هنوز سرنوشتش روشن نشده -- کاربر نمی‌تواند هم‌زمان دومی ثبت کند.
     OPEN_STATUSES = ('pending', 'approved')
@@ -385,16 +386,17 @@ class WithdrawalRequest(models.Model):
             if fresh.status not in self.OPEN_STATUSES:
                 return False, f'این درخواست قبلاً «{fresh.get_status_display()}» شده است.'
 
-            if status == 'rejected':
+            if status in ('rejected', 'cancelled'):
                 # پول باید برگردد وگرنه کاربر هم بلیط ندارد هم پول.
                 # نکته: پیشوند reference عمداً 'WD-REJECT-' است و نه '-refund'؛
                 # اگر با 'refund-' شروع می‌شد، دستور audit_payment_ticket_balance
                 # آن را «جبران پرداخت‌شده» حساب می‌کرد و یک بدهیِ واقعی را پنهان
                 # می‌کرد.
                 wallet, _ = Wallet.objects.get_or_create(user=fresh.user)
+                _what = 'لغو شد' if status == 'cancelled' else 'رد شد'
                 wallet.add_balance(
                     amount=fresh.amount,
-                    description=f'بازگشت مبلغ درخواست برداشت #{fresh.pk} (رد شد)',
+                    description=f'بازگشت مبلغ درخواست برداشت #{fresh.pk} ({_what})',
                     reference_id=f'WD-REJECT-{fresh.pk}',
                     tx_type='refund',
                 )
@@ -422,7 +424,33 @@ class WithdrawalRequest(models.Model):
         return self._finish('approved', by, note=note)
 
     def mark_paid(self, by, bank_reference='', note=''):
-        return self._finish('paid', by, note=note, bank_reference=bank_reference)
+        ok, err = self._finish('paid', by, note=note, bank_reference=bank_reference)
+        if ok and bank_reference:
+            # ===== شناسه‌ی واریز باید در تاریخچه‌ی خودِ کاربر بنشیند =====
+            # تراکنشِ کسر، لحظه‌ی ثبتِ درخواست ساخته شده و آن موقع هنوز
+            # شناسه‌ای وجود نداشت. اگر همان‌جا به‌روز نشود، کاربر در تاریخچه‌ی
+            # کیف پولش فقط یک «برداشت» می‌بیند بدون هیچ شماره‌ی پیگیری‌ای که
+            # بتواند با آن به بانک مراجعه کند.
+            Transaction.objects.filter(
+                user=self.user, reference_id=f'WD-{self.pk}'
+            ).update(description=(
+                f'برداشت به شبا {self.iban[-6:]} — واریز شد، '
+                f'شناسه پیگیری: {bank_reference}'))
+        return ok, err
 
     def reject(self, by, reason=''):
         return self._finish('rejected', by, note=reason)
+
+    def cancel_by_user(self, reason='انصراف کاربر'):
+        """کاربر خودش درخواستش را پس می‌گیرد -- مثلاً شبا را اشتباه زده.
+
+        فقط تا وقتی «در انتظار بررسی» است ممکن است؛ بعد از تأیید، خزانه‌داری
+        ممکن است همین حالا در حال واریز باشد و پس‌گرفتنش یعنی احتمال واریز
+        دوباره. از آن مرحله به بعد، اصلاح فقط از راهِ رد کردن توسط مدیر است.
+        """
+        with transaction.atomic():
+            fresh = WithdrawalRequest.objects.select_for_update().get(pk=self.pk)
+            if fresh.status != 'pending':
+                return False, ('این درخواست دیگر قابل لغو نیست؛ '
+                               f'وضعیت فعلی: {fresh.get_status_display()}.')
+        return self._finish('cancelled', None, note=reason)

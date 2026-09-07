@@ -309,6 +309,28 @@ def admin_withdrawal_action(request, request_id):
     return redirect(f'{url}?{back}' if back else url)
 
 
+@login_required
+def wallet_withdraw_cancel(request, request_id):
+    """کاربر درخواست خودش را پس می‌گیرد -- راهِ اصلاحِ اطلاعات اشتباه.
+
+    بدون این، کسی که شبا را غلط زده باید منتظر بماند تا مدیر رد کند؛ در آن
+    فاصله پولش هم بلوکه است و هم نمی‌تواند درخواست درست ثبت کند.
+    """
+    if request.method != 'POST':
+        return redirect('wallet:dashboard')
+
+    wr = get_object_or_404(WithdrawalRequest, pk=request_id, user=request.user)
+    ok, err = wr.cancel_by_user()
+    if ok:
+        messages.success(
+            request,
+            f'درخواست #{wr.pk} لغو شد و {wr.amount:,} ریال به کیف پول شما برگشت. '
+            'حالا می‌توانید درخواست تازه با اطلاعات درست ثبت کنید.')
+    else:
+        messages.error(request, err)
+    return redirect('wallet:dashboard')
+
+
 # ============================================================
 #  شارژ جبرانیِ دستی از پنل
 # ============================================================
