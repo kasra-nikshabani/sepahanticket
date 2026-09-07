@@ -170,6 +170,22 @@
         .wd-status.paid { background: #d4edda; color: #155724; }
         .wd-status.rejected { background: #f8d7da; color: #721c24; }
         .wd-status.cancelled { background: #e9ecef; color: #495057; }
+        .wd-status.needs_correction { background: #ffe0cc; color: #8a4b1a; }
+
+        .btn-edit-wd {
+            display: inline-block;
+            background: #fff;
+            border: 1px solid #cfe0f2;
+            color: #0a58ca;
+            border-radius: 8px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            margin-left: 5px;
+        }
+
+        .btn-edit-wd:hover { background: #eef4fb; color: #0a58ca; }
 
         .paid-ref {
             background: #eaf7ee;
@@ -795,16 +811,32 @@
                                     تأیید شد؛ در انتظار واریز بانکی (معمولاً ۱ تا ۳ روز کاری)
                                 {% elif w.status == 'cancelled' %}
                                     شما این درخواست را لغو کردید؛ مبلغ برگشت.
+                                {% elif w.status == 'needs_correction' %}
+                                    <div class="reject-box">
+                                        <i class="fas fa-triangle-exclamation"></i>
+                                        <strong>باید اصلاح کنید:</strong>
+                                        {{ w.admin_note|default:"اطلاعات واردشده مغایرت دارد." }}
+                                        <div style="margin-top:6px;">
+                                            مبلغ همچنان برای شما نگه داشته شده.
+                                            <a href="{% url 'wallet:withdraw' %}" style="color:#0a58ca; font-weight:700;">
+                                                اصلاح اطلاعات</a>
+                                        </div>
+                                    </div>
                                 {% else %}
-                                    در حال بررسی
-                                    <form method="post" action="{% url 'wallet:withdraw_cancel' w.id %}"
-                                          style="display:inline; margin-right:6px;">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn-cancel-wd"
-                                                onclick="return confirm('درخواست لغو شود؟ مبلغ به کیف پول شما برمی‌گردد و می‌توانید دوباره با اطلاعات درست ثبت کنید.');">
-                                            <i class="fas fa-xmark"></i> لغو و اصلاح
-                                        </button>
-                                    </form>
+                                    در انتظار تأیید
+                                    <div style="margin-top:6px;">
+                                        <a href="{% url 'wallet:withdraw' %}" class="btn-edit-wd">
+                                            <i class="fas fa-pen-to-square"></i> ویرایش
+                                        </a>
+                                        <form method="post" action="{% url 'wallet:withdraw_cancel' w.id %}"
+                                              style="display:inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn-cancel-wd"
+                                                    onclick="return confirm('درخواست لغو شود؟ مبلغ به کیف پول شما برمی‌گردد.');">
+                                                <i class="fas fa-xmark"></i> لغو
+                                            </button>
+                                        </form>
+                                    </div>
                                 {% endif %}
                             </td>
                         </tr>

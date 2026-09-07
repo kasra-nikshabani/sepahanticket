@@ -346,6 +346,148 @@ class UserVisibilityAndCorrectionTests(TestCase):
         self.assertIn('اگر شبا را اشتباه وارد کنم', body)
 
 
+class StatusFlowTests(TestCase):
+    """چرخه‌ی وضعیت: در انتظار تأیید -> در حال پرداخت -> پرداخت انجام شد،
+    و انشعابِ «نیاز به اصلاح اطلاعات»."""
+
+    def setUp(self):
+        from accounts.models import SiteSettings
+        self.user = User.objects.create_user(username='u11', password='pw12345')
+        self.admin = User.objects.create_user(username='adm7', password='pw12345',
+                                              is_staff=True, is_superuser=True)
+        self.wallet = Wallet.objects.get(user=self.user)
+        self.wallet.add_balance(amount=5_000_000, reference_id='compensate-64-95')
+        s = SiteSettings.get_solo()
+        s.withdrawal_enabled = True
+        s.block_foreign_ips = False
+        s.save()
+        self.client.force_login(self.user)
+        self.req = WithdrawalRequest.create_for(
+            self.user, 3_000_000, VALID_IBAN, 'کسری نیک‌شبانی')
+
+    OTHER_IBAN = 'IR260620000000000123456789'
+
+    # ---------------- در انتظار تأیید: قابل ویرایش ----------------
+    def test_pending_request_is_editable_by_the_user(self):
+        resp = self.client.post('/wallet/withdraw/', {
+            'amount': '3000000', 'iban': self.OTHER_IBAN, 'account_holder': 'نام اصلاح‌شده'})
+        self.assertEqual(resp.status_code, 302)
+        self.req.refresh_from_db()
+        self.assertEqual(self.req.iban, self.OTHER_IBAN)
+        self.assertEqual(self.req.account_holder, 'نام اصلاح‌شده')
+        self.assertEqual(WithdrawalRequest.objects.filter(user=self.user).count(), 1)
+
+    def test_editing_the_amount_settles_the_difference(self):
+        self.client.post('/wallet/withdraw/', {
+            'amount': '2000000', 'iban': VALID_IBAN, 'account_holder': 'کسری نیک‌شبانی'})
+        self.req.refresh_from_db()
+        self.wallet.refresh_from_db()
+        self.assertEqual(self.req.amount, 2_000_000)
+        self.assertEqual(self.wallet.balance, 3_000_000)      # ۱ میلیون برگشت
+        self.assertEqual(get_withdrawable_amount(self.user), 3_000_000)
+
+    def test_editing_upward_takes_the_difference(self):
+        self.client.post('/wallet/withdraw/', {
+            'amount': '4500000', 'iban': VALID_IBAN, 'account_holder': 'کسری نیک‌شبانی'})
+        self.req.refresh_from_db()
+        self.wallet.refresh_from_db()
+        self.assertEqual(self.req.amount, 4_500_000)
+        self.assertEqual(self.wallet.balance, 500_000)
+
+    def test_cannot_edit_above_what_is_withdrawable(self):
+        self.client.post('/wallet/withdraw/', {
+            'amount': '9000000', 'iban': VALID_IBAN, 'account_holder': 'کسری نیک‌شبانی'})
+        self.req.refresh_from_db()
+        self.assertEqual(self.req.amount, 3_000_000)
+
+    def test_the_form_comes_prefilled_when_editing(self):
+        body = self.client.get('/wallet/withdraw/').content.decode()
+        self.assertIn(VALID_IBAN, body)
+        self.assertIn('کسری نیک‌شبانی', body)
+
+    # ---------------- در حال پرداخت: قفل ----------------
+    def test_approved_request_is_locked_for_the_user(self):
+        self.req.approve(self.admin)
+        self.assertEqual(self.req.get_status_display(), 'در حال پرداخت')
+        self.client.post('/wallet/withdraw/', {
+            'amount': '1000000', 'iban': self.OTHER_IBAN, 'account_holder': 'نام دیگر'})
+        self.req.refresh_from_db()
+        self.assertEqual(self.req.iban, VALID_IBAN)
+        self.assertEqual(self.req.amount, 3_000_000)
+
+    def test_approved_request_cannot_be_cancelled_by_the_user(self):
+        self.req.approve(self.admin)
+        self.client.post(f'/wallet/withdraw/{self.req.pk}/cancel/')
+        self.req.refresh_from_db()
+        self.assertEqual(self.req.status, 'approved')
+
+    # ---------------- نیاز به اصلاح ----------------
+    def test_admin_sends_it_back_and_the_money_stays_held(self):
+        ok, err = self.req.request_correction(self.admin, reason='شبا با نام شما یکی نیست')
+        self.assertTrue(ok, err)
+        self.req.refresh_from_db()
+        self.wallet.refresh_from_db()
+        self.assertEqual(self.req.status, 'needs_correction')
+        self.assertEqual(self.wallet.balance, 2_000_000, 'پول نباید برگشته باشد')
+        self.assertEqual(get_withdrawable_amount(self.user), 2_000_000)
+
+    def test_user_sees_what_to_fix_and_can_fix_it(self):
+        self.req.request_correction(self.admin, reason='شبا با نام شما یکی نیست')
+        body = self.client.get('/wallet/withdraw/').content.decode()
+        self.assertIn('اطلاعات این درخواست باید اصلاح شود', body)
+        self.assertIn('شبا با نام شما یکی نیست', body)
+
+        self.client.post('/wallet/withdraw/', {
+            'amount': '3000000', 'iban': self.OTHER_IBAN, 'account_holder': 'نام درست'})
+        self.req.refresh_from_db()
+        self.assertEqual(self.req.status, 'pending', 'بعد از اصلاح باید به صف بررسی برگردد')
+        self.assertEqual(self.req.iban, self.OTHER_IBAN)
+        self.assertEqual(self.req.admin_note, '', 'یادداشت قبلی باید پاک شود')
+
+    def test_correction_can_also_come_from_the_paying_stage(self):
+        """اگر بانک واریز را برگرداند، همان درخواست باید برای اصلاح برود."""
+        self.req.approve(self.admin)
+        ok, _ = self.req.request_correction(self.admin, reason='بانک شبا را نپذیرفت')
+        self.assertTrue(ok)
+        self.req.refresh_from_db()
+        self.assertEqual(self.req.status, 'needs_correction')
+        self.assertEqual(Wallet.objects.get(user=self.user).balance, 2_000_000)
+
+    def test_correction_route_through_the_admin_view(self):
+        self.client.force_login(self.admin)
+        self.client.post(f'/wallet/admin/withdrawals/{self.req.pk}/action/',
+                         {'action': 'correct', 'note': 'کد ملی صاحب حساب مغایر است'})
+        self.req.refresh_from_db()
+        self.assertEqual(self.req.status, 'needs_correction')
+        self.assertEqual(self.req.admin_note, 'کد ملی صاحب حساب مغایر است')
+
+    def test_correction_needs_a_reason(self):
+        self.client.force_login(self.admin)
+        self.client.post(f'/wallet/admin/withdrawals/{self.req.pk}/action/',
+                         {'action': 'correct', 'note': ''})
+        self.req.refresh_from_db()
+        self.assertEqual(self.req.status, 'pending')
+
+    def test_a_second_request_is_still_blocked_while_correcting(self):
+        """درخواست در حال اصلاح هنوز باز است -- نباید دومی ساخته شود."""
+        self.req.request_correction(self.admin, reason='اصلاح کن')
+        self.assertEqual(WithdrawalRequest.objects.filter(user=self.user).count(), 1)
+        self.client.post('/wallet/withdraw/', {
+            'amount': '1000000', 'iban': self.OTHER_IBAN, 'account_holder': 'نام'})
+        self.assertEqual(WithdrawalRequest.objects.filter(user=self.user).count(), 1)
+
+    # ---------------- پرداخت انجام شد ----------------
+    def test_full_happy_path(self):
+        self.req.approve(self.admin)
+        self.req.mark_paid(self.admin, bank_reference='PAYA-321')
+        self.req.refresh_from_db()
+        self.assertEqual(self.req.get_status_display(), 'پرداخت انجام شد')
+        self.assertEqual(Wallet.objects.get(user=self.user).balance, 2_000_000)
+        body = self.client.get('/wallet/dashboard/').content.decode()
+        self.assertIn('PAYA-321', body)
+        self.assertIn('پرداخت انجام شد', body)
+
+
 class PageRenderTests(TestCase):
     """صفحه‌ها واقعاً رندر شوند.
 

@@ -90,6 +90,23 @@
     }
     .btn-cancel:hover { background: #fdeceb; }
 
+    .correction-box {
+        background: #fff4ec; border: 1px solid #f3c9a6; border-right: 5px solid #e8873a;
+        border-radius: 14px; padding: 16px 20px; margin-bottom: 18px; color: #7a4318;
+    }
+    .correction-title { font-weight: 800; font-size: 15px; margin-bottom: 8px; }
+    .correction-reason {
+        background: #fff; border: 1px dashed #f3c9a6; border-radius: 9px;
+        padding: 9px 13px; font-weight: 700; color: #8a4b1a; font-size: 14px;
+    }
+    .correction-box p { margin: 10px 0 0; font-size: 13.5px; line-height: 2; }
+
+    .editing-box {
+        background: #eef4fb; border: 1px solid #cfe0f2; border-right: 5px solid #17a2b8;
+        border-radius: 14px; padding: 13px 18px; margin-bottom: 18px;
+        color: #24506e; font-size: 13.5px; line-height: 2;
+    }
+
     .pending-card {
         background: #fff; border: 1px solid #f0dca8; border-right: 5px solid #D4AF37;
         border-radius: 16px; padding: 22px 26px; line-height: 2.1; color: #1A1A2E;
@@ -108,7 +125,7 @@
         </a>
     </div>
 
-    {% if pending %}
+    {% if pending and not editing %}
         {% comment %}
             یک درخواست باز در جریان است -- فرم تازه نشان داده نمی‌شود تا کاربر
             تصور نکند می‌تواند دوباره همان پول را درخواست دهد.
@@ -151,10 +168,10 @@
             {% endif %}
         </div>
 
-    {% elif withdrawable < min_amount %}
+    {% elif max_amount < min_amount %}
         <div class="warn-box">
             <i class="fas fa-circle-info"></i>
-            مبلغ قابل برداشت شما <strong>{{ withdrawable|rial_display }} ریال</strong> است که از
+            مبلغ قابل برداشت شما <strong>{{ max_amount|rial_display }} ریال</strong> است که از
             حداقل مجاز ({{ min_amount|rial_display }} ریال) کمتر است.
             <br>
             توجه: فقط مبلغی که <strong>باشگاه به کیف پول شما برگردانده</strong> — مثل جبران بلیط
@@ -163,9 +180,28 @@
         </div>
 
     {% else %}
+        {% if editing and editing.status == 'needs_correction' %}
+        <div class="correction-box">
+            <div class="correction-title">
+                <i class="fas fa-triangle-exclamation"></i> اطلاعات این درخواست باید اصلاح شود
+            </div>
+            <div class="correction-reason">{{ editing.admin_note|default:"اطلاعات واردشده مغایرت دارد." }}</div>
+            <p>
+                مبلغ <strong>{{ editing.amount|rial_display }} ریال</strong> همچنان برای شما نگه داشته
+                شده است. اطلاعات زیر را درست کنید و دوباره بفرستید؛ درخواست به صف بررسی برمی‌گردد.
+            </p>
+        </div>
+        {% elif editing %}
+        <div class="editing-box">
+            <i class="fas fa-pen-to-square"></i>
+            در حال ویرایش <strong>درخواست #{{ editing.id }}</strong> که هنوز تأیید نشده است.
+            هر تغییری بدهید، درخواست دوباره در صف بررسی قرار می‌گیرد.
+        </div>
+        {% endif %}
+
         <div class="amount-card">
             <div class="lbl"><i class="fas fa-coins"></i> حداکثر مبلغ قابل برداشت</div>
-            <div class="val">{{ withdrawable|rial_display }} <small>ریال</small></div>
+            <div class="val">{{ max_amount|rial_display }} <small>ریال</small></div>
         </div>
 
         <div class="guide">
@@ -222,10 +258,10 @@
             <div class="field">
                 <label for="amount">مبلغ برداشت (ریال)</label>
                 <input type="number" name="amount" id="amount" required
-                       min="{{ min_amount }}" max="{{ withdrawable }}" step="1"
-                       value="{{ form.amount }}" placeholder="{{ withdrawable }}">
+                       min="{{ min_amount }}" max="{{ max_amount }}" step="1"
+                       value="{{ form.amount }}" placeholder="{{ max_amount }}">
                 <span class="hint">
-                    حداقل {{ min_amount|rial_display }} و حداکثر {{ withdrawable|rial_display }} ریال
+                    حداقل {{ min_amount|rial_display }} و حداکثر {{ max_amount|rial_display }} ریال
                 </span>
             </div>
 
@@ -247,10 +283,24 @@
             </div>
 
             <button type="submit" class="btn-submit"
-                    onclick="return confirm('درخواست برداشت ثبت شود؟ مبلغ تا زمان واریز از کیف پول شما کسر می‌ماند.');">
-                <i class="fas fa-paper-plane"></i> ثبت درخواست برداشت
+                    onclick="return confirm('{% if editing %}اصلاحیه ثبت شود؟ درخواست دوباره در صف بررسی قرار می‌گیرد.{% else %}درخواست برداشت ثبت شود؟ مبلغ تا زمان واریز از کیف پول شما کسر می‌ماند.{% endif %}');">
+                <i class="fas fa-paper-plane"></i>
+                {% if editing %}ثبت اصلاحیه{% else %}ثبت درخواست برداشت{% endif %}
             </button>
         </form>
+
+        {% if editing %}
+        <div class="fix-box">
+            دیگر نمی‌خواهید برداشت کنید؟
+            <form method="post" action="{% url 'wallet:withdraw_cancel' editing.id %}" style="margin-top:8px;">
+                {% csrf_token %}
+                <button type="submit" class="btn-cancel"
+                        onclick="return confirm('درخواست لغو شود؟ مبلغ به کیف پول شما برمی‌گردد.');">
+                    <i class="fas fa-xmark"></i> لغو کامل درخواست
+                </button>
+            </form>
+        </div>
+        {% endif %}
     {% endif %}
 
 </div>

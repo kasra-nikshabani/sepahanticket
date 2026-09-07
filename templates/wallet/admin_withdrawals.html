@@ -84,6 +84,8 @@
     .req-card.status-paid { border-right-color: #28a745; opacity: .85; }
     .req-card.status-rejected { border-right-color: #dc3545; opacity: .85; }
     .req-card.status-approved { border-right-color: #17a2b8; }
+    .req-card.status-needs_correction { border-right-color: #e8873a; }
+    .req-card.status-cancelled { border-right-color: #adb5bd; opacity: .85; }
 
     .req-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; }
     .req-amount { font-size: 25px; font-weight: 800; color: #1A1A2E; }
@@ -96,6 +98,8 @@
     .badge.approved { background: #cce5ff; color: #004085; }
     .badge.paid { background: #d4edda; color: #155724; }
     .badge.rejected { background: #f8d7da; color: #721c24; }
+    .badge.needs_correction { background: #ffe0cc; color: #8a4b1a; }
+    .badge.cancelled { background: #e9ecef; color: #495057; }
 
     .req-grid {
         display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -124,6 +128,7 @@
     .btn-act.approve { background: #17a2b8; }
     .btn-act.paid { background: #28a745; }
     .btn-act.reject { background: #dc3545; }
+    .btn-act.correct { background: #e8873a; }
 
     .empty { text-align: center; padding: 60px 20px; color: #6c757d; }
     .empty i { font-size: 52px; color: #e8eaed; display: block; margin-bottom: 14px; }
@@ -168,11 +173,15 @@
     <div class="kpi-row">
         <div class="kpi-card {% if counts.pending %}warn{% endif %}">
             <div class="num">{{ counts.pending }}</div>
-            <div class="lbl">در انتظار بررسی</div>
+            <div class="lbl">در انتظار تأیید</div>
+        </div>
+        <div class="kpi-card">
+            <div class="num">{{ counts.needs_correction }}</div>
+            <div class="lbl">منتظر اصلاح توسط کاربر</div>
         </div>
         <div class="kpi-card">
             <div class="num">{{ counts.approved }}</div>
-            <div class="lbl">تأیید شده — در انتظار واریز</div>
+            <div class="lbl">در حال پرداخت</div>
         </div>
         <div class="kpi-card">
             <div class="num">{{ open_total|rial_display }}</div>
@@ -228,9 +237,10 @@
 
     <div class="toolbar">
         <a class="tab {% if status == 'open' %}active{% endif %}" href="?status=open">در جریان</a>
-        <a class="tab {% if status == 'pending' %}active{% endif %}" href="?status=pending">در انتظار بررسی</a>
-        <a class="tab {% if status == 'approved' %}active{% endif %}" href="?status=approved">در انتظار واریز</a>
-        <a class="tab {% if status == 'paid' %}active{% endif %}" href="?status=paid">واریز شده</a>
+        <a class="tab {% if status == 'pending' %}active{% endif %}" href="?status=pending">در انتظار تأیید</a>
+        <a class="tab {% if status == 'needs_correction' %}active{% endif %}" href="?status=needs_correction">نیاز به اصلاح</a>
+        <a class="tab {% if status == 'approved' %}active{% endif %}" href="?status=approved">در حال پرداخت</a>
+        <a class="tab {% if status == 'paid' %}active{% endif %}" href="?status=paid">پرداخت شد</a>
         <a class="tab {% if status == 'rejected' %}active{% endif %}" href="?status=rejected">رد شده</a>
         <a class="tab {% if status == 'all' %}active{% endif %}" href="?status=all">همه</a>
         <form method="get">
@@ -302,7 +312,7 @@
             مقایسه‌ی نام، تنها کنترل مالکیت حساب است -- سیستم شبا را استعلام
             نمی‌کند، پس این خط باید همیشه جلوی چشم اپراتور باشد.
         {% endcomment %}
-        {% if r.status == 'pending' or r.status == 'approved' %}
+        {% if r.status == 'pending' or r.status == 'approved' or r.status == 'needs_correction' %}
         <div class="name-check">
             <i class="fas fa-user-check"></i>
             <strong>قبل از واریز، نام را مقایسه کنید:</strong>
@@ -312,7 +322,7 @@
         </div>
         {% endif %}
 
-        {% if r.status == 'pending' or r.status == 'approved' %}
+        {% if r.status == 'pending' or r.status == 'approved' or r.status == 'needs_correction' %}
         <div class="actions">
             {% if r.status == 'pending' %}
             <form method="post" action="{% url 'wallet:admin_withdrawal_action' r.id %}">
@@ -335,6 +345,17 @@
                 <button type="submit" class="btn-act paid"
                         onclick="return confirm('واریز این درخواست ثبت شود؟ این کار به معنای آن است که پول واقعاً به حساب کاربر واریز شده است.');">
                     <i class="fas fa-money-check-dollar"></i> ثبت واریز
+                </button>
+            </form>
+
+            <form method="post" action="{% url 'wallet:admin_withdrawal_action' r.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="correct">
+                <input type="hidden" name="back_query" value="status={{ status }}&q={{ q }}&page={{ requests.number }}">
+                <input type="text" name="note" placeholder="چه چیزی باید اصلاح شود؟ (الزامی)" required>
+                <button type="submit" class="btn-act correct"
+                        onclick="return confirm('این درخواست برای اصلاح به کاربر برگردد؟ مبلغ همچنان نگه داشته می‌شود.');">
+                    <i class="fas fa-pen-to-square"></i> اصلاح اطلاعات
                 </button>
             </form>
 

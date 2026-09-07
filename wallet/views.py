@@ -140,34 +140,50 @@ def wallet_withdraw(request):
     pending = WithdrawalRequest.objects.filter(
         user=request.user, status__in=WithdrawalRequest.OPEN_STATUSES
     ).first()
+    # درخواستی که کاربر حق دارد رویش دست ببرد. سقف مبلغِ ویرایش، مبلغِ
+    # نگه‌داشته‌شده‌ی خودش به‌علاوه‌ی باقی‌مانده‌ی قابل برداشت است.
+    editing = pending if (pending and pending.status in
+                          WithdrawalRequest.EDITABLE_STATUSES) else None
+    max_amount = withdrawable + (editing.amount if editing else 0)
 
-    # مقادیری که اگر فرم رد شد، دوباره در آن نشان داده شوند تا کاربر مجبور
-    # به تایپ دوباره‌ی شبا نباشد.
-    form = {
-        'amount': request.POST.get('amount', '') if request.method == 'POST' else '',
-        'iban': request.POST.get('iban', '') if request.method == 'POST' else '',
-        'account_holder': (request.POST.get('account_holder', '') if request.method == 'POST'
-                           else (request.user.get_full_name() or '').strip()),
-    }
+    if request.method == 'POST':
+        prefill = {
+            'amount': request.POST.get('amount', ''),
+            'iban': request.POST.get('iban', ''),
+            'account_holder': request.POST.get('account_holder', ''),
+        }
+    elif editing:
+        prefill = {
+            'amount': editing.amount,
+            'iban': editing.iban,
+            'account_holder': editing.account_holder,
+        }
+    else:
+        prefill = {
+            'amount': '', 'iban': '',
+            'account_holder': (request.user.get_full_name() or '').strip(),
+        }
 
     def _render(error=None):
         if error:
             messages.error(request, error)
         return render(request, 'wallet/withdraw.html', {
             'withdrawable': withdrawable,
+            'max_amount': max_amount,
             'pending': pending,
+            'editing': editing,
             'min_amount': MIN_WITHDRAWAL_AMOUNT,
-            'form': form,
+            'form': prefill,
         })
 
     if request.method != 'POST':
         return _render()
 
-    if pending:
-        return _render('شما یک درخواست برداشت در جریان دارید؛ تا تعیین تکلیف آن '
-                       'نمی‌توانید درخواست تازه‌ای ثبت کنید.')
+    if pending and not editing:
+        return _render('درخواست شما تأیید شده و در حال پرداخت است؛ در این مرحله '
+                       'امکان تغییر یا ثبت درخواست تازه وجود ندارد.')
 
-    if withdrawable < MIN_WITHDRAWAL_AMOUNT:
+    if max_amount < MIN_WITHDRAWAL_AMOUNT:
         return _render(f'مبلغ قابل برداشت شما کمتر از حداقل مجاز '
                        f'({MIN_WITHDRAWAL_AMOUNT:,} ریال) است.')
 
@@ -180,8 +196,8 @@ def wallet_withdraw(request):
 
     if amount < MIN_WITHDRAWAL_AMOUNT:
         return _render(f'حداقل مبلغ برداشت {MIN_WITHDRAWAL_AMOUNT:,} ریال است.')
-    if amount > withdrawable:
-        return _render(f'حداکثر مبلغ قابل برداشت شما {withdrawable:,} ریال است.')
+    if amount > max_amount:
+        return _render(f'حداکثر مبلغ قابل برداشت شما {max_amount:,} ریال است.')
 
     iban = normalize_iban(request.POST.get('iban'))
     if not is_valid_iban(iban):
@@ -190,6 +206,15 @@ def wallet_withdraw(request):
     holder = (request.POST.get('account_holder') or '').strip()
     if len(holder) < 3:
         return _render('نام صاحب حساب را کامل وارد کنید.')
+
+    if editing:
+        ok, err = editing.update_by_user(amount, iban, holder)
+        if not ok:
+            return _render(err)
+        messages.success(
+            request,
+            f'اطلاعات درخواست #{editing.pk} اصلاح شد و دوباره در انتظار تأیید قرار گرفت.')
+        return redirect('wallet:dashboard')
 
     try:
         req = WithdrawalRequest.create_for(request.user, amount, iban, holder)
@@ -238,6 +263,7 @@ def admin_withdrawal_list(request):
 
     counts = {
         'pending': WithdrawalRequest.objects.filter(status='pending').count(),
+        'needs_correction': WithdrawalRequest.objects.filter(status='needs_correction').count(),
         'approved': WithdrawalRequest.objects.filter(status='approved').count(),
     }
     open_total = WithdrawalRequest.objects.filter(
@@ -286,6 +312,14 @@ def admin_withdrawal_action(request, request_id):
             return redirect('wallet:admin_withdrawal_list')
         ok, err = wr.mark_paid(request.user, bank_reference=bank_ref, note=note)
         done = f'واریز درخواست #{wr.pk} ثبت شد.'
+    elif action == 'correct':
+        if not note:
+            messages.error(request, 'بنویسید چه چیزی باید اصلاح شود '
+                                    '(همان متن برای کاربر نمایش داده می‌شود).')
+            return redirect('wallet:admin_withdrawal_list')
+        ok, err = wr.request_correction(request.user, reason=note)
+        done = (f'درخواست #{wr.pk} برای اصلاح به کاربر برگشت. '
+                f'مبلغ همچنان نگه داشته شده و کاربر باید اطلاعاتش را درست کند.')
     elif action == 'reject':
         if not note:
             messages.error(request, 'برای رد درخواست، ذکر دلیل الزامی است '

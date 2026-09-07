@@ -310,18 +310,34 @@ def withdrawable_totals():
 
 
 class WithdrawalRequest(models.Model):
+    # ===== چرخه‌ی عمر یک درخواست =====
+    #
+    #   در انتظار تأیید ──ادمین تأیید──▶ در حال پرداخت ──ثبت واریز──▶ پرداخت انجام شد
+    #        │  ▲                             │
+    #        │  │                             │ (بانک برگرداند یا مغایرت دیده شد)
+    #        │  └──── کاربر اصلاح کرد ◀───── نیاز به اصلاح اطلاعات
+    #        │                                     ▲
+    #        └─────────────────────────────────────┘
+    #
+    # کاربر فقط در دو حالتِ «در انتظار تأیید» و «نیاز به اصلاح اطلاعات»
+    # می‌تواند ویرایش کند. به‌محض تأیید، خزانه‌داری ممکن است در حال واریز
+    # باشد و تغییر شبا در آن لحظه یعنی واریز به حساب اشتباه.
     STATUS_CHOICES = (
-        ('pending', 'در انتظار بررسی'),
-        ('approved', 'تأیید شده — در انتظار واریز'),
-        ('paid', 'واریز شد'),
+        ('pending', 'در انتظار تأیید'),
+        ('needs_correction', 'نیاز به اصلاح اطلاعات'),
+        ('approved', 'در حال پرداخت'),
+        ('paid', 'پرداخت انجام شد'),
         ('rejected', 'رد شد'),
         ('cancelled', 'لغو شده توسط شما'),
     )
     # درخواستی که هنوز سرنوشتش روشن نشده -- کاربر نمی‌تواند هم‌زمان دومی ثبت کند.
-    OPEN_STATUSES = ('pending', 'approved')
+    OPEN_STATUSES = ('pending', 'needs_correction', 'approved')
+    # حالت‌هایی که کاربر می‌تواند اطلاعات را عوض کند.
+    EDITABLE_STATUSES = ('pending', 'needs_correction')
     # درخواست‌هایی که پولشان از کیف پول کسر شده و برنگشته. مبنای محاسبه‌ی
-    # «چقدر دیگر قابل برداشت است».
-    COMMITTED_STATUSES = ('pending', 'approved', 'paid')
+    # «چقدر دیگر قابل برداشت است». «نیاز به اصلاح» عمداً اینجاست: پول همچنان
+    # نگه داشته می‌شود تا کاربر در فاصله‌ی اصلاح آن را خرج بلیط نکند.
+    COMMITTED_STATUSES = ('pending', 'needs_correction', 'approved', 'paid')
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='withdrawal_requests')
     amount = models.BigIntegerField(verbose_name='مبلغ (ریال)')
@@ -441,16 +457,76 @@ class WithdrawalRequest(models.Model):
     def reject(self, by, reason=''):
         return self._finish('rejected', by, note=reason)
 
-    def cancel_by_user(self, reason='انصراف کاربر'):
-        """کاربر خودش درخواستش را پس می‌گیرد -- مثلاً شبا را اشتباه زده.
+    def request_correction(self, by, reason=''):
+        """اطلاعات ایراد دارد -- برگردان به کاربر تا خودش اصلاح کند.
 
-        فقط تا وقتی «در انتظار بررسی» است ممکن است؛ بعد از تأیید، خزانه‌داری
-        ممکن است همین حالا در حال واریز باشد و پس‌گرفتنش یعنی احتمال واریز
-        دوباره. از آن مرحله به بعد، اصلاح فقط از راهِ رد کردن توسط مدیر است.
+        عمداً با «رد کردن» فرق دارد: پول همچنان نگه داشته می‌شود و درخواست
+        زنده می‌ماند. اگر به‌جایش رد می‌شد، پول به کیف پول برمی‌گشت، کاربر
+        می‌توانست خرجش کند و بعد دیگر چیزی برای برداشت نمی‌ماند -- در حالی
+        که تنها ایراد یک شماره‌ی شبای غلط بوده.
         """
         with transaction.atomic():
             fresh = WithdrawalRequest.objects.select_for_update().get(pk=self.pk)
-            if fresh.status != 'pending':
+            if fresh.status not in ('pending', 'approved', 'needs_correction'):
+                return False, f'این درخواست در وضعیت «{fresh.get_status_display()}» است.'
+            fresh.status = 'needs_correction'
+            fresh.processed_by = by
+            fresh.processed_at = timezone.now()
+            fresh.admin_note = reason
+            fresh.save(update_fields=['status', 'processed_by', 'processed_at',
+                                      'admin_note', 'updated_at'])
+        self.refresh_from_db()
+        return True, ''
+
+    def update_by_user(self, amount, iban, account_holder):
+        """کاربر اطلاعات درخواستِ بازش را اصلاح می‌کند.
+
+        اگر مبلغ عوض شود، تفاوتش همین‌جا با کیف پول تسویه می‌شود -- وگرنه
+        مبلغِ نگه‌داشته‌شده با مبلغِ درخواست یکی نمی‌ماند و محاسبه‌ی
+        «قابل برداشت» غلط می‌شود.
+        """
+        with transaction.atomic():
+            fresh = WithdrawalRequest.objects.select_for_update().get(pk=self.pk)
+            if fresh.status not in self.EDITABLE_STATUSES:
+                return False, ('این درخواست دیگر قابل ویرایش نیست؛ '
+                               f'وضعیت فعلی: {fresh.get_status_display()}.')
+
+            wallet, _ = Wallet.objects.get_or_create(user=fresh.user)
+            delta = amount - fresh.amount
+            if delta > 0:
+                ok = wallet.deduct_balance(
+                    amount=delta,
+                    description=f'افزایش مبلغ درخواست برداشت #{fresh.pk}',
+                    reference_id=f'WD-ADJ-{fresh.pk}-{int(timezone.now().timestamp())}',
+                    tx_type='withdraw')
+                if not ok:
+                    return False, 'موجودی برای افزایش مبلغ کافی نیست.'
+            elif delta < 0:
+                wallet.add_balance(
+                    amount=-delta,
+                    description=f'کاهش مبلغ درخواست برداشت #{fresh.pk}',
+                    reference_id=f'WD-ADJ-{fresh.pk}-{int(timezone.now().timestamp())}',
+                    tx_type='refund')
+
+            fresh.amount = amount
+            fresh.iban = iban
+            fresh.account_holder = account_holder
+            fresh.status = 'pending'          # دوباره در صف بررسی
+            fresh.admin_note = ''
+            fresh.save(update_fields=['amount', 'iban', 'account_holder', 'status',
+                                      'admin_note', 'updated_at'])
+        self.refresh_from_db()
+        return True, ''
+
+    def cancel_by_user(self, reason='انصراف کاربر'):
+        """کاربر خودش درخواستش را پس می‌گیرد و پولش را برمی‌گرداند.
+
+        فقط در حالت‌های قابل ویرایش ممکن است؛ بعد از تأیید، خزانه‌داری ممکن
+        است همین حالا در حال واریز باشد و پس‌گرفتنش یعنی احتمال واریز دوباره.
+        """
+        with transaction.atomic():
+            fresh = WithdrawalRequest.objects.select_for_update().get(pk=self.pk)
+            if fresh.status not in self.EDITABLE_STATUSES:
                 return False, ('این درخواست دیگر قابل لغو نیست؛ '
                                f'وضعیت فعلی: {fresh.get_status_display()}.')
         return self._finish('cancelled', None, note=reason)
