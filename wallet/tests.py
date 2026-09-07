@@ -220,7 +220,8 @@ class WithdrawalViewTests(TestCase):
         self.client.force_login(self.user)
 
     def _post(self, **kw):
-        data = {'amount': '1000000', 'iban': VALID_IBAN, 'account_holder': 'کسری نیک‌شبانی'}
+        data = {'amount': '1000000', 'iban': VALID_IBAN,
+                'account_holder': 'کسری نیک‌شبانی', 'national_code': '1234567890'}
         data.update(kw)
         return self.client.post('/wallet/withdraw/', data)
 
@@ -348,7 +349,8 @@ class UserVisibilityAndCorrectionTests(TestCase):
     def test_after_cancelling_a_new_request_is_possible(self):
         self.client.post(f'/wallet/withdraw/{self.req.pk}/cancel/')
         self.client.post('/wallet/withdraw/', {
-            'amount': '2000000', 'iban': VALID_IBAN, 'account_holder': 'کسری نیک‌شبانی'})
+            'amount': '2000000', 'iban': VALID_IBAN, 'account_holder': 'کسری نیک‌شبانی',
+            'national_code': '1234567890'})
         self.assertEqual(WithdrawalRequest.objects.filter(
             user=self.user, status='pending').count(), 1)
 
@@ -405,7 +407,8 @@ class StatusFlowTests(TestCase):
     # ---------------- در انتظار تأیید: قابل ویرایش ----------------
     def test_pending_request_is_editable_by_the_user(self):
         resp = self.client.post('/wallet/withdraw/', {
-            'amount': '3000000', 'iban': self.OTHER_IBAN, 'account_holder': 'نام اصلاح‌شده'})
+            'amount': '3000000', 'iban': self.OTHER_IBAN, 'account_holder': 'نام اصلاح‌شده',
+            'national_code': '1234567890'})
         self.assertEqual(resp.status_code, 302)
         self.req.refresh_from_db()
         self.assertEqual(self.req.iban, self.OTHER_IBAN)
@@ -414,7 +417,8 @@ class StatusFlowTests(TestCase):
 
     def test_editing_the_amount_settles_the_difference(self):
         self.client.post('/wallet/withdraw/', {
-            'amount': '2000000', 'iban': VALID_IBAN, 'account_holder': 'کسری نیک‌شبانی'})
+            'amount': '2000000', 'iban': VALID_IBAN, 'account_holder': 'کسری نیک‌شبانی',
+            'national_code': '1234567890'})
         self.req.refresh_from_db()
         self.wallet.refresh_from_db()
         self.assertEqual(self.req.amount, 2_000_000)
@@ -423,7 +427,8 @@ class StatusFlowTests(TestCase):
 
     def test_editing_upward_takes_the_difference(self):
         self.client.post('/wallet/withdraw/', {
-            'amount': '4500000', 'iban': VALID_IBAN, 'account_holder': 'کسری نیک‌شبانی'})
+            'amount': '4500000', 'iban': VALID_IBAN, 'account_holder': 'کسری نیک‌شبانی',
+            'national_code': '1234567890'})
         self.req.refresh_from_db()
         self.wallet.refresh_from_db()
         self.assertEqual(self.req.amount, 4_500_000)
@@ -431,7 +436,8 @@ class StatusFlowTests(TestCase):
 
     def test_cannot_edit_above_what_is_withdrawable(self):
         self.client.post('/wallet/withdraw/', {
-            'amount': '9000000', 'iban': VALID_IBAN, 'account_holder': 'کسری نیک‌شبانی'})
+            'amount': '9000000', 'iban': VALID_IBAN, 'account_holder': 'کسری نیک‌شبانی',
+            'national_code': '1234567890'})
         self.req.refresh_from_db()
         self.assertEqual(self.req.amount, 3_000_000)
 
@@ -445,7 +451,8 @@ class StatusFlowTests(TestCase):
         self.req.approve(self.admin)
         self.assertEqual(self.req.get_status_display(), 'در حال پرداخت')
         self.client.post('/wallet/withdraw/', {
-            'amount': '1000000', 'iban': self.OTHER_IBAN, 'account_holder': 'نام دیگر'})
+            'amount': '1000000', 'iban': self.OTHER_IBAN, 'account_holder': 'نام دیگر',
+            'national_code': '1234567890'})
         self.req.refresh_from_db()
         self.assertEqual(self.req.iban, VALID_IBAN)
         self.assertEqual(self.req.amount, 3_000_000)
@@ -473,7 +480,8 @@ class StatusFlowTests(TestCase):
         self.assertIn('شبا با نام شما یکی نیست', body)
 
         self.client.post('/wallet/withdraw/', {
-            'amount': '3000000', 'iban': self.OTHER_IBAN, 'account_holder': 'نام درست'})
+            'amount': '3000000', 'iban': self.OTHER_IBAN, 'account_holder': 'نام درست',
+            'national_code': '1234567890'})
         self.req.refresh_from_db()
         self.assertEqual(self.req.status, 'pending', 'بعد از اصلاح باید به صف بررسی برگردد')
         self.assertEqual(self.req.iban, self.OTHER_IBAN)
@@ -508,7 +516,8 @@ class StatusFlowTests(TestCase):
         self.req.request_correction(self.admin, reason='اصلاح کن')
         self.assertEqual(WithdrawalRequest.objects.filter(user=self.user).count(), 1)
         self.client.post('/wallet/withdraw/', {
-            'amount': '1000000', 'iban': self.OTHER_IBAN, 'account_holder': 'نام'})
+            'amount': '1000000', 'iban': self.OTHER_IBAN, 'account_holder': 'نام',
+            'national_code': '1234567890'})
         self.assertEqual(WithdrawalRequest.objects.filter(user=self.user).count(), 1)
 
     # ---------------- پرداخت انجام شد ----------------
@@ -544,9 +553,12 @@ class IbanInquiryTests(TestCase):
         s.save()
         self.client.force_login(self.user)
 
-    def _submit(self):
-        return self.client.post('/wallet/withdraw/', {
-            'amount': '3000000', 'iban': VALID_IBAN, 'account_holder': 'کسری نیک‌شبانی'})
+    def _submit(self, **over):
+        data = {'amount': '3000000', 'iban': VALID_IBAN,
+                'account_holder': 'کسری نیک‌شبانی',
+                'national_code': self.user.national_code or '1234567890'}
+        data.update(over)
+        return self.client.post('/wallet/withdraw/', data)
 
     @staticmethod
     def _zibal(result, data=None, message='موفق'):
@@ -677,7 +689,9 @@ class IbanInquiryTests(TestCase):
             self._submit()
         req = WithdrawalRequest.objects.get(user=self.user)
         self.assertTrue(req.iban_verified)
-        self.assertEqual(req.status, 'pending')
+        # تأیید قطعیِ بانک یعنی دیگر منتظر اپراتور نمی‌ماند
+        self.assertEqual(req.status, 'approved')
+        self.assertEqual(req.get_status_display(), 'در حال پرداخت')
 
     def test_happy_path_costs_only_one_inquiry(self):
         """در مسیر عادی نباید دو بار کارمزد بدهیم."""
@@ -770,6 +784,117 @@ class IbanInquiryTests(TestCase):
                                buyer_info={'national_code_5': '1234567890',
                                            'tarikhe_tavallod_5': '1365/03/12'})
         self.assertEqual(find_birth_date(self.user), '1365/03/12')
+
+    # ---------------- قفلِ کد ملی ----------------
+    def test_someone_elses_national_code_is_refused(self):
+        """وگرنه می‌شد کد ملیِ صاحبِ واقعیِ یک حساب را زد، استعلام را پاس کرد
+        و پول را به حساب همان شخص فرستاد."""
+        self.user.national_code = '1234567890'
+        self.user.save()
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', side_effect=self._routed({
+                 'checkIbanWithNationalCode': self._zibal(1, {'matched': True})})):
+            self._submit(national_code='9999999999')
+        self.assertEqual(WithdrawalRequest.objects.filter(user=self.user).count(), 0)
+
+    def test_national_code_must_be_ten_digits(self):
+        self.user.national_code = None
+        self.user.save()
+        self._submit(national_code='123')
+        self.assertEqual(WithdrawalRequest.objects.filter(user=self.user).count(), 0)
+
+    def test_persian_digits_in_national_code_are_accepted(self):
+        self.user.national_code = '1234567890'
+        self.user.save()
+        fa = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')
+        with self.settings(ZIBAL_FACILITY_TOKEN=''):
+            self._submit(national_code='1234567890'.translate(fa))
+        self.assertEqual(WithdrawalRequest.objects.filter(user=self.user).count(), 1)
+
+    def test_the_declared_code_is_stored_on_the_request(self):
+        self.user.national_code = '1234567890'
+        self.user.save()
+        with self.settings(ZIBAL_FACILITY_TOKEN=''):
+            self._submit()
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.assertEqual(req.national_code, '1234567890')
+
+    # ---------------- تأیید خودکار ----------------
+    def test_unverified_request_still_waits_for_a_human(self):
+        """اگر نتوانستیم استعلام کنیم، تأیید خودکار نباید اتفاق بیفتد."""
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', return_value=self._zibal(45, message='در دسترس نیست')):
+            self._submit()
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.assertEqual(req.status, 'pending')
+
+    def test_name_only_match_does_not_auto_approve(self):
+        """تطابق نام حدسی است -- هم‌نام بودن دو نفر ممکن است. برای رفتن به صف
+        پرداخت، تأیید قطعیِ کد ملی لازم است."""
+        self.user.national_code = None
+        self.user.save()
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', side_effect=self._routed({
+                 'ibanInquiry': self._zibal(1, {'name': 'کسری نیک شبانی'})})):
+            self._submit(national_code='1234567890')
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.assertTrue(req.iban_verified)
+        self.assertEqual(req.status, 'pending', 'تطابق نام نباید خودکار تأیید کند')
+
+    def test_correcting_a_request_clears_the_old_verification(self):
+        """جوابِ استعلام به شبای قبلی مربوط بود؛ با عوض شدن شبا باید دوباره پرسیده شود."""
+        self.user.national_code = '1234567890'
+        self.user.save()
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', side_effect=self._routed({
+                 'checkIbanWithNationalCode': self._zibal(1, {'matched': False}),
+                 'ibanInquiry': self._zibal(1, {'name': 'مهدی احمدی'})})):
+            self._submit()
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.assertEqual(req.status, 'needs_correction')
+
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', side_effect=self._routed({
+                 'checkIbanWithNationalCode': self._zibal(1, {'matched': True})})):
+            self._submit(iban='IR260620000000000123456789')
+        req.refresh_from_db()
+        self.assertEqual(req.iban, 'IR260620000000000123456789')
+        self.assertTrue(req.iban_verified)
+        self.assertEqual(req.status, 'approved')
+
+    # ---------------- دستورِ بررسیِ درخواست‌های قدیمی ----------------
+    def test_sweep_command_verifies_older_requests(self):
+        from io import StringIO
+        from django.core.management import call_command
+        self.user.national_code = '1234567890'
+        self.user.save()
+        with self.settings(ZIBAL_FACILITY_TOKEN=''):
+            self._submit()                              # بدون استعلام ثبت می‌شود
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.assertIsNone(req.iban_verified)
+
+        out = StringIO()
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', side_effect=self._routed({
+                 'checkIbanWithNationalCode': self._zibal(1, {'matched': True})})):
+            call_command('verify_withdrawal_ibans', '--execute', stdout=out, stderr=out)
+        req.refresh_from_db()
+        self.assertTrue(req.iban_verified)
+        self.assertEqual(req.status, 'approved')
+
+    def test_sweep_command_is_read_only_without_execute(self):
+        from io import StringIO
+        from django.core.management import call_command
+        with self.settings(ZIBAL_FACILITY_TOKEN=''):
+            self._submit()
+        req = WithdrawalRequest.objects.get(user=self.user)
+        out = StringIO()
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', side_effect=self._routed({
+                 'checkIbanWithNationalCode': self._zibal(1, {'matched': True})})):
+            call_command('verify_withdrawal_ibans', stdout=out, stderr=out)
+        req.refresh_from_db()
+        self.assertIsNone(req.iban_verified, 'حالت آزمایشی چیزی را تغییر داد')
 
     # ---------------- نمایش در پنل ----------------
     def test_admin_sees_the_bank_answer(self):

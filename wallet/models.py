@@ -343,6 +343,10 @@ class WithdrawalRequest(models.Model):
     amount = models.BigIntegerField(verbose_name='مبلغ (ریال)')
     iban = models.CharField(max_length=26, verbose_name='شماره شبا')
     account_holder = models.CharField(max_length=120, verbose_name='نام صاحب حساب')
+    # کد ملیِ اعلام‌شده برای استعلام مالکیت. اگر کاربر روی پروفایلش کد ملی
+    # داشته باشد، این باید دقیقاً همان باشد -- وگرنه می‌شد با کد ملیِ شخصِ
+    # دیگری استعلام را پاس کرد و پول را به حساب همان شخص فرستاد.
+    national_code = models.CharField(max_length=10, blank=True, verbose_name='کد ملی')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', db_index=True)
 
     # ===== نتیجه‌ی استعلام شبا از بانک =====
@@ -381,7 +385,7 @@ class WithdrawalRequest(models.Model):
 
     # ------------------------------------------------------------------
     @classmethod
-    def create_for(cls, user, amount, iban, account_holder):
+    def create_for(cls, user, amount, iban, account_holder, national_code=''):
         """ثبت درخواست + کسر فوری موجودی، هر دو با هم یا هیچ‌کدام.
 
         کسر همین‌جا (نه موقع واریز) انجام می‌شود چون در فاصله‌ی ثبت تا واریز،
@@ -391,6 +395,7 @@ class WithdrawalRequest(models.Model):
         with transaction.atomic():
             req = cls.objects.create(
                 user=user, amount=amount, iban=iban, account_holder=account_holder,
+                national_code=national_code,
             )
             wallet, _ = Wallet.objects.get_or_create(user=user)
             ok = wallet.deduct_balance(
@@ -487,9 +492,18 @@ class WithdrawalRequest(models.Model):
         # می‌تواند نامش را جور دیگری بنویسد. وقتی بانک صریحاً گفته این حساب
         # متعلق به دارنده‌ی این کد ملی هست یا نیست، دیگر جای حدس نیست.
         if ownership is True:
+            # ===== تأیید قطعی یعنی دیگر منتظر اپراتور نمانَد =====
+            # بانک گفته این حساب متعلق به دارنده‌ی همین کد ملی است، و کد ملی
+            # هم به این حساب کاربری قفل است. چیزی نمانده که آدم بخواهد
+            # بررسی کند، پس مستقیم وارد صف پرداخت می‌شود. اگر استعلام
+            # *انجام نشده* باشد این اتفاق نمی‌افتد و بررسی دستی سر جایش است.
             self.iban_owner_name = bank_name
             self.iban_verified = True
-            self.save(update_fields=['iban_owner_name', 'iban_verified', 'updated_at'])
+            self.status = 'approved'
+            self.admin_note = 'تأیید خودکار: تطابق شبا با کد ملی توسط بانک تأیید شد.'
+            self.processed_at = timezone.now()
+            self.save(update_fields=['iban_owner_name', 'iban_verified', 'status',
+                                     'admin_note', 'processed_at', 'updated_at'])
             return ''
 
         if ownership is False:
@@ -550,7 +564,7 @@ class WithdrawalRequest(models.Model):
         self.refresh_from_db()
         return True, ''
 
-    def update_by_user(self, amount, iban, account_holder):
+    def update_by_user(self, amount, iban, account_holder, national_code=''):
         """کاربر اطلاعات درخواستِ بازش را اصلاح می‌کند.
 
         اگر مبلغ عوض شود، تفاوتش همین‌جا با کیف پول تسویه می‌شود -- وگرنه
@@ -583,10 +597,17 @@ class WithdrawalRequest(models.Model):
             fresh.amount = amount
             fresh.iban = iban
             fresh.account_holder = account_holder
+            if national_code:
+                fresh.national_code = national_code
             fresh.status = 'pending'          # دوباره در صف بررسی
             fresh.admin_note = ''
-            fresh.save(update_fields=['amount', 'iban', 'account_holder', 'status',
-                                      'admin_note', 'updated_at'])
+            # نتیجه‌ی استعلامِ قبلی به شبای قبلی مربوط بود؛ با عوض شدن اطلاعات
+            # باید دوباره پرسیده شود، نه اینکه جوابِ کهنه معتبر بماند.
+            fresh.iban_verified = None
+            fresh.iban_owner_name = ''
+            fresh.save(update_fields=['amount', 'iban', 'account_holder', 'national_code',
+                                      'status', 'admin_note', 'iban_verified',
+                                      'iban_owner_name', 'updated_at'])
         self.refresh_from_db()
         return True, ''
 

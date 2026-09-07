@@ -268,7 +268,7 @@ def check_iban_owner(iban, national_code, birth_date=''):
     return None, f'کد {result}: {message}'
 
 
-def verify_iban_ownership(iban, user):
+def verify_iban_ownership(iban, user, national_code=''):
     """کنترل کاملِ مالکیت شبا -- همان چیزی که مسیر برداشت صدا می‌زند.
 
     ترتیب عمداً این‌طور است تا هم قوی‌ترین جواب گرفته شود و هم کمترین
@@ -280,7 +280,7 @@ def verify_iban_ownership(iban, user):
     اگر کاربر کد ملی نداشته باشد یا سرویس تطابق در دسترس نباشد، به همان
     روش قبلی (استعلام نام + مقایسه) برمی‌گردیم.
     """
-    national_code = (getattr(user, 'national_code', '') or '').strip()
+    national_code = (national_code or getattr(user, 'national_code', '') or '').strip()
     matched, detail = check_iban_owner(iban, national_code, find_birth_date(user))
 
     if matched is True:

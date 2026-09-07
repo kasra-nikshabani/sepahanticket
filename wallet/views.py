@@ -152,22 +152,26 @@ def wallet_withdraw(request):
                           WithdrawalRequest.EDITABLE_STATUSES) else None
     max_amount = withdrawable + (editing.amount if editing else 0)
 
+    profile_code = (request.user.national_code or '').strip()
     if request.method == 'POST':
         prefill = {
             'amount': request.POST.get('amount', ''),
             'iban': request.POST.get('iban', ''),
             'account_holder': request.POST.get('account_holder', ''),
+            'national_code': request.POST.get('national_code', ''),
         }
     elif editing:
         prefill = {
             'amount': editing.amount,
             'iban': editing.iban,
             'account_holder': editing.account_holder,
+            'national_code': editing.national_code or profile_code,
         }
     else:
         prefill = {
             'amount': '', 'iban': '',
             'account_holder': (request.user.get_full_name() or '').strip(),
+            'national_code': profile_code,
         }
 
     def _render(error=None):
@@ -180,6 +184,7 @@ def wallet_withdraw(request):
             'editing': editing,
             'min_amount': MIN_WITHDRAWAL_AMOUNT,
             'form': prefill,
+            'profile_code': profile_code,
         })
 
     if request.method != 'POST':
@@ -213,6 +218,18 @@ def wallet_withdraw(request):
     if len(holder) < 3:
         return _render('نام صاحب حساب را کامل وارد کنید.')
 
+    national_code = (request.POST.get('national_code') or '').strip().translate(
+        str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789'))
+    if not (national_code.isdigit() and len(national_code) == 10):
+        return _render('کد ملی باید ۱۰ رقم باشد.')
+    # ===== کد ملیِ اعلامی باید همانِ خودِ کاربر باشد =====
+    # وگرنه می‌شد کد ملیِ صاحبِ واقعیِ یک حساب را وارد کرد، استعلام را پاس
+    # کرد و پول را به حساب همان شخص فرستاد -- یعنی دقیقاً همان کانال
+    # انتقال پولی که نباید ممکن باشد.
+    if profile_code and national_code != profile_code:
+        return _render('کد ملی واردشده با کد ملی ثبت‌شده در حساب شما یکی نیست. '
+                       'حساب بانکی باید به نام و کد ملی خودتان باشد.')
+
     # ===== استعلام نام صاحب حساب از بانک =====
     # عمداً *قبل* از ثبت انجام نمی‌شود که اگر سرویس کند بود، درخواست کاربر
     # گم نشود؛ اول ثبت می‌کنیم (پول نگه داشته می‌شود) و بعد نتیجه را روی
@@ -221,12 +238,16 @@ def wallet_withdraw(request):
     names = [holder, request.user.get_full_name(), request.user.username]
 
     if editing:
-        ok, err = editing.update_by_user(amount, iban, holder)
+        ok, err = editing.update_by_user(amount, iban, holder, national_code)
         if not ok:
             return _render(err)
-        problem = editing.record_iban_check(verify_iban_ownership(iban, request.user), *names)
+        problem = editing.record_iban_check(
+            verify_iban_ownership(iban, request.user, national_code), *names)
         if problem:
             messages.warning(request, problem)
+        elif editing.status == 'approved':
+            messages.success(request, '✅ شماره شبا توسط بانک تأیید شد و درخواست '
+                                      'در صف پرداخت قرار گرفت.')
         else:
             messages.success(
                 request,
@@ -234,14 +255,21 @@ def wallet_withdraw(request):
         return redirect('wallet:dashboard')
 
     try:
-        req = WithdrawalRequest.create_for(request.user, amount, iban, holder)
+        req = WithdrawalRequest.create_for(request.user, amount, iban, holder,
+                                           national_code)
     except ValueError:
         # موجودی بین بارگذاری فرم و ارسال آن خرج شده است.
         return _render('موجودی کیف پول شما تغییر کرده است؛ لطفاً دوباره تلاش کنید.')
 
-    problem = req.record_iban_check(verify_iban_ownership(iban, request.user), *names)
+    problem = req.record_iban_check(
+        verify_iban_ownership(iban, request.user, national_code), *names)
     if problem:
         messages.warning(request, problem + ' مبلغ برای شما نگه داشته شده است.')
+    elif req.status == 'approved':
+        messages.success(
+            request,
+            f'✅ شماره شبا توسط بانک تأیید شد. درخواست #{req.pk} به مبلغ '
+            f'{amount:,} ریال در صف پرداخت قرار گرفت.')
     else:
         messages.success(
             request,

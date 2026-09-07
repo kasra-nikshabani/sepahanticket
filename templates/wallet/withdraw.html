@@ -57,6 +57,13 @@
     .field { margin-bottom: 20px; }
     .iban-field { direction: ltr; text-align: left; letter-spacing: 1px; }
 
+    .verify-note {
+        background: #eef4fb; border: 1px solid #cfe0f2; border-radius: 11px;
+        padding: 12px 16px; margin-bottom: 18px; font-size: 13px;
+        color: #24506e; line-height: 2;
+    }
+    .verify-note i { color: #17a2b8; }
+
     .btn-submit {
         background: linear-gradient(135deg, #D4AF37, #B8960F); color: #1A1A2E; border: none;
         padding: 13px 30px; border-radius: 12px; font-weight: 700; font-size: 15px; width: 100%;
@@ -220,8 +227,9 @@
                     <div class="num">۲</div>
                     <div>
                         <strong>فرم زیر را پر کنید</strong>
-                        <p>مبلغ، شماره شبا و نام صاحب حساب. حساب باید
-                           <strong>به نام خودتان</strong> باشد — واریز به حساب شخص دیگر انجام نمی‌شود.
+                        <p>مبلغ، شماره شبا، نام صاحب حساب و کد ملی. حساب باید
+                           <strong>به نام و کد ملی خودتان</strong> باشد — این را از بانک
+                           استعلام می‌کنیم و واریز به حساب شخص دیگر انجام نمی‌شود.
                            فاصله و خط تیره در شبا اشکالی ندارد.</p>
                     </div>
                 </div>
@@ -278,8 +286,31 @@
                 <input type="text" name="account_holder" id="account_holder" required
                        value="{{ form.account_holder }}" placeholder="نام و نام خانوادگی دقیقاً مطابق حساب بانکی">
                 <span class="hint">
-                    این نام هنگام واریز با نام شما مقایسه می‌شود؛ در صورت مغایرت، درخواست رد خواهد شد.
+                    دقیقاً همان‌طور که در بانک ثبت شده است.
                 </span>
+            </div>
+
+            <div class="field">
+                <label for="national_code">کد ملی</label>
+                <input type="text" name="national_code" id="national_code" required
+                       inputmode="numeric" maxlength="10" class="iban-field"
+                       value="{{ form.national_code }}" placeholder="۱۰ رقم"
+                       {% if profile_code %}readonly{% endif %}>
+                <span class="hint">
+                    {% if profile_code %}
+                        کد ملی ثبت‌شده در حساب شماست و قابل تغییر نیست؛ حساب بانکی باید
+                        به همین کد ملی باشد.
+                    {% else %}
+                        با این کد ملی از بانک استعلام می‌شود که حساب متعلق به خودتان باشد.
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="verify-note">
+                <i class="fas fa-shield-halved"></i>
+                پس از ثبت، <strong>مالکیت حساب از بانک استعلام می‌شود</strong>.
+                اگر حساب به نام و کد ملی خودتان باشد، درخواست بلافاصله تأیید و وارد
+                صف پرداخت می‌شود؛ در غیر این صورت برای اصلاح به شما برمی‌گردد.
             </div>
 
             <button type="submit" class="btn-submit"
