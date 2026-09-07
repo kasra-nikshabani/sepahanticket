@@ -615,6 +615,15 @@ class IbanInquiryTests(TestCase):
         self.assertEqual(req.status, 'pending')
         self.assertIsNone(req.iban_verified)
 
+    def test_iban_not_found_asks_the_user_to_fix_it(self):
+        """کد ۴۴ («شبای مورد نظر یافت نشد») درباره‌ی ورودیِ کاربر است."""
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', return_value=self._zibal(44, message='شبا یافت نشد')):
+            self._submit()
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.assertEqual(req.status, 'needs_correction')
+        self.assertFalse(req.iban_verified)
+
     def test_no_provider_available_is_unknown_not_mismatch(self):
         """کد ۴۵ درباره‌ی زیرساختِ استعلام است، نه شبای کاربر."""
         with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
