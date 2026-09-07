@@ -615,6 +615,16 @@ class IbanInquiryTests(TestCase):
         self.assertEqual(req.status, 'pending')
         self.assertIsNone(req.iban_verified)
 
+    def test_no_provider_available_is_unknown_not_mismatch(self):
+        """کد ۴۵ درباره‌ی زیرساختِ استعلام است، نه شبای کاربر."""
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post',
+                   return_value=self._zibal(45, message='سرویس دهنده ای در دسترس نیست')):
+            self._submit()
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.assertEqual(req.status, 'pending')
+        self.assertIsNone(req.iban_verified)
+
     def test_network_failure_does_not_block_the_user(self):
         with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
              patch('requests.post', side_effect=RuntimeError('timeout')):

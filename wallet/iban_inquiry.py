@@ -28,6 +28,11 @@ TIMEOUT = 8
 # نباید به پای او نوشته شود.
 RESULT_OK = 1
 RESULT_BAD_IBAN = (6, 21)
+# ۴۵ = «سرویس‌دهنده‌ای برای استعلام در دسترس نیست». این جمله درباره‌ی
+# زیرساختِ استعلام است، نه درباره‌ی شبای کاربر -- پس «نامعلوم» است نه
+# «مغایر». اشتباه گرفتنش یعنی متوقف‌کردن درخواست‌های درست به‌خاطر قطعیِ
+# موقتِ سمتِ بانک.
+RESULT_NO_PROVIDER = 45
 
 # وضعیت‌های خروجی
 OK = 'ok'                   # نام گرفته شد
@@ -148,6 +153,11 @@ def inquire_iban(iban):
     if result in RESULT_BAD_IBAN:
         return {'status': BAD_IBAN, 'name': '', 'detail': message or 'شبا نزد بانک یافت نشد'}
 
+    if result == RESULT_NO_PROVIDER:
+        logger.warning('IBAN inquiry: no provider available for %s', iban[-6:])
+        return {'status': UNAVAILABLE, 'name': '', 'detail': message}
+
     # ۲/۳ توکن، ۴ دسترسی، ۷ آی‌پی، ۲۹ موجودی -- همه مشکل پیکربندیِ ماست.
-    logger.error('IBAN inquiry misconfigured: result=%s message=%s', result, message)
+    logger.error('IBAN inquiry misconfigured: result=%s message=%s errorCode=%s',
+                 result, message, payload.get('errorCode'))
     return {'status': UNAVAILABLE, 'name': '', 'detail': f'کد {result}: {message}'}
