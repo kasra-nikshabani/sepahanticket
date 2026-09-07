@@ -4,6 +4,8 @@
 پول نه گم می‌شود و نه دو بار شمرده می‌شود. اشتباه در این مسیر مثل اشتباه در
 یک صفحه‌ی نمایشی نیست -- مستقیم روی حساب بانکی آدم‌ها اثر می‌گذارد.
 """
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
@@ -521,6 +523,140 @@ class StatusFlowTests(TestCase):
         self.assertIn('پرداخت انجام شد', body)
 
 
+class IbanInquiryTests(TestCase):
+    """استعلام نام صاحب حساب از بانک.
+
+    اصل حاکم: خرابیِ این سرویس هرگز نباید پول کسی را گیر بیندازد. فقط وقتی
+    بانک *با اطمینان* نام دیگری برمی‌گرداند، مسیر عوض می‌شود.
+    """
+
+    def setUp(self):
+        from accounts.models import SiteSettings
+        self.user = User.objects.create_user(username='u13', password='pw12345',
+                                             first_name='کسری', last_name='نیک‌شبانی')
+        self.admin = User.objects.create_user(username='adm8', password='pw12345',
+                                              is_staff=True, is_superuser=True)
+        self.wallet = Wallet.objects.get(user=self.user)
+        self.wallet.add_balance(amount=5_000_000, reference_id='compensate-64-96')
+        s = SiteSettings.get_solo()
+        s.withdrawal_enabled = True
+        s.block_foreign_ips = False
+        s.save()
+        self.client.force_login(self.user)
+
+    def _submit(self):
+        return self.client.post('/wallet/withdraw/', {
+            'amount': '3000000', 'iban': VALID_IBAN, 'account_holder': 'کسری نیک‌شبانی'})
+
+    @staticmethod
+    def _zibal(result, data=None, message='موفق'):
+        class R:
+            status_code = 200
+            @staticmethod
+            def json():
+                out = {'result': result, 'message': message}
+                if data is not None:
+                    out['data'] = data
+                return out
+        return R()
+
+    # ---------------- تطابق ----------------
+    def test_matching_name_marks_the_request_verified(self):
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', return_value=self._zibal(1, {'name': 'کسری نیک شبانی'})):
+            self._submit()
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.assertTrue(req.iban_verified)
+        self.assertEqual(req.status, 'pending')
+        self.assertEqual(req.iban_owner_name, 'کسری نیک شبانی')
+
+    def test_spelling_variants_still_match(self):
+        """«نیک‌شبانی» با نیم‌فاصله و «نيك شباني» عربی، همان نام‌اند."""
+        from .iban_inquiry import names_match
+        self.assertTrue(names_match('كسري نيك شباني', 'کسری نیک‌شبانی'))
+        self.assertTrue(names_match('کسری نیک شبانی', 'کسری نیک‌شبانی'))
+        self.assertTrue(names_match('کسری نیک‌شبانی', 'کسری نیک شبانی فرزند x'))
+        self.assertFalse(names_match('مهدی احمدی', 'کسری نیک‌شبانی'))
+
+    # ---------------- مغایرت ----------------
+    def test_different_name_sends_it_to_correction_and_keeps_the_money(self):
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', return_value=self._zibal(1, {'name': 'مهدی احمدی'})):
+            self._submit()
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.wallet.refresh_from_db()
+        self.assertFalse(req.iban_verified)
+        self.assertEqual(req.status, 'needs_correction')
+        self.assertIn('مهدی احمدی', req.admin_note)
+        self.assertEqual(self.wallet.balance, 2_000_000, 'پول نباید برگشته باشد')
+
+    def test_unknown_iban_at_the_bank_asks_for_correction(self):
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', return_value=self._zibal(21, message='شبا نامعتبر')):
+            self._submit()
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.assertEqual(req.status, 'needs_correction')
+        self.assertFalse(req.iban_verified)
+
+    # ---------------- سرویس در دسترس نیست ----------------
+    def test_no_token_behaves_exactly_like_before(self):
+        with self.settings(ZIBAL_FACILITY_TOKEN=''):
+            self._submit()
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.assertEqual(req.status, 'pending')
+        self.assertIsNone(req.iban_verified)
+
+    def test_zibal_wallet_empty_does_not_block_the_user(self):
+        """کد ۲۹ یعنی کیف پول کارمزدِ *ما* خالی است -- تقصیر کاربر نیست."""
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', return_value=self._zibal(29, message='موجودی کافی نیست')):
+            self._submit()
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.assertEqual(req.status, 'pending')
+        self.assertIsNone(req.iban_verified)
+
+    def test_network_failure_does_not_block_the_user(self):
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', side_effect=RuntimeError('timeout')):
+            self._submit()
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.assertEqual(req.status, 'pending')
+        self.assertIsNone(req.iban_verified)
+
+    def test_unexpected_response_shape_is_treated_as_unknown_not_mismatch(self):
+        """اگر شکل پاسخ عوض شود، نباید درخواست‌های درست را مغایر اعلام کنیم."""
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', return_value=self._zibal(1, {'somethingElse': 'x'})):
+            self._submit()
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.assertEqual(req.status, 'pending')
+        self.assertIsNone(req.iban_verified)
+
+    def test_name_shapes_from_different_response_formats(self):
+        from .iban_inquiry import _extract_name
+        self.assertEqual(_extract_name({'name': 'الف ب'}), 'الف ب')
+        self.assertEqual(_extract_name({'firstName': 'الف', 'lastName': 'ب'}), 'الف ب')
+        self.assertEqual(_extract_name({'depositOwners': [{'fullName': 'الف ب'}]}), 'الف ب')
+        self.assertEqual(_extract_name({}), '')
+
+    # ---------------- نمایش در پنل ----------------
+    def test_admin_sees_the_bank_answer(self):
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', return_value=self._zibal(1, {'name': 'مهدی احمدی'})):
+            self._submit()
+        self.client.force_login(self.admin)
+        body = self.client.get('/wallet/admin/withdrawals/?status=all').content.decode()
+        self.assertIn('بانک نام دیگری برگرداند', body)
+        self.assertIn('مهدی احمدی', body)
+
+    def test_admin_sees_that_no_inquiry_happened(self):
+        with self.settings(ZIBAL_FACILITY_TOKEN=''):
+            self._submit()
+        self.client.force_login(self.admin)
+        body = self.client.get('/wallet/admin/withdrawals/?status=all').content.decode()
+        self.assertIn('استعلام بانکی انجام نشد', body)
+
+
 class PageRenderTests(TestCase):
     """صفحه‌ها واقعاً رندر شوند.
 
@@ -555,7 +691,7 @@ class PageRenderTests(TestCase):
         WithdrawalRequest.create_for(self.user, 1_000_000, VALID_IBAN, 'کسری نیک‌شبانی')
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'قبل از واریز، نام را مقایسه کنید')
+        self.assertContains(resp, 'استعلام بانکی انجام نشد')
         for st in ('pending', 'approved', 'paid', 'rejected', 'all'):
             self.assertEqual(self.client.get(f'{url}?status={st}').status_code, 200)
 

@@ -113,7 +113,9 @@
         margin-top: 14px; background: #fff8e6; border: 1px solid #f0dca8;
         border-radius: 10px; padding: 10px 15px; font-size: 13.5px; color: #6b5400; line-height: 1.9;
     }
+
     .name-check.match { background: #eaf7ee; border-color: #bfe3c9; color: #1e5c30; }
+    .name-check.mismatch { background: #fdeceb; border-color: #f5b7b1; color: #922b21; font-weight: 600; }
 
     .actions { margin-top: 16px; padding-top: 16px; border-top: 1px dashed #e8eaed; }
     .actions form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
@@ -309,17 +311,35 @@
         {% endif %}
 
         {% comment %}
-            مقایسه‌ی نام، تنها کنترل مالکیت حساب است -- سیستم شبا را استعلام
-            نمی‌کند، پس این خط باید همیشه جلوی چشم اپراتور باشد.
+            اگر استعلام بانک جواب داده باشد، نامِ واقعیِ صاحب حساب اینجاست و
+            مقایسه دیگر حدس نیست. اگر جواب نداده (توکن/سرویس/موجودی)، همان
+            هشدار قدیمی می‌ماند تا اپراتور دستی مقایسه کند -- سکوت در این
+            نقطه یعنی واریز به حساب اشتباه.
         {% endcomment %}
         {% if r.status == 'pending' or r.status == 'approved' or r.status == 'needs_correction' %}
-        <div class="name-check">
-            <i class="fas fa-user-check"></i>
-            <strong>قبل از واریز، نام را مقایسه کنید:</strong>
-            نام کاربر در سامانه «{{ r.user.get_full_name|default:"—" }}» /
-            نام اعلامی صاحب حساب «{{ r.account_holder }}».
-            در صورت مغایرت، درخواست را با ذکر دلیل رد کنید.
-        </div>
+            {% if r.iban_verified %}
+            <div class="name-check match">
+                <i class="fas fa-circle-check"></i>
+                <strong>شبا توسط بانک تأیید شد:</strong>
+                حساب به نام «{{ r.iban_owner_name }}» است و با نام کاربر می‌خواند.
+            </div>
+            {% elif r.iban_verified is False %}
+            <div class="name-check mismatch">
+                <i class="fas fa-triangle-exclamation"></i>
+                <strong>بانک نام دیگری برگرداند:</strong>
+                این شبا به نام «{{ r.iban_owner_name|default:"—" }}» است، نه
+                «{{ r.user.get_full_name|default:r.user.username }}». واریز نکنید مگر مطمئن باشید
+                فقط املای نام فرق دارد.
+            </div>
+            {% else %}
+            <div class="name-check">
+                <i class="fas fa-user-check"></i>
+                <strong>استعلام بانکی انجام نشد — دستی مقایسه کنید:</strong>
+                نام کاربر در سامانه «{{ r.user.get_full_name|default:"—" }}» /
+                نام اعلامی صاحب حساب «{{ r.account_holder }}».
+                هنگام واریز، نامی که بانک نشان می‌دهد باید با اینها بخواند.
+            </div>
+            {% endif %}
         {% endif %}
 
         {% if r.status == 'pending' or r.status == 'approved' or r.status == 'needs_correction' %}

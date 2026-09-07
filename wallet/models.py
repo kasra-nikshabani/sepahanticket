@@ -345,6 +345,15 @@ class WithdrawalRequest(models.Model):
     account_holder = models.CharField(max_length=120, verbose_name='نام صاحب حساب')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', db_index=True)
 
+    # ===== نتیجه‌ی استعلام شبا از بانک =====
+    # None یعنی نپرسیدیم یا نتوانستیم بپرسیم (توکن نبود، سرویس قطع بود).
+    # عمداً با False یکی نیست: «نمی‌دانیم» نباید مثل «مغایرت دارد» رفتار شود،
+    # وگرنه یک قطعیِ موقتِ سرویس، درخواست‌های درست را هم متوقف می‌کند.
+    iban_verified = models.BooleanField(
+        null=True, blank=True, verbose_name='تطابق نام با بانک')
+    iban_owner_name = models.CharField(
+        max_length=120, blank=True, verbose_name='نام صاحب حساب نزد بانک')
+
     # شماره پیگیریِ واریز بانکی (پایا/ساتنا) که خزانه‌دار ثبت می‌کند
     bank_reference = models.CharField(max_length=80, blank=True, verbose_name='شماره پیگیری واریز')
     admin_note = models.TextField(blank=True, verbose_name='یادداشت مدیر / دلیل رد')
@@ -456,6 +465,46 @@ class WithdrawalRequest(models.Model):
 
     def reject(self, by, reason=''):
         return self._finish('rejected', by, note=reason)
+
+    def record_iban_check(self, check, *candidate_names):
+        """نتیجه‌ی استعلام بانک را روی درخواست می‌نشاند.
+
+        اگر نام مغایر بود، درخواست خودکار به «نیاز به اصلاح اطلاعات» می‌رود --
+        بدون معطلیِ اپراتور و بدون بن‌بست: کاربر همان لحظه می‌بیند حساب به نام
+        چه کسی است و می‌تواند اصلاح کند، و مدیر هم اگر مطمئن باشد می‌تواند
+        همان را تأیید کند (مثلاً املای متفاوتِ یک نام).
+
+        خروجی: پیامی برای نشان‌دادن به کاربر (یا رشته‌ی خالی).
+        """
+        from .iban_inquiry import OK, BAD_IBAN, names_match
+
+        status = check.get('status')
+        bank_name = (check.get('name') or '').strip()
+
+        if status == OK:
+            matched = names_match(bank_name, *candidate_names)
+            self.iban_owner_name = bank_name
+            self.iban_verified = matched
+            if not matched:
+                self.status = 'needs_correction'
+                self.admin_note = (f'شماره شبای واردشده به نام «{bank_name}» است، '
+                                   f'نه شما. حساب باید به نام خودتان باشد.')
+            self.save(update_fields=['iban_owner_name', 'iban_verified',
+                                     'status', 'admin_note', 'updated_at'])
+            return '' if matched else self.admin_note
+
+        if status == BAD_IBAN:
+            self.iban_verified = False
+            self.iban_owner_name = ''
+            self.status = 'needs_correction'
+            self.admin_note = ('این شماره شبا نزد بانک یافت نشد. '
+                               'لطفاً آن را از اپلیکیشن بانک خود دوباره بررسی کنید.')
+            self.save(update_fields=['iban_owner_name', 'iban_verified',
+                                     'status', 'admin_note', 'updated_at'])
+            return self.admin_note
+
+        # نامعلوم -- دست به وضعیت نمی‌زنیم؛ بررسی دستی مثل قبل انجام می‌شود.
+        return ''
 
     def request_correction(self, by, reason=''):
         """اطلاعات ایراد دارد -- برگردان به کاربر تا خودش اصلاح کند.

@@ -213,13 +213,24 @@ def wallet_withdraw(request):
     if len(holder) < 3:
         return _render('نام صاحب حساب را کامل وارد کنید.')
 
+    # ===== استعلام نام صاحب حساب از بانک =====
+    # عمداً *قبل* از ثبت انجام نمی‌شود که اگر سرویس کند بود، درخواست کاربر
+    # گم نشود؛ اول ثبت می‌کنیم (پول نگه داشته می‌شود) و بعد نتیجه را روی
+    # همان درخواست می‌نشانیم.
+    from .iban_inquiry import inquire_iban
+    names = [holder, request.user.get_full_name(), request.user.username]
+
     if editing:
         ok, err = editing.update_by_user(amount, iban, holder)
         if not ok:
             return _render(err)
-        messages.success(
-            request,
-            f'اطلاعات درخواست #{editing.pk} اصلاح شد و دوباره در انتظار تأیید قرار گرفت.')
+        problem = editing.record_iban_check(inquire_iban(iban), *names)
+        if problem:
+            messages.warning(request, problem)
+        else:
+            messages.success(
+                request,
+                f'اطلاعات درخواست #{editing.pk} اصلاح شد و دوباره در انتظار تأیید قرار گرفت.')
         return redirect('wallet:dashboard')
 
     try:
@@ -228,11 +239,15 @@ def wallet_withdraw(request):
         # موجودی بین بارگذاری فرم و ارسال آن خرج شده است.
         return _render('موجودی کیف پول شما تغییر کرده است؛ لطفاً دوباره تلاش کنید.')
 
-    messages.success(
-        request,
-        f'درخواست برداشت #{req.pk} به مبلغ {amount:,} ریال ثبت شد. '
-        'پس از بررسی و تأیید، مبلغ به حساب اعلامی شما واریز می‌شود.'
-    )
+    problem = req.record_iban_check(inquire_iban(iban), *names)
+    if problem:
+        messages.warning(request, problem + ' مبلغ برای شما نگه داشته شده است.')
+    else:
+        messages.success(
+            request,
+            f'درخواست برداشت #{req.pk} به مبلغ {amount:,} ریال ثبت شد. '
+            'پس از بررسی و تأیید، مبلغ به حساب اعلامی شما واریز می‌شود.'
+        )
     return redirect('wallet:dashboard')
 
 

@@ -295,6 +295,12 @@ ZIBAL_MERCHANT_ID = os.getenv('ZIBAL_MERCHANT_ID', 'zibal')
 ZIBAL_SANDBOX = os.getenv('ZIBAL_SANDBOX', 'True') == 'True'
 ZIBAL_CALLBACK_URL = os.getenv('ZIBAL_CALLBACK_URL', 'http://ticket.sepahansc.com/payment/verify/')
 
+# توکن وب‌سرویس‌های استعلامیِ زیبال -- جدا از مرچنت‌آیدیِ درگاه. فقط برای
+# استعلام نام صاحب حساب از روی شبا استفاده می‌شود (wallet/iban_inquiry.py).
+# اگر خالی باشد، استعلام انجام نمی‌شود و بررسی مثل قبل دستی می‌ماند؛ هیچ
+# مسیری به‌خاطر نبودنش نمی‌شکند.
+ZIBAL_FACILITY_TOKEN = os.getenv('ZIBAL_FACILITY_TOKEN', '')
+
 AUTHENTICATION_BACKENDS = [
     'accounts.backends.PhoneBackend',
     'django.contrib.auth.backends.ModelBackend',
