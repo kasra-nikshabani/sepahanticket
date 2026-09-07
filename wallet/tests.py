@@ -408,6 +408,118 @@ class RenderedPagesHaveNoLeakedCommentsTests(TestCase):
             self.assertNotIn('سیستم شبا را استعلام', body, url)
 
 
+class FinanceFileTests(TestCase):
+    """چرخه‌ی خزانه‌داری: فایل بگیر، پرداخت کن، همان فایل را برگردان."""
+
+    def setUp(self):
+        from accounts.models import SiteSettings
+        self.admin = User.objects.create_user(username='adm4', password='pw12345',
+                                              is_staff=True, is_superuser=True)
+        self.user = User.objects.create_user(username='u6', password='pw12345',
+                                             phone_number='09120001111',
+                                             national_code='1111111111')
+        Wallet.objects.get(user=self.user).add_balance(
+            amount=5_000_000, reference_id='compensate-64-6')
+        s = SiteSettings.get_solo()
+        s.withdrawal_enabled = True
+        s.block_foreign_ips = False
+        s.save()
+        self.req = WithdrawalRequest.create_for(
+            self.user, 3_000_000, VALID_IBAN, 'کسری نیک‌شبانی')
+        self.req.approve(self.admin)
+        self.client.force_login(self.admin)
+
+    # ------------------------------------------------------------------
+    def _download(self, fmt=''):
+        url = '/wallet/admin/withdrawals/export/?status=approved'
+        if fmt:
+            url += f'&format={fmt}'
+        return self.client.get(url)
+
+    def test_excel_export_carries_what_the_bank_needs(self):
+        from io import BytesIO
+        from openpyxl import load_workbook
+        resp = self._download()
+        self.assertEqual(resp.status_code, 200)
+        ws = load_workbook(BytesIO(resp.content)).active
+        header = [c.value for c in ws[1]]
+        self.assertIn('شماره شبا', header)
+        self.assertIn('مبلغ (ریال)', header)
+        self.assertIn('شماره پیگیری واریز', header)
+        row = [c.value for c in ws[2]]
+        self.assertEqual(row[0], self.req.id)
+        self.assertEqual(row[2], VALID_IBAN)
+        self.assertEqual(row[3], 3_000_000)
+        self.assertIn('', [row[8] or ''])          # ستون پیگیری خالی است
+
+    def test_csv_export_opens_correctly_in_excel(self):
+        resp = self._download('csv')
+        self.assertEqual(resp.status_code, 200)
+        body = resp.content.decode('utf-8-sig')
+        self.assertIn('شماره شبا', body)
+        self.assertIn(VALID_IBAN, body)
+        # بدون BOM اکسل فارسی ستون‌ها را به‌هم می‌ریزد
+        self.assertTrue(resp.content.startswith('﻿'.encode('utf-8')))
+
+    def test_export_only_includes_approved_by_default(self):
+        other = User.objects.create_user(username='u7', password='x')
+        Wallet.objects.get(user=other).add_balance(
+            amount=2_000_000, reference_id='compensate-64-77')
+        WithdrawalRequest.create_for(other, 1_000_000, VALID_IBAN, 'دیگری')  # pending
+        body = self._download('csv').content.decode('utf-8-sig')
+        self.assertEqual(body.count('IR27'), 1, 'درخواستِ بررسی‌نشده هم در فایل آمد')
+
+    # ------------------------------------------------------------------
+    def _upload(self, rows):
+        import csv
+        import io
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        buf = io.StringIO()
+        w = csv.writer(buf)
+        w.writerow(['شماره درخواست', 'نام', 'شبا', 'مبلغ', 'نام کاربر',
+                    'موبایل', 'کد ملی', 'تاریخ', 'شماره پیگیری واریز'])
+        for r in rows:
+            w.writerow(r)
+        f = SimpleUploadedFile('paid.csv', buf.getvalue().encode('utf-8-sig'),
+                               content_type='text/csv')
+        return self.client.post('/wallet/admin/withdrawals/import/', {'file': f})
+
+    def test_uploading_the_filled_file_marks_them_paid(self):
+        self._upload([[self.req.id, 'x', VALID_IBAN, 3_000_000, 'x', '', '', '', 'PAYA-77']])
+        self.req.refresh_from_db()
+        self.assertEqual(self.req.status, 'paid')
+        self.assertEqual(self.req.bank_reference, 'PAYA-77')
+
+    def test_row_without_a_bank_reference_is_left_alone(self):
+        self._upload([[self.req.id, 'x', VALID_IBAN, 3_000_000, 'x', '', '', '', '']])
+        self.req.refresh_from_db()
+        self.assertEqual(self.req.status, 'approved')
+
+    def test_a_changed_amount_is_refused(self):
+        """اگر مبلغ فایل با درخواست یکی نباشد یعنی مبلغ دیگری پرداخت شده."""
+        self._upload([[self.req.id, 'x', VALID_IBAN, 9_000_000, 'x', '', '', '', 'PAYA-9']])
+        self.req.refresh_from_db()
+        self.assertEqual(self.req.status, 'approved', 'با مبلغ مغایر ثبت شد')
+
+    def test_uploading_twice_does_not_double_process(self):
+        self._upload([[self.req.id, 'x', VALID_IBAN, 3_000_000, 'x', '', '', '', 'PAYA-1']])
+        self._upload([[self.req.id, 'x', VALID_IBAN, 3_000_000, 'x', '', '', '', 'PAYA-2']])
+        self.req.refresh_from_db()
+        self.assertEqual(self.req.bank_reference, 'PAYA-1', 'ثبت دوباره وضعیت را عوض کرد')
+        self.assertEqual(Wallet.objects.get(user=self.user).balance, 2_000_000)
+
+    def test_persian_digits_in_the_returned_file_are_understood(self):
+        fa = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')
+        self._upload([[str(self.req.id).translate(fa), 'x', VALID_IBAN,
+                       '3,000,000'.translate(fa), 'x', '', '', '', 'PAYA-FA']])
+        self.req.refresh_from_db()
+        self.assertEqual(self.req.status, 'paid')
+
+    def test_non_staff_cannot_download_the_file(self):
+        self.client.force_login(self.user)
+        self.assertNotEqual(self._download().status_code, 200)
+
+
 class IbanValidationTests(TestCase):
     def test_accepts_common_input_shapes(self):
         body = VALID_IBAN[2:]

@@ -1,8 +1,10 @@
 # wallet/views.py
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Sum
+from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
+from django.utils import timezone
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -305,3 +307,178 @@ def admin_withdrawal_action(request, request_id):
     back = (request.POST.get('back_query') or '').lstrip('?')
     url = reverse('wallet:admin_withdrawal_list')
     return redirect(f'{url}?{back}' if back else url)
+
+
+# ============================================================
+#  خروجی برای خزانه‌داری و برگرداندن نتیجه‌ی واریز
+# ============================================================
+# ستون‌ها عمداً همین ترتیب‌اند: شناسه‌ی درخواست اول می‌آید چون کلیدِ برگرداندن
+# فایل است، و «شماره پیگیری واریز» آخرین ستونِ خالی است تا خزانه‌دار فقط همان
+# را پر کند. ستون‌های نام/موبایل/کد ملی برای همان مقایسه‌ی چشمی‌اند که تنها
+# کنترل مالکیت حساب است.
+EXPORT_COLUMNS = [
+    'شماره درخواست', 'نام صاحب حساب', 'شماره شبا', 'مبلغ (ریال)',
+    'نام کاربر در سامانه', 'موبایل', 'کد ملی', 'تاریخ درخواست',
+    'شماره پیگیری واریز',
+]
+
+
+def _export_rows(qs):
+    for r in qs:
+        yield [
+            r.id,
+            r.account_holder,
+            r.iban,
+            r.amount,
+            (r.user.get_full_name() or r.user.username),
+            r.user.phone_number or '',
+            r.user.national_code or '',
+            r.created_at.strftime('%Y/%m/%d %H:%M'),
+            r.bank_reference or '',
+        ]
+
+
+@never_cache
+@staff_member_required
+def admin_withdrawal_export(request):
+    """فایل پرداخت دسته‌ای برای خزانه‌داری (اکسل یا CSV).
+
+    پیش‌فرض فقط درخواست‌های «تأیید شده -- در انتظار واریز» را می‌دهد؛ چیزی که
+    هنوز بررسی نشده نباید سهواً پرداخت شود.
+    """
+    status = request.GET.get('status', 'approved')
+    qs = WithdrawalRequest.objects.select_related('user')
+    if status == 'open':
+        qs = qs.filter(status__in=WithdrawalRequest.OPEN_STATUSES)
+    elif status in dict(WithdrawalRequest.STATUS_CHOICES):
+        qs = qs.filter(status=status)
+    qs = qs.order_by('created_at')
+
+    stamp = timezone.now().strftime('%Y%m%d-%H%M')
+    rows = list(_export_rows(qs))
+
+    if request.GET.get('format') == 'csv':
+        import csv
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="withdrawals-{stamp}.csv"'
+        # BOM تا اکسل فارسی را درست باز کند؛ بدون آن ستون‌ها به‌هم می‌ریزند.
+        response.write('﻿')
+        writer = csv.writer(response)
+        writer.writerow(EXPORT_COLUMNS)
+        for row in rows:
+            writer.writerow(row)
+        return response
+
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Font, PatternFill
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'پرداخت برداشت'
+    ws.append(EXPORT_COLUMNS)
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal='center')
+        cell.fill = PatternFill(start_color='D4AF37', end_color='D4AF37', fill_type='solid')
+    for row in rows:
+        ws.append(row)
+    # شبا باید متن بماند، وگرنه اکسل آن را عدد می‌کند و صفرهای ابتدایی می‌پرند.
+    for r in range(2, ws.max_row + 1):
+        ws.cell(row=r, column=3).number_format = '@'
+        ws.cell(row=r, column=4).number_format = '#,##0'
+    for col, width in zip('ABCDEFGHI', (14, 26, 30, 16, 26, 15, 14, 18, 22)):
+        ws.column_dimensions[col].width = width
+    ws.freeze_panes = 'A2'
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="withdrawals-{stamp}.xlsx"'
+    wb.save(response)
+    return response
+
+
+@staff_member_required
+def admin_withdrawal_import(request):
+    """همان فایل را با ستونِ «شماره پیگیری واریز» پرشده برمی‌گرداند.
+
+    فقط سطرهایی که شماره پیگیری دارند پردازش می‌شوند. مبلغِ داخل فایل با
+    رکورد مقایسه می‌شود: اگر یکی نبود، آن سطر رد می‌شود -- یعنی خزانه‌دار
+    مبلغ دیگری پرداخت کرده و ثبت خودکارش وضعیت را غلط نشان می‌داد.
+    """
+    if request.method != 'POST' or not request.FILES.get('file'):
+        messages.error(request, 'فایلی انتخاب نشده است.')
+        return redirect('wallet:admin_withdrawal_list')
+
+    upload = request.FILES['file']
+    try:
+        rows = _read_uploaded_rows(upload)
+    except Exception as exc:                            # noqa: BLE001
+        messages.error(request, f'فایل خوانده نشد: {exc}')
+        return redirect('wallet:admin_withdrawal_list')
+
+    paid = skipped = 0
+    problems = []
+    for lineno, (req_id, amount, bank_ref) in enumerate(rows, start=2):
+        if not bank_ref:
+            continue                                    # هنوز پرداخت نشده
+        wr = WithdrawalRequest.objects.filter(pk=req_id).first()
+        if wr is None:
+            problems.append(f'سطر {lineno}: درخواست {req_id} پیدا نشد')
+            skipped += 1
+            continue
+        if amount is not None and amount != wr.amount:
+            problems.append(
+                f'سطر {lineno}: مبلغ فایل ({amount:,}) با درخواست #{req_id} '
+                f'({wr.amount:,}) یکی نیست')
+            skipped += 1
+            continue
+        ok, err = wr.mark_paid(request.user, bank_reference=bank_ref,
+                               note='ثبت گروهی از فایل خزانه‌داری')
+        if ok:
+            paid += 1
+        else:
+            problems.append(f'سطر {lineno}: درخواست #{req_id} — {err}')
+            skipped += 1
+
+    if paid:
+        messages.success(request, f'{paid} واریز از روی فایل ثبت شد.')
+    if problems:
+        messages.warning(request, f'{skipped} سطر ثبت نشد: ' + ' | '.join(problems[:10]))
+    if not paid and not problems:
+        messages.info(request, 'هیچ سطری با شماره پیگیری پرشده در فایل نبود.')
+    return redirect('wallet:admin_withdrawal_list')
+
+
+def _read_uploaded_rows(upload):
+    """(شماره درخواست، مبلغ، شماره پیگیری) را از xlsx یا csv بیرون می‌کشد."""
+    digits = str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789')
+
+    def to_int(v):
+        if v in (None, ''):
+            return None
+        s = str(v).translate(digits).replace(',', '').replace('٬', '').strip()
+        return int(float(s)) if s else None
+
+    name = (upload.name or '').lower()
+    raw = []
+    if name.endswith('.csv'):
+        import csv
+        import io
+        text = upload.read().decode('utf-8-sig', errors='replace')
+        raw = list(csv.reader(io.StringIO(text)))
+    else:
+        from openpyxl import load_workbook
+        wb = load_workbook(upload, data_only=True)
+        raw = [[c for c in row] for row in wb.active.iter_rows(values_only=True)]
+
+    out = []
+    for row in raw[1:]:                                 # سطر اول عنوان ستون‌هاست
+        if not row or all(c in (None, '') for c in row):
+            continue
+        req_id = to_int(row[0] if len(row) > 0 else None)
+        amount = to_int(row[3] if len(row) > 3 else None)
+        bank_ref = str(row[8]).strip() if len(row) > 8 and row[8] not in (None, '') else ''
+        if req_id is None:
+            continue
+        out.append((req_id, amount, bank_ref))
+    return out

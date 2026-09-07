@@ -33,6 +33,29 @@
         color: #922b21; line-height: 1.95;
     }
 
+    .finance-box {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px;
+        background: #fff; border: 1px solid #e8eaed; border-radius: 16px;
+        padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    }
+    .finance-col { min-width: 0; }
+    .finance-title { font-weight: 700; color: #1A1A2E; margin-bottom: 6px; }
+    .finance-title i { color: #D4AF37; margin-left: 6px; }
+    .finance-hint { color: #6c757d; font-size: 13px; line-height: 1.9; margin: 0 0 12px; }
+    .btn-file {
+        display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px;
+        border-radius: 10px; border: none; background: linear-gradient(135deg, #D4AF37, #B8960F);
+        color: #1A1A2E; font-weight: 700; font-size: 13.5px; font-family: inherit;
+        text-decoration: none; cursor: pointer; margin: 0 0 8px 8px;
+    }
+    .btn-file.ghost { background: #fafafa; border: 1px solid #e8eaed; color: #1A1A2E; font-weight: 600; }
+    .btn-file:hover { transform: translateY(-2px); color: #1A1A2E; }
+    .upload-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .upload-form input[type=file] {
+        font-family: inherit; font-size: 13px; padding: 7px; border: 1px dashed #dfe3e8;
+        border-radius: 10px; background: #fafbfc; flex: 1; min-width: 180px;
+    }
+
     .toolbar {
         display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
         background: #fff; border: 1px solid #e8eaed; border-radius: 14px;
@@ -158,6 +181,48 @@
         <div class="kpi-card">
             <div class="num">{{ paid_total|rial_display }}</div>
             <div class="lbl">مجموع واریزشده تا امروز (ریال)</div>
+        </div>
+    </div>
+
+    {% comment %}
+        ===== تحویل به خزانه‌داری و برگشتِ نتیجه =====
+        بدون این دو، خزانه‌دار باید شبا را از روی صفحه دستی در اینترنت‌بانک
+        تایپ کند -- برای ده‌ها درخواست نشدنی است و تایپ دستی شبا یعنی ریسک
+        واریز به حساب اشتباه.
+    {% endcomment %}
+    <div class="finance-box">
+        <div class="finance-col">
+            <div class="finance-title"><i class="fas fa-file-arrow-down"></i> گرفتن فایل پرداخت</div>
+            <p class="finance-hint">
+                فایل شامل شبا، مبلغ و نام صاحب حساب است و ستون آخرش
+                («شماره پیگیری واریز») خالی می‌ماند تا خزانه‌دار پرش کند.
+            </p>
+            <a class="btn-file" href="{% url 'wallet:admin_withdrawal_export' %}?status=approved">
+                <i class="fas fa-file-excel"></i> اکسل — در انتظار واریز
+            </a>
+            <a class="btn-file ghost" href="{% url 'wallet:admin_withdrawal_export' %}?status=approved&amp;format=csv">
+                <i class="fas fa-file-csv"></i> CSV
+            </a>
+            <a class="btn-file ghost" href="{% url 'wallet:admin_withdrawal_export' %}?status=open">
+                همه‌ی در جریان
+            </a>
+        </div>
+        <div class="finance-col">
+            <div class="finance-title"><i class="fas fa-file-arrow-up"></i> ثبت گروهی واریز</div>
+            <p class="finance-hint">
+                همان فایل را با ستون «شماره پیگیری واریز» پرشده برگردانید.
+                سطرهای بدون شماره پیگیری نادیده گرفته می‌شوند و اگر مبلغ فایل با
+                درخواست یکی نباشد، آن سطر ثبت نمی‌شود.
+            </p>
+            <form method="post" action="{% url 'wallet:admin_withdrawal_import' %}"
+                  enctype="multipart/form-data" class="upload-form">
+                {% csrf_token %}
+                <input type="file" name="file" accept=".xlsx,.csv" required>
+                <button type="submit" class="btn-file"
+                        onclick="return confirm('واریزهای داخل این فایل ثبت شود؟ این کار یعنی پول واقعاً به حساب کاربران رفته است.');">
+                    <i class="fas fa-check-double"></i> ثبت واریزها
+                </button>
+            </form>
         </div>
     </div>
 
