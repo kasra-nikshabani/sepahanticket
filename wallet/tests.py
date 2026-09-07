@@ -658,6 +658,119 @@ class IbanInquiryTests(TestCase):
         self.assertEqual(_extract_name({'depositOwners': [{'fullName': 'الف ب'}]}), 'الف ب')
         self.assertEqual(_extract_name({}), '')
 
+    # ---------------- تطابق کد ملی: حرفِ آخر ----------------
+    def _routed(self, url_map):
+        """پاسخ جعلی بر اساس آدرسی که صدا زده می‌شود."""
+        def fake(url, **kw):
+            for fragment, response in url_map.items():
+                if fragment in url:
+                    return response
+            raise AssertionError(f'آدرس پیش‌بینی‌نشده: {url}')
+        return fake
+
+    def test_national_code_match_verifies_without_needing_the_name(self):
+        self.user.national_code = '1234567890'
+        self.user.save()
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', side_effect=self._routed({
+                 'checkIbanWithNationalCode': self._zibal(1, {'matched': True})})):
+            self._submit()
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.assertTrue(req.iban_verified)
+        self.assertEqual(req.status, 'pending')
+
+    def test_happy_path_costs_only_one_inquiry(self):
+        """در مسیر عادی نباید دو بار کارمزد بدهیم."""
+        self.user.national_code = '1234567890'
+        self.user.save()
+        calls = []
+
+        def fake(url, **kw):
+            calls.append(url)
+            return self._zibal(1, {'matched': True})
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), patch('requests.post', side_effect=fake):
+            self._submit()
+        self.assertEqual(len(calls), 1, f'بیش از یک استعلام زده شد: {calls}')
+
+    def test_national_code_mismatch_beats_a_matching_name(self):
+        """حتی اگر نام بخواند، وقتی کد ملی نمی‌خواند یعنی حساب مالِ او نیست.
+
+        دو نفر می‌توانند هم‌نام باشند؛ این دقیقاً همان حالتی است که مقایسه‌ی
+        نام از پسش برنمی‌آید.
+        """
+        self.user.national_code = '1234567890'
+        self.user.save()
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', side_effect=self._routed({
+                 'checkIbanWithNationalCode': self._zibal(1, {'matched': False}),
+                 'ibanInquiry': self._zibal(1, {'name': 'کسری نیک‌شبانی'})})):
+            self._submit()
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.assertFalse(req.iban_verified)
+        self.assertEqual(req.status, 'needs_correction')
+        self.assertIn('متعلق به شما نیست', req.admin_note)
+
+    def test_mismatch_message_names_the_real_owner(self):
+        self.user.national_code = '1234567890'
+        self.user.save()
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', side_effect=self._routed({
+                 'checkIbanWithNationalCode': self._zibal(1, {'matched': False}),
+                 'ibanInquiry': self._zibal(1, {'name': 'مهدی احمدی'})})):
+            self._submit()
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.assertIn('مهدی احمدی', req.admin_note)
+
+    def test_falls_back_to_name_comparison_without_a_national_code(self):
+        self.user.national_code = None
+        self.user.save()
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', side_effect=self._routed({
+                 'ibanInquiry': self._zibal(1, {'name': 'کسری نیک شبانی'})})):
+            self._submit()
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.assertTrue(req.iban_verified)
+
+    def test_match_service_down_falls_back_to_name(self):
+        self.user.national_code = '1234567890'
+        self.user.save()
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', side_effect=self._routed({
+                 'checkIbanWithNationalCode': self._zibal(45, message='در دسترس نیست'),
+                 'ibanInquiry': self._zibal(1, {'name': 'کسری نیک شبانی'})})):
+            self._submit()
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.assertTrue(req.iban_verified, 'با قطعیِ سرویس تطابق، باید به نام برگردد')
+
+    def test_unknown_match_shape_is_not_treated_as_mismatch(self):
+        self.user.national_code = '1234567890'
+        self.user.save()
+        with self.settings(ZIBAL_FACILITY_TOKEN='x'), \
+             patch('requests.post', side_effect=self._routed({
+                 'checkIbanWithNationalCode': self._zibal(1, {'unexpected': 'x'}),
+                 'ibanInquiry': self._zibal(45, message='در دسترس نیست')})):
+            self._submit()
+        req = WithdrawalRequest.objects.get(user=self.user)
+        self.assertEqual(req.status, 'pending')
+        self.assertIsNone(req.iban_verified)
+
+    def test_birth_date_is_taken_from_past_purchases_when_available(self):
+        from .iban_inquiry import find_birth_date
+        from matches.models import Match, Stadium
+        from payments.models import Payment
+        from django.utils import timezone as tz
+        from datetime import timedelta
+        self.user.national_code = '1234567890'
+        self.user.save()
+        st = Stadium.objects.create(name='ورزشگاه', capacity=10)
+        m = Match.objects.create(home_team='الف', away_team='ب', stadium=st,
+                                 date_time=tz.now() + timedelta(days=1))
+        Payment.objects.create(user=self.user, purpose='ticket_purchase', match=m,
+                               status='success', gateway_amount=1000,
+                               buyer_info={'national_code_5': '1234567890',
+                                           'tarikhe_tavallod_5': '1365/03/12'})
+        self.assertEqual(find_birth_date(self.user), '1365/03/12')
+
     # ---------------- نمایش در پنل ----------------
     def test_admin_sees_the_bank_answer(self):
         with self.settings(ZIBAL_FACILITY_TOKEN='x'), \

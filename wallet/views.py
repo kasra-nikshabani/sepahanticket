@@ -217,14 +217,14 @@ def wallet_withdraw(request):
     # عمداً *قبل* از ثبت انجام نمی‌شود که اگر سرویس کند بود، درخواست کاربر
     # گم نشود؛ اول ثبت می‌کنیم (پول نگه داشته می‌شود) و بعد نتیجه را روی
     # همان درخواست می‌نشانیم.
-    from .iban_inquiry import inquire_iban
+    from .iban_inquiry import verify_iban_ownership
     names = [holder, request.user.get_full_name(), request.user.username]
 
     if editing:
         ok, err = editing.update_by_user(amount, iban, holder)
         if not ok:
             return _render(err)
-        problem = editing.record_iban_check(inquire_iban(iban), *names)
+        problem = editing.record_iban_check(verify_iban_ownership(iban, request.user), *names)
         if problem:
             messages.warning(request, problem)
         else:
@@ -239,7 +239,7 @@ def wallet_withdraw(request):
         # موجودی بین بارگذاری فرم و ارسال آن خرج شده است.
         return _render('موجودی کیف پول شما تغییر کرده است؛ لطفاً دوباره تلاش کنید.')
 
-    problem = req.record_iban_check(inquire_iban(iban), *names)
+    problem = req.record_iban_check(verify_iban_ownership(iban, request.user), *names)
     if problem:
         messages.warning(request, problem + ' مبلغ برای شما نگه داشته شده است.')
     else:

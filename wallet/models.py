@@ -480,6 +480,29 @@ class WithdrawalRequest(models.Model):
 
         status = check.get('status')
         bank_name = (check.get('name') or '').strip()
+        ownership = check.get('ownership')
+
+        # ===== تطابق کد ملی، اگر جواب داده باشد، حرفِ آخر است =====
+        # مقایسه‌ی نام حدسی است: دو نفر می‌توانند هم‌نام باشند و یک نفر
+        # می‌تواند نامش را جور دیگری بنویسد. وقتی بانک صریحاً گفته این حساب
+        # متعلق به دارنده‌ی این کد ملی هست یا نیست، دیگر جای حدس نیست.
+        if ownership is True:
+            self.iban_owner_name = bank_name
+            self.iban_verified = True
+            self.save(update_fields=['iban_owner_name', 'iban_verified', 'updated_at'])
+            return ''
+
+        if ownership is False:
+            self.iban_owner_name = bank_name
+            self.iban_verified = False
+            self.status = 'needs_correction'
+            self.admin_note = (
+                f'این شماره شبا متعلق به شما نیست'
+                + (f' (به نام «{bank_name}» است)' if bank_name else '')
+                + '. حساب باید به نام خودتان و با کد ملی خودتان باشد.')
+            self.save(update_fields=['iban_owner_name', 'iban_verified',
+                                     'status', 'admin_note', 'updated_at'])
+            return self.admin_note
 
         if status == OK:
             matched = names_match(bank_name, *candidate_names)

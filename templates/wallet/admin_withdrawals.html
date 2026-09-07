@@ -321,7 +321,11 @@
             <div class="name-check match">
                 <i class="fas fa-circle-check"></i>
                 <strong>شبا توسط بانک تأیید شد:</strong>
-                حساب به نام «{{ r.iban_owner_name }}» است و با نام کاربر می‌خواند.
+                {% if r.iban_owner_name %}
+                    حساب به نام «{{ r.iban_owner_name }}» است و با کاربر می‌خواند.
+                {% else %}
+                    این حساب متعلق به دارنده‌ی همین کد ملی است (تطابق قطعی، نه شباهت نام).
+                {% endif %}
             </div>
             {% elif r.iban_verified is False %}
             <div class="name-check mismatch">
