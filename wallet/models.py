@@ -219,12 +219,24 @@ def is_valid_iban(iban):
 def get_withdrawable_amount(user):
     """چقدر از موجودی این کاربر قابل برداشت است (ریال).
 
-        قابل برداشت = min( موجودی فعلی ، پولِ برگشتی از باشگاه − برداشت‌های ثبت‌شده )
+        قابل برداشت = min( موجودی فعلی ,
+                           پولِ برگشتی از باشگاه − خرجِ بلیط − برداشت‌های ثبت‌شده )
 
-    سقفِ «موجودی فعلی» یعنی نمی‌شود بیشتر از آنچه واقعاً در کیف پول هست
-    برداشت کرد. جمله‌ی دوم یعنی خرجِ بلیط اول از پولِ شارژیِ خود کاربر کم
-    می‌شود و بعد از پول جبرانی -- که به نفع کاربر است و ساده‌ترین قاعده‌ای
-    است که هم‌زمان از دو طرف نشتی ندارد.
+    ===== چرا «خرجِ بلیط» هم کم می‌شود =====
+    نسخه‌ی اول این تابع خرج را کم نمی‌کرد، یعنی خرج عملاً اول از پولِ شارژیِ
+    خود کاربر برداشته می‌شد. آن قاعده به نظر به نفع کاربر می‌آمد ولی یک راهِ
+    دور برای بیرون‌کشیدنِ پولِ شارژی باز می‌گذاشت:
+
+        ۳ میلیون جبرانی می‌گیرد -> با همان بلیط می‌خرد -> ۳ میلیون از کارت
+        خودش شارژ می‌کند -> حالا همان ۳ میلیون «قابل برداشت» شمرده می‌شود.
+
+    نتیجه‌اش دقیقاً همان چیزی بود که نباید ممکن باشد: پول با کارتِ الف وارد
+    شود و به حسابِ ب برگردد. حالا خرج *اول از سهمِ جبرانی* کم می‌شود، پس
+    هر ریالی که کاربر خودش شارژ کرده تا آخر غیرقابل‌برداشت می‌ماند.
+
+    این نه سخت‌گیرانه است و نه دست‌ودل‌بازانه -- فقط درست است: اگر کسی
+    ۳ میلیون جبرانی و ۵ میلیون شارژِ خودش داشته باشد و ۵ میلیون بلیط بخرد،
+    باقی‌مانده‌ی ۳ میلیونیِ کیف پولش تماماً پولِ خودش است، نه جبرانی.
     """
     balance = Wallet.objects.filter(user=user).values_list('balance', flat=True).first() or 0
     if balance <= 0:
@@ -238,11 +250,56 @@ def get_withdrawable_amount(user):
         prefix_q, user=user, is_wallet=True, amount__gt=0
     ).aggregate(s=Sum('amount'))['s'] or 0
 
+    # هر برداشتِ ثبت‌شده یک تراکنش منفیِ 'withdraw' هم ساخته؛ آن‌ها اینجا
+    # کنار گذاشته می‌شوند تا با `committed` دوبار شمرده نشوند.
+    spent = Transaction.objects.filter(
+        user=user, is_wallet=True, amount__lt=0
+    ).exclude(transaction_type='withdraw').aggregate(s=Sum('amount'))['s'] or 0
+
     committed = WithdrawalRequest.objects.filter(
         user=user, status__in=WithdrawalRequest.COMMITTED_STATUSES
     ).aggregate(s=Sum('amount'))['s'] or 0
 
-    return max(0, min(balance, credited - committed))
+    # spent عددی منفی است، پس جمع می‌شود نه تفریق.
+    return max(0, min(balance, credited + spent - committed))
+
+
+def withdrawable_totals():
+    """جمعِ کلِ قابل برداشت در سیستم -> (تعداد کاربر، مبلغ).
+
+    همان قاعده‌ی get_withdrawable_amount، ولی به‌صورت انبوه: صفحه‌ی تنظیمات
+    باید این عدد را پیش از روشن‌کردن کلید نشان بدهد و فراخوانی تک‌به‌تک برای
+    صدها کیف پول یعنی هزاران کوئری. عمداً کنار همان تابع نوشته شده تا اگر
+    قاعده عوض شد، هر دو با هم دیده شوند.
+    """
+    balances = dict(Wallet.objects.filter(balance__gt=0).values_list('user_id', 'balance'))
+    if not balances:
+        return 0, 0
+
+    prefix_q = Q()
+    for pre in WITHDRAWABLE_PREFIXES:
+        prefix_q |= Q(reference_id__startswith=pre)
+
+    credited = dict(Transaction.objects.filter(prefix_q, is_wallet=True, amount__gt=0)
+                    .values_list('user_id').annotate(s=Sum('amount'))
+                    .values_list('user_id', 's'))
+    spent = dict(Transaction.objects.filter(is_wallet=True, amount__lt=0)
+                 .exclude(transaction_type='withdraw')
+                 .values_list('user_id').annotate(s=Sum('amount'))
+                 .values_list('user_id', 's'))
+    committed = dict(WithdrawalRequest.objects
+                     .filter(status__in=WithdrawalRequest.COMMITTED_STATUSES)
+                     .values_list('user_id').annotate(s=Sum('amount'))
+                     .values_list('user_id', 's'))
+
+    users = total = 0
+    for uid, bal in balances.items():
+        amount = min(bal, (credited.get(uid, 0) or 0)
+                     + (spent.get(uid, 0) or 0) - (committed.get(uid, 0) or 0))
+        if amount > 0:
+            users += 1
+            total += amount
+    return users, total
 
 
 class WithdrawalRequest(models.Model):

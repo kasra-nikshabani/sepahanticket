@@ -43,15 +43,68 @@ class WithdrawableAmountTests(TestCase):
         self.assertEqual(get_withdrawable_amount(self.user),
                          1_000_000 * len(WITHDRAWABLE_PREFIXES))
 
-    def test_mixed_money_spending_is_charged_to_self_funds_first(self):
-        """خرج بلیط اول از پول شارژیِ خود کاربر کم می‌شود، بعد از پول جبرانی."""
+    def test_spending_comes_out_of_the_compensation_share_first(self):
+        """خرجِ بلیط اول از سهمِ جبرانی کم می‌شود، نه از پولِ شارژیِ کاربر.
+
+        نسخه‌ی اول این تست عکسِ این را ثبت کرده بود («خرج اول از پول شارژی
+        کم می‌شود»)، که به نظر به نفع کاربر می‌آمد ولی راهی باز می‌گذاشت تا
+        پولِ شارژی از کیف پول بیرون کشیده شود. آن قاعده -- و این تست -- عوض
+        شدند؛ توضیح کامل در get_withdrawable_amount.
+        """
         self._credit(5_000_000, reference_id='compensate-64-1')
-        self._credit(1_000_000, reference_id='4734693545')
+        self._credit(1_000_000, reference_id='4734693545')      # شارژ شخصی
         self.wallet.deduct_balance(amount=2_000_000, reference_id='order-1',
                                    tx_type='ticket_purchase')
         self.assertEqual(self.wallet.balance, 4_000_000)
-        # ۵ جبرانی منهای ۱ که سهم شارژ خودش را پوشانده = ۴
-        self.assertEqual(get_withdrawable_amount(self.user), 4_000_000)
+        # ۵ جبرانی منهای ۲ خرج = ۳؛ آن یک میلیونِ شارژی دست‌نخورده قفل می‌ماند.
+        self.assertEqual(get_withdrawable_amount(self.user), 3_000_000)
+
+    def test_spending_the_compensation_then_charging_does_not_reopen_withdrawal(self):
+        """راهِ دورِ بیرون‌کشیدنِ پولِ شارژی -- باید بسته باشد.
+
+        سناریو: کاربر ۳ میلیون جبرانی می‌گیرد، با همان بلیط می‌خرد، بعد
+        ۳ میلیون از کارت خودش شارژ می‌کند. اگر خرج از سهمِ جبرانی کم نشود،
+        همان پولِ شارژی «قابل برداشت» شمرده می‌شود و سایت تبدیل به کانال
+        انتقال پول می‌شود: ورود با کارتِ الف، خروج به حسابِ ب.
+        """
+        self._credit(3_000_000, reference_id='compensate-64-7')
+        self.wallet.deduct_balance(amount=3_000_000, reference_id='order-9',
+                                   tx_type='ticket_purchase')
+        self._credit(3_000_000, reference_id='4734699999')      # شارژ از درگاه
+        self.wallet.refresh_from_db()
+        self.assertEqual(self.wallet.balance, 3_000_000)
+        self.assertEqual(get_withdrawable_amount(self.user), 0,
+                         'پولِ شارژیِ خود کاربر قابل برداشت شد')
+
+    def test_partly_spent_compensation_is_withdrawable_only_for_the_rest(self):
+        self._credit(3_000_000, reference_id='compensate-64-8')
+        self.wallet.deduct_balance(amount=1_000_000, reference_id='order-10',
+                                   tx_type='ticket_purchase')
+        self.assertEqual(get_withdrawable_amount(self.user), 2_000_000)
+
+    def test_own_charge_stays_locked_even_next_to_compensation(self):
+        """۳ جبرانی + ۵ شارژِ خودش، ۵ بلیط می‌خرد -> باقی‌مانده مالِ خودش است."""
+        self._credit(3_000_000, reference_id='compensate-64-11')
+        self._credit(5_000_000, reference_id='4734698888')
+        self.wallet.deduct_balance(amount=5_000_000, reference_id='order-11',
+                                   tx_type='ticket_purchase')
+        self.wallet.refresh_from_db()
+        self.assertEqual(self.wallet.balance, 3_000_000)
+        self.assertEqual(get_withdrawable_amount(self.user), 0)
+
+    def test_bulk_total_matches_the_per_user_rule(self):
+        """عدد صفحه‌ی تنظیمات باید دقیقاً با جمعِ تک‌تک کاربران یکی باشد."""
+        from .models import withdrawable_totals
+        other = User.objects.create_user(username='u1b', password='x')
+        Wallet.objects.get(user=other).add_balance(
+            amount=2_000_000, reference_id='compensate-64-99')
+        self._credit(3_000_000, reference_id='compensate-64-98')
+        self._credit(1_000_000, reference_id='4734697777')       # شارژ شخصی
+        users, total = withdrawable_totals()
+        expected = get_withdrawable_amount(self.user) + get_withdrawable_amount(other)
+        self.assertEqual(total, expected)
+        self.assertEqual(total, 5_000_000)                        # شارژ شخصی نیامده
+        self.assertEqual(users, 2)
 
     def test_never_exceeds_actual_balance(self):
         """اگر پول جبرانی خرج بلیط شده باشد، دیگر قابل برداشت نیست."""
