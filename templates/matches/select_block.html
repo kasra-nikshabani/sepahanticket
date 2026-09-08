@@ -75,6 +75,12 @@
         .map-frame.dragging { cursor: grabbing; }
         #stadiumSvg { width: 100%; height: auto; display: block; }
 
+        /* SVG از ویژگیِ hidden پیروی نمی‌کند و مهم‌تر: g.hidden در
+           جاوااسکریپت روی SVGElement اصلاً به DOM نمی‌رسد (hidden فقط روی
+           HTMLElement تعریف شده). پس مخفی‌سازی با کلاس انجام می‌شود. */
+        .floor-layer.off { display: none; }
+        .lgroup.off { display: none; }
+
         .compass { fill: #545a6b; font-size: 15px; font-weight: 700; text-anchor: middle; }
 
         .wedge {
@@ -465,7 +471,7 @@
                     <text x="26" y="346" class="compass" text-anchor="start">غرب</text>
                     <text x="974" y="346" class="compass" text-anchor="end">شرق</text>
 
-                    <g class="floor-layer" data-floor="ground" {% if selected_floor != "ground" %}hidden{% endif %}>
+                    <g class="floor-layer{% if selected_floor != "ground" %} off{% endif %}" data-floor="ground">
                     {% for p in floor_maps.ground %}
                     <g class="wedge {% if p.selectable %}pickable{% else %}muted{% endif %}{% if p.sold_out %} full{% endif %}"
                        id="w{{ p.block.id }}"
@@ -496,7 +502,7 @@
                     </g>
                     {% endfor %}
                     </g>
-                    <g class="floor-layer" data-floor="second" {% if selected_floor != "second" %}hidden{% endif %}>
+                    <g class="floor-layer{% if selected_floor != "second" %} off{% endif %}" data-floor="second">
                     {% for p in floor_maps.second %}
                     <g class="wedge {% if p.selectable %}pickable{% else %}muted{% endif %}{% if p.sold_out %} full{% endif %}"
                        id="w{{ p.block.id }}"
@@ -561,7 +567,7 @@
         {% endcomment %}
         <div class="list-view" id="listView" hidden>
             {% for fl, items in floor_maps.items %}
-            <div class="lgroup" data-floor="{{ fl }}" {% if selected_floor != fl %}hidden{% endif %}>
+            <div class="lgroup{% if selected_floor != fl %} off{% endif %}" data-floor="{{ fl }}">
                 {% for p in items %}{% if p.selectable %}
                 <button type="button" class="lrow" onclick="pickBlock({{ p.block.id }})">
                     <span class="ldot" style="background:{{ p.fill }}"></span>
@@ -804,11 +810,8 @@
     // در فیلد مخفی می‌نشیند تا موقع ارسال فرم، سرور هم بداند کاربر آخر سر
     // کدام طبقه را انتخاب کرده.
     window.setFloor = function (floor) {
-        document.querySelectorAll('.floor-layer').forEach(function (g) {
-            g.hidden = g.dataset.floor !== floor;
-        });
-        document.querySelectorAll('.lgroup').forEach(function (g) {
-            g.hidden = g.dataset.floor !== floor;
+        document.querySelectorAll('.floor-layer, .lgroup').forEach(function (g) {
+            g.classList.toggle('off', g.dataset.floor !== floor);
         });
         document.getElementById('fswGround').classList.toggle('on', floor === 'ground');
         document.getElementById('fswSecond').classList.toggle('on', floor === 'second');
