@@ -144,6 +144,20 @@
             cursor: not-allowed;
             transform: none;
         }
+
+        .select-item.sending {
+            pointer-events: none;
+            opacity: .75;
+            transform: scale(.98);
+        }
+        .select-item.sending::after {
+            content: '';
+            position: absolute; inset: auto 0 10px 0; margin: 0 auto;
+            width: 20px; height: 20px; border-radius: 50%;
+            border: 2.5px solid rgba(212,175,55,.3); border-top-color: #D4AF37;
+            animation: spin .7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 {% endblock %}
 
@@ -190,10 +204,6 @@
                 </div>
                 <input type="hidden" name="team_type" id="team_type_input" required>
             </div>
-
-            <button type="submit" class="btn-continue" id="submitBtn" disabled>
-                <i class="fas fa-check-circle ms-2"></i> ادامه و دیدن نقشه ورزشگاه
-            </button>
         </form>
     </div>
 
@@ -210,15 +220,13 @@
             // اضافه کردن کلاس selected به آیتم انتخاب شده
             element.classList.add('selected');
 
-            // ثبت مقدار در input مخفی
+            // ثبت مقدار و رفتن مستقیم به مرحله‌ی بعد.
+            // دکمه‌ی «ادامه» برداشته شد: وقتی فقط یک سؤال روی صفحه است،
+            // کلیک دوم چیزی به تصمیم اضافه نمی‌کند و فقط یک قدم اضافه است.
             if (type === 'team') {
                 document.getElementById('team_type_input').value = value;
-            }
-
-            // بررسی اینکه آیا هر دو انتخاب انجام شده است یا خیر
-            // طبقه دیگر اینجا پرسیده نمی‌شود؛ روی خودِ نقشه عوض می‌شود.
-            if (document.getElementById('team_type_input').value) {
-                document.getElementById('submitBtn').disabled = false;
+                element.classList.add('sending');
+                document.getElementById('selectionForm').submit();
             }
         }
     </script>

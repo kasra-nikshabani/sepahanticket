@@ -341,6 +341,11 @@ def select_block(request, match_id):
                     f'بلوک "{block.name}" هیچ صندلی‌ای ندارد! لطفاً با مدیر تماس بگیرید.'
                 )
                 return redirect('matches:select_block', match_id=match_id)
+            # طبقه از خودِ فرم می‌آید، چون کاربر ممکن است بدون بارگذاری
+            # دوباره‌ی صفحه عوضش کرده باشد.
+            posted_floor = request.POST.get('floor')
+            if posted_floor in ('ground', 'second'):
+                request.session['selected_floor'] = posted_floor
             request.session['selected_block_id'] = block_id
             return redirect('matches:block_map', match_id=match_id)
         else:
@@ -353,22 +358,38 @@ def select_block(request, match_id):
     # باکس‌ها را دارد با ظاهر دیگر. بقیه کم‌رنگ و غیرقابل‌کلیک‌اند.
     from .stadium_map import build_map, ZONE_COLORS
 
-    selectable_ids = {b.id for b in blocks}
-    floor_blocks = list(Block.objects.filter(
-        stadium=stadium, floor=selected_floor).order_by('order', 'name'))
-    by_id = {b.id: b for b in blocks}
+    # ===== هر دو طبقه با هم رسم می‌شوند =====
+    # تعویض طبقه نباید صفحه را از نو بارگذاری کند: کاربر وسط انتخاب است و
+    # هر بارگذاری یعنی از دست رفتن جای اسکرول و درنگِ چند صد میلی‌ثانیه‌ای.
+    # هزینه‌اش چند کیلوبایت SVG اضافه است که یک‌بار می‌آید و سریع عوض می‌شود.
+    all_floor_blocks = list(Block.objects.filter(stadium=stadium).order_by('order', 'name'))
+    seat_stats = {b.id: (b.available_seats, b.total_seats) for b in blocks}
 
-    pieces = build_map(
-        floor_blocks,
-        zone_map=block_zone_map,
-        seat_stats={b.id: (b.available_seats, b.total_seats) for b in blocks},
-    )
-    for p in pieces:
-        b = p['block']
-        rich = by_id.get(b.id)
-        p['selectable'] = b.id in selectable_ids
-        p['price'] = getattr(rich, 'price', None)
-        p['occupancy'] = getattr(rich, 'occupancy', None)
+    # قابل انتخاب بودن برای *هر دو* طبقه حساب می‌شود، وگرنه طبقه‌ی دیگر
+    # کاملاً خاکستری می‌آمد و کاربر فکر می‌کرد چیزی برایش نیست.
+    active_ids = set(get_active_block_ids(match))
+    selectable_all = set()
+    for b in all_floor_blocks:
+        if b.id not in active_ids:
+            continue
+        is_away_block = b.id in away_block_ids
+        if (selected_team_type == 'away') == is_away_block:
+            selectable_all.add(b.id)
+
+    by_id = {b.id: b for b in blocks}
+    floor_maps = {}
+    for fl in ('ground', 'second'):
+        fl_blocks = [b for b in all_floor_blocks if b.floor == fl]
+        items = build_map(fl_blocks, zone_map=block_zone_map, seat_stats=seat_stats)
+        for p in items:
+            b = p['block']
+            rich = by_id.get(b.id)
+            p['selectable'] = b.id in selectable_all
+            p['price'] = getattr(rich, 'price', None) or b.price
+            p['occupancy'] = getattr(rich, 'occupancy', None)
+        floor_maps[fl] = items
+
+    pieces = floor_maps[selected_floor]
 
     other_floor = 'second' if selected_floor == 'ground' else 'ground'
     other_qs = Block.objects.filter(
@@ -382,6 +403,9 @@ def select_block(request, match_id):
         'match': match,
         'blocks': blocks,
         'pieces': pieces,
+        'floor_maps': floor_maps,
+        'ground_count': sum(1 for p in floor_maps['ground'] if p['selectable']),
+        'second_count': sum(1 for p in floor_maps['second'] if p['selectable']),
         'empty_floor': empty_floor,
         'other_floor': other_floor,
         'other_floor_count': other_qs.count(),
