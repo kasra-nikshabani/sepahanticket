@@ -3276,3 +3276,45 @@ def export_financial_report_pdf(request, match_id):
 
     html.write_pdf(target=response)
     return response
+
+
+@staff_member_required
+def stadium_map_preview(request, match_id):
+    """پیش‌نمایش نقشه‌ی ورزشگاه -- فقط برای بررسی چیدمان، پیش از جایگزینی.
+
+    عمداً جدا از مسیر خرید ساخته شده: اگر جای بلوکی روی حلقه اشتباه باشد،
+    نقشه‌ی قشنگ ولی غلط تماشاگر را به ضلع اشتباه می‌فرستد -- بدتر از
+    نداشتن نقشه. اول اینجا با چشم تأیید می‌شود، بعد جایگزین می‌کنیم.
+    """
+    from .stadium_map import build_map, ZONE_COLORS
+
+    match = get_object_or_404(Match, id=match_id)
+    floor = request.GET.get('floor', 'ground')
+    blocks = list(Block.objects.filter(
+        stadium=match.stadium, floor=floor).order_by('order', 'name'))
+
+    zone_map = get_block_zone_map(match)
+    active_ids = set(get_active_block_ids(match))
+
+    # صندلی خالی در برابر کل -- تا رنگ نقشه بگوید کجا هنوز جا هست.
+    stats = {}
+    rows = (MatchSeat.objects
+            .filter(match=match, seat__row__block__in=blocks, is_enabled=True)
+            .values('seat__row__block_id')
+            .annotate(total=Count('id'),
+                      free=Count('id', filter=Q(is_available=True))))
+    for r in rows:
+        stats[r['seat__row__block_id']] = (r['free'], r['total'])
+
+    pieces = build_map(blocks, zone_map=zone_map, seat_stats=stats)
+    for p in pieces:
+        p['is_active'] = p['block'].id in active_ids
+
+    return render(request, 'matches/stadium_map_preview.html', {
+        'match': match,
+        'floor': floor,
+        'pieces': pieces,
+        'legend': ZONE_COLORS,
+        'total_blocks': len(blocks),
+        'drawn': len(pieces),
+    })

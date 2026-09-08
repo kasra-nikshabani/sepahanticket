@@ -10,6 +10,8 @@ urlpatterns = [
     path('match/<int:match_id>/', views.match_detail, name='match_detail'),
     path('match/<int:match_id>/select-row/', views.select_row, name='select_row'),
     path('match/<int:match_id>/block-map/', views.show_block_map, name='block_map'),
+    path('match/<int:match_id>/stadium-map-preview/', views.stadium_map_preview,
+         name='stadium_map_preview'),
     path('get-seats-status/<int:match_id>/', views.get_seats_status, name='get_seats_status'),
 
     # ===== مدیریت قدیمی (قبل از بازنویسی) =====

@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}پیش‌نمایش نقشه ورزشگاه{% endblock %}
+
+{% block extra_css %}
+<style>
+    .map-page { max-width: 1150px; margin: 24px auto; padding: 0 14px 40px; }
+
+    .map-head {
+        background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
+        border-radius: 16px; padding: 20px 26px; color: #fff; margin-bottom: 16px;
+        border-bottom: 3px solid #D4AF37;
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;
+    }
+    .map-head h2 { margin: 0; color: #D4AF37; font-weight: 800; font-size: 20px; }
+    .map-head p { margin: 5px 0 0; opacity: .75; font-size: .85rem; }
+    .floor-switch { display: flex; gap: 8px; }
+    .floor-switch a {
+        padding: 8px 18px; border-radius: 50px; text-decoration: none; font-size: 13px;
+        font-weight: 700; background: rgba(255,255,255,.1); color: #fff;
+        border: 1px solid rgba(255,255,255,.2);
+    }
+    .floor-switch a.active { background: linear-gradient(135deg, #D4AF37, #B8960F); color: #1A1A2E; border-color: #D4AF37; }
+
+    .check-note {
+        background: #fff8e6; border: 1px solid #f0dca8; border-right: 4px solid #D4AF37;
+        border-radius: 11px; padding: 13px 17px; margin-bottom: 16px;
+        font-size: 13.5px; color: #6b5400; line-height: 2;
+    }
+    .check-note ul { margin: 6px 0 0; padding-right: 20px; }
+
+    .map-card {
+        background: #fff; border: 1px solid #e8eaed; border-radius: 16px;
+        padding: 14px; box-shadow: 0 2px 14px rgba(0,0,0,.05);
+    }
+    svg.stadium { width: 100%; height: auto; display: block; }
+
+    .wedge { cursor: pointer; transition: opacity .15s, stroke-width .15s; }
+    .wedge:hover { opacity: 1 !important; stroke: #1A1A2E; stroke-width: 3; }
+    .wedge.off { opacity: .18; }
+    .wedge.soldout { opacity: .35; }
+
+    .wlabel { font-size: 15px; font-weight: 700; fill: #fff; pointer-events: none;
+              text-anchor: middle; dominant-baseline: central; }
+
+    .legend { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; justify-content: center; }
+    .legend span {
+        display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px;
+        color: #1A1A2E; background: #fafafa; border: 1px solid #eee;
+        padding: 4px 12px; border-radius: 50px;
+    }
+    .swatch { width: 13px; height: 13px; border-radius: 3px; display: inline-block; }
+
+    .tip {
+        margin-top: 12px; text-align: center; font-size: 13px; color: #6c757d;
+        min-height: 22px;
+    }
+    .tip strong { color: #1A1A2E; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="map-page">
+
+    <div class="map-head">
+        <div>
+            <h2>پیش‌نمایش نقشه ورزشگاه</h2>
+            <p>{{ match.home_team }} — {{ match.away_team }} · {{ drawn }} بلوک از {{ total_blocks }} بلوکِ این طبقه روی نقشه نشست</p>
+        </div>
+        <div class="floor-switch">
+            <a href="?floor=ground" class="{% if floor == 'ground' %}active{% endif %}">طبقه پایین</a>
+            <a href="?floor=second" class="{% if floor == 'second' %}active{% endif %}">طبقه دوم</a>
+        </div>
+    </div>
+
+    <div class="check-note">
+        <strong>لطفاً چیدمان را با نقشه‌ی رسمی مقایسه کنید:</strong>
+        <ul>
+            <li>بلوک <strong>۹</strong> باید ضلع <strong>چپ</strong> باشد، <strong>۱۹</strong> بالا،
+                <strong>۲۸</strong> راست، و VIP و کلاس ۱ پایین.</li>
+            <li>شماره‌ها باید <strong>ساعت‌گرد</strong> زیاد شوند.</li>
+            <li>جای بلوک‌های <strong>۱ و ۶</strong> عمداً خالی است — در سیستم تعریف نشده‌اند و
+                روی نقشه‌ی رسمی هم آنجا ورودی است.</li>
+        </ul>
+        اگر جایی نخواند بگویید تا اصلاح کنم؛ این صفحه از مسیر خرید جداست و کاربران آن را نمی‌بینند.
+    </div>
+
+    <div class="map-card">
+        <svg class="stadium" viewBox="0 0 1000 680" xmlns="http://www.w3.org/2000/svg">
+            <!-- زمین چمن و پیست -->
+            <ellipse cx="500" cy="340" rx="322" ry="178" fill="#eceff1" stroke="#cfd8dc" stroke-width="2"/>
+            <rect x="352" y="250" width="296" height="180" rx="4" fill="#3f8f4a" stroke="#2f6f38" stroke-width="2"/>
+            <line x1="500" y1="250" x2="500" y2="430" stroke="#fff" stroke-width="2" opacity=".7"/>
+            <circle cx="500" cy="340" r="30" fill="none" stroke="#fff" stroke-width="2" opacity=".7"/>
+            <rect x="352" y="300" width="34" height="80" fill="none" stroke="#fff" stroke-width="2" opacity=".7"/>
+            <rect x="614" y="300" width="34" height="80" fill="none" stroke="#fff" stroke-width="2" opacity=".7"/>
+
+            <!-- جهت‌ها، برای تطبیق چشمی با نقشه‌ی رسمی -->
+            <text x="500" y="26" text-anchor="middle" font-size="14" fill="#90a4ae">شمال</text>
+            <text x="500" y="668" text-anchor="middle" font-size="14" fill="#90a4ae">جنوب — VIP و کلاس ۱</text>
+            <text x="18" y="345" font-size="14" fill="#90a4ae">غرب</text>
+            <text x="948" y="345" font-size="14" fill="#90a4ae">شرق</text>
+
+            {% for p in pieces %}
+            <g class="wedge {% if not p.is_active %}off{% elif p.sold_out %}soldout{% endif %}"
+               onmouseover="showTip('{{ p.block.name|escapejs }}', '{{ p.zone_label|escapejs }}', '{{ p.free|default_if_none:"?" }}', '{{ p.total|default_if_none:"?" }}', {{ p.is_active|yesno:"true,false" }})"
+               onmouseout="clearTip()">
+                <path d="{{ p.path }}" fill="{{ p.fill }}" stroke="#fff" stroke-width="1.5"/>
+                <text class="wlabel" x="{{ p.label_x }}" y="{{ p.label_y }}"
+                      transform="rotate({{ p.label_rotate }} {{ p.label_x }} {{ p.label_y }})">{{ p.label }}</text>
+            </g>
+            {% endfor %}
+        </svg>
+
+        <div class="tip" id="tip">برای دیدن جزئیات، نشانگر را روی یک بلوک ببرید.</div>
+
+        <div class="legend">
+            {% for key, z in legend.items %}
+            <span><i class="swatch" style="background:{{ z.fill }}"></i> {{ z.label }}</span>
+            {% endfor %}
+            <span><i class="swatch" style="background:#8a8a9a; opacity:.2"></i> غیرفعال در این مسابقه</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTip(name, zone, free, total, active) {
+        document.getElementById('tip').innerHTML =
+            '<strong>' + name + '</strong> — ' + zone +
+            (active ? ' · ' + free + ' صندلی خالی از ' + total : ' · <em>غیرفعال در این مسابقه</em>');
+    }
+    function clearTip() {
+        document.getElementById('tip').textContent = 'برای دیدن جزئیات، نشانگر را روی یک بلوک ببرید.';
+    }
+</script>
+{% endblock %}
