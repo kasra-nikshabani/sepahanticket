@@ -356,7 +356,7 @@
                 <thead>
                 <tr>
                     <th class="col-chk"><input type="checkbox" id="chkall" title="انتخاب همه‌ی این صفحه"></th>
-                    <th>#</th>
+                    <th>ردیف</th>
                     <th>کاربر</th>
                     <th>مبلغ (ریال)</th>
                     <th class="hide-sm">شماره شبا</th>
@@ -374,7 +374,12 @@
                         <input type="checkbox" name="ids" value="{{ r.id }}" class="rowchk">
                         {% endif %}
                     </td>
-                    <td>{{ r.id }}</td>
+                    {% comment %}
+                        شماره‌ی ترتیبیِ نمایش، نه شناسه‌ی دیتابیس. شناسه در
+                        «جزئیات» می‌ماند چون همان چیزی است که در فایل اکسل
+                        خزانه‌داری و در پیام‌های سیستم می‌آید.
+                    {% endcomment %}
+                    <td style="color:#6c757d;">{{ requests.start_index|add:forloop.counter0 }}</td>
                     <td>
                         <div class="who">
                             {{ r.user.get_full_name|default:r.user.username }}
@@ -407,6 +412,8 @@
                     <td colspan="9">
                         <div class="detail-inner">
                             <div class="detail-grid">
+                                <div><div class="k">شماره درخواست (در فایل خزانه‌داری)</div>
+                                     <div class="v ltr">{{ r.id }}</div></div>
                                 <div><div class="k">نام اعلامی صاحب حساب</div>
                                      <div class="v">{{ r.account_holder }}</div></div>
                                 <div><div class="k">کد ملی</div>
