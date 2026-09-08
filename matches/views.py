@@ -192,7 +192,12 @@ def match_detail(request, match_id):
 # ============================================================
 @login_required
 def select_floor(request, match_id):
-    """انتخاب طبقه (پایین یا بالا) و تیم (میزبان یا میهمان) قبل از نمایش بلوک‌ها"""
+    """انتخاب میزبان یا میهمان، پیش از نمایش نقشه‌ی ورزشگاه.
+
+    انتخابِ طبقه از این مرحله برداشته شد: کاربر باید طبقه‌ای را انتخاب
+    می‌کرد که هنوز ندیده بود، و اگر نظرش عوض می‌شد باید برمی‌گشت. حالا
+    روی خودِ نقشه با یک کلید عوض می‌شود.
+    """
     match = get_object_or_404(Match, id=match_id, is_active=True)
     if not match.ticket_sales_enabled:
         messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
@@ -202,12 +207,15 @@ def select_floor(request, match_id):
         floor = request.POST.get('floor')
         team_type = request.POST.get('team_type')  # <--- اضافه شد
 
-        if floor in ['ground', 'second'] and team_type in ['home', 'away']:
-            request.session['selected_floor'] = floor
+        # طبقه دیگر اینجا پرسیده نمی‌شود -- روی خودِ نقشه‌ی ورزشگاه عوض
+        # می‌شود. مقدار پیش‌فرض همان طبقه‌ی پایین است، مگر کاربر قبلاً چیز
+        # دیگری انتخاب کرده باشد.
+        if team_type in ['home', 'away']:
             request.session['selected_team_type'] = team_type  # <--- ذخیره در سشن
+            request.session.setdefault('selected_floor', floor if floor in ('ground', 'second') else 'ground')
             return redirect('matches:select_block', match_id=match_id)
         else:
-            messages.error(request, 'لطفاً طبقه و تیم (میزبان/میهمان) را به درستی انتخاب کنید.')
+            messages.error(request, 'لطفاً میزبان یا میهمان را انتخاب کنید.')
 
     return render(request, 'matches/select_floor.html', {'match': match})
 
@@ -219,6 +227,14 @@ def select_block(request, match_id):
         messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
         return redirect('matches:home')
     stadium = match.stadium
+
+    # ===== تغییر طبقه از روی همین صفحه =====
+    # قبلاً طبقه یک مرحله‌ی جدا بود؛ کاربر باید انتخاب می‌کرد، بعد بلوک‌ها را
+    # می‌دید، و اگر نظرش عوض می‌شد باید برمی‌گشت. حالا روی همین نقشه عوض
+    # می‌شود و انتخاب در سشن می‌ماند تا مراحل بعدی همان را ببینند.
+    floor_param = request.GET.get('floor')
+    if floor_param in ('ground', 'second'):
+        request.session['selected_floor'] = floor_param
 
     selected_floor = request.session.get('selected_floor', 'ground')
     selected_team_type = request.session.get('selected_team_type', 'home')  # <--- دریافت انتخاب کاربر از سشن
@@ -245,12 +261,10 @@ def select_block(request, match_id):
         # اگر کاربر میزبان را انتخاب کرده باشد، بلوک‌های میهمان نشان داده نشود (تا VIP، بانوان و کلاس ۱ هم برای میزبان باشد)
         blocks = blocks.exclude(id__in=away_block_ids)
 
-    if not blocks.exists():
-        messages.warning(
-            request,
-            f'هیچ بلوکی برای تیم "{"میهمان" if selected_team_type == "away" else "میزبان"}" در طبقه {"بالا" if selected_floor == "second" else "پایین"} تعریف نشده است.'
-        )
-        return redirect('matches:select_floor', match_id=match_id)
+    # اگر این طبقه چیزی برای این کاربر ندارد، او را از صفحه بیرون نمی‌کنیم؛
+    # نقشه‌ی همان طبقه با کلید تعویض نشان داده می‌شود تا خودش طبقه‌ی دیگر را
+    # امتحان کند. پرت کردن به مرحله‌ی قبل یعنی از دست دادن جای فعلی.
+    empty_floor = not blocks.exists()
 
     zone_labels = {
         'home': ('home', 'میزبان'),
@@ -356,10 +370,21 @@ def select_block(request, match_id):
         p['price'] = getattr(rich, 'price', None)
         p['occupancy'] = getattr(rich, 'occupancy', None)
 
+    other_floor = 'second' if selected_floor == 'ground' else 'ground'
+    other_qs = Block.objects.filter(
+        stadium=stadium, id__in=get_active_block_ids(match), floor=other_floor)
+    if selected_team_type == 'away':
+        other_qs = other_qs.filter(id__in=away_block_ids)
+    else:
+        other_qs = other_qs.exclude(id__in=away_block_ids)
+
     context = {
         'match': match,
         'blocks': blocks,
         'pieces': pieces,
+        'empty_floor': empty_floor,
+        'other_floor': other_floor,
+        'other_floor_count': other_qs.count(),
         'legend': ZONE_COLORS,
         'selected_floor': selected_floor,
         'selected_team_type': selected_team_type,  # <--- ارسال به قالب

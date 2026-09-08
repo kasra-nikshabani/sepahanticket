@@ -42,15 +42,23 @@ ANCHOR_DEG = 180.0
 # فاصله‌ی بین دو بلوک، تا مرزها دیده شوند.
 GAP_DEG = 1.4
 
+# ===== جنسیتِ جایگاه =====
+# جدا از نوع جایگاه نگه داشته می‌شود چون مهم‌ترین چیزی است که کاربر نباید
+# اشتباه بگیرد: بلیطِ جایگاه بانوان برای آقا (و برعکس) دمِ گیت رد می‌شود و
+# پول و وقتِ تماشاگر هدر می‌رود. رنگ و برچسبِ جدا دارد تا با یک نگاه معلوم
+# باشد، نه اینکه از دلِ «بانوان میهمان» استنباط شود.
+GENDER_WOMEN = {'key': 'women', 'label': 'ویژه بانوان', 'color': '#e0559c', 'icon': 'venus'}
+GENDER_MEN = {'key': 'men', 'label': 'ویژه آقایان', 'color': '#3b82c4', 'icon': 'mars'}
+
 ZONE_COLORS = {
-    'home':       {'fill': '#D4AF37', 'label': 'میزبان'},
-    'away':       {'fill': '#c0392b', 'label': 'میهمان'},
-    'women':      {'fill': '#b5379b', 'label': 'بانوان میزبان'},
-    'women_away': {'fill': '#7d3c98', 'label': 'بانوان میهمان'},
-    'class1':     {'fill': '#17a2b8', 'label': 'کلاس ۱'},
-    'vip':        {'fill': '#8e6b13', 'label': 'VIP'},
+    'home':       {'fill': '#D4AF37', 'label': 'میزبان', 'gender': GENDER_MEN},
+    'away':       {'fill': '#c0392b', 'label': 'میهمان', 'gender': GENDER_MEN},
+    'women':      {'fill': '#b5379b', 'label': 'بانوان میزبان', 'gender': GENDER_WOMEN},
+    'women_away': {'fill': '#7d3c98', 'label': 'بانوان میهمان', 'gender': GENDER_WOMEN},
+    'class1':     {'fill': '#17a2b8', 'label': 'کلاس ۱', 'gender': GENDER_MEN},
+    'vip':        {'fill': '#8e6b13', 'label': 'VIP', 'gender': GENDER_MEN},
 }
-DEFAULT_COLOR = {'fill': '#8a8a9a', 'label': 'نامشخص'}
+DEFAULT_COLOR = {'fill': '#8a8a9a', 'label': 'نامشخص', 'gender': None}
 
 _FA_DIGITS = str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789')
 
@@ -146,6 +154,10 @@ def build_map(blocks, zone_map=None, seat_stats=None,
             'fill': color['fill'],
             'zone': zone,
             'zone_label': color['label'],
+            'gender': (color.get('gender') or {}).get('key'),
+            'gender_label': (color.get('gender') or {}).get('label', ''),
+            'gender_color': (color.get('gender') or {}).get('color', '#8a8a9a'),
+            'gender_icon': (color.get('gender') or {}).get('icon', 'circle-question'),
             'free': free,
             'total': total,
             'occupancy': occupancy,

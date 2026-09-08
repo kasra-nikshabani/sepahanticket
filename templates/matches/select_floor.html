@@ -191,28 +191,8 @@
                 <input type="hidden" name="team_type" id="team_type_input" required>
             </div>
 
-            <!-- مرحله ۲: انتخاب طبقه -->
-            <div class="step-card">
-                <div class="step-title">
-                    <i class="fas fa-layer-group"></i> طبقه مورد نظر را انتخاب کنید
-                </div>
-                <div class="selection-grid">
-                    <div class="select-item ground" data-type="floor" data-value="ground" onclick="selectOption(this)">
-                        <i class="fas fa-arrow-down"></i>
-                        <h5>طبقه پایین</h5>
-                        <p>صندلی‌های نزدیک به زمین</p>
-                    </div>
-                    <div class="select-item second" data-type="floor" data-value="second" onclick="selectOption(this)">
-                        <i class="fas fa-arrow-up"></i>
-                        <h5>طبقه دوم</h5>
-                        <p> view بالا</p>
-                    </div>
-                </div>
-                <input type="hidden" name="floor" id="floor_input" required>
-            </div>
-
             <button type="submit" class="btn-continue" id="submitBtn" disabled>
-                <i class="fas fa-check-circle ms-2"></i> ادامه و انتخاب سکو
+                <i class="fas fa-check-circle ms-2"></i> ادامه و دیدن نقشه ورزشگاه
             </button>
         </form>
     </div>
@@ -233,12 +213,11 @@
             // ثبت مقدار در input مخفی
             if (type === 'team') {
                 document.getElementById('team_type_input').value = value;
-            } else if (type === 'floor') {
-                document.getElementById('floor_input').value = value;
             }
 
             // بررسی اینکه آیا هر دو انتخاب انجام شده است یا خیر
-            if (document.getElementById('team_type_input').value && document.getElementById('floor_input').value) {
+            // طبقه دیگر اینجا پرسیده نمی‌شود؛ روی خودِ نقشه عوض می‌شود.
+            if (document.getElementById('team_type_input').value) {
                 document.getElementById('submitBtn').disabled = false;
             }
         }

@@ -569,6 +569,10 @@
 
         @media (max-width: 768px) {
             .map-shell { padding: 10px; border-radius: 16px; }
+            .fsw { padding: 10px 12px; gap: 8px; }
+            .fsw b { font-size: 13px; }
+            .fsw small { display: none; }
+            .big-banner { font-size: 16px; padding: 12px; }
             .map-hint { font-size: 12px; }
             .wlabel { font-size: 22px; }
             .compass { font-size: 20px; }
@@ -594,6 +598,51 @@
             .wlabel { font-size: 26px; }
             .sheet-facts { grid-template-columns: 1fr; }
         }
+
+        /* ===== تعویض طبقه، روی همین صفحه ===== */
+        .floor-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 12px; }
+        .fsw {
+            display: flex; align-items: center; gap: 11px; padding: 12px 15px;
+            border-radius: 14px; text-decoration: none;
+            background: rgba(255,255,255,.05); border: 1.5px solid rgba(255,255,255,.1);
+            color: #c9cbd8; transition: .18s;
+        }
+        .fsw i { font-size: 17px; opacity: .75; }
+        .fsw b { display: block; font-size: 14px; font-weight: 800; }
+        .fsw small { display: block; font-size: 11px; opacity: .7; margin-top: 1px; }
+        .fsw:hover { border-color: rgba(212,175,55,.5); color: #fff; }
+        .fsw.on {
+            background: linear-gradient(135deg, rgba(212,175,55,.22), rgba(184,150,15,.12));
+            border-color: #D4AF37; color: #F0D77A;
+        }
+        .fsw.on i { opacity: 1; }
+
+        .floor-empty {
+            background: rgba(212,175,55,.1); border: 1px solid rgba(212,175,55,.32);
+            border-radius: 12px; padding: 11px 15px; margin-bottom: 12px;
+            color: #E5C158; font-size: 13px; line-height: 1.9;
+        }
+        .floor-empty a { color: #fff; font-weight: 800; text-decoration: none; }
+        .floor-empty a:hover { text-decoration: underline; }
+
+        /* ===== جنسیت در تولتیپ ===== */
+        .tip-gender {
+            display: inline-flex; align-items: center; gap: 6px; margin-top: 7px;
+            padding: 4px 11px; border-radius: 50px; font-size: 12px; font-weight: 800;
+            border: 1.5px solid currentColor;
+        }
+
+        /* ===== بنرهای بزرگِ کارت جزئیات ===== */
+        .big-banner {
+            display: flex; align-items: center; justify-content: center; gap: 9px;
+            padding: 13px; border-radius: 14px; margin-bottom: 9px;
+            font-size: 17px; font-weight: 900; letter-spacing: .2px;
+            border: 2px solid currentColor;
+        }
+        .big-banner i { font-size: 19px; }
+        .big-banner.zone { color: #1A1A2E; background: #f4f5f7; border-color: #dfe3e8; font-size: 15px; }
+
+        .lgender { font-weight: 800; }
     </style>
 {% endblock %}
 
@@ -728,6 +777,27 @@
         <input type="hidden" name="block_id" id="pickedBlock">
 
         <div class="map-shell">
+            <div class="floor-switch">
+                <a href="?floor=ground" class="fsw {% if selected_floor == 'ground' %}on{% endif %}">
+                    <i class="fas fa-arrow-down"></i>
+                    <span><b>طبقه پایین</b><small>نزدیک به زمین</small></span>
+                </a>
+                <a href="?floor=second" class="fsw {% if selected_floor == 'second' %}on{% endif %}">
+                    <i class="fas fa-arrow-up"></i>
+                    <span><b>طبقه دوم</b><small>دید از بالا</small></span>
+                </a>
+            </div>
+
+            {% if empty_floor %}
+            <div class="floor-empty">
+                <i class="fas fa-circle-info"></i>
+                در <b>{{ floor_label }}</b> جایگاهی برای شما باز نیست.
+                {% if other_floor_count %}
+                    <a href="?floor={{ other_floor }}">طبقه‌ی دیگر {{ other_floor_count }} جایگاه باز دارد ←</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
             <div class="map-bar">
                 <div class="map-hint">
                     <i class="fas fa-hand-pointer"></i>
@@ -809,9 +879,13 @@
                        data-free="{{ p.free|default_if_none:0 }}" data-total="{{ p.total|default_if_none:0 }}"
                        data-occ="{{ p.occupancy|default_if_none:0 }}"
                        data-price="{{ p.price|floatformat:0 }}" data-fill="{{ p.fill }}"
+                       data-gender="{{ p.gender_label }}" data-gcolor="{{ p.gender_color }}"
+                       data-gicon="{{ p.gender_icon }}"
                        {% else %}
                        onmouseenter="showTip(event, this)" onmousemove="moveTip(event)" onmouseleave="hideTip()"
                        data-name="{{ p.block.name }}" data-zone="{{ p.zone_label }}" data-off="1"
+                       data-gender="{{ p.gender_label }}" data-gcolor="{{ p.gender_color }}"
+                       data-gicon="{{ p.gender_icon }}"
                        {% endif %}>
                         <path d="{{ p.path }}" fill="{{ p.fill }}"/>
                         <path d="{{ p.path }}" fill="url(#sheen)" class="gloss"/>
@@ -826,6 +900,7 @@
                         <span class="tip-dot" id="tDot"></span>
                         <span class="tip-name" id="tName"></span>
                     </div>
+                    <div class="tip-gender" id="tGender"><i></i><span></span></div>
                     <div class="tip-zone" id="tZone"></div>
                     <div class="tip-rows" id="tRows">
                         <div><span>صندلی خالی</span><b id="tFree"></b></div>
@@ -855,7 +930,11 @@
             <button type="button" class="lrow" onclick="pickBlock({{ p.block.id }})">
                 <span class="ldot" style="background:{{ p.fill }}"></span>
                 <span class="lname">{{ p.block.name }}</span>
-                <span class="lzone">{{ p.zone_label }}</span>
+                <span class="lzone">
+                    <b class="lgender" style="color:{{ p.gender_color }}">
+                        <i class="fas fa-{{ p.gender_icon }}"></i> {{ p.gender_label }}</b>
+                    · {{ p.zone_label }}
+                </span>
                 <span class="lseat">{{ p.free|default_if_none:0 }} صندلی</span>
                 <span class="lprice">{{ p.price|floatformat:0 }} ریال</span>
             </button>
@@ -873,6 +952,14 @@
                 </div>
                 <button type="button" class="sheet-x" onclick="closeSheet()" aria-label="بستن">✕</button>
             </div>
+
+            {% comment %}
+                این دو بنر عمداً بزرگ و پررنگ‌اند. اشتباه گرفتنِ جایگاه بانوان
+                و آقایان یعنی بلیطی که دمِ گیت رد می‌شود -- پول و وقتِ تماشاگر
+                هدر می‌رود و کاری هم از دست ما برنمی‌آید.
+            {% endcomment %}
+            <div class="big-banner" id="sGender"><i></i><span></span></div>
+            <div class="big-banner zone" id="sZoneBig"><i class="fas fa-location-dot"></i><span></span></div>
             <div class="sheet-facts">
                 <div><span class="k">صندلی خالی</span><span class="v" id="sFree">—</span></div>
                 <div><span class="k">قیمت هر صندلی</span><span class="v gold" id="sPrice">—</span></div>
@@ -1010,6 +1097,10 @@
         var off = g.dataset.off === '1';
         document.getElementById('tName').textContent = g.dataset.name || '';
         document.getElementById('tZone').textContent = g.dataset.zone || '';
+        var tg = document.getElementById('tGender');
+        tg.style.color = g.dataset.gcolor || '#8a8a9a';
+        tg.querySelector('i').className = 'fas fa-' + (g.dataset.gicon || 'circle-question');
+        tg.querySelector('span').textContent = g.dataset.gender || '';
         document.getElementById('tDot').style.background =
             off ? '#5b6270' : (g.dataset.fill || '#D4AF37');
 
@@ -1067,6 +1158,13 @@
 
         document.getElementById('sName').textContent = g.dataset.name || '';
         document.getElementById('sZone').textContent = g.dataset.zone || '';
+        var gb = document.getElementById('sGender');
+        gb.style.color = g.dataset.gcolor || '#8a8a9a';
+        gb.style.background = (g.dataset.gcolor || '#8a8a9a') + '1f';
+        gb.querySelector('i').className = 'fas fa-' + (g.dataset.gicon || 'circle-question');
+        gb.querySelector('span').textContent = g.dataset.gender || '';
+        document.getElementById('sZoneBig').querySelector('span').textContent =
+            'جایگاه ' + (g.dataset.zone || '');
         document.getElementById('sDot').style.background = g.dataset.fill || '#D4AF37';
         var free = parseInt(g.dataset.free || '0', 10);
         document.getElementById('sFree').textContent =
