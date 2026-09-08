@@ -60,13 +60,13 @@
         .map-hint i { color: #D4AF37; }
         .map-tools { display: flex; gap: 6px; }
         .mtool {
-            width: 36px; height: 36px; border-radius: 10px; border: 1px solid rgba(255,255,255,.14);
-            background: rgba(255,255,255,.06); color: #e7e8ef; font-size: 16px; font-weight: 700;
+            width: 40px; height: 40px; border-radius: 11px; border: 1.5px solid #383e57;
+            background: #262a3d; color: #e7e8ef; font-size: 18px; font-weight: 800;
             cursor: pointer; font-family: inherit; display: inline-flex;
             align-items: center; justify-content: center; transition: .18s;
         }
-        .mtool:hover { background: rgba(212,175,55,.18); border-color: rgba(212,175,55,.5); color: #D4AF37; }
-        .mtool.wide { width: auto; padding: 0 14px; gap: 6px; font-size: 13px; }
+        .mtool:hover { background: #D4AF37; border-color: #E5C158; color: #17182a; }
+        .mtool.wide { width: auto; padding: 0 16px; gap: 7px; font-size: 14px; font-weight: 700; }
 
         .map-frame {
             position: relative; overflow: hidden; border-radius: 16px;
@@ -163,8 +163,8 @@
         }
         .lg {
             display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
-            color: #c9cbd8; background: rgba(255,255,255,.05);
-            border: 1px solid rgba(255,255,255,.09); padding: 4px 11px; border-radius: 50px;
+            color: #cbd0e0; background: #232739;
+            border: 1px solid #363b52; padding: 5px 12px; border-radius: 50px;
         }
         .lg i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
 
@@ -197,9 +197,12 @@
         .sheet-name { font-weight: 800; color: #1A1A2E; font-size: 16px; }
         .sheet-zone { color: #6c757d; font-size: 12.5px; margin-top: 2px; }
         .sheet-x {
-            margin-right: auto; background: transparent; border: none; color: #adb5bd;
-            font-size: 17px; cursor: pointer; padding: 4px 8px;
+            margin-right: auto; background: #eef0f3; border: 1px solid #dfe3e8;
+            color: #6c757d; font-size: 15px; font-weight: 700; cursor: pointer;
+            width: 34px; height: 34px; border-radius: 10px; flex: 0 0 auto;
+            display: inline-flex; align-items: center; justify-content: center; transition: .15s;
         }
+        .sheet-x:hover { background: #fdeceb; border-color: #f5b7b1; color: #c0392b; }
         .sheet-facts {
             display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;
         }
@@ -316,6 +319,14 @@
         .big-banner.zone { color: #1A1A2E; background: #f4f5f7; border-color: #dfe3e8; font-size: 15px; }
 
         .lgender { font-weight: 800; }
+
+        .btn-home {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: #1A1A2E; color: #fff; border: 1.5px solid #2f3450;
+            padding: 11px 24px; border-radius: 12px; font-weight: 700; font-size: 14px;
+            text-decoration: none; transition: .18s;
+        }
+        .btn-home:hover { background: #262a3d; border-color: #D4AF37; color: #D4AF37; }
     </style>
 {% endblock %}
 
@@ -631,7 +642,7 @@
     دکمه بازگشت
     ============================================================ -->
     <div class="text-center mt-3">
-        <a href="{% url 'matches:home' %}" class="btn btn-secondary btn-sm">
+        <a href="{% url 'matches:home' %}" class="btn-home">
             <i class="fas fa-arrow-right"></i> بازگشت به صفحه اصلی
         </a>
     </div>
