@@ -6,93 +6,138 @@
 
 {% block extra_css %}
 <style>
-    .wdadm-page { max-width: 1280px; margin: 30px auto; padding: 0 16px 40px; }
+    .wdadm-page { max-width: 1500px; margin: 24px auto; padding: 0 14px 40px; }
 
     .page-header {
         background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
-        border-radius: 20px; padding: 26px 32px; color: #fff; margin-bottom: 22px;
+        border-radius: 16px; padding: 20px 26px; color: #fff; margin-bottom: 16px;
         border-bottom: 3px solid #D4AF37; display: flex; justify-content: space-between;
-        align-items: center; flex-wrap: wrap; gap: 16px;
+        align-items: center; flex-wrap: wrap; gap: 14px;
     }
-    .page-header h2 { margin: 0; color: #D4AF37; font-weight: 800; display: flex; align-items: center; gap: 10px; }
-    .page-header p { margin: 6px 0 0; opacity: .7; font-size: .9rem; }
+    .page-header h2 { margin: 0; color: #D4AF37; font-weight: 800; font-size: 21px;
+        display: flex; align-items: center; gap: 10px; }
+    .page-header p { margin: 5px 0 0; opacity: .7; font-size: .85rem; }
+    .header-link {
+        background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2);
+        padding: 8px 16px; border-radius: 9px; text-decoration: none; font-size: 13px; font-weight: 600;
+    }
+    .header-link:hover { color: #D4AF37; }
 
-    .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 22px; }
+    /* ===== شمارنده‌ها: هرکدام یک فیلترِ کلیک‌شدنی است ===== */
+    .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
     .kpi-card {
-        background: #fff; border-radius: 16px; padding: 18px; text-align: center;
-        box-shadow: 0 4px 18px rgba(0,0,0,.06); border: 1px solid #eee; border-top: 4px solid #D4AF37;
+        background: #fff; border-radius: 12px; padding: 13px 16px; border: 1px solid #eee;
+        border-top: 3px solid #D4AF37; text-decoration: none; display: block; transition: all .2s;
     }
-    .kpi-card .num { font-size: 24px; font-weight: 800; color: #1A1A2E; }
-    .kpi-card .lbl { font-size: 13px; color: #6c757d; margin-top: 4px; }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+    .kpi-card .num { font-size: 21px; font-weight: 800; color: #1A1A2E; }
+    .kpi-card .lbl { font-size: 12px; color: #6c757d; margin-top: 2px; }
     .kpi-card.warn { border-top-color: #dc3545; }
     .kpi-card.warn .num { color: #dc3545; }
+    .kpi-card.act { border-top-color: #e8873a; }
+    .kpi-card.act .num { color: #e8873a; }
 
     .off-banner {
         background: #fdeceb; border: 1px solid #f5b7b1; border-right: 4px solid #c0392b;
-        border-radius: 12px; padding: 13px 18px; margin-bottom: 20px; font-size: .9rem;
-        color: #922b21; line-height: 1.95;
+        border-radius: 11px; padding: 11px 16px; margin-bottom: 14px; font-size: .87rem;
+        color: #922b21; line-height: 1.9;
     }
 
     .finance-box {
-        display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px;
-        background: #fff; border: 1px solid #e8eaed; border-radius: 16px;
-        padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,.04);
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px;
+        background: #fff; border: 1px solid #e8eaed; border-radius: 13px;
+        padding: 16px 20px; margin-bottom: 16px;
     }
-    .finance-col { min-width: 0; }
-    .finance-title { font-weight: 700; color: #1A1A2E; margin-bottom: 6px; }
+    .finance-title { font-weight: 700; color: #1A1A2E; margin-bottom: 4px; font-size: 14px; }
     .finance-title i { color: #D4AF37; margin-left: 6px; }
-    .finance-hint { color: #6c757d; font-size: 13px; line-height: 1.9; margin: 0 0 12px; }
+    .finance-hint { color: #6c757d; font-size: 12.5px; line-height: 1.85; margin: 0 0 10px; }
     .btn-file {
-        display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px;
-        border-radius: 10px; border: none; background: linear-gradient(135deg, #D4AF37, #B8960F);
-        color: #1A1A2E; font-weight: 700; font-size: 13.5px; font-family: inherit;
-        text-decoration: none; cursor: pointer; margin: 0 0 8px 8px;
+        display: inline-flex; align-items: center; gap: 6px; padding: 8px 15px;
+        border-radius: 9px; border: none; background: linear-gradient(135deg, #D4AF37, #B8960F);
+        color: #1A1A2E; font-weight: 700; font-size: 13px; font-family: inherit;
+        text-decoration: none; cursor: pointer; margin: 0 0 6px 6px;
     }
     .btn-file.ghost { background: #fafafa; border: 1px solid #e8eaed; color: #1A1A2E; font-weight: 600; }
-    .btn-file:hover { transform: translateY(-2px); color: #1A1A2E; }
-    .upload-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .btn-file:hover { color: #1A1A2E; }
+    .upload-form { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
     .upload-form input[type=file] {
-        font-family: inherit; font-size: 13px; padding: 7px; border: 1px dashed #dfe3e8;
-        border-radius: 10px; background: #fafbfc; flex: 1; min-width: 180px;
+        font-family: inherit; font-size: 12.5px; padding: 6px; border: 1px dashed #dfe3e8;
+        border-radius: 9px; background: #fafbfc; flex: 1; min-width: 170px;
     }
 
+    /* ===== نوار فیلتر ===== */
     .toolbar {
-        display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
-        background: #fff; border: 1px solid #e8eaed; border-radius: 14px;
-        padding: 14px 18px; margin-bottom: 20px;
+        display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+        background: #fff; border: 1px solid #e8eaed; border-radius: 12px;
+        padding: 11px 15px; margin-bottom: 12px;
     }
-    .toolbar .tab {
-        padding: 8px 18px; border-radius: 50px; text-decoration: none; font-size: 13.5px;
+    .tab {
+        padding: 6px 15px; border-radius: 50px; text-decoration: none; font-size: 13px;
         font-weight: 600; color: #1A1A2E; border: 1px solid #e8eaed; background: #fafafa;
+        white-space: nowrap;
     }
-    .toolbar .tab.active { background: linear-gradient(135deg, #D4AF37, #B8960F); border-color: #D4AF37; }
-    .toolbar form { display: flex; gap: 8px; margin: 0 0 0 auto; }
-    .toolbar input[type=text] {
-        padding: 9px 14px; border: 1px solid #dfe3e8; border-radius: 10px; font-family: inherit;
-        font-size: 14px; min-width: 240px;
+    .tab.active { background: linear-gradient(135deg, #D4AF37, #B8960F); border-color: #D4AF37; }
+    .tab.flag { background: #fff4ec; border-color: #f3c9a6; color: #8a4b1a; }
+    .tab.flag.active { background: #e8873a; border-color: #e8873a; color: #fff; }
+    .toolbar .spacer { margin-right: auto; }
+    .toolbar form { display: flex; gap: 7px; align-items: center; }
+    .toolbar input[type=text], .toolbar select {
+        padding: 8px 12px; border: 1px solid #dfe3e8; border-radius: 9px; font-family: inherit;
+        font-size: 13px;
     }
+    .toolbar input[type=text] { min-width: 210px; }
     .toolbar button {
-        padding: 9px 20px; border: none; border-radius: 10px; background: #1A1A2E; color: #fff;
-        font-weight: 600; font-family: inherit; cursor: pointer;
+        padding: 8px 16px; border: none; border-radius: 9px; background: #1A1A2E; color: #fff;
+        font-weight: 600; font-family: inherit; cursor: pointer; font-size: 13px;
     }
 
-    .req-card {
-        background: #fff; border: 1px solid #e8eaed; border-radius: 16px; padding: 20px 24px;
-        margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,.04);
-        border-right: 5px solid #D4AF37;
-    }
-    .req-card.status-paid { border-right-color: #28a745; opacity: .85; }
-    .req-card.status-rejected { border-right-color: #dc3545; opacity: .85; }
-    .req-card.status-approved { border-right-color: #17a2b8; }
-    .req-card.status-needs_correction { border-right-color: #e8873a; }
-    .req-card.status-cancelled { border-right-color: #adb5bd; opacity: .85; }
+    .result-line { font-size: 13px; color: #6c757d; margin: 0 4px 10px; }
+    .result-line strong { color: #1A1A2E; }
 
-    .req-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; }
-    .req-amount { font-size: 25px; font-weight: 800; color: #1A1A2E; }
-    .req-amount small { font-size: 13px; color: #6c757d; font-weight: 400; }
+    /* ===== نوار اقدام گروهی ===== */
+    .bulkbar {
+        position: sticky; top: 0; z-index: 20;
+        background: #1A1A2E; color: #fff; border-radius: 12px;
+        padding: 12px 16px; margin-bottom: 10px;
+        display: flex; gap: 9px; align-items: center; flex-wrap: wrap;
+    }
+    .bulkbar[hidden] { display: none; }
+    .bulkbar .count { font-weight: 800; color: #D4AF37; white-space: nowrap; }
+    .bulkbar input[type=text] {
+        flex: 1; min-width: 190px; padding: 8px 12px; border: 1px solid #3a3a52;
+        border-radius: 9px; background: #2a2a3e; color: #fff; font-family: inherit; font-size: 13px;
+    }
+    .bulkbar input::placeholder { color: #8a8a9a; }
+    .bulk-btn {
+        padding: 8px 16px; border: none; border-radius: 9px; font-weight: 700; font-size: 13px;
+        font-family: inherit; cursor: pointer; color: #fff; white-space: nowrap;
+    }
+    .bulk-btn.approve { background: #17a2b8; }
+    .bulk-btn.correct { background: #e8873a; }
+    .bulk-btn.reject { background: #dc3545; }
+    .bulk-btn.clear { background: transparent; border: 1px solid #4a4a62; color: #b8b8c8; }
+
+    /* ===== جدول ===== */
+    .table-wrap {
+        background: #fff; border: 1px solid #e8eaed; border-radius: 13px; overflow-x: auto;
+    }
+    table.wd { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    table.wd thead th {
+        background: #fafbfc; padding: 11px 12px; text-align: right; font-weight: 700;
+        color: #1A1A2E; font-size: 12.5px; border-bottom: 2px solid #D4AF37; white-space: nowrap;
+    }
+    table.wd tbody td { padding: 11px 12px; border-bottom: 1px solid #f1f3f5; vertical-align: middle; }
+    table.wd tbody tr:hover { background: #fcfbf7; }
+    table.wd tbody tr.sel { background: #fff8e6; }
+    .col-chk { width: 34px; }
+    .ltr { direction: ltr; text-align: left; font-family: monospace; font-size: 12.5px; }
+    .who { font-weight: 700; color: #1A1A2E; }
+    .who small { display: block; font-weight: 400; color: #6c757d; direction: ltr; text-align: right; font-size: 12px; }
+    .amt { font-weight: 800; color: #1A1A2E; white-space: nowrap; }
+
     .badge {
-        display: inline-flex; align-items: center; gap: 5px; padding: 5px 15px; border-radius: 50px;
-        font-size: 12.5px; font-weight: 700;
+        display: inline-block; padding: 3px 11px; border-radius: 50px;
+        font-size: 11.5px; font-weight: 700; white-space: nowrap;
     }
     .badge.pending { background: #fff3cd; color: #856404; }
     .badge.approved { background: #cce5ff; color: #004085; }
@@ -101,30 +146,42 @@
     .badge.needs_correction { background: #ffe0cc; color: #8a4b1a; }
     .badge.cancelled { background: #e9ecef; color: #495057; }
 
-    .req-grid {
-        display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 10px 22px; margin: 16px 0 0; font-size: 14px;
+    .vtag { font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+    .vtag.ok { color: #1e7e34; }
+    .vtag.bad { color: #c0392b; }
+    .vtag.unk { color: #8a6d1a; }
+
+    .rowbtn {
+        background: #fff; border: 1px solid #e2e6ea; border-radius: 8px; padding: 5px 10px;
+        font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; color: #1A1A2E;
     }
-    .req-grid .k { color: #6c757d; font-size: 12.5px; }
-    .req-grid .v { color: #1A1A2E; font-weight: 600; }
-    .req-grid .v.ltr { direction: ltr; text-align: left; letter-spacing: .5px; font-family: monospace; font-size: 13.5px; }
+    .rowbtn:hover { border-color: #D4AF37; }
 
-    .name-check {
-        margin-top: 14px; background: #fff8e6; border: 1px solid #f0dca8;
-        border-radius: 10px; padding: 10px 15px; font-size: 13.5px; color: #6b5400; line-height: 1.9;
+    /* ===== ردیف جزئیات ===== */
+    tr.detail > td { background: #fbfcfd; padding: 0; border-bottom: 2px solid #eef1f4; }
+    tr.detail[hidden] { display: none; }
+    .detail-inner { padding: 16px 18px; }
+    .detail-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 9px 20px; margin-bottom: 12px;
     }
+    .detail-grid .k { color: #6c757d; font-size: 12px; }
+    .detail-grid .v { color: #1A1A2E; font-weight: 600; font-size: 13.5px; }
+    .check-line {
+        border-radius: 9px; padding: 9px 13px; font-size: 12.5px; line-height: 1.85; margin-bottom: 12px;
+    }
+    .check-line.match { background: #eaf7ee; border: 1px solid #bfe3c9; color: #1e5c30; }
+    .check-line.mismatch { background: #fdeceb; border: 1px solid #f5b7b1; color: #922b21; font-weight: 600; }
+    .check-line.unknown { background: #fff8e6; border: 1px solid #f0dca8; color: #6b5400; }
 
-    .name-check.match { background: #eaf7ee; border-color: #bfe3c9; color: #1e5c30; }
-    .name-check.mismatch { background: #fdeceb; border-color: #f5b7b1; color: #922b21; font-weight: 600; }
-
-    .actions { margin-top: 16px; padding-top: 16px; border-top: 1px dashed #e8eaed; }
-    .actions form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
-    .actions input[type=text] {
-        padding: 8px 13px; border: 1px solid #dfe3e8; border-radius: 9px; font-family: inherit;
-        font-size: 13.5px; flex: 1; min-width: 190px;
+    .row-actions { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
+    .row-actions form { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .row-actions input[type=text] {
+        padding: 7px 11px; border: 1px solid #dfe3e8; border-radius: 8px; font-family: inherit;
+        font-size: 12.5px; min-width: 175px;
     }
     .btn-act {
-        padding: 8px 20px; border: none; border-radius: 9px; font-weight: 700; font-size: 13.5px;
+        padding: 7px 15px; border: none; border-radius: 8px; font-weight: 700; font-size: 12.5px;
         font-family: inherit; cursor: pointer; color: #fff; white-space: nowrap;
     }
     .btn-act.approve { background: #17a2b8; }
@@ -132,20 +189,21 @@
     .btn-act.reject { background: #dc3545; }
     .btn-act.correct { background: #e8873a; }
 
-    .empty { text-align: center; padding: 60px 20px; color: #6c757d; }
-    .empty i { font-size: 52px; color: #e8eaed; display: block; margin-bottom: 14px; }
+    .empty { text-align: center; padding: 50px 20px; color: #6c757d; }
+    .empty i { font-size: 46px; color: #e8eaed; display: block; margin-bottom: 12px; }
 
-    .pager { display: flex; gap: 6px; justify-content: center; margin-top: 22px; flex-wrap: wrap; }
+    .pager { display: flex; gap: 6px; justify-content: center; margin-top: 16px; flex-wrap: wrap; align-items: center; }
     .pager a, .pager .current {
-        min-width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;
+        min-width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
         border-radius: 8px; border: 1px solid #e8eaed; background: #fff; color: #1A1A2E;
-        text-decoration: none; font-size: 13.5px; padding: 0 10px;
+        text-decoration: none; font-size: 13px; padding: 0 10px;
     }
     .pager .current { background: linear-gradient(135deg, #D4AF37, #B8960F); border-color: #D4AF37; font-weight: 700; }
 
-    @media (max-width: 768px) {
-        .toolbar form { margin-right: 0; width: 100%; }
+    @media (max-width: 900px) {
+        .hide-sm { display: none; }
         .toolbar input[type=text] { min-width: 0; flex: 1; }
+        .toolbar .spacer { display: none; }
     }
 </style>
 {% endblock %}
@@ -158,8 +216,7 @@
             <h2><i class="fas fa-money-bill-transfer"></i> درخواست‌های برداشت</h2>
             <p>تأیید و ثبت واریزِ پولی که کاربران از کیف پولشان درخواست کرده‌اند</p>
         </div>
-        <a href="{% url 'accounts:admin_site_settings' %}" class="tab"
-           style="background:#fff; padding:10px 22px; border-radius:10px;">
+        <a href="{% url 'accounts:admin_site_settings' %}" class="header-link">
             <i class="fas fa-sliders-h"></i> تنظیمات برداشت
         </a>
     </div>
@@ -172,65 +229,62 @@
     </div>
     {% endif %}
 
+    {% comment %}
+        شمارنده‌ها عمداً لینک‌اند: با زیاد شدن صف، مهم‌ترین کارِ اپراتور رفتن
+        سراغ همان دسته‌ای است که کار می‌برد، نه خواندن یک عدد.
+    {% endcomment %}
     <div class="kpi-row">
-        <div class="kpi-card {% if counts.pending %}warn{% endif %}">
+        <a class="kpi-card {% if counts.pending %}warn{% endif %}" href="?status=pending">
             <div class="num">{{ counts.pending }}</div>
             <div class="lbl">در انتظار تأیید</div>
-        </div>
-        <div class="kpi-card">
+        </a>
+        <a class="kpi-card {% if unverified_open %}act{% endif %}" href="?status=open&amp;unverified=1">
+            <div class="num">{{ unverified_open }}</div>
+            <div class="lbl">بدون استعلام بانکی</div>
+        </a>
+        <a class="kpi-card" href="?status=needs_correction">
             <div class="num">{{ counts.needs_correction }}</div>
-            <div class="lbl">منتظر اصلاح توسط کاربر</div>
-        </div>
-        <div class="kpi-card">
+            <div class="lbl">منتظر اصلاح کاربر</div>
+        </a>
+        <a class="kpi-card" href="?status=approved">
             <div class="num">{{ counts.approved }}</div>
             <div class="lbl">در انتظار پرداخت</div>
-        </div>
-        <div class="kpi-card">
+        </a>
+        <a class="kpi-card" href="?status=open">
             <div class="num">{{ open_total|rial_display }}</div>
             <div class="lbl">مبلغ در جریان (ریال)</div>
-        </div>
-        <div class="kpi-card">
+        </a>
+        <a class="kpi-card" href="?status=paid">
             <div class="num">{{ paid_total|rial_display }}</div>
-            <div class="lbl">مجموع واریزشده تا امروز (ریال)</div>
-        </div>
+            <div class="lbl">پرداخت‌شده تا امروز (ریال)</div>
+        </a>
     </div>
 
-    {% comment %}
-        ===== تحویل به خزانه‌داری و برگشتِ نتیجه =====
-        بدون این دو، خزانه‌دار باید شبا را از روی صفحه دستی در اینترنت‌بانک
-        تایپ کند -- برای ده‌ها درخواست نشدنی است و تایپ دستی شبا یعنی ریسک
-        واریز به حساب اشتباه.
-    {% endcomment %}
     <div class="finance-box">
-        <div class="finance-col">
+        <div>
             <div class="finance-title"><i class="fas fa-file-arrow-down"></i> گرفتن فایل پرداخت</div>
             <p class="finance-hint">
-                فایل شامل شبا، مبلغ و نام صاحب حساب است و ستون آخرش
-                («شماره پیگیری واریز») خالی می‌ماند تا خزانه‌دار پرش کند.
+                شبا، مبلغ و نام صاحب حساب؛ ستون «شماره پیگیری واریز» خالی می‌ماند تا خزانه‌دار پرش کند.
             </p>
             <a class="btn-file" href="{% url 'wallet:admin_withdrawal_export' %}?status=approved">
-                <i class="fas fa-file-excel"></i> اکسل — در انتظار واریز
+                <i class="fas fa-file-excel"></i> اکسل — در انتظار پرداخت
             </a>
             <a class="btn-file ghost" href="{% url 'wallet:admin_withdrawal_export' %}?status=approved&amp;format=csv">
                 <i class="fas fa-file-csv"></i> CSV
             </a>
-            <a class="btn-file ghost" href="{% url 'wallet:admin_withdrawal_export' %}?status=open">
-                همه‌ی در جریان
-            </a>
         </div>
-        <div class="finance-col">
+        <div>
             <div class="finance-title"><i class="fas fa-file-arrow-up"></i> ثبت گروهی واریز</div>
             <p class="finance-hint">
-                همان فایل را با ستون «شماره پیگیری واریز» پرشده برگردانید.
-                سطرهای بدون شماره پیگیری نادیده گرفته می‌شوند و اگر مبلغ فایل با
-                درخواست یکی نباشد، آن سطر ثبت نمی‌شود.
+                همان فایل را با ستون شماره پیگیری پرشده برگردانید. سطرهای خالی نادیده گرفته می‌شوند و
+                اگر مبلغ فایل با درخواست یکی نباشد آن سطر ثبت نمی‌شود.
             </p>
             <form method="post" action="{% url 'wallet:admin_withdrawal_import' %}"
                   enctype="multipart/form-data" class="upload-form">
                 {% csrf_token %}
                 <input type="file" name="file" accept=".xlsx,.csv" required>
                 <button type="submit" class="btn-file"
-                        onclick="return confirm('واریزهای داخل این فایل ثبت شود؟ این کار یعنی پول واقعاً به حساب کاربران رفته است.');">
+                        onclick="return confirm('واریزهای داخل این فایل ثبت شود؟');">
                     <i class="fas fa-check-double"></i> ثبت واریزها
                 </button>
             </form>
@@ -238,185 +292,294 @@
     </div>
 
     <div class="toolbar">
-        <a class="tab {% if status == 'open' %}active{% endif %}" href="?status=open">در جریان</a>
+        <a class="tab {% if status == 'open' and not unverified %}active{% endif %}" href="?status=open">در جریان</a>
         <a class="tab {% if status == 'pending' %}active{% endif %}" href="?status=pending">در انتظار تأیید</a>
+        <a class="tab flag {% if unverified %}active{% endif %}" href="?status=open&amp;unverified=1">
+            <i class="fas fa-triangle-exclamation"></i> بدون استعلام
+        </a>
         <a class="tab {% if status == 'needs_correction' %}active{% endif %}" href="?status=needs_correction">نیاز به اصلاح</a>
         <a class="tab {% if status == 'approved' %}active{% endif %}" href="?status=approved">در انتظار پرداخت</a>
         <a class="tab {% if status == 'paid' %}active{% endif %}" href="?status=paid">پرداخت شد</a>
-        <a class="tab {% if status == 'rejected' %}active{% endif %}" href="?status=rejected">رد شده</a>
         <a class="tab {% if status == 'all' %}active{% endif %}" href="?status=all">همه</a>
+        <span class="spacer"></span>
         <form method="get">
             <input type="hidden" name="status" value="{{ status }}">
-            <input type="text" name="q" value="{{ q }}" placeholder="نام کاربری، موبایل، کد ملی، شبا…">
-            <button type="submit"><i class="fas fa-search"></i> جستجو</button>
+            {% if unverified %}<input type="hidden" name="unverified" value="1">{% endif %}
+            <select name="sort" onchange="this.form.submit()">
+                <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>قدیمی‌ترین اول</option>
+                <option value="newest" {% if sort == 'newest' %}selected{% endif %}>تازه‌ترین اول</option>
+                <option value="amount" {% if sort == 'amount' %}selected{% endif %}>بیشترین مبلغ</option>
+                <option value="amount_asc" {% if sort == 'amount_asc' %}selected{% endif %}>کمترین مبلغ</option>
+            </select>
+            <input type="text" name="q" value="{{ q }}" placeholder="نام، موبایل، کد ملی، شبا…">
+            <button type="submit"><i class="fas fa-search"></i></button>
         </form>
     </div>
 
-    {% for r in requests %}
-    <div class="req-card status-{{ r.status }}">
-        <div class="req-top">
-            <div>
-                <div class="req-amount">{{ r.amount|rial_display }} <small>ریال</small></div>
-                <div style="color:#6c757d; font-size:13px; margin-top:3px;">
-                    درخواست #{{ r.id }} — {{ r.created_at|date:"Y/m/d - H:i" }}
-                </div>
-            </div>
-            <span class="badge {{ r.status }}">{{ r.get_status_display }}</span>
-        </div>
-
-        <div class="req-grid">
-            <div>
-                <div class="k">کاربر</div>
-                <div class="v">
-                    <a href="{% url 'accounts:admin_user_detail' r.user.id %}"
-                       style="color:#1A1A2E; text-decoration:none; border-bottom:1px dotted #D4AF37;">
-                        {{ r.user.get_full_name|default:r.user.username }}
-                    </a>
-                </div>
-            </div>
-            <div>
-                <div class="k">موبایل</div>
-                <div class="v ltr">{{ r.user.phone_number|default:"—" }}</div>
-            </div>
-            <div>
-                <div class="k">کد ملی</div>
-                <div class="v ltr">{{ r.user.national_code|default:"—" }}</div>
-            </div>
-            <div>
-                <div class="k">شماره شبا</div>
-                <div class="v ltr">{{ r.iban_display }}</div>
-            </div>
-            <div>
-                <div class="k">نام صاحب حساب (اعلام کاربر)</div>
-                <div class="v">{{ r.account_holder }}</div>
-            </div>
-            {% if r.bank_reference %}
-            <div>
-                <div class="k">شماره پیگیری واریز</div>
-                <div class="v ltr">{{ r.bank_reference }}</div>
-            </div>
-            {% endif %}
-            {% if r.processed_by %}
-            <div>
-                <div class="k">رسیدگی توسط</div>
-                <div class="v">{{ r.processed_by.username }} — {{ r.processed_at|date:"Y/m/d H:i" }}</div>
-            </div>
-            {% endif %}
-        </div>
-
-        {% if r.admin_note %}
-        <div style="margin-top:12px; font-size:13.5px; color:#6c757d;">
-            <i class="fas fa-comment-dots"></i> یادداشت: {{ r.admin_note }}
-        </div>
-        {% endif %}
-
-        {% comment %}
-            اگر استعلام بانک جواب داده باشد، نامِ واقعیِ صاحب حساب اینجاست و
-            مقایسه دیگر حدس نیست. اگر جواب نداده (توکن/سرویس/موجودی)، همان
-            هشدار قدیمی می‌ماند تا اپراتور دستی مقایسه کند -- سکوت در این
-            نقطه یعنی واریز به حساب اشتباه.
-        {% endcomment %}
-        {% if r.status == 'pending' or r.status == 'approved' or r.status == 'needs_correction' %}
-            {% if r.iban_verified %}
-            <div class="name-check match">
-                <i class="fas fa-circle-check"></i>
-                <strong>شبا توسط بانک تأیید شد:</strong>
-                {% if r.iban_owner_name %}
-                    حساب به نام «{{ r.iban_owner_name }}» است و با کاربر می‌خواند.
-                {% else %}
-                    این حساب متعلق به دارنده‌ی همین کد ملی است (تطابق قطعی، نه شباهت نام).
-                {% endif %}
-            </div>
-            {% elif r.iban_verified is False %}
-            <div class="name-check mismatch">
-                <i class="fas fa-triangle-exclamation"></i>
-                <strong>بانک نام دیگری برگرداند:</strong>
-                این شبا به نام «{{ r.iban_owner_name|default:"—" }}» است، نه
-                «{{ r.user.get_full_name|default:r.user.username }}». واریز نکنید مگر مطمئن باشید
-                فقط املای نام فرق دارد.
-            </div>
-            {% else %}
-            <div class="name-check">
-                <i class="fas fa-user-check"></i>
-                <strong>استعلام بانکی انجام نشد — دستی مقایسه کنید:</strong>
-                نام کاربر در سامانه «{{ r.user.get_full_name|default:"—" }}» /
-                نام اعلامی صاحب حساب «{{ r.account_holder }}».
-                هنگام واریز، نامی که بانک نشان می‌دهد باید با اینها بخواند.
-            </div>
-            {% endif %}
-        {% endif %}
-
-        {% if r.status == 'pending' or r.status == 'approved' or r.status == 'needs_correction' %}
-        <div class="actions">
-            {% if r.status == 'pending' %}
-            <form method="post" action="{% url 'wallet:admin_withdrawal_action' r.id %}">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="approve">
-                <input type="hidden" name="back_query" value="status={{ status }}&q={{ q }}&page={{ requests.number }}">
-                <input type="text" name="note" placeholder="یادداشت (اختیاری)">
-                <button type="submit" class="btn-act approve"
-                        onclick="return confirm('این درخواست تأیید شود و به صف واریز برود؟');">
-                    <i class="fas fa-check"></i> تأیید
-                </button>
-            </form>
-            {% endif %}
-
-            <form method="post" action="{% url 'wallet:admin_withdrawal_action' r.id %}">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="paid">
-                <input type="hidden" name="back_query" value="status={{ status }}&q={{ q }}&page={{ requests.number }}">
-                <input type="text" name="bank_reference" placeholder="شماره پیگیری واریز بانکی (الزامی)" required>
-                <button type="submit" class="btn-act paid"
-                        onclick="return confirm('واریز این درخواست ثبت شود؟ این کار به معنای آن است که پول واقعاً به حساب کاربر واریز شده است.');">
-                    <i class="fas fa-money-check-dollar"></i> ثبت واریز
-                </button>
-            </form>
-
-            <form method="post" action="{% url 'wallet:admin_withdrawal_action' r.id %}">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="correct">
-                <input type="hidden" name="back_query" value="status={{ status }}&q={{ q }}&page={{ requests.number }}">
-                <input type="text" name="note" placeholder="چه چیزی باید اصلاح شود؟ (الزامی)" required>
-                <button type="submit" class="btn-act correct"
-                        onclick="return confirm('این درخواست برای اصلاح به کاربر برگردد؟ مبلغ همچنان نگه داشته می‌شود.');">
-                    <i class="fas fa-pen-to-square"></i> اصلاح اطلاعات
-                </button>
-            </form>
-
-            <form method="post" action="{% url 'wallet:admin_withdrawal_action' r.id %}">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="reject">
-                <input type="hidden" name="back_query" value="status={{ status }}&q={{ q }}&page={{ requests.number }}">
-                <input type="text" name="note" placeholder="دلیل رد (الزامی — به کاربر نمایش داده می‌شود)" required>
-                <button type="submit" class="btn-act reject"
-                        onclick="return confirm('این درخواست رد شود؟ مبلغ به کیف پول کاربر برمی‌گردد.');">
-                    <i class="fas fa-xmark"></i> رد درخواست
-                </button>
-            </form>
-        </div>
-        {% endif %}
+    <div class="result-line">
+        <strong>{{ filtered_count }}</strong> درخواست در این نما
+        {% if filtered_total %}— مجموع <strong>{{ filtered_total|rial_display }}</strong> ریال{% endif %}
+        {% if q %}— جستجوی «{{ q }}»{% endif %}
     </div>
-    {% empty %}
-    <div class="empty">
-        <i class="fas fa-inbox"></i>
-        <h4 style="color:#1A1A2E; font-weight:600;">درخواستی در این فهرست نیست</h4>
-        <p>{% if q %}جستجوی «{{ q }}» نتیجه‌ای نداشت.{% else %}هیچ درخواست برداشتی با این وضعیت ثبت نشده است.{% endif %}</p>
-    </div>
-    {% endfor %}
+
+    {% comment %}
+        نوار اقدام گروهی: با ده‌ها درخواست، باز کردن تک‌تک ردیف‌ها عملی نیست.
+        «ثبت واریز» عمداً اینجا نیست -- هر واریز شماره پیگیریِ خودش را دارد و
+        یک شماره برای همه، ردِ حسابرسی را خراب می‌کند. برای آن فایل هست.
+    {% endcomment %}
+    <form method="post" action="{% url 'wallet:admin_withdrawal_bulk' %}" id="bulkform">
+        {% csrf_token %}
+        <input type="hidden" name="back_query"
+               value="status={{ status }}&q={{ q }}&sort={{ sort }}&page={{ requests.number }}{% if unverified %}&unverified=1{% endif %}">
+
+        <div class="bulkbar" id="bulkbar" hidden>
+            <span class="count"><span id="bulkcount">0</span> انتخاب شده</span>
+            <input type="text" name="note" id="bulknote" placeholder="دلیل (برای «اصلاح» و «رد» الزامی است)">
+            <button type="submit" class="bulk-btn approve" name="action" value="approve"
+                    onclick="return confirm('درخواست‌های انتخاب‌شده تأیید و در انتظار پرداخت قرار بگیرند؟');">
+                <i class="fas fa-check"></i> تأیید
+            </button>
+            <button type="submit" class="bulk-btn correct" name="action" value="correct"
+                    onclick="return bulkNeedsNote('برای اصلاح به کاربران برگردد؟ مبلغ نگه داشته می‌شود.');">
+                <i class="fas fa-pen-to-square"></i> اصلاح اطلاعات
+            </button>
+            <button type="submit" class="bulk-btn reject" name="action" value="reject"
+                    onclick="return bulkNeedsNote('رد شوند؟ مبلغ به کیف پول کاربران برمی‌گردد.');">
+                <i class="fas fa-xmark"></i> رد
+            </button>
+            <button type="button" class="bulk-btn clear" onclick="clearSel()">لغو انتخاب</button>
+        </div>
+
+        <div class="table-wrap">
+        {% if requests %}
+            <table class="wd">
+                <thead>
+                <tr>
+                    <th class="col-chk"><input type="checkbox" id="chkall" title="انتخاب همه‌ی این صفحه"></th>
+                    <th>#</th>
+                    <th>کاربر</th>
+                    <th>مبلغ (ریال)</th>
+                    <th class="hide-sm">شماره شبا</th>
+                    <th>استعلام بانک</th>
+                    <th>وضعیت</th>
+                    <th class="hide-sm">تاریخ</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for r in requests %}
+                <tr id="row{{ r.id }}">
+                    <td class="col-chk">
+                        {% if r.status in 'pending needs_correction approved' %}
+                        <input type="checkbox" name="ids" value="{{ r.id }}" class="rowchk">
+                        {% endif %}
+                    </td>
+                    <td>{{ r.id }}</td>
+                    <td>
+                        <div class="who">
+                            {{ r.user.get_full_name|default:r.user.username }}
+                            <small>{{ r.user.phone_number|default:"—" }}</small>
+                        </div>
+                    </td>
+                    <td class="amt">{{ r.amount|rial_display }}</td>
+                    <td class="ltr hide-sm">{{ r.iban }}</td>
+                    <td>
+                        {% if r.iban_verified %}
+                            <span class="vtag ok"><i class="fas fa-circle-check"></i> تأیید شد</span>
+                        {% elif r.iban_verified is False %}
+                            <span class="vtag bad"><i class="fas fa-circle-xmark"></i> مغایرت</span>
+                        {% else %}
+                            <span class="vtag unk"><i class="fas fa-circle-question"></i> استعلام نشد</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge {{ r.status }}">{{ r.get_status_display }}</span></td>
+                    <td class="hide-sm" style="white-space:nowrap; color:#6c757d;">
+                        {{ r.created_at|date:"m/d H:i" }}
+                    </td>
+                    <td>
+                        <button type="button" class="rowbtn" onclick="toggleRow({{ r.id }})">
+                            جزئیات <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </td>
+                </tr>
+
+                <tr class="detail" id="detail{{ r.id }}" hidden>
+                    <td colspan="9">
+                        <div class="detail-inner">
+                            <div class="detail-grid">
+                                <div><div class="k">نام اعلامی صاحب حساب</div>
+                                     <div class="v">{{ r.account_holder }}</div></div>
+                                <div><div class="k">کد ملی</div>
+                                     <div class="v ltr">{{ r.national_code|default:r.user.national_code|default:"—" }}</div></div>
+                                <div><div class="k">شماره شبا</div>
+                                     <div class="v ltr">{{ r.iban_display }}</div></div>
+                                <div><div class="k">تاریخ ثبت</div>
+                                     <div class="v">{{ r.created_at|date:"Y/m/d - H:i" }}</div></div>
+                                {% if r.bank_reference %}
+                                <div><div class="k">شماره پیگیری واریز</div>
+                                     <div class="v ltr">{{ r.bank_reference }}</div></div>
+                                {% endif %}
+                                {% if r.processed_by %}
+                                <div><div class="k">رسیدگی توسط</div>
+                                     <div class="v">{{ r.processed_by.username }} — {{ r.processed_at|date:"Y/m/d H:i" }}</div></div>
+                                {% endif %}
+                            </div>
+
+                            {% if r.iban_verified %}
+                            <div class="check-line match">
+                                <i class="fas fa-circle-check"></i>
+                                {% if r.iban_owner_name %}
+                                    حساب به نام «{{ r.iban_owner_name }}» است و با کاربر می‌خواند.
+                                {% else %}
+                                    بانک تأیید کرد این حساب متعلق به دارنده‌ی همین کد ملی است (تطابق قطعی).
+                                {% endif %}
+                            </div>
+                            {% elif r.iban_verified is False %}
+                            <div class="check-line mismatch">
+                                <i class="fas fa-triangle-exclamation"></i>
+                                این شبا متعلق به کاربر نیست
+                                {% if r.iban_owner_name %}— به نام «{{ r.iban_owner_name }}» است{% endif %}.
+                                واریز نکنید مگر مطمئن باشید فقط املای نام فرق دارد.
+                            </div>
+                            {% else %}
+                            <div class="check-line unknown">
+                                <i class="fas fa-circle-question"></i>
+                                <strong>استعلام بانکی انجام نشد — دستی مقایسه کنید:</strong>
+                                نام کاربر «{{ r.user.get_full_name|default:"—" }}» /
+                                نام اعلامی «{{ r.account_holder }}».
+                                هنگام واریز، نامی که بانک نشان می‌دهد باید با اینها بخواند.
+                            </div>
+                            {% endif %}
+
+                            {% if r.admin_note %}
+                            <div style="font-size:12.5px; color:#6c757d; margin-bottom:12px;">
+                                <i class="fas fa-comment-dots"></i> یادداشت: {{ r.admin_note }}
+                            </div>
+                            {% endif %}
+
+                            {% if r.status == 'pending' or r.status == 'approved' or r.status == 'needs_correction' %}
+                            <div class="row-actions">
+                                {% if r.status == 'pending' or r.status == 'needs_correction' %}
+                                <form method="post" action="{% url 'wallet:admin_withdrawal_action' r.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="approve">
+                                    <input type="hidden" name="back_query" value="status={{ status }}&q={{ q }}&sort={{ sort }}&page={{ requests.number }}">
+                                    <button type="submit" class="btn-act approve"
+                                            onclick="return confirm('تأیید شود و در انتظار پرداخت قرار بگیرد؟');">
+                                        <i class="fas fa-check"></i> تأیید
+                                    </button>
+                                </form>
+                                {% endif %}
+
+                                <form method="post" action="{% url 'wallet:admin_withdrawal_action' r.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="paid">
+                                    <input type="hidden" name="back_query" value="status={{ status }}&q={{ q }}&sort={{ sort }}&page={{ requests.number }}">
+                                    <input type="text" name="bank_reference" placeholder="شماره پیگیری واریز" required>
+                                    <button type="submit" class="btn-act paid"
+                                            onclick="return confirm('واریز ثبت شود؟ یعنی پول واقعاً به حساب کاربر رفته است.');">
+                                        <i class="fas fa-money-check-dollar"></i> ثبت واریز
+                                    </button>
+                                </form>
+
+                                <form method="post" action="{% url 'wallet:admin_withdrawal_action' r.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="correct">
+                                    <input type="hidden" name="back_query" value="status={{ status }}&q={{ q }}&sort={{ sort }}&page={{ requests.number }}">
+                                    <input type="text" name="note" placeholder="چه چیزی اصلاح شود؟" required>
+                                    <button type="submit" class="btn-act correct"
+                                            onclick="return confirm('برای اصلاح به کاربر برگردد؟ مبلغ نگه داشته می‌شود.');">
+                                        <i class="fas fa-pen-to-square"></i> اصلاح
+                                    </button>
+                                </form>
+
+                                <form method="post" action="{% url 'wallet:admin_withdrawal_action' r.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="reject">
+                                    <input type="hidden" name="back_query" value="status={{ status }}&q={{ q }}&sort={{ sort }}&page={{ requests.number }}">
+                                    <input type="text" name="note" placeholder="دلیل رد (الزامی)" required>
+                                    <button type="submit" class="btn-act reject"
+                                            onclick="return confirm('رد شود؟ مبلغ به کیف پول کاربر برمی‌گردد.');">
+                                        <i class="fas fa-xmark"></i> رد
+                                    </button>
+                                </form>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty">
+                <i class="fas fa-inbox"></i>
+                <h4 style="color:#1A1A2E; font-weight:600;">درخواستی در این نما نیست</h4>
+                <p>{% if q %}جستجوی «{{ q }}» نتیجه‌ای نداشت.{% else %}همه‌چیز تعیین تکلیف شده است.{% endif %}</p>
+            </div>
+        {% endif %}
+        </div>
+    </form>
 
     {% if requests.has_other_pages %}
     <div class="pager">
         {% if requests.has_previous %}
-            <a href="?status={{ status }}&q={{ q }}&page={{ requests.previous_page_number }}">
+            <a href="?status={{ status }}&q={{ q }}&sort={{ sort }}{% if unverified %}&unverified=1{% endif %}&page={{ requests.previous_page_number }}">
                 <i class="fas fa-angle-right"></i></a>
         {% endif %}
         <span class="current">{{ requests.number }} از {{ requests.paginator.num_pages }}</span>
         {% if requests.has_next %}
-            <a href="?status={{ status }}&q={{ q }}&page={{ requests.next_page_number }}">
+            <a href="?status={{ status }}&q={{ q }}&sort={{ sort }}{% if unverified %}&unverified=1{% endif %}&page={{ requests.next_page_number }}">
                 <i class="fas fa-angle-left"></i></a>
         {% endif %}
     </div>
     {% endif %}
 
 </div>
+
+<script>
+    function boxes() { return Array.prototype.slice.call(document.querySelectorAll('.rowchk')); }
+
+    function refreshBulk() {
+        var picked = boxes().filter(function (b) { return b.checked; });
+        document.getElementById('bulkcount').textContent = picked.length;
+        document.getElementById('bulkbar').hidden = picked.length === 0;
+        boxes().forEach(function (b) {
+            var row = b.closest('tr');
+            if (row) { row.classList.toggle('sel', b.checked); }
+        });
+    }
+
+    function clearSel() {
+        boxes().forEach(function (b) { b.checked = false; });
+        var all = document.getElementById('chkall');
+        if (all) { all.checked = false; }
+        refreshBulk();
+    }
+
+    function bulkNeedsNote(message) {
+        if (!document.getElementById('bulknote').value.trim()) {
+            alert('برای این اقدام باید دلیل بنویسید؛ همان متن برای کاربران نمایش داده می‌شود.');
+            return false;
+        }
+        return confirm(message);
+    }
+
+    function toggleRow(id) {
+        var el = document.getElementById('detail' + id);
+        if (el) { el.hidden = !el.hidden; }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var all = document.getElementById('chkall');
+        if (all) {
+            all.addEventListener('change', function () {
+                boxes().forEach(function (b) { b.checked = all.checked; });
+                refreshBulk();
+            });
+        }
+        boxes().forEach(function (b) { b.addEventListener('change', refreshBulk); });
+        refreshBulk();
+    });
+</script>
 {% endblock %}

@@ -903,7 +903,7 @@ class IbanInquiryTests(TestCase):
             self._submit()
         self.client.force_login(self.admin)
         body = self.client.get('/wallet/admin/withdrawals/?status=all').content.decode()
-        self.assertIn('بانک نام دیگری برگرداند', body)
+        self.assertIn('این شبا متعلق به کاربر نیست', body)
         self.assertIn('مهدی احمدی', body)
 
     def test_admin_sees_that_no_inquiry_happened(self):
@@ -912,6 +912,136 @@ class IbanInquiryTests(TestCase):
         self.client.force_login(self.admin)
         body = self.client.get('/wallet/admin/withdrawals/?status=all').content.decode()
         self.assertIn('استعلام بانکی انجام نشد', body)
+
+
+class BulkActionTests(TestCase):
+    """اقدام گروهی -- چیزی که با بزرگ شدن صف لازم می‌شود و اگر غلط باشد
+    روی چند نفر هم‌زمان اثر می‌گذارد."""
+
+    def setUp(self):
+        from accounts.models import SiteSettings
+        self.admin = User.objects.create_user(username='adm9', password='pw12345',
+                                              is_staff=True, is_superuser=True)
+        s = SiteSettings.get_solo()
+        s.withdrawal_enabled = True
+        s.block_foreign_ips = False
+        s.save()
+        self.reqs = []
+        for i in range(3):
+            u = User.objects.create_user(username=f'bu{i}', password='pw',
+                                         phone_number=f'0912000000{i}')
+            Wallet.objects.get(user=u).add_balance(
+                amount=5_000_000, reference_id=f'compensate-64-b{i}')
+            self.reqs.append(WithdrawalRequest.create_for(
+                u, 2_000_000, VALID_IBAN, 'صاحب حساب'))
+        self.client.force_login(self.admin)
+
+    def _bulk(self, action, ids=None, note=''):
+        return self.client.post('/wallet/admin/withdrawals/bulk/', {
+            'action': action, 'note': note,
+            'ids': [str(r.pk) for r in (ids if ids is not None else self.reqs)]})
+
+    def test_bulk_approve(self):
+        self._bulk('approve')
+        for r in self.reqs:
+            r.refresh_from_db()
+            self.assertEqual(r.status, 'approved')
+
+    def test_bulk_correction_keeps_the_money_held(self):
+        self._bulk('correct', note='شبا را اصلاح کنید')
+        for r in self.reqs:
+            r.refresh_from_db()
+            self.assertEqual(r.status, 'needs_correction')
+            self.assertEqual(r.admin_note, 'شبا را اصلاح کنید')
+            self.assertEqual(Wallet.objects.get(user=r.user).balance, 3_000_000)
+
+    def test_bulk_reject_returns_every_amount(self):
+        self._bulk('reject', note='اطلاعات نامعتبر')
+        for r in self.reqs:
+            r.refresh_from_db()
+            self.assertEqual(r.status, 'rejected')
+            self.assertEqual(Wallet.objects.get(user=r.user).balance, 5_000_000)
+
+    def test_correction_and_reject_require_a_reason(self):
+        self._bulk('correct')
+        self._bulk('reject')
+        for r in self.reqs:
+            r.refresh_from_db()
+            self.assertEqual(r.status, 'pending')
+
+    def test_nothing_selected_changes_nothing(self):
+        self._bulk('approve', ids=[])
+        for r in self.reqs:
+            r.refresh_from_db()
+            self.assertEqual(r.status, 'pending')
+
+    def test_already_settled_rows_are_skipped_not_reprocessed(self):
+        self.reqs[0].reject(self.admin, reason='قبلاً رد شد')
+        self._bulk('reject', note='دسته‌جمعی')
+        self.reqs[0].refresh_from_db()
+        self.assertEqual(self.reqs[0].admin_note, 'قبلاً رد شد', 'روی ردیفِ بسته دوباره اجرا شد')
+        self.assertEqual(Wallet.objects.get(user=self.reqs[0].user).balance, 5_000_000)
+
+    def test_unknown_action_does_nothing(self):
+        self._bulk('delete_everything', note='x')
+        for r in self.reqs:
+            r.refresh_from_db()
+            self.assertEqual(r.status, 'pending')
+
+    def test_non_staff_cannot_run_bulk_actions(self):
+        self.client.force_login(self.reqs[0].user)
+        self._bulk('approve')
+        self.reqs[0].refresh_from_db()
+        self.assertEqual(self.reqs[0].status, 'pending')
+
+    def test_get_request_is_ignored(self):
+        self.client.get('/wallet/admin/withdrawals/bulk/')
+        for r in self.reqs:
+            r.refresh_from_db()
+            self.assertEqual(r.status, 'pending')
+
+
+class AdminListViewTests(TestCase):
+    """فیلتر، مرتب‌سازی و شمارنده‌های صفحه‌ی صف."""
+
+    def setUp(self):
+        from accounts.models import SiteSettings
+        self.admin = User.objects.create_user(username='adm10', password='pw12345',
+                                              is_staff=True, is_superuser=True)
+        s = SiteSettings.get_solo()
+        s.block_foreign_ips = False
+        s.save()
+        self.small = self._make('sm', 1_000_000)
+        self.big = self._make('bg', 4_000_000)
+        self.client.force_login(self.admin)
+
+    def _make(self, name, amount):
+        u = User.objects.create_user(username=name, password='pw')
+        Wallet.objects.get(user=u).add_balance(
+            amount=5_000_000, reference_id=f'compensate-64-{name}')
+        return WithdrawalRequest.create_for(u, amount, VALID_IBAN, 'صاحب')
+
+    def test_sort_by_amount(self):
+        resp = self.client.get('/wallet/admin/withdrawals/?status=all&sort=amount')
+        ids = [r.id for r in resp.context['requests']]
+        self.assertEqual(ids[0], self.big.id)
+
+    def test_unverified_filter_shows_only_unchecked_rows(self):
+        self.big.iban_verified = True
+        self.big.save()
+        resp = self.client.get('/wallet/admin/withdrawals/?status=open&unverified=1')
+        ids = [r.id for r in resp.context['requests']]
+        self.assertIn(self.small.id, ids)
+        self.assertNotIn(self.big.id, ids)
+
+    def test_totals_follow_the_current_filter(self):
+        resp = self.client.get('/wallet/admin/withdrawals/?status=all')
+        self.assertEqual(resp.context['filtered_count'], 2)
+        self.assertEqual(resp.context['filtered_total'], 5_000_000)
+
+    def test_search_narrows_the_list(self):
+        resp = self.client.get('/wallet/admin/withdrawals/?status=all&q=bg')
+        self.assertEqual(resp.context['filtered_count'], 1)
 
 
 class PageRenderTests(TestCase):

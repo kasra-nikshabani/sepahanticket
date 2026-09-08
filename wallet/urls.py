@@ -15,6 +15,8 @@ urlpatterns = [
     path('admin/withdrawals/<int:request_id>/action/', views.admin_withdrawal_action,
          name='admin_withdrawal_action'),
     path('admin/wallet-credit/', views.admin_wallet_credit, name='admin_wallet_credit'),
+    path('admin/withdrawals/bulk/', views.admin_withdrawal_bulk,
+         name='admin_withdrawal_bulk'),
     path('admin/withdrawals/export/', views.admin_withdrawal_export,
          name='admin_withdrawal_export'),
     path('admin/withdrawals/import/', views.admin_withdrawal_import,

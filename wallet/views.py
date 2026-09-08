@@ -322,7 +322,23 @@ def admin_withdrawal_list(request):
         status='paid'
     ).aggregate(s=Sum('amount'))['s'] or 0
 
-    paginator = Paginator(qs, 50)
+    # مرتب‌سازی -- با زیاد شدن صف، «بزرگ‌ترین مبلغ» و «قدیمی‌ترین» دو سؤال
+    # همیشگیِ اپراتورند.
+    SORTS = {
+        'oldest': 'created_at', 'newest': '-created_at',
+        'amount': '-amount', 'amount_asc': 'amount',
+    }
+    sort = request.GET.get('sort') or ('oldest' if status == 'open' else 'newest')
+    qs = qs.order_by(SORTS.get(sort, 'created_at'))
+
+    # ===== فقط آن‌هایی که واقعاً کار می‌برند =====
+    # با تأیید خودکارِ استعلام، بیشترِ درخواست‌ها بدون دخالت آدم رد می‌شوند.
+    # این فیلتر همان‌هایی را جدا می‌کند که ماشین نتوانسته تصمیم بگیرد.
+    if request.GET.get('unverified') == '1':
+        qs = qs.filter(iban_verified__isnull=True)
+
+    page_size = 50
+    paginator = Paginator(qs, page_size)
     try:
         page = paginator.page(request.GET.get('page', 1))
     except PageNotAnInteger:
@@ -334,11 +350,69 @@ def admin_withdrawal_list(request):
         'requests': page,
         'status': status,
         'q': q,
+        'sort': sort,
+        'unverified': request.GET.get('unverified') == '1',
         'counts': counts,
         'open_total': open_total,
         'paid_total': paid_total,
+        'filtered_count': paginator.count,
+        'filtered_total': qs.aggregate(s=Sum('amount'))['s'] or 0,
+        'unverified_open': WithdrawalRequest.objects.filter(
+            status__in=WithdrawalRequest.OPEN_STATUSES,
+            iban_verified__isnull=True).count(),
         'withdrawal_enabled': is_withdrawal_enabled(),
     })
+
+
+@staff_member_required
+def admin_withdrawal_bulk(request):
+    """اجرای یک اقدام روی چند درخواست با هم.
+
+    وقتی صف بزرگ می‌شود، باز کردن تک‌تک کارت‌ها عملی نیست. عمداً «ثبت واریز»
+    در این‌جا نیست: هر واریز شماره پیگیریِ خودش را دارد و ثبت گروهی‌اش یعنی
+    نوشتن یک شماره برای همه -- که رد حسابرسی را خراب می‌کند. برای آن، فایل
+    خزانه‌داری هست.
+    """
+    if request.method != 'POST':
+        return redirect('wallet:admin_withdrawal_list')
+
+    ids = request.POST.getlist('ids')
+    action = request.POST.get('action')
+    note = (request.POST.get('note') or '').strip()
+    back = (request.POST.get('back_query') or '').lstrip('?')
+    url = reverse('wallet:admin_withdrawal_list')
+    target = f'{url}?{back}' if back else url
+
+    if not ids:
+        messages.error(request, 'هیچ درخواستی انتخاب نشده است.')
+        return redirect(target)
+    if action in ('correct', 'reject') and not note:
+        messages.error(request, 'برای این اقدام، نوشتن دلیل الزامی است '
+                                '(همان متن برای همه‌ی انتخاب‌شده‌ها ثبت می‌شود).')
+        return redirect(target)
+
+    done = 0
+    skipped = []
+    for wr in WithdrawalRequest.objects.filter(pk__in=ids):
+        if action == 'approve':
+            ok, err = wr.approve(request.user, note=note)
+        elif action == 'correct':
+            ok, err = wr.request_correction(request.user, reason=note)
+        elif action == 'reject':
+            ok, err = wr.reject(request.user, reason=note)
+        else:
+            messages.error(request, 'اقدام نامعتبر است.')
+            return redirect(target)
+        if ok:
+            done += 1
+        else:
+            skipped.append(f'#{wr.pk}: {err}')
+
+    if done:
+        messages.success(request, f'{done} درخواست پردازش شد.')
+    if skipped:
+        messages.warning(request, 'انجام نشد — ' + ' | '.join(skipped[:8]))
+    return redirect(target)
 
 
 @staff_member_required
