@@ -423,20 +423,79 @@
 
         .compass { fill: #545a6b; font-size: 15px; font-weight: 700; text-anchor: middle; }
 
-        .wedge path { stroke: #0b0c14; stroke-width: 2; transition: filter .18s, opacity .18s; }
+        .wedge {
+            transition: transform .22s cubic-bezier(.34, 1.4, .5, 1), filter .2s;
+            transform-origin: 500px 340px;
+            animation: wedgeIn .5s cubic-bezier(.2, .9, .3, 1) both;
+            animation-delay: var(--d, 0ms);
+        }
+        @keyframes wedgeIn {
+            from { opacity: 0; transform: scale(.9); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+        .wedge path { stroke: #0b0c14; stroke-width: 2; }
+        .wedge .gloss { pointer-events: none; stroke: none; }
         .wlabel {
             font-size: 17px; font-weight: 800; fill: #12131c; pointer-events: none;
             text-anchor: middle; dominant-baseline: central;
+            paint-order: stroke; stroke: rgba(255,255,255,.35); stroke-width: 2.5px;
         }
+
         .wedge.pickable { cursor: pointer; }
-        .wedge.pickable:hover path,
-        .wedge.pickable:focus path { filter: brightness(1.25); outline: none; }
+        /* بیرون‌آمدنِ شعاعی: جهتش برای هر قاچ فرق دارد و از سمت سرور می‌آید،
+           چون CSS نمی‌داند این تکه کجای دایره است. */
+        .wedge.pickable:hover,
+        .wedge.pickable:focus-visible {
+            transform: translate(var(--px), var(--py));
+            filter: url(#lift) brightness(1.18);
+            outline: none;
+        }
         .wedge.pickable:focus { outline: none; }
-        .wedge.picked path { filter: url(#pick) brightness(1.2); stroke: #fff; stroke-width: 3; }
-        .wedge.muted path { fill: #5b6270 !important; opacity: .3; }
-        .wedge.muted .wlabel { fill: #9aa0ad; opacity: .55; }
-        .wedge.full path { opacity: .42; }
-        .wedge.full .wlabel { opacity: .5; }
+        .wedge.picked {
+            transform: translate(var(--px), var(--py));
+            filter: url(#pick) brightness(1.22);
+        }
+        .wedge.picked path { stroke: #fff; stroke-width: 3.5; }
+        .wedge.muted { cursor: default; }
+        .wedge.muted path { fill: #4a5060 !important; opacity: .34; }
+        .wedge.muted .gloss { opacity: .25; }
+        .wedge.muted .wlabel { fill: #99a0ae; opacity: .5; stroke: none; }
+        .wedge.full path { opacity: .45; }
+        .wedge.full .wlabel { opacity: .55; }
+
+        /* ===== تولتیپ =====
+           روی SVG نوشته نمی‌شود چون تایپوگرافیِ HTML خواناتر است و نوار
+           اشغال هم لازم دارد. */
+        .tip-card {
+            position: absolute; z-index: 30; pointer-events: none;
+            min-width: 186px; max-width: 240px;
+            background: rgba(16, 17, 26, .97);
+            border: 1px solid rgba(212, 175, 55, .38);
+            border-radius: 13px; padding: 11px 13px;
+            box-shadow: 0 12px 34px rgba(0, 0, 0, .5);
+            backdrop-filter: blur(6px);
+            animation: tipIn .14s ease-out;
+        }
+        .tip-card[hidden] { display: none; }
+        @keyframes tipIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; } }
+        .tip-top { display: flex; align-items: center; gap: 7px; }
+        .tip-dot { width: 11px; height: 11px; border-radius: 4px; flex: 0 0 auto; }
+        .tip-name { color: #fff; font-weight: 800; font-size: 13.5px; }
+        .tip-zone { color: #a8adbd; font-size: 11.5px; margin: 3px 0 9px; }
+        .tip-rows { display: grid; gap: 5px; font-size: 12px; }
+        .tip-rows > div { display: flex; justify-content: space-between; gap: 10px; }
+        .tip-rows span { color: #9aa0ae; }
+        .tip-rows b { color: #eceef4; font-weight: 700; }
+        .tip-rows b.gold { color: #E5C158; }
+        .tip-bar {
+            height: 5px; border-radius: 4px; background: rgba(255,255,255,.12);
+            margin-top: 10px; overflow: hidden;
+        }
+        .tip-bar i { display: block; height: 100%; border-radius: 4px;
+                     background: linear-gradient(90deg, #D4AF37, #e8c96a); transition: width .2s; }
+        .tip-occ { color: #8a90a0; font-size: 10.5px; margin-top: 5px; text-align: left; }
+        .tip-off { color: #d98a8a; font-size: 11.5px; }
+        .tip-off[hidden] { display: none; }
 
         .legend-row {
             display: flex; gap: 7px; flex-wrap: wrap; justify-content: center;
@@ -504,6 +563,10 @@
            تا انگشت برای تأیید مسیر درازی نرود و انتخابِ اشتباه با یک
            لمس نهایی نشود.
            ============================================================ */
+        @media (hover: none) {
+            .tip-card { display: none !important; }
+        }
+
         @media (max-width: 768px) {
             .map-shell { padding: 10px; border-radius: 16px; }
             .map-hint { font-size: 12px; }
@@ -686,18 +749,38 @@
                 <svg id="stadiumSvg" viewBox="0 0 1000 680" xmlns="http://www.w3.org/2000/svg"
                      role="img" aria-label="نقشه ورزشگاه">
                     <defs>
-                        <radialGradient id="pitchGrad" cx="50%" cy="45%" r="70%">
-                            <stop offset="0%" stop-color="#4aa657"/>
-                            <stop offset="100%" stop-color="#2f7539"/>
+                        <radialGradient id="pitchGrad" cx="50%" cy="42%" r="72%">
+                            <stop offset="0%" stop-color="#54b862"/>
+                            <stop offset="100%" stop-color="#276b31"/>
                         </radialGradient>
-                        <filter id="pick" x="-30%" y="-30%" width="160%" height="160%">
-                            <feDropShadow dx="0" dy="0" stdDeviation="9" flood-color="#fff" flood-opacity=".95"/>
+                        <radialGradient id="bowlGrad" cx="50%" cy="50%" r="52%">
+                            <stop offset="60%" stop-color="#0b0c14"/>
+                            <stop offset="100%" stop-color="#1d1f2e"/>
+                        </radialGradient>
+                        <pattern id="turf" width="36" height="8" patternUnits="userSpaceOnUse">
+                            <rect width="36" height="8" fill="none"/>
+                            <rect width="18" height="8" fill="#ffffff" opacity=".045"/>
+                        </pattern>
+                        <filter id="pick" x="-40%" y="-40%" width="180%" height="180%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="11" flood-color="#ffffff" flood-opacity=".9"/>
                         </filter>
+                        <filter id="lift" x="-40%" y="-40%" width="180%" height="180%">
+                            <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#000000" flood-opacity=".55"/>
+                        </filter>
+                        <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#ffffff" stop-opacity=".22"/>
+                            <stop offset="100%" stop-color="#000000" stop-opacity=".16"/>
+                        </linearGradient>
                     </defs>
 
-                    <ellipse cx="500" cy="340" rx="486" ry="326" fill="#11121c"/>
-                    <ellipse cx="500" cy="340" rx="322" ry="178" fill="#1b2432" stroke="#2c3a4d" stroke-width="2"/>
+                    <ellipse cx="500" cy="340" rx="486" ry="326" fill="url(#bowlGrad)"/>
+                    <ellipse cx="500" cy="340" rx="486" ry="326" fill="none"
+                             stroke="#D4AF37" stroke-opacity=".13" stroke-width="2"/>
+                    <ellipse cx="500" cy="340" rx="322" ry="178" fill="#151c27" stroke="#2c3a4d" stroke-width="2"/>
+                    <ellipse cx="500" cy="340" rx="300" ry="160" fill="none"
+                             stroke="#8b6f2a" stroke-opacity=".35" stroke-width="1.5" stroke-dasharray="4 7"/>
                     <rect x="356" y="252" width="288" height="176" rx="5" fill="url(#pitchGrad)"/>
+                    <rect x="356" y="252" width="288" height="176" rx="5" fill="url(#turf)"/>
                     <g stroke="#ffffff" stroke-width="1.6" opacity=".55" fill="none">
                         <rect x="356" y="252" width="288" height="176" rx="3"/>
                         <line x1="500" y1="252" x2="500" y2="428"/>
@@ -714,21 +797,44 @@
                     {% for p in pieces %}
                     <g class="wedge {% if p.selectable %}pickable{% else %}muted{% endif %}{% if p.sold_out %} full{% endif %}"
                        id="w{{ p.block.id }}"
+                       style="--px: {{ p.pop_x }}px; --py: {{ p.pop_y }}px; --d: {{ p.delay }}ms"
                        {% if p.selectable %}
                        tabindex="0" role="button"
-                       aria-label="{{ p.block.name }} — {{ p.zone_label }}"
+                       aria-label="{{ p.block.name }} — {{ p.zone_label }} — {{ p.free|default_if_none:0 }} صندلی خالی"
                        onclick="pickBlock({{ p.block.id }})"
                        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();pickBlock({{ p.block.id }});}"
+                       onmouseenter="showTip(event, this)" onmousemove="moveTip(event)" onmouseleave="hideTip()"
+                       onfocus="showTip(null, this)" onblur="hideTip()"
                        data-name="{{ p.block.name }}" data-zone="{{ p.zone_label }}"
                        data-free="{{ p.free|default_if_none:0 }}" data-total="{{ p.total|default_if_none:0 }}"
+                       data-occ="{{ p.occupancy|default_if_none:0 }}"
                        data-price="{{ p.price|floatformat:0 }}" data-fill="{{ p.fill }}"
+                       {% else %}
+                       onmouseenter="showTip(event, this)" onmousemove="moveTip(event)" onmouseleave="hideTip()"
+                       data-name="{{ p.block.name }}" data-zone="{{ p.zone_label }}" data-off="1"
                        {% endif %}>
                         <path d="{{ p.path }}" fill="{{ p.fill }}"/>
+                        <path d="{{ p.path }}" fill="url(#sheen)" class="gloss"/>
                         <text class="wlabel" x="{{ p.label_x }}" y="{{ p.label_y }}"
                               transform="rotate({{ p.label_rotate }} {{ p.label_x }} {{ p.label_y }})">{{ p.label }}</text>
                     </g>
                     {% endfor %}
                 </svg>
+
+                <div class="tip-card" id="tipCard" hidden>
+                    <div class="tip-top">
+                        <span class="tip-dot" id="tDot"></span>
+                        <span class="tip-name" id="tName"></span>
+                    </div>
+                    <div class="tip-zone" id="tZone"></div>
+                    <div class="tip-rows" id="tRows">
+                        <div><span>صندلی خالی</span><b id="tFree"></b></div>
+                        <div><span>قیمت</span><b class="gold" id="tPrice"></b></div>
+                    </div>
+                    <div class="tip-bar" id="tBarWrap"><i id="tBar"></i></div>
+                    <div class="tip-occ" id="tOcc"></div>
+                    <div class="tip-off" id="tOff" hidden>در این مسابقه برای شما در دسترس نیست</div>
+                </div>
             </div>
 
             <div class="legend-row">
@@ -891,6 +997,62 @@
         var dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY;
         return Math.hypot(dx, dy) || 1;
     }
+
+    // ===== تولتیپِ هاور =====
+    // فقط روی دستگاه‌هایی که واقعاً هاور دارند؛ روی لمسی، «هاور» همان لمس
+    // اول است و تولتیپ جلوی انتخاب را می‌گیرد -- آنجا کارت پایین کار را
+    // می‌کند.
+    var canHover = window.matchMedia('(hover: hover)').matches;
+    var tip = document.getElementById('tipCard');
+
+    window.showTip = function (evt, g) {
+        if (!canHover) { return; }
+        var off = g.dataset.off === '1';
+        document.getElementById('tName').textContent = g.dataset.name || '';
+        document.getElementById('tZone').textContent = g.dataset.zone || '';
+        document.getElementById('tDot').style.background =
+            off ? '#5b6270' : (g.dataset.fill || '#D4AF37');
+
+        document.getElementById('tRows').hidden = off;
+        document.getElementById('tBarWrap').hidden = off;
+        document.getElementById('tOcc').hidden = off;
+        document.getElementById('tOff').hidden = !off;
+
+        if (!off) {
+            var free = parseInt(g.dataset.free || '0', 10);
+            var total = parseInt(g.dataset.total || '0', 10);
+            var occ = parseInt(g.dataset.occ || '0', 10);
+            var price = parseInt(g.dataset.price || '0', 10);
+            document.getElementById('tFree').textContent =
+                free > 0 ? free.toLocaleString('fa-IR') + ' از ' + total.toLocaleString('fa-IR') : 'تکمیل';
+            document.getElementById('tPrice').textContent = price.toLocaleString('fa-IR') + ' ریال';
+            document.getElementById('tBar').style.width = occ + '%';
+            document.getElementById('tOcc').textContent = occ.toLocaleString('fa-IR') + '٪ پر شده';
+        }
+
+        tip.hidden = false;
+        if (evt) { moveTip(evt); } else { placeTipAt(g); }
+    };
+
+    window.moveTip = function (evt) {
+        if (!canHover || tip.hidden) { return; }
+        var r = frame.getBoundingClientRect();
+        var x = evt.clientX - r.left + 16;
+        var y = evt.clientY - r.top + 16;
+        // نگه‌داشتن داخل قاب، تا لبه‌ها بیرون نزند
+        if (x + tip.offsetWidth > r.width - 6) { x = evt.clientX - r.left - tip.offsetWidth - 16; }
+        if (y + tip.offsetHeight > r.height - 6) { y = r.height - tip.offsetHeight - 8; }
+        tip.style.left = Math.max(6, x) + 'px';
+        tip.style.top = Math.max(6, y) + 'px';
+    };
+
+    function placeTipAt(g) {
+        var b = g.getBoundingClientRect(), r = frame.getBoundingClientRect();
+        tip.style.left = Math.max(6, Math.min(b.left - r.left, r.width - tip.offsetWidth - 6)) + 'px';
+        tip.style.top = Math.max(6, Math.min(b.top - r.top, r.height - tip.offsetHeight - 6)) + 'px';
+    }
+
+    window.hideTip = function () { tip.hidden = true; };
 
     // ===== انتخاب بلوک =====
     // انتخاب مستقیماً فرم را نمی‌فرستد؛ اول کارت جزئیات باز می‌شود. روی

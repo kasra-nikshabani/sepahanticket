@@ -133,6 +133,13 @@ def build_map(blocks, zone_map=None, seat_stats=None,
         # برچسب روی خودِ قاچ: وسط حلقه، تا هم روی رنگ خوانا باشد هم جا بگیرد.
         lx, ly = _point(cx, cy, (rx_out + rx_in) / 2, (ry_out + ry_in) / 2, center)
 
+        # بردار شعاعی: با هاور، قاچ کمی از مرکز دور می‌شود. جهتش برای هر
+        # بلوک فرق دارد، پس همین‌جا حساب می‌شود نه در CSS.
+        rad = math.radians(center)
+        occupancy = None
+        if total:
+            occupancy = round((total - (free or 0)) / total * 100)
+
         out.append({
             'block': block,
             'path': _wedge_path(cx, cy, rx_out, ry_out, rx_in, ry_in, deg_from, deg_to),
@@ -141,11 +148,15 @@ def build_map(blocks, zone_map=None, seat_stats=None,
             'zone_label': color['label'],
             'free': free,
             'total': total,
+            'occupancy': occupancy,
             'sold_out': (free == 0) if free is not None else False,
             'label': _short_label(block),
             'label_x': round(lx, 1),
             'label_y': round(ly, 1),
             'label_rotate': round(center + 90, 1),
+            'pop_x': round(math.cos(rad) * 13, 2),
+            'pop_y': round(math.sin(rad) * 9, 2),
+            'delay': index * 14,
         })
     return out
 
