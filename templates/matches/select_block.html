@@ -261,21 +261,27 @@
 
         /* ===== تعویض طبقه، روی همین صفحه ===== */
         .floor-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 12px; }
+        /* رنگِ خودش را دارد، نه شفافیت روی پس‌زمینه -- روی زمینه‌ی تیره‌ی
+           نقشه، شفافیت باعث می‌شد دکمه به‌سختی دیده شود و شبیه دکمه نباشد. */
         .fsw {
-            display: flex; align-items: center; gap: 11px; padding: 12px 15px;
-            border-radius: 14px; text-decoration: none;
-            background: rgba(255,255,255,.05); border: 1.5px solid rgba(255,255,255,.1);
-            color: #c9cbd8; transition: .18s;
+            display: flex; align-items: center; gap: 11px; padding: 13px 16px;
+            border-radius: 14px; text-decoration: none; cursor: pointer;
+            font-family: inherit; text-align: right;
+            background: #262a3d; border: 1.5px solid #383e57;
+            color: #cbd0e0; transition: .18s;
         }
-        .fsw i { font-size: 17px; opacity: .75; }
+        .fsw i { font-size: 17px; color: #8b93ad; transition: .18s; }
         .fsw b { display: block; font-size: 14px; font-weight: 800; }
-        .fsw small { display: block; font-size: 11px; opacity: .7; margin-top: 1px; }
-        .fsw:hover { border-color: rgba(212,175,55,.5); color: #fff; }
+        .fsw small { display: block; font-size: 11px; opacity: .72; margin-top: 1px; }
+        .fsw:hover { background: #2f3550; border-color: #4d5578; color: #fff; }
+        .fsw:hover i { color: #D4AF37; }
         .fsw.on {
-            background: linear-gradient(135deg, rgba(212,175,55,.22), rgba(184,150,15,.12));
-            border-color: #D4AF37; color: #F0D77A;
+            background: linear-gradient(135deg, #E0BC45, #B8960F);
+            border-color: #F0D77A; color: #17182a;
+            box-shadow: 0 5px 18px rgba(212, 175, 55, .32);
         }
-        .fsw.on i { opacity: 1; }
+        .fsw.on i { color: #17182a; }
+        .fsw.on small { opacity: .8; }
 
         .floor-empty {
             background: rgba(212,175,55,.1); border: 1px solid rgba(212,175,55,.32);
