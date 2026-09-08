@@ -386,6 +386,151 @@
                 height: 36px;
             }
         }
+
+        /* ============================================================
+           نقشه‌ی ورزشگاه
+           ============================================================ */
+        .map-shell {
+            background: linear-gradient(160deg, #171826 0%, #0e0f18 100%);
+            border: 1px solid rgba(212, 175, 55, .22);
+            border-radius: 20px;
+            padding: 14px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, .25);
+        }
+
+        .map-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 10px; flex-wrap: wrap; margin-bottom: 10px;
+        }
+        .map-hint { color: #c9cbd8; font-size: 13px; display: flex; align-items: center; gap: 7px; }
+        .map-hint i { color: #D4AF37; }
+        .map-tools { display: flex; gap: 6px; }
+        .mtool {
+            width: 36px; height: 36px; border-radius: 10px; border: 1px solid rgba(255,255,255,.14);
+            background: rgba(255,255,255,.06); color: #e7e8ef; font-size: 16px; font-weight: 700;
+            cursor: pointer; font-family: inherit; display: inline-flex;
+            align-items: center; justify-content: center; transition: .18s;
+        }
+        .mtool:hover { background: rgba(212,175,55,.18); border-color: rgba(212,175,55,.5); color: #D4AF37; }
+        .mtool.wide { width: auto; padding: 0 14px; gap: 6px; font-size: 13px; }
+
+        .map-frame {
+            position: relative; overflow: hidden; border-radius: 16px;
+            background: #0b0c14; touch-action: none; cursor: grab;
+        }
+        .map-frame.dragging { cursor: grabbing; }
+        #stadiumSvg { width: 100%; height: auto; display: block; }
+
+        .compass { fill: #545a6b; font-size: 15px; font-weight: 700; text-anchor: middle; }
+
+        .wedge path { stroke: #0b0c14; stroke-width: 2; transition: filter .18s, opacity .18s; }
+        .wlabel {
+            font-size: 17px; font-weight: 800; fill: #12131c; pointer-events: none;
+            text-anchor: middle; dominant-baseline: central;
+        }
+        .wedge.pickable { cursor: pointer; }
+        .wedge.pickable:hover path,
+        .wedge.pickable:focus path { filter: brightness(1.25); outline: none; }
+        .wedge.pickable:focus { outline: none; }
+        .wedge.picked path { filter: url(#pick) brightness(1.2); stroke: #fff; stroke-width: 3; }
+        .wedge.muted path { fill: #5b6270 !important; opacity: .3; }
+        .wedge.muted .wlabel { fill: #9aa0ad; opacity: .55; }
+        .wedge.full path { opacity: .42; }
+        .wedge.full .wlabel { opacity: .5; }
+
+        .legend-row {
+            display: flex; gap: 7px; flex-wrap: wrap; justify-content: center;
+            margin-top: 12px;
+        }
+        .lg {
+            display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+            color: #c9cbd8; background: rgba(255,255,255,.05);
+            border: 1px solid rgba(255,255,255,.09); padding: 4px 11px; border-radius: 50px;
+        }
+        .lg i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+
+        /* ===== نمای فهرستی ===== */
+        .list-view { margin-top: 12px; display: grid; gap: 8px; }
+        .list-view[hidden] { display: none; }
+        .lrow {
+            display: grid; grid-template-columns: 14px 1fr auto auto auto; gap: 10px;
+            align-items: center; width: 100%; text-align: right;
+            background: #fff; border: 1px solid #e8eaed; border-radius: 12px;
+            padding: 12px 14px; cursor: pointer; font-family: inherit; font-size: 13.5px;
+            transition: .15s;
+        }
+        .lrow:hover { border-color: #D4AF37; transform: translateX(-3px); }
+        .ldot { width: 12px; height: 12px; border-radius: 4px; }
+        .lname { font-weight: 800; color: #1A1A2E; }
+        .lzone { color: #6c757d; font-size: 12.5px; }
+        .lseat { color: #1e7e34; font-weight: 700; font-size: 12.5px; }
+        .lprice { color: #B8960F; font-weight: 800; }
+
+        /* ===== کارت جزئیات ===== */
+        .sheet {
+            margin-top: 14px; background: #fff; border: 1px solid #e8eaed;
+            border-radius: 18px; padding: 16px 18px; box-shadow: 0 6px 26px rgba(0,0,0,.08);
+        }
+        .sheet[hidden] { display: none; }
+        .sheet-grip { display: none; }
+        .sheet-head { display: flex; align-items: center; gap: 11px; margin-bottom: 12px; }
+        .sheet-dot { width: 15px; height: 15px; border-radius: 5px; flex: 0 0 auto; background: #D4AF37; }
+        .sheet-name { font-weight: 800; color: #1A1A2E; font-size: 16px; }
+        .sheet-zone { color: #6c757d; font-size: 12.5px; margin-top: 2px; }
+        .sheet-x {
+            margin-right: auto; background: transparent; border: none; color: #adb5bd;
+            font-size: 17px; cursor: pointer; padding: 4px 8px;
+        }
+        .sheet-facts {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;
+        }
+        .sheet-facts > div {
+            background: #fafbfc; border: 1px solid #eef1f4; border-radius: 12px; padding: 10px 13px;
+        }
+        .sheet-facts .k { display: block; color: #6c757d; font-size: 11.5px; }
+        .sheet-facts .v { display: block; font-weight: 800; color: #1A1A2E; font-size: 15px; margin-top: 3px; }
+        .sheet-facts .v.gold { color: #B8960F; }
+        .sheet-go {
+            width: 100%; border: none; border-radius: 13px; padding: 14px;
+            background: linear-gradient(135deg, #D4AF37, #B8960F); color: #1A1A2E;
+            font-weight: 800; font-size: 15px; font-family: inherit; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+            transition: .18s;
+        }
+        .sheet-go:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(212,175,55,.4); }
+
+        /* ============================================================
+           موبایل: کارت جزئیات از پایین بالا می‌آید و همان‌جا می‌ماند،
+           تا انگشت برای تأیید مسیر درازی نرود و انتخابِ اشتباه با یک
+           لمس نهایی نشود.
+           ============================================================ */
+        @media (max-width: 768px) {
+            .map-shell { padding: 10px; border-radius: 16px; }
+            .map-hint { font-size: 12px; }
+            .wlabel { font-size: 22px; }
+            .compass { font-size: 20px; }
+            .lg { font-size: 11px; padding: 3px 9px; }
+            .lrow { grid-template-columns: 12px 1fr auto; row-gap: 4px; font-size: 13px; }
+            .lzone { grid-column: 2; }
+            .lseat, .lprice { grid-column: 3; }
+
+            .sheet {
+                position: fixed; inset: auto 0 0 0; z-index: 1200; margin: 0;
+                border-radius: 20px 20px 0 0; padding: 10px 16px calc(16px + env(safe-area-inset-bottom));
+                box-shadow: 0 -8px 32px rgba(0,0,0,.28);
+                animation: sheetUp .22s ease-out;
+            }
+            .sheet-grip {
+                display: block; width: 42px; height: 4px; border-radius: 4px;
+                background: #dfe3e8; margin: 2px auto 10px;
+            }
+            @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        }
+
+        @media (max-width: 420px) {
+            .wlabel { font-size: 26px; }
+            .sheet-facts { grid-template-columns: 1fr; }
+        }
     </style>
 {% endblock %}
 
@@ -512,73 +657,123 @@
     <!-- ============================================================
     فرم انتخاب سکو
     ============================================================ -->
+    <!-- ============================================================
+    نقشه‌ی ورزشگاه — جایگزین باکس‌های قدیمی
+    ============================================================ -->
     <form method="post" id="blockForm">
         {% csrf_token %}
-        <div class="row">
-            {% for block in blocks %}
-                <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-3">
-                    <div class="block-card">
-                        <!-- ===== نمایش نام سکو ===== -->
-                        <div class="block-name">سکو {{ block.name|cut:"بلوک " }}</div>
+        <input type="hidden" name="block_id" id="pickedBlock">
 
-                                                <!-- برچسب‌های سکو -->
-                        {% if block.is_vip %}
-                            <span class="block-badge vip"><i class="fas fa-star"></i> VIP</span>
-                        {% elif block.is_class1 %}
-                            <span class="block-badge class1"><i class="fas fa-star"></i> کلاس ۱</span>
-                        {% elif block.team_type == 'women' %}
-                            <span class="block-badge" style="background: #ff69b4; color: #fff;">
-                                <i class="fas fa-venus"></i> بانوان میزبان
-                            </span>
-                        {% elif block.team_type == 'women_away' %}
-                            <span class="block-badge" style="background: #c2185b; color: #fff;">
-                                <i class="fas fa-venus"></i> بانوان میهمان
-                            </span>
-                        {% else %}
-                            <!-- فقط برای سکوهای عمومی، میزبان/میهمان نشان داده می‌شود -->
-                            <span class="team-badge {% if block.team_type == 'home' %}team-home{% else %}team-away{% endif %}">
-                                {% if block.team_type == 'home' %}
-                                    <i class="fas fa-home"></i> میزبان
-                                {% else %}
-                                    <i class="fas fa-flag"></i> میهمان
-                                {% endif %}
-                            </span>
-{#                            <span class="block-badge"><i class="fas fa-users"></i> عمومی</span>#}
-                        {% endif %}
-
-                        <!-- برچسب VIP / کلاس ۱ -->
-                        {% if block.is_vip %}
-                            <span class="block-badge vip"><i class="fas fa-star"></i> VIP</span>
-                        {% elif block.is_class1 %}
-                            <span class="block-badge class1"><i class="fas fa-star"></i> کلاس ۱</span>
-                        {% else %}
-                            <span class="block-badge"><i class="fas fa-users"></i> عمومی</span>
-                        {% endif %}
-
-                        <!-- قیمت -->
-                        <div class="block-price mb-1" style="font-size:0.85rem; font-weight:500; color:#1A1A2E;">
-                            <span class="price-label">قیمت:</span>
-                            <span class="price-value"
-                                  style="color:#D4AF37; font-weight:700;">{{ block.price|floatformat:0 }}</span>
-                            <span style="font-size:0.7rem; color:#6c757d;">ریال</span>
-                        </div>
-
-                        <!-- آمار -->
-                        <div class="block-stats">
-                            <span class="available">{{ block.available_seats|default:0 }}</span>
-                            <span class="text-muted">از</span>
-                            <span class="total">{{ block.total_seats|default:0 }}</span>
-                            <span class="text-muted">صندلی موجود</span>
-                            <span class="occupancy">اشغال: {{ block.occupancy|default:0 }}%</span>
-                        </div>
-
-                        <!-- دکمه انتخاب -->
-                        <button type="submit" name="block_id" value="{{ block.id }}" class="btn-select">
-                            <i class="fas fa-check-circle"></i> انتخاب سکو
-                        </button>
-                    </div>
+        <div class="map-shell">
+            <div class="map-bar">
+                <div class="map-hint">
+                    <i class="fas fa-hand-pointer"></i>
+                    روی جایگاه موردنظرتان روی نقشه بزنید
                 </div>
-            {% endfor %}
+                <div class="map-tools">
+                    <button type="button" class="mtool" onclick="mapZoom(-1)" aria-label="بزرگ‌نمایی کمتر">−</button>
+                    <button type="button" class="mtool" onclick="mapZoom(0)" aria-label="اندازه اصلی">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                    <button type="button" class="mtool" onclick="mapZoom(1)" aria-label="بزرگ‌نمایی بیشتر">+</button>
+                    <button type="button" class="mtool wide" onclick="toggleList()" id="listBtn">
+                        <i class="fas fa-list"></i> فهرست
+                    </button>
+                </div>
+            </div>
+
+            <div class="map-frame" id="mapFrame">
+                <svg id="stadiumSvg" viewBox="0 0 1000 680" xmlns="http://www.w3.org/2000/svg"
+                     role="img" aria-label="نقشه ورزشگاه">
+                    <defs>
+                        <radialGradient id="pitchGrad" cx="50%" cy="45%" r="70%">
+                            <stop offset="0%" stop-color="#4aa657"/>
+                            <stop offset="100%" stop-color="#2f7539"/>
+                        </radialGradient>
+                        <filter id="pick" x="-30%" y="-30%" width="160%" height="160%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="9" flood-color="#fff" flood-opacity=".95"/>
+                        </filter>
+                    </defs>
+
+                    <ellipse cx="500" cy="340" rx="486" ry="326" fill="#11121c"/>
+                    <ellipse cx="500" cy="340" rx="322" ry="178" fill="#1b2432" stroke="#2c3a4d" stroke-width="2"/>
+                    <rect x="356" y="252" width="288" height="176" rx="5" fill="url(#pitchGrad)"/>
+                    <g stroke="#ffffff" stroke-width="1.6" opacity=".55" fill="none">
+                        <rect x="356" y="252" width="288" height="176" rx="3"/>
+                        <line x1="500" y1="252" x2="500" y2="428"/>
+                        <circle cx="500" cy="340" r="30"/>
+                        <rect x="356" y="300" width="32" height="80"/>
+                        <rect x="612" y="300" width="32" height="80"/>
+                    </g>
+
+                    <text x="500" y="30" class="compass">شمال</text>
+                    <text x="500" y="662" class="compass">جنوب</text>
+                    <text x="26" y="346" class="compass" text-anchor="start">غرب</text>
+                    <text x="974" y="346" class="compass" text-anchor="end">شرق</text>
+
+                    {% for p in pieces %}
+                    <g class="wedge {% if p.selectable %}pickable{% else %}muted{% endif %}{% if p.sold_out %} full{% endif %}"
+                       id="w{{ p.block.id }}"
+                       {% if p.selectable %}
+                       tabindex="0" role="button"
+                       aria-label="{{ p.block.name }} — {{ p.zone_label }}"
+                       onclick="pickBlock({{ p.block.id }})"
+                       onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();pickBlock({{ p.block.id }});}"
+                       data-name="{{ p.block.name }}" data-zone="{{ p.zone_label }}"
+                       data-free="{{ p.free|default_if_none:0 }}" data-total="{{ p.total|default_if_none:0 }}"
+                       data-price="{{ p.price|floatformat:0 }}" data-fill="{{ p.fill }}"
+                       {% endif %}>
+                        <path d="{{ p.path }}" fill="{{ p.fill }}"/>
+                        <text class="wlabel" x="{{ p.label_x }}" y="{{ p.label_y }}"
+                              transform="rotate({{ p.label_rotate }} {{ p.label_x }} {{ p.label_y }})">{{ p.label }}</text>
+                    </g>
+                    {% endfor %}
+                </svg>
+            </div>
+
+            <div class="legend-row">
+                {% for key, z in legend.items %}
+                <span class="lg"><i style="background:{{ z.fill }}"></i>{{ z.label }}</span>
+                {% endfor %}
+                <span class="lg"><i style="background:#5b6270"></i>خارج از دسترس شما</span>
+            </div>
+        </div>
+
+        {% comment %}
+            نمای فهرستی: هم برای کسانی که ترجیح می‌دهند فهرست ببینند، هم
+            به‌عنوان راه دوم اگر نقشه روی دستگاهی درست بالا نیامد. انتخاب از
+            هر دو به یک جا می‌رسد.
+        {% endcomment %}
+        <div class="list-view" id="listView" hidden>
+            {% for p in pieces %}{% if p.selectable %}
+            <button type="button" class="lrow" onclick="pickBlock({{ p.block.id }})">
+                <span class="ldot" style="background:{{ p.fill }}"></span>
+                <span class="lname">{{ p.block.name }}</span>
+                <span class="lzone">{{ p.zone_label }}</span>
+                <span class="lseat">{{ p.free|default_if_none:0 }} صندلی</span>
+                <span class="lprice">{{ p.price|floatformat:0 }} ریال</span>
+            </button>
+            {% endif %}{% endfor %}
+        </div>
+
+        <!-- کارت جزئیات: روی موبایل از پایین بالا می‌آید -->
+        <div class="sheet" id="sheet" hidden>
+            <div class="sheet-grip"></div>
+            <div class="sheet-head">
+                <span class="sheet-dot" id="sDot"></span>
+                <div>
+                    <div class="sheet-name" id="sName">—</div>
+                    <div class="sheet-zone" id="sZone">—</div>
+                </div>
+                <button type="button" class="sheet-x" onclick="closeSheet()" aria-label="بستن">✕</button>
+            </div>
+            <div class="sheet-facts">
+                <div><span class="k">صندلی خالی</span><span class="v" id="sFree">—</span></div>
+                <div><span class="k">قیمت هر صندلی</span><span class="v gold" id="sPrice">—</span></div>
+            </div>
+            <button type="submit" class="sheet-go">
+                <i class="fas fa-arrow-left"></i> ادامه و انتخاب صندلی
+            </button>
         </div>
     </form>
 
@@ -613,4 +808,136 @@
             e.stopPropagation();
         });
     </script>
+
+<script>
+(function () {
+    // ===== بزرگ‌نمایی و جابه‌جایی =====
+    // روی موبایل، قاچ‌های ضلع دور کوچک می‌شوند؛ بدون امکان زوم، انتخابشان
+    // با انگشت دقیق نیست. با دو انگشت هم کار می‌کند، هم با دکمه‌ها.
+    var BASE = {x: 0, y: 0, w: 1000, h: 680};
+    var view = Object.assign({}, BASE);
+    var svg = document.getElementById('stadiumSvg');
+    var frame = document.getElementById('mapFrame');
+
+    function apply() {
+        svg.setAttribute('viewBox', view.x + ' ' + view.y + ' ' + view.w + ' ' + view.h);
+    }
+
+    window.mapZoom = function (dir) {
+        if (dir === 0) { view = Object.assign({}, BASE); apply(); return; }
+        var factor = dir > 0 ? 0.78 : 1 / 0.78;
+        var nw = Math.min(BASE.w, Math.max(BASE.w * 0.32, view.w * factor));
+        var nh = nw * BASE.h / BASE.w;
+        view.x += (view.w - nw) / 2;
+        view.y += (view.h - nh) / 2;
+        view.w = nw; view.h = nh;
+        clampView();
+        apply();
+    };
+
+    function clampView() {
+        view.x = Math.min(Math.max(view.x, BASE.x - 40), BASE.w - view.w + 40);
+        view.y = Math.min(Math.max(view.y, BASE.y - 40), BASE.h - view.h + 40);
+    }
+
+    var drag = null;
+    function startDrag(px, py) {
+        if (view.w >= BASE.w) { return; }
+        drag = {px: px, py: py, ox: view.x, oy: view.y};
+        frame.classList.add('dragging');
+    }
+    function moveDrag(px, py) {
+        if (!drag) { return; }
+        var rect = frame.getBoundingClientRect();
+        view.x = drag.ox - (px - drag.px) * view.w / rect.width;
+        view.y = drag.oy - (py - drag.py) * view.h / rect.height;
+        clampView();
+        apply();
+    }
+    function endDrag() { drag = null; frame.classList.remove('dragging'); }
+
+    frame.addEventListener('mousedown', function (e) { startDrag(e.clientX, e.clientY); });
+    window.addEventListener('mousemove', function (e) { moveDrag(e.clientX, e.clientY); });
+    window.addEventListener('mouseup', endDrag);
+
+    var pinch = null;
+    frame.addEventListener('touchstart', function (e) {
+        if (e.touches.length === 2) {
+            pinch = {d: dist(e.touches), w: view.w};
+        } else if (e.touches.length === 1) {
+            startDrag(e.touches[0].clientX, e.touches[0].clientY);
+        }
+    }, {passive: true});
+
+    frame.addEventListener('touchmove', function (e) {
+        if (e.touches.length === 2 && pinch) {
+            e.preventDefault();
+            var nw = Math.min(BASE.w, Math.max(BASE.w * 0.32, pinch.w * pinch.d / dist(e.touches)));
+            var cx = view.x + view.w / 2, cy = view.y + view.h / 2;
+            view.w = nw; view.h = nw * BASE.h / BASE.w;
+            view.x = cx - view.w / 2; view.y = cy - view.h / 2;
+            clampView(); apply();
+        } else if (e.touches.length === 1 && drag) {
+            e.preventDefault();
+            moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+        }
+    }, {passive: false});
+
+    frame.addEventListener('touchend', function (e) {
+        if (e.touches.length === 0) { endDrag(); pinch = null; }
+    });
+
+    function dist(t) {
+        var dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY;
+        return Math.hypot(dx, dy) || 1;
+    }
+
+    // ===== انتخاب بلوک =====
+    // انتخاب مستقیماً فرم را نمی‌فرستد؛ اول کارت جزئیات باز می‌شود. روی
+    // موبایل لمسِ اشتباه روی قاچ کوچک آسان است و رفتن به مرحله‌ی بعد بدون
+    // تأیید یعنی برگشتن و شروع دوباره.
+    window.pickBlock = function (id) {
+        var g = document.getElementById('w' + id);
+        if (!g) { return; }
+        document.querySelectorAll('.wedge.picked').forEach(function (e) { e.classList.remove('picked'); });
+        g.classList.add('picked');
+        document.getElementById('pickedBlock').value = id;
+
+        document.getElementById('sName').textContent = g.dataset.name || '';
+        document.getElementById('sZone').textContent = g.dataset.zone || '';
+        document.getElementById('sDot').style.background = g.dataset.fill || '#D4AF37';
+        var free = parseInt(g.dataset.free || '0', 10);
+        document.getElementById('sFree').textContent =
+            free > 0 ? free.toLocaleString('fa-IR') + ' از ' + parseInt(g.dataset.total || '0', 10).toLocaleString('fa-IR') : 'تکمیل';
+        var price = parseInt(g.dataset.price || '0', 10);
+        document.getElementById('sPrice').textContent = price.toLocaleString('fa-IR') + ' ریال';
+
+        var sheet = document.getElementById('sheet');
+        sheet.hidden = false;
+        if (window.innerWidth > 768) { sheet.scrollIntoView({behavior: 'smooth', block: 'nearest'}); }
+    };
+
+    window.closeSheet = function () {
+        document.getElementById('sheet').hidden = true;
+        document.querySelectorAll('.wedge.picked').forEach(function (e) { e.classList.remove('picked'); });
+        document.getElementById('pickedBlock').value = '';
+    };
+
+    window.toggleList = function () {
+        var lv = document.getElementById('listView');
+        lv.hidden = !lv.hidden;
+        document.getElementById('listBtn').innerHTML = lv.hidden
+            ? '<i class="fas fa-list"></i> فهرست'
+            : '<i class="fas fa-map"></i> نقشه';
+    };
+
+    document.getElementById('blockForm').addEventListener('submit', function (e) {
+        if (!document.getElementById('pickedBlock').value) {
+            e.preventDefault();
+            alert('لطفاً ابتدا یک جایگاه را از روی نقشه انتخاب کنید.');
+        }
+    });
+})();
+</script>
+
 {% endblock %}

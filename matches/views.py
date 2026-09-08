@@ -332,9 +332,35 @@ def select_block(request, match_id):
         else:
             messages.error(request, 'لطفاً یک بلوک را انتخاب کنید.')
 
+    # ===== نقشه‌ی ورزشگاه =====
+    # کلِ بلوک‌های همین طبقه رسم می‌شوند، نه فقط آن‌هایی که کاربر می‌تواند
+    # انتخاب کند. دیدنِ کاسه‌ی کامل است که به تماشاگر می‌گوید «من کجای
+    # ورزشگاه می‌نشینم»؛ اگر فقط چند قاچِ معلق نشان داده شود، همان سردرگمیِ
+    # باکس‌ها را دارد با ظاهر دیگر. بقیه کم‌رنگ و غیرقابل‌کلیک‌اند.
+    from .stadium_map import build_map, ZONE_COLORS
+
+    selectable_ids = {b.id for b in blocks}
+    floor_blocks = list(Block.objects.filter(
+        stadium=stadium, floor=selected_floor).order_by('order', 'name'))
+    by_id = {b.id: b for b in blocks}
+
+    pieces = build_map(
+        floor_blocks,
+        zone_map=block_zone_map,
+        seat_stats={b.id: (b.available_seats, b.total_seats) for b in blocks},
+    )
+    for p in pieces:
+        b = p['block']
+        rich = by_id.get(b.id)
+        p['selectable'] = b.id in selectable_ids
+        p['price'] = getattr(rich, 'price', None)
+        p['occupancy'] = getattr(rich, 'occupancy', None)
+
     context = {
         'match': match,
         'blocks': blocks,
+        'pieces': pieces,
+        'legend': ZONE_COLORS,
         'selected_floor': selected_floor,
         'selected_team_type': selected_team_type,  # <--- ارسال به قالب
         'floor_label': 'طبقه بالا' if selected_floor == 'second' else 'طبقه پایین',
