@@ -56,8 +56,9 @@ def decode_keycloak_token(token):
 
     Raises:
         jwt.PyJWTError / jwt.PyJWKClientError: اگر رشته اصلاً JWT معتبر نباشد
-            یا امضا/انقضا/صادرکننده نادرست باشد (شامل توکن Opaque اسکنر گیت،
-            که این‌جا فقط شکست می‌خورد و caller آن را جدا مدیریت می‌کند).
+            یا امضا/انقضا/صادرکننده نادرست باشد (توکن Opaque اسکنر گیت
+            پیش از رسیدن به این‌جا در try_authenticate_keycloak کنار
+            گذاشته می‌شود، چون شکل JWT ندارد).
         InvalidKeycloakToken: توکن از نظر رمزنگاری معتبر است ولی از Client
             نامعتبر صادر شده یا Claim لازم (national_code/phone_number) را ندارد.
     """
@@ -135,6 +136,18 @@ def try_authenticate_keycloak(request):
         return None
     token = auth_header[len('Bearer '):].strip()
     if not token:
+        return None
+
+    # ===== چرا شکل توکن را قبل از رمزگشایی بررسی می‌کنیم =====
+    # اسکنر گیت هم با همین هدر Authorization: Bearer می‌آید، ولی توکنش JWT
+    # نیست -- یک رشته‌ی تصادفی Opaque است (secrets.token_urlsafe در
+    # tickets/api.py). بدون این بررسی، هر اسکن یک سطر INFO با پیام
+    # «Not enough segments» در logs/django-errors.log می‌نوشت؛ روز مسابقه
+    # ده‌ها هزار اسکن انجام می‌شود و همان فایلی که برای پیدا کردن خطای
+    # واقعی خوانده می‌شود پر از نویز می‌شد. JWT دقیقاً سه بخشِ نقطه-جدا
+    # دارد، پس چیزی که این شکل را ندارد از اول توکن Fan ID نیست و
+    # ردکردنش خبر نیست.
+    if token.count('.') != 2:
         return None
 
     try:

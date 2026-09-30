@@ -7,6 +7,7 @@ PyJWKClient، Token Endpoint و ارسال پیامک Mock می‌شوند؛ ه�
 """
 import base64
 import hashlib
+import secrets
 import time
 from datetime import timedelta
 from unittest.mock import MagicMock, patch
@@ -142,6 +143,24 @@ class KeycloakBearerTests(TestCase):
     def test_garbage_bearer_returns_none_not_raises(self):
         # سناریوی توکن Opaque اسکنر گیت -- نباید Exception بدهد
         self.assertIsNone(try_authenticate_keycloak(self._request('this-is-not-a-jwt-at-all')))
+
+    def test_gate_scanner_token_is_not_logged(self):
+        """توکن اسکنر گیت نباید لاگ تولید کند.
+
+        اسکنر گیت با همین هدر Bearer می‌آید ولی توکنش JWT نیست. روز مسابقه
+        ده‌ها هزار اسکن انجام می‌شود؛ یک سطر لاگ به‌ازای هر اسکن،
+        logs/django-errors.log را -- همان فایلی که برای پیدا کردن خطای
+        واقعی خوانده می‌شود -- پر از نویز می‌کرد.
+        """
+        gate_token = secrets.token_urlsafe(32)      # عیناً همان چیزی که gate_login می‌سازد
+        with self.assertNoLogs('accounts.keycloak_auth', level='INFO'):
+            self.assertIsNone(try_authenticate_keycloak(self._request(gate_token)))
+
+    def test_a_real_looking_token_that_fails_is_still_logged(self):
+        """سکوت فقط برای چیزی است که شکل JWT ندارد؛ توکن Fan ID معیوب
+        باید همچنان دیده شود، وگرنه اشکال‌یابی ورود اپ کور می‌شد."""
+        with self.assertLogs('accounts.keycloak_auth', level='INFO'):
+            self.assertIsNone(try_authenticate_keycloak(self._request('aaa.bbb.ccc')))
 
     # ---------- Middleware ----------
 
