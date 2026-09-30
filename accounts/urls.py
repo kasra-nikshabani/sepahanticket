@@ -1,6 +1,7 @@
 # accounts/urls.py
 from django.urls import path
 from . import views
+from . import fanid_views
 
 app_name = 'accounts'
 
@@ -14,6 +15,12 @@ urlpatterns = [
 
     path('verify/', views.otp_verify, name='otp_verify'),
     path('resend-otp/', views.resend_otp, name='resend_otp'),
+
+    # ===== ورود با Fan ID (حساب اپ سپاهان) -- تا FANID_LOGIN_ENABLED روشن نشود ۴۰۴ =====
+    path('fanid/login/', fanid_views.fanid_login, name='fanid_login'),
+    path('fanid/callback/', fanid_views.fanid_callback, name='fanid_callback'),
+    path('fanid/verify/', fanid_views.fanid_verify, name='fanid_verify'),
+    path('fanid/resend/', fanid_views.fanid_resend, name='fanid_resend'),
 
     # ===== ورود با رمز (ادمین و VIP) =====
     path('login-password/', views.login_view, name='login_password'),

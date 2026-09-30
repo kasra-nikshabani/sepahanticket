@@ -1,16 +1,14 @@
 """
 تست‌های Endpoint فقط-خواندنی Polling سرویس Loyalty (Phase 12 در sepapp، ADR-0014).
 
-هم‌الگوی accounts/tests.py (Phase 7): چون کاربر دیتابیس این پروژه (sepahan_user)
-عمداً CREATEDB ندارد، با SQLite In-memory جدا اجرا می‌شوند:
-
-    DJANGO_SETTINGS_MODULE=football_tickets.settings_test_loyalty python manage.py test tickets.tests
+با اجرای معمولی تست‌ها اجرا می‌شوند؛ توکن سرویس با override_settings تنظیم می‌شود،
+پس به settings_test_loyalty.py (جایگزین اختیاری SQLite) وابسته نیستند.
 """
 from datetime import timedelta
 from urllib.parse import quote
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from matches.models import Match, Stadium
@@ -20,6 +18,7 @@ User = get_user_model()
 TEST_TOKEN = 'test-only-token-never-used-in-production'
 
 
+@override_settings(LOYALTY_POLL_SERVICE_TOKEN=TEST_TOKEN)
 class CompletedOrdersEndpointTest(TestCase):
 
     def setUp(self):

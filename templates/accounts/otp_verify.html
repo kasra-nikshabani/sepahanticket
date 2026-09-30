@@ -564,8 +564,8 @@
             <div class="icon-wrapper">
                 <i class="fas fa-shield-alt"></i>
             </div>
-            <h2>تأیید هویت</h2>
-            <p class="subtitle">کد تأیید به شماره زیر ارسال شد</p>
+            <h2>{% firstof page_title 'تأیید هویت' %}</h2>
+            <p class="subtitle">{% firstof page_subtitle 'کد تأیید به شماره زیر ارسال شد' %}</p>
             <span class="phone-display">
                 <i class="fas fa-mobile-alt"></i>
                 {{ phone_masked|default:phone_number }}
@@ -613,7 +613,7 @@
                 <!-- ===== دکمه‌ها ===== -->
                 <div class="otp-actions">
                     <button type="submit" class="btn-verify" id="verifyBtn">
-                        <i class="fas fa-check-circle"></i> تأیید و ورود
+                        <i class="fas fa-check-circle"></i> {% firstof submit_label 'تأیید و ورود' %}
                         <span class="spinner" id="btnSpinner"></span>
                     </button>
 
@@ -621,8 +621,9 @@
                         <i class="fas fa-redo"></i> <span id="resendBtnText">ارسال مجدد کد</span>
                     </button>
 
-                    <a href="{% url 'accounts:phone_login' %}" class="btn-outline-danger-custom btn-full">
-                        <i class="fas fa-times"></i> تغییر شماره
+                    {% url 'accounts:phone_login' as default_cancel_url %}
+                    <a href="{% firstof cancel_url default_cancel_url %}" class="btn-outline-danger-custom btn-full">
+                        <i class="fas fa-times"></i> {% firstof cancel_label 'تغییر شماره' %}
                     </a>
                 </div>
 
@@ -700,7 +701,8 @@
             resendFeedback.innerHTML = '';
             resendFeedback.style.display = 'none';
 
-            fetch("{% url 'accounts:resend_otp' %}", {
+            {% url 'accounts:resend_otp' as default_resend_url %}
+            fetch("{% firstof resend_url default_resend_url %}", {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': '{{ csrf_token }}',

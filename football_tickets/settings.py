@@ -324,6 +324,19 @@ KEYCLOAK_JWKS_URL = os.getenv('KEYCLOAK_JWKS_URL', f'{KEYCLOAK_ISSUER}/protocol/
 # یک اپ ناشناس داخل همان Realm نباید بتواند مستقیم کاربر Django بسازد/جا بزند.
 KEYCLOAK_TRUSTED_CLIENTS = [c.strip() for c in os.getenv('KEYCLOAK_TRUSTED_CLIENTS', 'mobile-app,admin-panel').split(',') if c.strip()]
 
+# دکمه‌ی «ورود با Fan ID» روی خود سایت (accounts/fanid_views.py) -- پیش‌فرض خاموش.
+# فقط وقتی روشن می‌شود که Secret و آدرس بازگشت هم تنظیم شده باشند (Client «ticket-site»
+# در Keycloak). آدرس بازگشت باید دقیقاً همانی باشد که در Keycloak ثبت شده، مثلاً
+# https://ticket.sepahansc.com/accounts/fanid/callback/
+FANID_CLIENT_ID = os.getenv('FANID_CLIENT_ID', 'ticket-site')
+FANID_CLIENT_SECRET = os.getenv('FANID_CLIENT_SECRET', '')
+FANID_REDIRECT_URI = os.getenv('FANID_REDIRECT_URI', '')
+FANID_LOGIN_ENABLED = (
+    os.getenv('FANID_LOGIN_ENABLED', 'False') == 'True'
+    and bool(FANID_CLIENT_SECRET)
+    and bool(FANID_REDIRECT_URI)
+)
+
 # ============================================================
 #  Loyalty polling service token، افزودنی (Phase 12 در sepapp)
 # ============================================================

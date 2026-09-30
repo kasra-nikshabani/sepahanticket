@@ -1,0 +1,14 @@
+{# دکمه‌ی «ورود با Fan ID» -- فقط وقتی FANID_LOGIN_ENABLED روشن است (accounts/fanid_views.py). #}
+{% if settings.FANID_LOGIN_ENABLED %}
+    <div class="fanid-login">
+        <div class="d-flex align-items-center my-3 text-muted small">
+            <hr class="flex-grow-1"><span class="mx-2">یا</span><hr class="flex-grow-1">
+        </div>
+        <a href="{% url 'accounts:fanid_login' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}"
+           class="btn btn-lg w-100"
+           style="background: #1A1A2E; color: #D4AF37; border: none; font-weight: 700; border-radius: 12px;">
+            <i class="fas fa-id-card"></i> ورود با حساب اپ سپاهان (Fan ID)
+        </a>
+        <p class="text-muted small text-center mt-2 mb-0">بدون ثبت‌نام دوباره، با همان حساب اپ</p>
+    </div>
+{% endif %}
