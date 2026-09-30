@@ -31,7 +31,7 @@ _PUBLIC_KEY = _PRIVATE_KEY.public_key()
 
 ISSUER = 'http://localhost:8080/realms/sepahan'
 TRUSTED_CLIENT = 'mobile-app'
-SITE_CLIENT = 'ticket-site'
+SITE_CLIENT = 'django-ticketing'
 SUB = '11111111-1111-1111-1111-111111111111'
 NATIONAL_CODE = '0012345678'
 FANID_PHONE = '09120000000'
