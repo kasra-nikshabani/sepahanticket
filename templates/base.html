@@ -661,8 +661,9 @@
             }
 
             .bottom-nav-item {
-                min-width: 48px;
-                padding: 8px 8px;
+                min-width: 0;
+                flex: 1 1 0;
+                padding: 8px 2px;
                 font-size: 10px;
             }
 
@@ -824,6 +825,11 @@
                class="bottom-nav-item {% if request.resolver_match.url_name == 'tutorial' %}active{% endif %}">
                 <i class="fas fa-question-circle"></i>
                 <span>{% trans "راهنما" %}</span>
+            </a>
+            <!-- قوانین ورزشگاه (PDF) -->
+            <a href="{% static 'docs/stadium-ground-rules.pdf' %}" target="_blank" rel="noopener" class="bottom-nav-item">
+                <i class="fas fa-file-pdf"></i>
+                <span>{% trans "مقررات" %}</span>
             </a>
 
             {% if user.is_authenticated %}

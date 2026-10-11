@@ -3201,3 +3201,6 @@ msgstr "0"
 
 msgid "قوانین ورزشگاه"
 msgstr "Stadium ground rules"
+
+msgid "مقررات"
+msgstr "Rules"
