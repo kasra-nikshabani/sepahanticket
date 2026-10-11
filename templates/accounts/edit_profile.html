@@ -1,25 +1,26 @@
 
 <!-- templates/accounts/edit_profile.html -->
 {% extends 'base.html' %}
+{% load i18n %}
 {% load currency_filters %}
-{% block title %}ویرایش پروفایل{% endblock %}
+{% block title %}{% trans "ویرایش پروفایل" %}{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-md-4">
         <div class="card">
             <div class="card-header bg-primary text-white">
-                <h5><i class="fas fa-user-cog"></i> پنل کاربری</h5>
+                <h5><i class="fas fa-user-cog"></i> {% trans "پنل کاربری" %}</h5>
             </div>
             <div class="list-group list-group-flush">
                 <a href="{% url 'accounts:profile' %}" class="list-group-item list-group-item-action">
-                    <i class="fas fa-id-card"></i> اطلاعات کاربری
+                    <i class="fas fa-id-card"></i> {% trans "اطلاعات کاربری" %}
                 </a>
                 <a href="{% url 'tickets:user_tickets' %}" class="list-group-item list-group-item-action">
-                    <i class="fas fa-ticket-alt"></i> بلیط‌های من
+                    <i class="fas fa-ticket-alt"></i> {% trans "بلیط‌های من" %}
                 </a>
                 <a href="{% url 'accounts:edit_profile' %}" class="list-group-item list-group-item-action active">
-                    <i class="fas fa-edit"></i> ویرایش پروفایل
+                    <i class="fas fa-edit"></i> {% trans "ویرایش پروفایل" %}
                 </a>
             </div>
         </div>
@@ -28,7 +29,7 @@
     <div class="col-md-8">
         <div class="card">
             <div class="card-header">
-                <h4>ویرایش اطلاعات کاربری</h4>
+                <h4>{% trans "ویرایش اطلاعات کاربری" %}</h4>
             </div>
             <div class="card-body">
                 <form method="post">
@@ -36,45 +37,45 @@
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">نام کاربری</label>
+                            <label class="form-label">{% trans "نام کاربری" %}</label>
                             <input type="text" class="form-control" value="{{ user.username }}" disabled>
-                            <small class="text-muted">نام کاربری قابل تغییر نیست.</small>
+                            <small class="text-muted">{% trans "نام کاربری قابل تغییر نیست." %}</small>
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">کد ملی</label>
+                            <label class="form-label">{% trans "کد ملی" %}</label>
                             <input type="text" class="form-control" value="{{ user.national_code }}" disabled>
-                            <small class="text-muted">کد ملی قابل تغییر نیست.</small>
+                            <small class="text-muted">{% trans "کد ملی قابل تغییر نیست." %}</small>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="full_name" class="form-label">نام و نام خانوادگی</label>
+                        <label for="full_name" class="form-label">{% trans "نام و نام خانوادگی" %}</label>
                         <input type="text" name="full_name" id="full_name" class="form-control"
                                value="{{ user.get_full_name }}" required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="phone_number" class="form-label">شماره موبایل</label>
+                        <label for="phone_number" class="form-label">{% trans "شماره موبایل" %}</label>
                         <input type="tel" name="phone_number" id="phone_number" class="form-control"
                                value="{{ user.phone_number }}" dir="ltr" maxlength="11"
                                pattern="09[0-9]{9}" inputmode="numeric"
                                oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11);" required>
-                        <small class="text-muted">شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد.</small>
+                        <small class="text-muted">{% trans "شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد." %}</small>
                     </div>
 
                     <div class="mb-3">
-                        <label for="email" class="form-label">ایمیل (اختیاری)</label>
+                        <label for="email" class="form-label">{% trans "ایمیل (اختیاری)" %}</label>
                         <input type="email" name="email" id="email" class="form-control"
                                value="{{ user.email }}">
                     </div>
 
                     <div class="mt-3">
                         <button type="submit" class="btn btn-success">
-                            <i class="fas fa-save"></i> ذخیره تغییرات
+                            <i class="fas fa-save"></i> {% trans "ذخیره تغییرات" %}
                         </button>
                         <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">
-                            <i class="fas fa-times"></i> انصراف
+                            <i class="fas fa-times"></i> {% trans "انصراف" %}
                         </a>
                     </div>
                 </form>
@@ -90,7 +91,7 @@
         const phoneRegex = /^09\d{9}$/;
         if (!phoneRegex.test(phone)) {
             e.preventDefault();
-            alert('شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد.');
+            alert('{% trans "شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد." %}');
         }
     });
 </script>

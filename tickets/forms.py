@@ -3,6 +3,8 @@ from django import forms
 from django.contrib.auth import get_user_model
 from matches.models import Match, Block, Row, MatchSeat
 from tickets.models import VIPQuota, DiscountCode
+from django.utils.translation import gettext as _t
+from django.utils.translation import gettext_lazy as _tl
 
 User = get_user_model()
 
@@ -10,27 +12,27 @@ User = get_user_model()
 class BulkTicketForm(forms.Form):
     match = forms.ModelChoiceField(
         queryset=Match.objects.filter(is_active=True),
-        label='مسابقه',
+        label=_tl("مسابقه"),
         widget=forms.Select(attrs={'class': 'form-control-custom'})
     )
 
     users = forms.ModelMultipleChoiceField(
         queryset=User.objects.filter(user_type='vip'),
-        label='کاربران ویژه',
+        label=_tl("کاربران ویژه"),
         widget=forms.SelectMultiple(attrs={'class': 'form-control-custom', 'size': '8'})
     )
 
     # ===== تغییر: به‌جای row، block =====
     block = forms.ModelChoiceField(
         queryset=Block.objects.all(),  # ← حذف فیلتر is_active
-        label='بلوک (جایگاه)',
+        label=_tl("بلوک (جایگاه)"),
         widget=forms.Select(attrs={'class': 'form-control-custom'})
     )
 
     seat_count_per_user = forms.IntegerField(
         min_value=1,
         initial=1,
-        label='تعداد بلیط برای هر کاربر',
+        label=_tl("تعداد بلیط برای هر کاربر"),
         widget=forms.NumberInput(attrs={'class': 'form-control-custom'})
     )
 
@@ -52,8 +54,7 @@ class BulkTicketForm(forms.Form):
 
             if available_seats < total_needed:
                 raise forms.ValidationError(
-                    f'تعداد صندلی‌های موجود در بلوک "{block.name}" ({available_seats}) کافی نیست. '
-                    f'به {total_needed} صندلی نیاز است.'
+                    _t("تعداد صندلی‌های موجود در بلوک \"%(name)s\" (%(available_seats)s) کافی نیست. به %(total_needed)s صندلی نیاز است.") % {"name": block.name, "available_seats": available_seats, "total_needed": total_needed}
                 )
         return cleaned_data
 

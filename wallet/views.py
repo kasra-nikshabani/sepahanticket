@@ -16,6 +16,7 @@ from .models import (Wallet, Transaction, WithdrawalRequest,
                      MIN_WITHDRAWAL_AMOUNT,
                      WALLET_DISABLED_MESSAGE, WALLET_CHARGE_DISABLED_MESSAGE,
                      WITHDRAWAL_DISABLED_MESSAGE)
+from django.utils.translation import gettext as _t
 
 
 @never_cache
@@ -23,7 +24,7 @@ from .models import (Wallet, Transaction, WithdrawalRequest,
 def wallet_dashboard(request):
     """نمایش کیف پول و تاریخچه تراکنش‌ها با صفحه‌بندی"""
     if request.user.user_type == 'vip':
-        messages.error(request, 'کاربران ویژه به این بخش دسترسی ندارند.')
+        messages.error(request, _t("کاربران ویژه به این بخش دسترسی ندارند."))
         return redirect('matches:home')
 
     wallet, created = Wallet.objects.get_or_create(user=request.user)
@@ -101,7 +102,7 @@ def wallet_charge(request):
     از تایید واقعی زیبال در payments:payment_verify انجام می‌گیرد.
     """
     if request.user.user_type == 'vip':
-        messages.error(request, 'کاربران ویژه به این بخش دسترسی ندارند.')
+        messages.error(request, _t("کاربران ویژه به این بخش دسترسی ندارند."))
         return redirect('matches:home')
 
     # ===== کیف پول غیرفعال یعنی صفحه‌ی شارژ اصلاً باز نشود =====
@@ -116,7 +117,7 @@ def wallet_charge(request):
     if request.method == 'POST':
         # این مسیر دیگر پردازشی انجام نمی‌دهد؛ فرم صفحه باید مستقیم به
         # payments:payment_request ارسال شود (طبق تمپلیت فعلی charge.html).
-        messages.info(request, 'برای شارژ کیف پول از دکمه‌ی «پرداخت و شارژ» استفاده کنید.')
+        messages.info(request, _t("برای شارژ کیف پول از دکمه‌ی «پرداخت و شارژ» استفاده کنید."))
         return redirect('wallet:charge')
 
     return render(request, 'wallet/charge.html', {'wallet': wallet})
@@ -135,7 +136,7 @@ def wallet_withdraw(request):
     می‌دارد. واریز واقعی را خزانه‌دار از پنل انجام می‌دهد.
     """
     if request.user.user_type == 'vip':
-        messages.error(request, 'کاربران ویژه به این بخش دسترسی ندارند.')
+        messages.error(request, _t("کاربران ویژه به این بخش دسترسی ندارند."))
         return redirect('matches:home')
 
     if not is_withdrawal_enabled():
@@ -246,12 +247,11 @@ def wallet_withdraw(request):
         if problem:
             messages.warning(request, problem)
         elif editing.status == 'approved':
-            messages.success(request, '✅ شماره شبا توسط بانک تأیید شد و درخواست '
-                                      'در انتظار پرداخت قرار گرفت.')
+            messages.success(request, _t("✅ شماره شبا توسط بانک تأیید شد و درخواست در انتظار پرداخت قرار گرفت."))
         else:
             messages.success(
                 request,
-                f'اطلاعات درخواست #{editing.pk} اصلاح شد و دوباره در انتظار تأیید قرار گرفت.')
+                _t("اطلاعات درخواست #%(pk)s اصلاح شد و دوباره در انتظار تأیید قرار گرفت.") % {"pk": editing.pk})
         return redirect('wallet:dashboard')
 
     try:
@@ -264,17 +264,15 @@ def wallet_withdraw(request):
     problem = req.record_iban_check(
         verify_iban_ownership(iban, request.user, national_code), *names)
     if problem:
-        messages.warning(request, problem + ' مبلغ برای شما نگه داشته شده است.')
+        messages.warning(request, problem + _t(" مبلغ برای شما نگه داشته شده است."))
     elif req.status == 'approved':
         messages.success(
             request,
-            f'✅ شماره شبا توسط بانک تأیید شد. درخواست #{req.pk} به مبلغ '
-            f'{amount:,} ریال در انتظار پرداخت قرار گرفت.')
+            _t("✅ شماره شبا توسط بانک تأیید شد. درخواست #%(pk)s به مبلغ %(amount)s ریال در انتظار پرداخت قرار گرفت.") % {"pk": req.pk, "amount": format(amount, ",")})
     else:
         messages.success(
             request,
-            f'درخواست برداشت #{req.pk} به مبلغ {amount:,} ریال ثبت شد. '
-            'پس از بررسی و تأیید، مبلغ به حساب اعلامی شما واریز می‌شود.'
+            _t("درخواست برداشت #%(pk)s به مبلغ %(amount)s ریال ثبت شد. پس از بررسی و تأیید، مبلغ به حساب اعلامی شما واریز می‌شود.") % {"pk": req.pk, "amount": format(amount, ",")}
         )
     return redirect('wallet:dashboard')
 
@@ -384,11 +382,10 @@ def admin_withdrawal_bulk(request):
     target = f'{url}?{back}' if back else url
 
     if not ids:
-        messages.error(request, 'هیچ درخواستی انتخاب نشده است.')
+        messages.error(request, _t("هیچ درخواستی انتخاب نشده است."))
         return redirect(target)
     if action in ('correct', 'reject') and not note:
-        messages.error(request, 'برای این اقدام، نوشتن دلیل الزامی است '
-                                '(همان متن برای همه‌ی انتخاب‌شده‌ها ثبت می‌شود).')
+        messages.error(request, _t("برای این اقدام، نوشتن دلیل الزامی است (همان متن برای همه‌ی انتخاب‌شده‌ها ثبت می‌شود)."))
         return redirect(target)
 
     done = 0
@@ -401,7 +398,7 @@ def admin_withdrawal_bulk(request):
         elif action == 'reject':
             ok, err = wr.reject(request.user, reason=note)
         else:
-            messages.error(request, 'اقدام نامعتبر است.')
+            messages.error(request, _t("اقدام نامعتبر است."))
             return redirect(target)
         if ok:
             done += 1
@@ -409,9 +406,9 @@ def admin_withdrawal_bulk(request):
             skipped.append(f'#{wr.pk}: {err}')
 
     if done:
-        messages.success(request, f'{done} درخواست پردازش شد.')
+        messages.success(request, _t("%(done)s درخواست پردازش شد.") % {"done": done})
     if skipped:
-        messages.warning(request, 'انجام نشد — ' + ' | '.join(skipped[:8]))
+        messages.warning(request, _t("انجام نشد — ") + ' | '.join(skipped[:8]))
     return redirect(target)
 
 
@@ -431,27 +428,25 @@ def admin_withdrawal_action(request, request_id):
     elif action == 'paid':
         bank_ref = (request.POST.get('bank_reference') or '').strip()
         if not bank_ref:
-            messages.error(request, 'برای ثبت واریز، شماره پیگیری بانکی الزامی است.')
+            messages.error(request, _t("برای ثبت واریز، شماره پیگیری بانکی الزامی است."))
             return redirect('wallet:admin_withdrawal_list')
         ok, err = wr.mark_paid(request.user, bank_reference=bank_ref, note=note)
         done = f'واریز درخواست #{wr.pk} ثبت شد.'
     elif action == 'correct':
         if not note:
-            messages.error(request, 'بنویسید چه چیزی باید اصلاح شود '
-                                    '(همان متن برای کاربر نمایش داده می‌شود).')
+            messages.error(request, _t("بنویسید چه چیزی باید اصلاح شود (همان متن برای کاربر نمایش داده می‌شود)."))
             return redirect('wallet:admin_withdrawal_list')
         ok, err = wr.request_correction(request.user, reason=note)
         done = (f'درخواست #{wr.pk} برای اصلاح به کاربر برگشت. '
                 f'مبلغ همچنان نگه داشته شده و کاربر باید اطلاعاتش را درست کند.')
     elif action == 'reject':
         if not note:
-            messages.error(request, 'برای رد درخواست، ذکر دلیل الزامی است '
-                                    '(همان متن برای کاربر نمایش داده می‌شود).')
+            messages.error(request, _t("برای رد درخواست، ذکر دلیل الزامی است (همان متن برای کاربر نمایش داده می‌شود)."))
             return redirect('wallet:admin_withdrawal_list')
         ok, err = wr.reject(request.user, reason=note)
         done = f'درخواست #{wr.pk} رد شد و مبلغ {wr.amount:,} ریال به کیف پول کاربر برگشت.'
     else:
-        messages.error(request, 'درخواست نامعتبر است.')
+        messages.error(request, _t("درخواست نامعتبر است."))
         return redirect('wallet:admin_withdrawal_list')
 
     if ok:
@@ -481,8 +476,7 @@ def wallet_withdraw_cancel(request, request_id):
     if ok:
         messages.success(
             request,
-            f'درخواست #{wr.pk} لغو شد و {wr.amount:,} ریال به کیف پول شما برگشت. '
-            'حالا می‌توانید درخواست تازه با اطلاعات درست ثبت کنید.')
+            _t("درخواست #%(pk)s لغو شد و %(amount)s ریال به کیف پول شما برگشت. حالا می‌توانید درخواست تازه با اطلاعات درست ثبت کنید.") % {"pk": wr.pk, "amount": format(wr.amount, ",")})
     else:
         messages.error(request, err)
     return redirect('wallet:dashboard')
@@ -530,11 +524,11 @@ def admin_wallet_credit(request):
 
         target = User.objects.filter(pk=user_id).first()
         if target is None:
-            messages.error(request, 'کاربر پیدا نشد.')
+            messages.error(request, _t("کاربر پیدا نشد."))
         elif amount <= 0:
-            messages.error(request, 'مبلغ باید بزرگ‌تر از صفر باشد.')
+            messages.error(request, _t("مبلغ باید بزرگ‌تر از صفر باشد."))
         elif len(reason) < 5:
-            messages.error(request, 'دلیل شارژ را بنویسید — در تاریخچه‌ی کاربر ثبت می‌شود.')
+            messages.error(request, _t("دلیل شارژ را بنویسید — در تاریخچه‌ی کاربر ثبت می‌شود."))
         else:
             # مرجع تعیین می‌کند این پول «برگشتیِ باشگاه» شمرده شود و در نتیجه
             # قابل برداشت باشد. اگر به مسابقه‌ای وصل شود، ممیزیِ همان مسابقه
@@ -555,10 +549,9 @@ def admin_wallet_credit(request):
             if ok:
                 messages.success(
                     request,
-                    f'{amount:,} ریال به کیف پول {target.phone_number or target.username} '
-                    f'اضافه شد و قابل برداشت است.')
+                    _t("%(amount)s ریال به کیف پول %(v)s اضافه شد و قابل برداشت است.") % {"amount": format(amount, ","), "v": target.phone_number or target.username})
                 return redirect(f"{reverse('wallet:admin_wallet_credit')}?q={query}")
-            messages.error(request, 'واریز انجام نشد.')
+            messages.error(request, _t("واریز انجام نشد."))
 
     return render(request, 'wallet/admin_wallet_credit.html', {
         'q': query, 'found': found, 'matches': matches,
@@ -662,14 +655,14 @@ def admin_withdrawal_import(request):
     مبلغ دیگری پرداخت کرده و ثبت خودکارش وضعیت را غلط نشان می‌داد.
     """
     if request.method != 'POST' or not request.FILES.get('file'):
-        messages.error(request, 'فایلی انتخاب نشده است.')
+        messages.error(request, _t("فایلی انتخاب نشده است."))
         return redirect('wallet:admin_withdrawal_list')
 
     upload = request.FILES['file']
     try:
         rows = _read_uploaded_rows(upload)
     except Exception as exc:                            # noqa: BLE001
-        messages.error(request, f'فایل خوانده نشد: {exc}')
+        messages.error(request, _t("فایل خوانده نشد: %(exc)s") % {"exc": exc})
         return redirect('wallet:admin_withdrawal_list')
 
     paid = skipped = 0
@@ -697,11 +690,11 @@ def admin_withdrawal_import(request):
             skipped += 1
 
     if paid:
-        messages.success(request, f'{paid} واریز از روی فایل ثبت شد.')
+        messages.success(request, _t("%(paid)s واریز از روی فایل ثبت شد.") % {"paid": paid})
     if problems:
-        messages.warning(request, f'{skipped} سطر ثبت نشد: ' + ' | '.join(problems[:10]))
+        messages.warning(request, _t("%(skipped)s سطر ثبت نشد: ") % {"skipped": skipped} + ' | '.join(problems[:10]))
     if not paid and not problems:
-        messages.info(request, 'هیچ سطری با شماره پیگیری پرشده در فایل نبود.')
+        messages.info(request, _t("هیچ سطری با شماره پیگیری پرشده در فایل نبود."))
     return redirect('wallet:admin_withdrawal_list')
 
 

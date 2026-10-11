@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 {% load currency_filters %}
-{% block title %}انتخاب صندلی{% endblock %}
+{% block title %}{% trans "انتخاب صندلی" %}{% endblock %}
 
 {% block extra_head %}
     <!-- جلوگیری از کش شدن صفحه -->
@@ -16,15 +17,15 @@
     <div class="text-center mb-4">
         <h2>{{ match.home_team }} <span style="color: var(--gold);">🆚</span> {{ match.away_team }}</h2>
         <p class="text-muted">{{ match.date_time|date:"Y/m/d H:i" }}</p>
-        <p><strong>بلوک / ردیف:</strong> {{ row.name }}</p>
+        <p><strong>{% trans "بلوک / ردیف:" %}</strong> {{ row.name }}</p>
     </div>
 
     <!-- راهنما -->
     <div class="d-flex justify-content-center gap-4 mb-4">
-        <span><span class="badge bg-success">سبز</span> = خالی</span>
-        <span><span class="badge bg-danger">قرمز</span> = فروخته شده</span>
-        <span><span class="badge bg-warning text-dark">زرد</span> = انتخاب شما</span>
-        <span><span class="badge" style="background:#ff8c00; color:white;">نارنجی</span> = در حال رزرو توسط دیگران</span>
+        <span><span class="badge bg-success">{% trans "سبز" %}</span> {% trans "= خالی" %}</span>
+        <span><span class="badge bg-danger">{% trans "قرمز" %}</span> {% trans "= فروخته شده" %}</span>
+        <span><span class="badge bg-warning text-dark">{% trans "زرد" %}</span> {% trans "= انتخاب شما" %}</span>
+        <span><span class="badge" style="background:#ff8c00; color:white;">{% trans "نارنجی" %}</span> {% trans "= در حال رزرو توسط دیگران" %}</span>
     </div>
 
     <!-- ===== فرم انتخاب صندلی ===== -->
@@ -42,18 +43,18 @@
                 </div>
             {% empty %}
                 <div class="col-12 text-center text-muted">
-                    <p>هیچ صندلی‌ای برای این ردیف در این مسابقه وجود ندارد.</p>
+                    <p>{% trans "هیچ صندلی‌ای برای این ردیف در این مسابقه وجود ندارد." %}</p>
                 </div>
             {% endfor %}
         </div>
 
         <div class="text-center mt-4">
-            <p>تعداد انتخاب شده: <span id="selectedCount">0</span> از ۵</p>
+            <p>{% trans "تعداد انتخاب شده:" %} <span id="selectedCount">0</span> {% trans "از ۵" %}</p>
             <button type="submit" class="btn btn-success btn-lg">
-                <i class="fas fa-credit-card"></i> ادامه به اطلاعات خریدار
+                <i class="fas fa-credit-card"></i> {% trans "ادامه به اطلاعات خریدار" %}
             </button>
             <a href="{% url 'matches:select_row' match.id %}" class="btn btn-secondary btn-lg">
-                <i class="fas fa-arrow-right"></i> بازگشت به انتخاب ردیف
+                <i class="fas fa-arrow-right"></i> {% trans "بازگشت به انتخاب ردیف" %}
             </a>
         </div>
     </form>
@@ -149,7 +150,7 @@
             });
             selectedSeats.clear();
             updateSelectedCount();
-            console.log('✅ انتخاب‌ها پاک شدند');
+            console.log('{% trans "✅ انتخاب‌ها پاک شدند" %}');
         }
 
         // ===== اجرای پاک‌سازی در ابتدای بارگذاری =====
@@ -176,7 +177,7 @@
 
             // محدودیت حداکثر ۵ صندلی
             if (selectedSeats.size >= 5) {
-                alert('حداکثر ۵ صندلی می‌توانید انتخاب کنید.');
+                alert('{% trans "حداکثر ۵ صندلی می‌توانید انتخاب کنید." %}');
                 return;
             }
 
@@ -190,7 +191,7 @@
         document.querySelector('form').addEventListener('submit', function (e) {
             if (selectedSeats.size === 0) {
                 e.preventDefault();
-                alert('لطفاً حداقل یک صندلی انتخاب کنید.');
+                alert('{% trans "لطفاً حداقل یک صندلی انتخاب کنید." %}');
                 return;
             }
         });
@@ -257,7 +258,7 @@
                         });
                     }
                 })
-                .catch(error => console.error('خطا در بروزرسانی صندلی‌ها:', error));
+                .catch(error => console.error('{% trans "خطا در بروزرسانی صندلی‌ها:" %}', error));
         }
 
         // ===== بروزرسانی اولیه و دوره‌ای =====

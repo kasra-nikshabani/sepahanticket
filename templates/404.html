@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}صفحه پیدا نشد{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "صفحه پیدا نشد" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -55,13 +56,12 @@
     <div class="err-card">
         <div class="err-top">
             <div class="err-icon"><i class="fas fa-compass"></i></div>
-            <p class="err-code">۴۰۴</p>
-            <h1 class="err-title">این صفحه پیدا نشد</h1>
+            <p class="err-code">{% trans "۴۰۴" %}</p>
+            <h1 class="err-title">{% trans "این صفحه پیدا نشد" %}</h1>
         </div>
         <div class="err-body">
             <p class="err-text">
-                آدرسی که وارد کرده‌اید وجود ندارد یا صفحه‌ی مورد نظر جابه‌جا شده است.
-                ممکن است لینک قدیمی باشد یا در تایپ آدرس اشتباهی رخ داده باشد.
+                {% trans "آدرسی که وارد کرده‌اید وجود ندارد یا صفحه‌ی مورد نظر جابه‌جا شده است. ممکن است لینک قدیمی باشد یا در تایپ آدرس اشتباهی رخ داده باشد." %}
             </p>
 
             {% if request_path %}
@@ -70,15 +70,15 @@
 
             <div class="err-actions">
                 <a href="{% url 'matches:home' %}" class="err-btn primary">
-                    <i class="fas fa-home"></i> صفحه اصلی
+                    <i class="fas fa-home"></i> {% trans "صفحه اصلی" %}
                 </a>
                 {% if user.is_authenticated and user.user_type == 'normal' %}
                     <a href="{% url 'tickets:user_tickets' %}" class="err-btn ghost">
-                        <i class="fas fa-ticket-alt"></i> بلیط‌های من
+                        <i class="fas fa-ticket-alt"></i> {% trans "بلیط‌های من" %}
                     </a>
                 {% endif %}
                 <a href="javascript:history.back()" class="err-btn ghost">
-                    <i class="fas fa-arrow-right"></i> صفحه قبل
+                    <i class="fas fa-arrow-right"></i> {% trans "صفحه قبل" %}
                 </a>
             </div>
         </div>

@@ -76,6 +76,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'accounts.middleware.CookieLocaleMiddleware',  # قبل از Geo تا صفحه‌ی مسدودی هم دوزبانه باشد
     'accounts.middleware.GeoAccessMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -99,6 +100,7 @@ TEMPLATES = [
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
                 'django.template.context_processors.request',  # ← این باید باشد
                 'django.contrib.auth.context_processors.auth',  # ← این باید باشد
                 'django.contrib.messages.context_processors.messages',
@@ -209,7 +211,17 @@ LOGGING = {
 
 AUTH_PASSWORD_VALIDATORS = []
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'fa'
+
+# سایت دو زبانه است: فارسی (پیش‌فرض، راست‌به‌چپ) و انگلیسی (چپ‌به‌راست).
+# زبان انتخابی کاربر در کوکی django_language ذخیره می‌شود (نگاه کنید به
+# LocaleMiddleware و includes/header.html).
+from django.utils.translation import gettext_lazy as _lazy
+LANGUAGES = [
+    ('fa', _lazy('Persian')),
+    ('en', _lazy('English')),
+]
+LOCALE_PATHS = [os.path.join(BASE_DIR, 'locale')]
 # داده‌ها همچنان به‌صورت UTC در دیتابیس ذخیره می‌شوند (USE_TZ=True)؛ فقط
 # نمایش تاریخ/ساعت (پنل ادمین، قالب‌ها و ...) با ساعت تهران محاسبه می‌شود.
 TIME_ZONE = 'Asia/Tehran'

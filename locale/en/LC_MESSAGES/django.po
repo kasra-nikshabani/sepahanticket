@@ -1,0 +1,3200 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "فروش بلیط سپاهان"
+msgstr "Sepahan Ticket Sales"
+
+msgid "بلیط سپاهان"
+msgstr "Sepahan Ticket"
+
+msgid "بستن"
+msgstr "Close"
+
+msgid "خانه"
+msgstr "Home"
+
+msgid "راهنما"
+msgstr "Guide"
+
+msgid "بلیط‌ها"
+msgstr "Tickets"
+
+msgid "کیف پول"
+msgstr "Wallet"
+
+msgid "پروفایل"
+msgstr "Profile"
+
+msgid "داشبورد"
+msgstr "Dashboard"
+
+msgid "مدیریت"
+msgstr "Admin"
+
+msgid "گزارشات"
+msgstr "Reports"
+
+msgid "خروج"
+msgstr "Logout"
+
+msgid "ورود"
+msgstr "Login"
+
+msgid "ثبت‌نام"
+msgstr "Sign up"
+
+msgid "لوگوی سپاهان"
+msgstr "Sepahan logo"
+
+msgid "باشگاه فرهنگی ورزشی فولاد مبارکه سپاهان"
+msgstr "Foolad Mobarakeh Sepahan Cultural and Sports Club"
+
+msgid "بلیط‌های من"
+msgstr "My tickets"
+
+msgid "حساب کاربری"
+msgstr "My account"
+
+msgid "فولاد مبارکه سپاهان"
+msgstr "Foolad Mobarakeh Sepahan"
+
+msgid "سامانه فروش بلیط مسابقات تیم فوتبال فولاد مبارکه سپاهان"
+msgstr "Ticket sales system for Foolad Mobarakeh Sepahan football matches"
+
+msgid "لینک‌ها"
+msgstr "Links"
+
+msgid "صفحه اصلی"
+msgstr "Home page"
+
+msgid "مسابقات"
+msgstr "Matches"
+
+msgid "تماس با ما"
+msgstr "Contact us"
+
+msgid "اصفهان، ورزشگاه نقش جهان"
+msgstr "Isfahan, Naqsh-e Jahan Stadium"
+
+msgid ""
+"&copy; ۲۰۲۶ تمامی حقوق محفوظ است. باشگاه فرهنگی ورزشی فولاد مبارکه سپاهان"
+msgstr ""
+"&copy; 2026 All rights reserved. Foolad Mobarakeh Sepahan Cultural and "
+"Sports Club"
+
+msgid "نسخه ۱.۰"
+msgstr "Version 1.0"
+
+msgid "ورزشگاه نقش جهان"
+msgstr "Naqsh-e Jahan Stadium"
+
+msgid "طبقه و تیم"
+msgstr "Floor & team"
+
+msgid "انتخاب سکو"
+msgstr "Select stand"
+
+msgid "انتخاب صندلی"
+msgstr "Select seat"
+
+msgid "اطلاعات و پرداخت"
+msgstr "Details & payment"
+
+msgid "مسابقات سپاهان"
+msgstr "Sepahan matches"
+
+msgid "برای خرید بلیط، روی دکمه زیر کلیک کنید"
+msgstr "Click the button below to buy tickets"
+
+msgid "🏠 میزبان"
+msgstr "🏠 Home"
+
+msgid "✈️ میهمان"
+msgstr "✈️ Away"
+
+msgid "خرید بلیط"
+msgstr "Buy ticket"
+
+msgid "فروش بلیط غیرفعال است"
+msgstr "Ticket sales are disabled"
+
+msgid "صدور از پنل ویژه"
+msgstr "Issue from VIP panel"
+
+msgid "هیچ مسابقه فعالی وجود ندارد"
+msgstr "There are no active matches"
+
+msgid "به زودی مسابقات جدید برگزار خواهد شد."
+msgstr "New matches will be announced soon."
+
+msgid "سپاهان تیکت"
+msgstr "Sepahan Ticket"
+
+msgid "سامانه فروش بلیط آنلاین"
+msgstr "Online ticket sales system"
+
+msgid "در حال بارگذاری ..."
+msgstr "Loading ..."
+
+msgid "© ۱۴۰۵ باشگاه فرهنگی ورزشی فولاد مبارکه سپاهان"
+msgstr "© 2026 Foolad Mobarakeh Sepahan Cultural and Sports Club"
+
+#, python-format
+msgid "ورزشگاه: %(name)s"
+msgstr "Stadium: %(name)s"
+
+msgid "میزبان"
+msgstr "Home"
+
+msgid "میهمان"
+msgstr "Away"
+
+msgid "برای انتخاب سکو، روی دکمه‌ی"
+msgstr "To choose a stand, click the"
+
+msgid "\"انتخاب سکو\""
+msgstr "“Select stand”"
+
+msgid "کلیک کنید."
+msgstr "button."
+
+msgid "طبقه پایین"
+msgstr "Ground floor"
+
+#, python-format
+msgid "%(ground_count)s جایگاه باز"
+msgstr "%(ground_count)s open stands"
+
+msgid "طبقه دوم"
+msgstr "Second floor"
+
+#, python-format
+msgid "%(second_count)s جایگاه باز"
+msgstr "%(second_count)s open stands"
+
+msgid "در این طبقه جایگاهی برای شما باز نیست — طبقه‌ی دیگر را ببینید."
+msgstr "There is no open stand for you on this floor — check the other floor."
+
+msgid "روی جایگاه موردنظرتان روی نقشه بزنید"
+msgstr "Tap the stand you want on the map"
+
+msgid "بزرگ‌نمایی کمتر"
+msgstr "Zoom out"
+
+msgid "اندازه اصلی"
+msgstr "Original size"
+
+msgid "بزرگ‌نمایی بیشتر"
+msgstr "Zoom in"
+
+msgid "فهرست"
+msgstr "List"
+
+msgid "نقشه ورزشگاه"
+msgstr "Stadium map"
+
+msgid "شمال"
+msgstr "North"
+
+msgid "جنوب"
+msgstr "South"
+
+msgid "غرب"
+msgstr "West"
+
+msgid "شرق"
+msgstr "East"
+
+msgid "صندلی خالی"
+msgstr "Free seats"
+
+msgid "قیمت"
+msgstr "Price"
+
+msgid "در این مسابقه برای شما در دسترس نیست"
+msgstr "Not available to you in this match"
+
+msgid "خارج از دسترس شما"
+msgstr "Not available to you"
+
+#, python-format
+msgid "%(free)s صندلی"
+msgstr "%(free)s seats"
+
+#, python-format
+msgid "%(price)s ریال"
+msgstr "%(price)s IRR"
+
+msgid "قیمت هر صندلی"
+msgstr "Price per seat"
+
+msgid "ادامه و انتخاب صندلی"
+msgstr "Continue and select seats"
+
+msgid "بازگشت به صفحه اصلی"
+msgstr "Back to home page"
+
+msgid "از"
+msgstr "of"
+
+msgid "تکمیل"
+msgstr "Full"
+
+msgid "ریال"
+msgstr "IRR"
+
+msgid "٪ پر شده"
+msgstr "% full"
+
+msgid "جایگاه"
+msgstr "Stand"
+
+msgid "لطفاً ابتدا یک جایگاه را از روی نقشه انتخاب کنید."
+msgstr "Please select a stand on the map first."
+
+msgid "انتخاب طبقه و تیم"
+msgstr "Select floor & team"
+
+msgid "تیم مورد نظر خود را انتخاب کنید"
+msgstr "Choose your team"
+
+msgid "انتخاب ردیف"
+msgstr "Select row"
+
+msgid "سکو"
+msgstr "Stand"
+
+msgid "لطفاً ردیف مورد نظر خود را انتخاب کنید."
+msgstr "Please select your row."
+
+#, python-format
+msgid "ردیف %(number)s"
+msgstr "Row %(number)s"
+
+msgid "انتخاب"
+msgstr "Select"
+
+msgid "هیچ ردیفی در این سکو تعریف نشده است."
+msgstr "No rows are defined in this stand."
+
+msgid "بازگشت به انتخاب سکو"
+msgstr "Back to stand selection"
+
+msgid "بلوک / ردیف:"
+msgstr "Block / row:"
+
+msgid "سبز"
+msgstr "Green"
+
+msgid "= خالی"
+msgstr "= available"
+
+msgid "قرمز"
+msgstr "Red"
+
+msgid "= فروخته شده"
+msgstr "= sold"
+
+msgid "زرد"
+msgstr "Yellow"
+
+msgid "= انتخاب شما"
+msgstr "= your selection"
+
+msgid "نارنجی"
+msgstr "Orange"
+
+msgid "= در حال رزرو توسط دیگران"
+msgstr "= being reserved by others"
+
+msgid "هیچ صندلی‌ای برای این ردیف در این مسابقه وجود ندارد."
+msgstr "There are no seats for this row in this match."
+
+msgid "تعداد انتخاب شده:"
+msgstr "Selected:"
+
+msgid "از ۵"
+msgstr "of 5"
+
+msgid "ادامه به اطلاعات خریدار"
+msgstr "Continue to buyer details"
+
+msgid "بازگشت به انتخاب ردیف"
+msgstr "Back to row selection"
+
+msgid "✅ انتخاب‌ها پاک شدند"
+msgstr "✅ Selection cleared"
+
+msgid "حداکثر ۵ صندلی می‌توانید انتخاب کنید."
+msgstr "You can select at most 5 seats."
+
+msgid "لطفاً حداقل یک صندلی انتخاب کنید."
+msgstr "Please select at least one seat."
+
+msgid "خطا در بروزرسانی صندلی‌ها:"
+msgstr "Error updating seats:"
+
+#, python-format
+msgid "تعداد صندلی: %(seat_count)s"
+msgstr "Seats: %(seat_count)s"
+
+#, python-format
+msgid "قیمت: %(price)s ریال"
+msgstr "Price: %(price)s IRR"
+
+#, python-format
+msgid "نقشه سکو %(name)s"
+msgstr "Map of stand %(name)s"
+
+#, python-format
+msgid "%(block_price)s ریال"
+msgstr "%(block_price)s IRR"
+
+#, python-format
+msgid "صندلی خالی از %(seat_total)s"
+msgstr "free seats of %(seat_total)s"
+
+#, python-format
+msgid "%(seat_occupancy)s٪ پر شده"
+msgstr "%(seat_occupancy)s%% full"
+
+msgid "نمایش همه صندلی‌ها"
+msgstr "Show all seats"
+
+msgid "هیچ صندلی‌ای برای این سکو تعریف نشده است."
+msgstr "No seats are defined for this stand."
+
+msgid "⚽ ورزشگاه نقش جهان ⚽"
+msgstr "⚽ Naqsh-e Jahan Stadium ⚽"
+
+msgid "خالی"
+msgstr "Free"
+
+msgid "فروخته شده"
+msgstr "Sold"
+
+msgid "انتخاب شما"
+msgstr "Your selection"
+
+msgid "در حال رزرو"
+msgstr "Being reserved"
+
+msgid "بازگشت"
+msgstr "Back"
+
+msgid "انتخاب‌شده:"
+msgstr "Selected:"
+
+msgid "— جمع:"
+msgstr "— Total:"
+
+msgid "❌ دکمه toggleViewBtn پیدا نشد!"
+msgstr "❌ toggleViewBtn button not found!"
+
+msgid "⚠️ هیچ المنت .seat-grid یافت نشد!"
+msgstr "⚠️ No .seat-grid element found!"
+
+msgid "ردیف:"
+msgstr "Row:"
+
+msgid "تکمیل اطلاعات خریدار"
+msgstr "Complete buyer details"
+
+#, python-format
+msgid "صندلی %(number)s - %(row_name)s"
+msgstr "Seat %(number)s - %(row_name)s"
+
+msgid "حذف این بلیط"
+msgstr "Remove this ticket"
+
+msgid "نام"
+msgstr "First name"
+
+msgid "مثال: علی"
+msgstr "e.g. Ali"
+
+msgid "نام خانوادگی"
+msgstr "Last name"
+
+msgid "مثال: رضایی"
+msgstr "e.g. Rezaei"
+
+msgid "کد ملی (۱۰ رقم)"
+msgstr "National ID (10 digits)"
+
+msgid "شماره موبایل"
+msgstr "Mobile number"
+
+msgid "تاریخ تولد"
+msgstr "Date of birth"
+
+msgid "فروردین"
+msgstr "Farvardin"
+
+msgid "اردیبهشت"
+msgstr "Ordibehesht"
+
+msgid "خرداد"
+msgstr "Khordad"
+
+msgid "تیر"
+msgstr "Tir"
+
+msgid "مرداد"
+msgstr "Mordad"
+
+msgid "شهریور"
+msgstr "Shahrivar"
+
+msgid "مهر"
+msgstr "Mehr"
+
+msgid "آبان"
+msgstr "Aban"
+
+msgid "آذر"
+msgstr "Azar"
+
+msgid "دی"
+msgstr "Dey"
+
+msgid "بهمن"
+msgstr "Bahman"
+
+msgid "اسفند"
+msgstr "Esfand"
+
+msgid "استعلام و تایید اطلاعات"
+msgstr "Verify information"
+
+msgid "در حال استعلام از ثبت احوال..."
+msgstr "Checking with the civil registry..."
+
+msgid "کد ویژه (اختیاری -- این بلیط را رایگان می‌کند)"
+msgstr "Special code (optional — makes this ticket free)"
+
+msgid "کد ویژه را وارد کنید"
+msgstr "Enter the special code"
+
+msgid "بررسی کد"
+msgstr "Check code"
+
+msgid "زمان باقی‌مانده:"
+msgstr "Time remaining:"
+
+msgid "خلاصه سفارش"
+msgstr "Order summary"
+
+msgid "مجموع بلیط‌ها:"
+msgstr "Total tickets:"
+
+#, python-format
+msgid "%(total_price)s ریال"
+msgstr "%(total_price)s IRR"
+
+msgid "کد تخفیف..."
+msgstr "Discount code..."
+
+msgid "اعمال"
+msgstr "Apply"
+
+#, python-format
+msgid "استفاده از کیف پول (موجودی: %(wallet_balance)s)"
+msgstr "Use wallet (balance: %(wallet_balance)s)"
+
+msgid "مبلغ نهایی:"
+msgstr "Final amount:"
+
+msgid "پرداخت و دریافت بلیط"
+msgstr "Pay and get tickets"
+
+msgid "⚠️ لطفاً اطلاعات همه صندلی‌ها را استعلام کنید"
+msgstr "⚠️ Please verify the information for all seats"
+
+msgid "انصراف و آزادسازی صندلی‌ها"
+msgstr "Cancel and release seats"
+
+msgid "پایان یافت"
+msgstr "Expired"
+
+msgid "⏰ زمان شما برای تکمیل خرید به پایان رسید."
+msgstr "⏰ Your time to complete the purchase has run out."
+
+msgid "رایگان (کد ویژه)"
+msgstr "Free (special code)"
+
+msgid "رایگان"
+msgstr "Free"
+
+msgid "(با تخفیف باسا)"
+msgstr "(with BASA discount)"
+
+msgid "⚠️ شما تمام صندلی‌ها را حذف کرده‌اید!"
+msgstr "⚠️ You have removed all the seats!"
+
+msgid "⚠️ لطفاً برای همه صندلی‌ها اطلاعات را وارد و دکمه استعلام را بزنید."
+msgstr ""
+"⚠️ Please enter the information for all seats and press the verify button."
+
+msgid "❌ لطفاً تمام فیلدها (به خصوص تاریخ تولد) را پر کنید."
+msgstr "❌ Please fill in all fields (especially date of birth)."
+
+msgid "❌ نام و نام خانوادگی باید فقط با حروف فارسی نوشته شود."
+msgstr "❌ The first and last name must be written in Persian letters only."
+
+msgid "❌ کد ملی باید ۱۰ رقم باشد."
+msgstr "❌ The national ID must be 10 digits."
+
+msgid "⚠️ حالت اضطراری فعال است -- بدون استعلام از ثبت‌احوال،"
+msgstr "⚠️ Emergency mode is active — without checking the civil registry,"
+
+msgid "اطلاعات نامعتبر است"
+msgstr "Invalid information"
+
+msgid "❌ خطا در ارتباط با سرور:"
+msgstr "❌ Server connection error:"
+
+msgid "✅ تمام اطلاعات تأیید شد. می‌توانید خرید کنید."
+msgstr "✅ All information verified. You can proceed with the purchase."
+
+msgid "⚠️ لطفاً برای همه صندلی‌ها اطلاعات را وارد و استعلام کنید"
+msgstr "⚠️ Please enter and verify the information for all seats"
+
+msgid "بلیط ورود به ورزشگاه"
+msgstr "Stadium entry ticket"
+
+msgid "QR Code موجود نیست"
+msgstr "QR code not available"
+
+msgid "شماره بلیط"
+msgstr "Ticket number"
+
+msgid "نام و نام خانوادگی"
+msgstr "Full name"
+
+msgid "کد ملی"
+msgstr "National ID"
+
+msgid "سن"
+msgstr "Age"
+
+msgid "سکو / ردیف"
+msgstr "Stand / row"
+
+msgid "شماره صندلی"
+msgstr "Seat number"
+
+msgid "این بلیط فقط با ارائه کارت ملی معتبر است."
+msgstr "This ticket is valid only with a valid national ID card."
+
+msgid "لطفاً ۳۰ دقیقه قبل از شروع مسابقه در ورزشگاه حاضر باشید."
+msgstr "Please arrive at the stadium 30 minutes before the match starts."
+
+msgid "🎫 بلیط‌های من"
+msgstr "🎫 My tickets"
+
+msgid "لیست تمام بلیط‌های مرتبط با شما"
+msgstr "List of all tickets related to you"
+
+msgid "مسابقه:"
+msgstr "Match:"
+
+msgid "همه مسابقات"
+msgstr "All matches"
+
+msgid "وضعیت:"
+msgstr "Status:"
+
+msgid "همه"
+msgstr "All"
+
+msgid "خریداری‌شده"
+msgstr "Purchased"
+
+msgid "تخصیص ادمین"
+msgstr "Admin assigned"
+
+msgid "صادرشده توسط کاربر"
+msgstr "Issued by user"
+
+msgid "حذف فیلترها"
+msgstr "Clear filters"
+
+#, python-format
+msgid "%(tickets)s بلیط"
+msgstr "%(tickets)s tickets"
+
+msgid "انتخاب همه"
+msgstr "Select all"
+
+msgid "لغو انتخاب"
+msgstr "Deselect"
+
+msgid "۰ بلیط انتخاب شده"
+msgstr "0 tickets selected"
+
+msgid "دانلود انتخاب‌شده‌ها"
+msgstr "Download selected"
+
+msgid "اشتراک‌گذاری"
+msgstr "Share"
+
+msgid "این مسابقه لغو شده است. مبلغ این بلیط به کیف پول شما بازگشت داده شد."
+msgstr ""
+"This match has been cancelled. The price of this ticket was returned to your"
+" wallet."
+
+msgid "نام خریدار"
+msgstr "Buyer name"
+
+msgid "صندلی"
+msgstr "Seat"
+
+msgid "❌ استفاده شده"
+msgstr "❌ Used"
+
+msgid "✅ استفاده نشده"
+msgstr "✅ Not used"
+
+msgid "دانلود"
+msgstr "Download"
+
+msgid "در حال آماده‌سازی..."
+msgstr "Preparing..."
+
+msgid "هیچ بلیطی یافت نشد"
+msgstr "No tickets found"
+
+msgid "شما هنوز بلیطی دریافت نکرده‌اید یا بلیطی صادر نکرده‌اید."
+msgstr "You have not received or issued any tickets yet."
+
+msgid "شما هنوز بلیطی خریداری نکرده‌اید."
+msgstr "You have not purchased any tickets yet."
+
+msgid "مشاهده مسابقات"
+msgstr "View matches"
+
+msgid "❌ لینک این بلیط(ها) هنوز آماده نشده. چند لحظه دیگر دوباره امتحان کنید."
+msgstr ""
+"❌ The link for this ticket(s) is not ready yet. Try again in a few moments."
+
+msgid "بلیط سپاهان تیکت"
+msgstr "Sepahan Ticket"
+
+msgid "🎫 برای دانلود فایل PDF بلیط، لینک زیر را باز کنید:"
+msgstr "🎫 Open the link below to download the PDF ticket:"
+
+msgid "✅ لینک بلیط در کلیپ‌بورد کپی شد."
+msgstr "✅ Ticket link copied to the clipboard."
+
+msgid "لینک را کپی کنید:"
+msgstr "Copy the link:"
+
+msgid "شارژ کیف پول"
+msgstr "Charge wallet"
+
+msgid "موجودی فعلی"
+msgstr "Current balance"
+
+msgid "مبلغ شارژ (ریال)"
+msgstr "Charge amount (IRR)"
+
+msgid "مثال: ۵۰,۰۰۰"
+msgstr "e.g. 50,000"
+
+msgid "حداقل ۱۰,۰۰۰ و حداکثر ۱۰۰,۰۰۰,۰۰۰ ریال"
+msgstr "Minimum 10,000 and maximum 100,000,000 IRR"
+
+msgid "پرداخت و شارژ"
+msgstr "Pay and charge"
+
+msgid "کیف پول من"
+msgstr "My wallet"
+
+msgid "برداشت وجه"
+msgstr "Withdraw"
+
+msgid "کیف پول در حال حاضر غیرفعال است."
+msgstr "The wallet is currently disabled."
+
+msgid ""
+"امکان شارژ کیف پول و پرداخت هزینه‌ی بلیط از کیف پول وجود ندارد. موجودی شما "
+"محفوظ است و به محض فعال شدن دوباره، قابل استفاده خواهد بود."
+msgstr ""
+"Charging the wallet and paying for tickets from the wallet is not possible. "
+"Your balance is safe and will be usable as soon as it is enabled again."
+
+msgid "موجودی کیف پول"
+msgstr "Wallet balance"
+
+#, python-format
+msgid "آخرین به‌روزرسانی: %(updated_at)s"
+msgstr "Last updated: %(updated_at)s"
+
+msgid "قابل برداشت به حساب بانکی"
+msgstr "Withdrawable to bank account"
+
+#, python-format
+msgid ""
+"%(held_amount)s ریال بابت درخواست در جریان نگه داشته شده و به موجودی "
+"برنمی‌گردد مگر درخواست لغو یا رد شود."
+msgstr ""
+"%(held_amount)s IRR is held for the pending request and will not return to "
+"your balance unless the request is cancelled or rejected."
+
+msgid "درخواست برداشت"
+msgstr "Withdrawal request"
+
+msgid "از موجودی فعلی شما چیزی قابل برداشت نیست. فقط مبلغی که"
+msgstr "Nothing is withdrawable from your current balance. Only amounts the"
+
+msgid "باشگاه"
+msgstr "club"
+
+msgid ""
+"به کیف پول شما برگردانده — بابت بلیط صادرنشده، لغو مسابقه یا بازگشت وجه — "
+"قابل برداشت است؛ مبلغی که خودتان شارژ کرده‌اید برای خرید بلیط قابل استفاده "
+"است."
+msgstr ""
+"has returned to your wallet — for unissued tickets, cancelled matches or "
+"refunds — can be withdrawn; amounts you charged yourself can be used to buy "
+"tickets."
+
+msgid "موجودی فعلی (ریال)"
+msgstr "Current balance (IRR)"
+
+msgid "کل شارژها (ریال)"
+msgstr "Total deposits (IRR)"
+
+msgid "کل برداشت‌ها (ریال)"
+msgstr "Total withdrawals (IRR)"
+
+msgid "قابل برداشت (ریال)"
+msgstr "Withdrawable (IRR)"
+
+msgid "تعداد تراکنش‌ها"
+msgstr "Number of transactions"
+
+msgid "درخواست‌های برداشت"
+msgstr "Withdrawal requests"
+
+msgid "تاریخ"
+msgstr "Date"
+
+msgid "مبلغ (ریال)"
+msgstr "Amount (IRR)"
+
+msgid "شبا"
+msgstr "IBAN"
+
+msgid "وضعیت"
+msgstr "Status"
+
+msgid "توضیح"
+msgstr "Description"
+
+msgid "شناسه پیگیری واریز"
+msgstr "Payout tracking ID"
+
+msgid "این شماره را برای پیگیری در بانک نگه دارید."
+msgstr "Keep this number for tracking at the bank."
+
+msgid "واریز شد"
+msgstr "Paid"
+
+msgid "دلیل رد:"
+msgstr "Rejection reason:"
+
+msgid "مبلغ به کیف پول شما برگشت. می‌توانید با اطلاعات درست"
+msgstr "The amount was returned to your wallet. You can submit a"
+
+msgid "درخواست تازه"
+msgstr "new request"
+
+msgid "ثبت کنید."
+msgstr "with the correct information."
+
+msgid "شماره شبا تأیید شد."
+msgstr "IBAN verified."
+
+msgid "درخواست شما"
+msgstr "Your request is"
+
+msgid "در انتظار پرداخت"
+msgstr "Awaiting payment"
+
+msgid "است و مبلغ طی"
+msgstr "and the amount will be deposited to the same account within"
+
+msgid "۱ تا ۳ روز کاری"
+msgstr "1 to 3 business days"
+
+msgid "به همان حساب واریز می‌شود."
+msgstr "."
+
+msgid ""
+"پس از واریز، شناسه‌ی پیگیری در همین صفحه نمایش داده می‌شود. در این مرحله "
+"امکان تغییر اطلاعات وجود ندارد."
+msgstr ""
+"After the payout, the tracking ID will be shown on this page. Information "
+"cannot be changed at this stage."
+
+msgid "شما این درخواست را لغو کردید؛ مبلغ برگشت."
+msgstr "You cancelled this request; the amount was returned."
+
+msgid "باید اصلاح کنید:"
+msgstr "You must correct:"
+
+msgid "مبلغ همچنان برای شما نگه داشته شده."
+msgstr "The amount is still held for you."
+
+msgid "اصلاح اطلاعات"
+msgstr "Correct information"
+
+msgid "در انتظار تأیید"
+msgstr "Awaiting approval"
+
+msgid "ویرایش"
+msgstr "Edit"
+
+msgid "لغو"
+msgstr "Cancel"
+
+msgid "تاریخچه تراکنش‌ها"
+msgstr "Transaction history"
+
+#, python-format
+msgid "%(transactions)s تراکنش"
+msgstr "%(transactions)s transactions"
+
+msgid "نوع"
+msgstr "Type"
+
+msgid "توضیحات"
+msgstr "Description"
+
+msgid "موجودی بعد (ریال)"
+msgstr "Balance after (IRR)"
+
+msgid "نمایش"
+msgstr "Showing"
+
+msgid "تا"
+msgstr "to"
+
+msgid "تراکنش"
+msgstr "transactions"
+
+msgid "هیچ تراکنشی انجام نشده است"
+msgstr "No transactions yet"
+
+msgid "کیف پول شما خالی است. برای شروع، کیف پول خود را شارژ کنید."
+msgstr "Your wallet is empty. Charge your wallet to get started."
+
+msgid "شارژ کیف پول در حال حاضر غیرفعال است."
+msgstr "Wallet charging is currently disabled."
+
+msgid "بازگشت به کیف پول"
+msgstr "Back to wallet"
+
+msgid "یک درخواست برداشت در جریان دارید"
+msgstr "You have a withdrawal request in progress"
+
+msgid "شبا:"
+msgstr "IBAN:"
+
+#, python-format
+msgid "تاریخ ثبت: %(created_at)s"
+msgstr "Submitted: %(created_at)s"
+
+msgid ""
+"پس از تأیید و واریز، مبلغ معمولاً طی یک تا سه روز کاری بانکی به حساب شما "
+"می‌نشیند. تا تعیین تکلیف این درخواست، امکان ثبت درخواست تازه وجود ندارد."
+msgstr ""
+"After approval and payout, the amount usually reaches your account within "
+"one to three bank business days. Until this request is resolved, a new "
+"request cannot be submitted."
+
+msgid "اطلاعات را اشتباه وارد کرده‌اید؟"
+msgstr "Entered the information incorrectly?"
+
+msgid ""
+"تا وقتی درخواست بررسی نشده می‌توانید خودتان لغوش کنید؛ مبلغ بلافاصله به کیف "
+"پول برمی‌گردد و می‌توانید درخواست تازه با شبای درست ثبت کنید."
+msgstr ""
+"As long as the request has not been reviewed you can cancel it yourself; the"
+" amount returns to your wallet immediately and you can submit a new request "
+"with the correct IBAN."
+
+msgid "لغو درخواست و اصلاح اطلاعات"
+msgstr "Cancel request and correct information"
+
+msgid "اطلاعات اشتباه است؟"
+msgstr "Information is wrong?"
+
+msgid ""
+"این درخواست تأیید شده و ممکن است همین حالا در حال واریز باشد، پس دیگر خودتان"
+" نمی‌توانید لغوش کنید. با پشتیبانی تماس بگیرید و شماره‌ی درخواست"
+msgstr ""
+"This request has been approved and may be being paid out right now, so you "
+"can no longer cancel it yourself. Contact support and provide the request "
+"number"
+
+msgid ""
+"را اعلام کنید؛ اگر هنوز واریز نشده باشد، رد می‌شود و مبلغ به کیف پولتان "
+"برمی‌گردد."
+msgstr ""
+"; if it has not been paid yet, it will be rejected and the amount returned "
+"to your wallet."
+
+msgid "مبلغ قابل برداشت شما"
+msgstr "Your withdrawable amount"
+
+#, python-format
+msgid "%(max_amount)s ریال"
+msgstr "%(max_amount)s IRR"
+
+#, python-format
+msgid "است که از حداقل مجاز (%(min_amount)s ریال) کمتر است."
+msgstr "is below the minimum allowed (%(min_amount)s IRR)."
+
+msgid "توجه: فقط مبلغی که"
+msgstr "Note: only the amount the"
+
+msgid "باشگاه به کیف پول شما برگردانده"
+msgstr "club returned to your wallet"
+
+msgid ""
+"— مثل جبران بلیط صادرنشده یا بازگشت وجه — قابل برداشت است. مبلغی که خودتان "
+"کیف پول را با آن شارژ کرده‌اید قابل برداشت نیست ولی برای خرید بلیط قابل "
+"استفاده است."
+msgstr ""
+"— such as compensation for an unissued ticket or a refund — is withdrawable."
+" Amounts you charged the wallet with yourself cannot be withdrawn but can be"
+" used to buy tickets."
+
+msgid "اطلاعات این درخواست باید اصلاح شود"
+msgstr "The information in this request must be corrected"
+
+msgid "مبلغ"
+msgstr "The amount"
+
+#, python-format
+msgid "%(amount)s ریال"
+msgstr "%(amount)s IRR"
+
+msgid ""
+"همچنان برای شما نگه داشته شده است. اطلاعات زیر را درست کنید و دوباره "
+"بفرستید؛ درخواست به صف بررسی برمی‌گردد."
+msgstr ""
+"is still held for you. Correct the information below and submit again; the "
+"request goes back to the review queue."
+
+msgid "در حال ویرایش"
+msgstr "Editing"
+
+#, python-format
+msgid "درخواست #%(id)s"
+msgstr "request #%(id)s"
+
+msgid ""
+"که هنوز تأیید نشده است. هر تغییری بدهید، درخواست دوباره در صف بررسی قرار "
+"می‌گیرد."
+msgstr ""
+"which has not been approved yet. Any change you make puts the request back "
+"in the review queue."
+
+msgid "حداکثر مبلغ قابل برداشت"
+msgstr "Maximum withdrawable amount"
+
+msgid "برداشت در سه مرحله"
+msgstr "Withdraw in three steps"
+
+msgid "شماره شبا را از بانک خودتان بگیرید"
+msgstr "Get your IBAN from your bank"
+
+msgid ""
+"در اپلیکیشن یا اینترنت‌بانک، بخش «مشخصات حساب» شماره‌ی شبا را نشان می‌دهد. "
+"روی کارت بانکی نوشته نشده. شبا با"
+msgstr ""
+"In your bank app or internet bank, the “Account details” section shows the "
+"IBAN. It is not printed on the bank card. The IBAN starts with"
+
+msgid "شروع می‌شود و ۲۴ رقم دارد."
+msgstr "and has 24 digits."
+
+msgid "فرم زیر را پر کنید"
+msgstr "Fill in the form below"
+
+msgid "مبلغ، شماره شبا، نام صاحب حساب و کد ملی. حساب باید"
+msgstr ""
+"Amount, IBAN, account holder name and national ID. The account must be"
+
+msgid "به نام و کد ملی خودتان"
+msgstr "in your own name and national ID"
+
+msgid ""
+"باشد — این را از بانک استعلام می‌کنیم و واریز به حساب شخص دیگر انجام "
+"نمی‌شود. فاصله و خط تیره در شبا اشکالی ندارد."
+msgstr ""
+"— we verify this with the bank, and payouts to another person’s account are "
+"not made. Spaces and dashes in the IBAN are fine."
+
+msgid "منتظر واریز بمانید"
+msgstr "Wait for the payout"
+
+msgid ""
+"مبلغ همان لحظه از کیف پول کسر و تا زمان واریز محفوظ می‌شود. پس از تأیید، "
+"واریز بانکی معمولاً"
+msgstr ""
+"The amount is deducted from your wallet immediately and held until the "
+"payout. After approval, the bank payout usually"
+
+msgid "طول می‌کشد."
+msgstr "takes time."
+
+msgid "شناسه‌ی پیگیری واریز"
+msgstr "Payout tracking ID"
+
+msgid "در همین صفحه‌ی کیف پول به شما نشان داده می‌شود."
+msgstr "is shown to you on this wallet page."
+
+msgid "چند سؤال رایج:"
+msgstr "Frequently asked questions:"
+
+msgid "اگر شبا را اشتباه وارد کنم؟"
+msgstr "What if I enter the IBAN incorrectly?"
+
+msgid ""
+"تا وقتی درخواست بررسی نشده، خودتان می‌توانید از صفحه‌ی کیف پول لغوش کنید و "
+"دوباره ثبت کنید. اگر هم کارشناس متوجه مغایرت شود، درخواست را با ذکر دلیل رد "
+"می‌کند و"
+msgstr ""
+"As long as the request has not been reviewed, you can cancel it yourself "
+"from the wallet page and submit it again. If a reviewer notices a mismatch, "
+"they reject the request with a reason and"
+
+msgid "تمام مبلغ به کیف پول شما برمی‌گردد"
+msgstr "the full amount returns to your wallet"
+
+msgid "چرا همه‌ی موجودی‌ام قابل برداشت نیست؟"
+msgstr "Why is not my whole balance withdrawable?"
+
+msgid ""
+"فقط مبلغی که باشگاه به کیف پول شما برگردانده (بابت بلیط صادرنشده، لغو مسابقه"
+" یا بازگشت وجه) قابل برداشت است. مبلغی که خودتان شارژ کرده‌اید برای خرید "
+"بلیط قابل استفاده است."
+msgstr ""
+"Only the amount the club returned to your wallet (for unissued tickets, "
+"cancelled matches or refunds) is withdrawable. Amounts you charged yourself "
+"can be used to buy tickets."
+
+msgid "می‌توانم چند درخواست هم‌زمان بدهم؟"
+msgstr "Can I submit several requests at the same time?"
+
+msgid "نه، در هر زمان یک درخواست باز."
+msgstr "No, only one open request at a time."
+
+msgid "مبلغ برداشت (ریال)"
+msgstr "Withdrawal amount (IRR)"
+
+#, python-format
+msgid "حداقل %(min_amount)s و حداکثر %(max_amount)s ریال"
+msgstr "Minimum %(min_amount)s and maximum %(max_amount)s IRR"
+
+msgid "شماره شبا"
+msgstr "IBAN"
+
+msgid "۲۴ رقم پس از IR. فاصله و خط تیره اشکالی ندارد."
+msgstr "24 digits after IR. Spaces and dashes are fine."
+
+msgid "نام صاحب حساب"
+msgstr "Account holder name"
+
+msgid "نام و نام خانوادگی دقیقاً مطابق حساب بانکی"
+msgstr "Full name exactly as on the bank account"
+
+msgid "دقیقاً همان‌طور که در بانک ثبت شده است."
+msgstr "Exactly as registered at the bank."
+
+msgid "۱۰ رقم"
+msgstr "10 digits"
+
+msgid ""
+"کد ملی ثبت‌شده در حساب شماست و قابل تغییر نیست؛ حساب بانکی باید به همین کد "
+"ملی باشد."
+msgstr ""
+"The national ID is registered on your account and cannot be changed; the "
+"bank account must belong to this national ID."
+
+msgid "با این کد ملی از بانک استعلام می‌شود که حساب متعلق به خودتان باشد."
+msgstr ""
+"The bank is queried with this national ID to confirm the account belongs to "
+"you."
+
+msgid "پس از ثبت،"
+msgstr "After submission,"
+
+msgid "مالکیت حساب از بانک استعلام می‌شود"
+msgstr "account ownership is verified with the bank"
+
+msgid ""
+". اگر حساب به نام و کد ملی خودتان باشد، درخواست بلافاصله تأیید و وارد انتظار"
+" پرداخت قرار می‌گیرد؛ در غیر این صورت برای اصلاح به شما برمی‌گردد."
+msgstr ""
+". If the account is in your own name and national ID, the request is "
+"approved immediately and moves to awaiting payment; otherwise it is returned"
+" to you for correction."
+
+msgid "ثبت اصلاحیه"
+msgstr "Submit correction"
+
+msgid "ثبت درخواست برداشت"
+msgstr "Submit withdrawal request"
+
+msgid "دیگر نمی‌خواهید برداشت کنید؟"
+msgstr "No longer want to withdraw?"
+
+msgid "لغو کامل درخواست"
+msgstr "Cancel request completely"
+
+msgid "انتخاب روش ورود"
+msgstr "Choose login method"
+
+msgid "ورود به سامانه"
+msgstr "Log in to the system"
+
+msgid "لطفاً روش ورود خود را انتخاب کنید"
+msgstr "Please choose your login method"
+
+msgid "کاربر معمولی"
+msgstr "Regular user"
+
+msgid "ورود با شماره تلفن و کد تأیید"
+msgstr "Log in with phone number and verification code"
+
+msgid "ورود با شماره تلفن"
+msgstr "Log in with phone number"
+
+msgid "مدیر / کاربر ویژه"
+msgstr "Admin / VIP user"
+
+msgid "ورود با نام کاربری و رمز عبور"
+msgstr "Log in with username and password"
+
+msgid "ورود با رمز عبور"
+msgstr "Log in with password"
+
+msgid "ویرایش پروفایل"
+msgstr "Edit profile"
+
+msgid "پنل کاربری"
+msgstr "User panel"
+
+msgid "اطلاعات کاربری"
+msgstr "User information"
+
+msgid "ویرایش اطلاعات کاربری"
+msgstr "Edit user information"
+
+msgid "نام کاربری"
+msgstr "Username"
+
+msgid "نام کاربری قابل تغییر نیست."
+msgstr "The username cannot be changed."
+
+msgid "کد ملی قابل تغییر نیست."
+msgstr "The national ID cannot be changed."
+
+msgid "شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد."
+msgstr "The mobile number must start with 09 and have 11 digits."
+
+msgid "ایمیل (اختیاری)"
+msgstr "Email (optional)"
+
+msgid "ذخیره تغییرات"
+msgstr "Save changes"
+
+msgid "انصراف"
+msgstr "Cancel"
+
+msgid "رمز عبور"
+msgstr "Password"
+
+msgid "ثبت‌نام نکرده‌اید؟"
+msgstr "Not registered?"
+
+msgid "ثبت‌نام کنید"
+msgstr "Sign up"
+
+msgid "ورود ویژه"
+msgstr "Special login"
+
+msgid "مدیران و کاربران ویژه"
+msgstr "Admins and VIP users"
+
+msgid "نام کاربری خود را وارد کنید"
+msgstr "Enter your username"
+
+msgid "رمز عبور خود را وارد کنید"
+msgstr "Enter your password"
+
+msgid "تأیید کد"
+msgstr "Verify code"
+
+msgid "تأیید هویت"
+msgstr "Identity verification"
+
+msgid "کد تأیید به شماره زیر ارسال شد"
+msgstr "A verification code was sent to the number below"
+
+msgid "کد"
+msgstr "Enter the"
+
+msgid "۴ رقمی"
+msgstr "4-digit"
+
+msgid "ارسال‌شده را در کادر زیر وارد کنید."
+msgstr "code that was sent in the box below."
+
+msgid "این کد تا ۵ دقیقه اعتبار دارد."
+msgstr "This code is valid for 5 minutes."
+
+msgid "رقم ۱"
+msgstr "Digit 1"
+
+msgid "رقم ۲"
+msgstr "Digit 2"
+
+msgid "رقم ۳"
+msgstr "Digit 3"
+
+msgid "رقم ۴"
+msgstr "Digit 4"
+
+msgid "کد را به‌صورت پیوسته وارد کنید"
+msgstr "Enter the code continuously"
+
+msgid "تأیید و ورود"
+msgstr "Verify and log in"
+
+msgid "ارسال مجدد کد"
+msgstr "Resend code"
+
+msgid "تغییر شماره"
+msgstr "Change number"
+
+msgid "لوگوی فولاد مبارکه سپاهان"
+msgstr "Foolad Mobarakeh Sepahan logo"
+
+msgid "برای ورود شماره تلفن خود را وارد کنید"
+msgstr "Enter your phone number to log in"
+
+msgid "شماره تلفن"
+msgstr "Phone number"
+
+msgid "شماره تلفن خود را به صورت ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید"
+msgstr "Enter your phone number like 09123456789"
+
+msgid "ورود با رمز عبور ثابت"
+msgstr "Log in with a fixed password"
+
+msgid "کاربران ویژه و مدیران از طریق رمز عبور وارد می‌شوند."
+msgstr "VIP users and admins log in with a password."
+
+msgid "⚠️ شماره تلفن معتبر نیست. لطفاً به صورت ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید."
+msgstr "⚠️ The phone number is not valid. Please enter it like 09123456789."
+
+msgid "ثبت‌نام با شماره تلفن"
+msgstr "Sign up with phone number"
+
+msgid "لوگو سپاهان"
+msgstr "Sepahan logo"
+
+msgid "با شماره تلفن خود ثبت‌نام کنید"
+msgstr "Sign up with your phone number"
+
+msgid "نام خود را به فارسی وارد کنید"
+msgstr "Enter your first name in Persian"
+
+msgid "نام خانوادگی خود را به فارسی وارد کنید"
+msgstr "Enter your last name in Persian"
+
+msgid "شماره تلفن را به صورت ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید"
+msgstr "Enter the phone number like 09123456789"
+
+msgid "۱۰ رقم کد ملی"
+msgstr "10-digit national ID"
+
+msgid "جنسیت"
+msgstr "Gender"
+
+msgid "مرد"
+msgstr "Male"
+
+msgid "زن"
+msgstr "Female"
+
+msgid "دریافت کد تأیید"
+msgstr "Get verification code"
+
+msgid "قبلاً ثبت‌نام کرده‌اید؟"
+msgstr "Already registered?"
+
+msgid "وارد شوید"
+msgstr "Log in"
+
+msgid "با ثبت‌نام، شما با"
+msgstr "By signing up, you agree to the"
+
+msgid "قوانین"
+msgstr "terms"
+
+msgid "و"
+msgstr "and"
+
+msgid "حریم خصوصی"
+msgstr "privacy policy"
+
+msgid "موافقت می‌کنید."
+msgstr "."
+
+msgid "⚠️ نام و نام خانوادگی باید فقط با حروف فارسی وارد شود."
+msgstr "⚠️ The first and last name must be entered in Persian letters only."
+
+msgid "⚠️ کد ملی وارد شده معتبر نیست."
+msgstr "⚠️ The national ID entered is not valid."
+
+msgid "⚠️ لطفاً جنسیت را انتخاب کنید."
+msgstr "⚠️ Please select your gender."
+
+msgid "پروفایل کاربری"
+msgstr "User profile"
+
+msgid "نام کاربری:"
+msgstr "Username:"
+
+msgid "نام و نام خانوادگی:"
+msgstr "Full name:"
+
+msgid "کد ملی:"
+msgstr "National ID:"
+
+msgid "شماره موبایل:"
+msgstr "Mobile number:"
+
+msgid "نوع کاربر:"
+msgstr "User type:"
+
+msgid "مدیر"
+msgstr "Admin"
+
+msgid "کاربر ویژه"
+msgstr "VIP user"
+
+msgid "ایجاد حساب کاربری جدید"
+msgstr "Create a new account"
+
+msgid "نام و نام خانوادگی خود را وارد کنید"
+msgstr "Enter your full name"
+
+msgid "کد ملی باید ۱۰ رقم باشد."
+msgstr "The national ID must be 10 digits."
+
+msgid "شماره موبایل را به صورت ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید."
+msgstr "Enter the mobile number like 09123456789."
+
+msgid "حداقل ۸ کاراکتر و شامل حروف و اعداد"
+msgstr "At least 8 characters, including letters and numbers"
+
+msgid "تکرار رمز عبور"
+msgstr "Repeat password"
+
+msgid "رمز عبور را مجدداً وارد کنید"
+msgstr "Enter the password again"
+
+msgid "این فرم مخصوص ثبت‌نام مدیران و کاربران ویژه است."
+msgstr "This form is only for registering admins and VIP users."
+
+msgid "برای ورود، VPN خود را خاموش کنید"
+msgstr "Turn off your VPN to log in"
+
+msgid ""
+"به نظر می‌رسه از طریق VPN یا فیلترشکن به سایت وصل شده اید. برای اینکه "
+"بتوانید از سایت استفاده کنی، لطفاً VPN خود را خاموش کن."
+msgstr ""
+"It looks like you are connected to the site through a VPN or proxy. To be "
+"able to use the site, please turn off your VPN."
+
+msgid "تلاش مجدد"
+msgstr "Try again"
+
+msgid "آموزش خرید بلیط"
+msgstr "How to buy a ticket"
+
+msgid "از ثبت‌نام تا ورود به ورزشگاه، تمام مراحل را گام‌به‌گام دنبال کنید."
+msgstr ""
+"Follow all the steps one by one, from sign-up to entering the stadium."
+
+msgid "مرحله ۱"
+msgstr "Step 1"
+
+msgid "ثبت‌نام در سایت"
+msgstr "Sign up on the site"
+
+msgid "برای خرید بلیط ابتدا باید یک حساب کاربری ایجاد کنید. روی دکمه"
+msgstr "To buy a ticket you first need to create an account. Click the"
+
+msgid "«ثبت‌نام»"
+msgstr "“Sign up”"
+
+msgid "در بالای صفحه کلیک کنید."
+msgstr "button at the top of the page."
+
+msgid ""
+"اطلاعات خواسته‌شده شامل نام، نام‌خانوادگی، شماره موبایل و کد ملی را وارد "
+"کنید."
+msgstr ""
+"Enter the requested information, including first name, last name, mobile "
+"number and national ID."
+
+msgid "مرحله ۲"
+msgstr "Step 2"
+
+msgid "ورود به حساب کاربری"
+msgstr "Log in to your account"
+
+msgid ""
+"پس از ثبت‌نام، با شماره موبایل و رمز عبور وارد سایت شوید. اگر کد تأیید برای "
+"شما ارسال شد، آن را وارد کنید."
+msgstr ""
+"After signing up, log in with your mobile number and password. If a "
+"verification code is sent to you, enter it."
+
+msgid ""
+"رمز عبور خود را فراموش نکنید. در صورت نیاز از گزینه «فراموشی رمز» استفاده "
+"کنید."
+msgstr ""
+"Do not forget your password. If needed, use the “Forgot password” option."
+
+msgid "مرحله ۳"
+msgstr "Step 3"
+
+msgid "انتخاب مسابقه"
+msgstr "Choose a match"
+
+msgid ""
+"در صفحه اصلی، لیست مسابقات فعال را مشاهده می‌کنید. مسابقه مورد نظر خود را "
+"انتخاب کنید و روی دکمه"
+msgstr ""
+"On the home page you see the list of active matches. Choose the match you "
+"want and click the"
+
+msgid "«خرید بلیط»"
+msgstr "“Buy ticket”"
+
+msgid "مسابقات نزدیک به زمان برگزاری، اولویت نمایش دارند."
+msgstr "Matches closer to kick-off are shown first."
+
+msgid "مرحله ۴"
+msgstr "Step 4"
+
+msgid "انتخاب بلوک و صندلی"
+msgstr "Choose a block and seat"
+
+msgid ""
+"نقشه ورزشگاه به شما نمایش داده می‌شود. یک بلوک را انتخاب کنید و سپس صندلی "
+"مورد نظر را روی نقشه کلیک کنید."
+msgstr ""
+"The stadium map is shown to you. Choose a block, then click the seat you "
+"want on the map."
+
+msgid "صندلی‌های"
+msgstr "Seats are"
+
+msgid "موجود و"
+msgstr "available and"
+
+msgid "فروخته‌شده هستند."
+msgstr "sold."
+
+msgid "مرحله ۵"
+msgstr "Step 5"
+
+msgid "پرداخت و تأیید نهایی"
+msgstr "Payment and final confirmation"
+
+msgid ""
+"پس از انتخاب صندلی، اطلاعات بلیط شامل قیمت و شماره صندلی را بررسی کنید. سپس "
+"روی دکمه"
+msgstr ""
+"After choosing a seat, check the ticket information, including price and "
+"seat number. Then click the"
+
+msgid "«پرداخت»"
+msgstr "“Pay”"
+
+msgid "تمام تراکنش‌ها با پروتکل امن انجام می‌شود."
+msgstr "All transactions are made over a secure protocol."
+
+msgid "مرحله ۶"
+msgstr "Step 6"
+
+msgid "دریافت بلیط"
+msgstr "Get your ticket"
+
+msgid ""
+"پس از پرداخت موفق، بلیط شما به‌صورت الکترونیکی صادر می‌شود. می‌توانید آن را "
+"از بخش"
+msgstr ""
+"After a successful payment, your ticket is issued electronically. You can "
+"view it in the"
+
+msgid "«بلیط‌های من»"
+msgstr "“My tickets”"
+
+msgid "در پروفایل مشاهده کنید."
+msgstr "section of your profile."
+
+msgid "بلیط را به‌صورت PDF دانلود کنید یا در روز مسابقه با موبایل نمایش دهید."
+msgstr "Download the ticket as a PDF or show it on your phone on match day."
+
+msgid "مرحله ۷"
+msgstr "Step 7"
+
+msgid "ورود به ورزشگاه"
+msgstr "Enter the stadium"
+
+msgid ""
+"در روز مسابقه، بلیط خود را به‌صورت دیجیتال (در موبایل) یا پرینت‌شده به مسئول"
+" بلیط‌بخوانی نشان دهید. کد QR روی بلیط اسکن می‌شود."
+msgstr ""
+"On match day, show your ticket digitally (on your phone) or printed to the "
+"ticket checker. The QR code on the ticket is scanned."
+
+msgid "حداقل"
+msgstr "At least"
+
+msgid "۳۰ دقیقه"
+msgstr "30 minutes"
+
+msgid "قبل از شروع مسابقه در ورزشگاه حاضر باشید."
+msgstr "before the match starts, be at the stadium."
+
+msgid "نکات طلایی"
+msgstr "Golden tips"
+
+msgid "غیرقابل انتقال"
+msgstr "non-transferable"
+
+msgid "هستند و فقط به نام خریدار صادر می‌شوند."
+msgstr "and are issued only in the buyer’s name."
+
+msgid "در صورت لغو مسابقه، مبلغ بلیط به حساب شما بازگردانده می‌شود."
+msgstr ""
+"If the match is cancelled, the ticket price is returned to your account."
+
+msgid "همراه داشتن"
+msgstr "Bringing your"
+
+msgid "کارت ملی"
+msgstr "national ID card"
+
+msgid "برای تطابق با اطلاعات بلیط الزامی است."
+msgstr "is required to match the ticket information."
+
+msgid "در صورت مشکل، با پشتیبانی از طریق"
+msgstr "If you have a problem, contact support through the"
+
+msgid "پنل پیام‌ها"
+msgstr "messages panel"
+
+msgid "ارتباط بگیرید."
+msgstr "."
+
+msgid "قیمت بلیط‌ها در روز مسابقه ممکن است تغییر کند، پس زودتر خرید کنید."
+msgstr "Ticket prices may change on match day, so buy early."
+
+msgid ""
+"برای ورود VIP، از درب اختصاصی استفاده کنید و کارت مخصوص را همراه داشته "
+"باشید."
+msgstr "For VIP entry, use the dedicated gate and bring your special card."
+
+msgid "راهنمای ورود به ورزشگاه"
+msgstr "Stadium entry guide"
+
+msgid ""
+"تماشاگران عزیزی که با مراجعه به وب سایت سامانه به آدرس "
+"www.ticket.sepahansc.com ، با کدملی بلیت خریده‌اند می‌بایست جهت تماشای "
+"مسابقه و استقرار خود، مراحل ذیل را طی نمایند:"
+msgstr ""
+"Dear spectators who bought tickets with their national ID on the system "
+"website at www.ticket.sepahansc.com must follow these steps to watch the "
+"match and take their place:"
+
+msgid ""
+"با همراه داشتن کارت ملی یا شناسنامه، به درب ورودی مراجعه کرده و کارت ملی خود"
+" را به دستگاه بارکدخوان موجود در ورودی مذکور نزدیک نمایید."
+msgstr ""
+"Bring your national ID card or birth certificate, go to the entrance gate "
+"and hold your national ID card near the barcode reader at the entrance."
+
+msgid ""
+"(افرادی که با کد ملی بلیت خریده‌اند نمی‌توانند با کارت دیگری جز کارت ملی "
+"وارد ورزشگاه شوند.)"
+msgstr ""
+"(People who bought tickets with a national ID cannot enter the stadium with "
+"any card other than their national ID card.)"
+
+msgid ""
+"در صورتیکه بلیت مسابقه حاضر را خریداری کرده باشید، چراغ ورودی سبز شده و شما "
+"می‌توانید وارد استادیوم شوید."
+msgstr ""
+"If you have bought a ticket for this match, the entrance light turns green "
+"and you can enter the stadium."
+
+msgid ""
+"در محوطه ورزشگاه با استفاده از راهنمای محل استقرار و تابلوهای راهنمای نصب "
+"شده در ورزشگاه، گیتِ مرتبط با موقعیت استقرار خود را که در رسید درج شده در "
+"سایت نمایش داده شده، پیدا نمایید."
+msgstr ""
+"Inside the stadium grounds, use the seating guide and the signs installed in"
+" the stadium to find the gate related to your seating position, which is "
+"shown on the receipt displayed on the site."
+
+msgid ""
+"با ورود به گیت مورد نظر و نزدیک کردن کارت ملی خود به بارکدخوان، گیتِ مرتبط "
+"با موقعیت استقرار باز شده و شما می‌توانید وارد استادیوم شوید."
+msgstr ""
+"When you reach the gate and hold your national ID card near the barcode "
+"reader, the gate for your seating position opens and you can enter the "
+"stadium."
+
+msgid ""
+"با استفاده از راهنمای محل استقرار و راهنما‌های نصب شده در استادیوم، بلوک، "
+"ردیف و صندلی خود را پیدا کرده و مستقر شوید."
+msgstr ""
+"Use the seating guide and the signs installed in the stadium to find your "
+"block, row and seat and take your place."
+
+msgid ""
+"در صورتیکه در استادیوم به هر علتی جهت استقرار با مشکل مواجه شدید، به بازرسان"
+" مستقر در ورزشگاه که کارتخوان همراه دارند، مراجعه نمایید."
+msgstr ""
+"If for any reason you have trouble finding your place in the stadium, go to "
+"the inspectors in the stadium who carry a card reader."
+
+msgid "شروع خرید بلیط"
+msgstr "Start buying tickets"
+
+msgid "دسترسی مجاز نیست"
+msgstr "Access denied"
+
+msgid "دسترسی به این صفحه مجاز نیست"
+msgstr "Access to this page is not allowed"
+
+msgid ""
+"حساب کاربری شما اجازه‌ی دیدن این صفحه را ندارد. اگر فکر می‌کنید این یک "
+"اشتباه است، با مدیر سامانه تماس بگیرید."
+msgstr ""
+"Your account is not allowed to view this page. If you think this is a "
+"mistake, contact the system administrator."
+
+msgid "برای دیدن این صفحه باید وارد حساب کاربری خود شوید."
+msgstr "You must log in to your account to see this page."
+
+msgid ""
+"اگر قبلاً وارد شده بودید، ممکن است نشست شما به دلیل بی‌فعالیتی منقضی شده "
+"باشد. کافی است دوباره وارد شوید."
+msgstr ""
+"If you were logged in before, your session may have expired due to "
+"inactivity. Just log in again."
+
+msgid "ورود به حساب"
+msgstr "Log in to account"
+
+msgid "صفحه قبل"
+msgstr "Previous page"
+
+msgid "نشست منقضی شده — بلیط سپاهان"
+msgstr "Session expired — Sepahan Ticket"
+
+msgid "درخواست شما تأیید نشد"
+msgstr "Your request was not verified"
+
+msgid ""
+"به دلایل امنیتی، این درخواست پذیرفته نشد. اطلاعاتی که فرستادید ثبت نشده و "
+"هیچ تغییری در حساب شما ایجاد نشده است."
+msgstr ""
+"For security reasons, this request was not accepted. The information you "
+"sent was not saved and no change was made to your account."
+
+msgid "چرا این اتفاق افتاد؟"
+msgstr "Why did this happen?"
+
+msgid ""
+"معمولاً وقتی پیش می‌آید که صفحه مدت زیادی باز مانده باشد و نشست شما منقضی "
+"شده باشد، یا در یک تب دیگر از حساب خارج و دوباره وارد شده باشید."
+msgstr ""
+"This usually happens when the page has been left open for a long time and "
+"your session has expired, or when you logged out and back in in another tab."
+
+msgid "کافی است صفحه را تازه کنید و دوباره تلاش کنید."
+msgstr "Just refresh the page and try again."
+
+msgid "تازه کردن صفحه"
+msgstr "Refresh page"
+
+msgid "صفحه پیدا نشد"
+msgstr "Page not found"
+
+msgid "این صفحه پیدا نشد"
+msgstr "This page was not found"
+
+msgid ""
+"آدرسی که وارد کرده‌اید وجود ندارد یا صفحه‌ی مورد نظر جابه‌جا شده است. ممکن "
+"است لینک قدیمی باشد یا در تایپ آدرس اشتباهی رخ داده باشد."
+msgstr ""
+"The address you entered does not exist or the page has been moved. The link "
+"may be old or the address may have been mistyped."
+
+msgid "نقشه"
+msgstr "Map"
+
+#, python-format
+msgid "ردیف %(row)s — صندلی %(number)s"
+msgstr "Row %(row)s — Seat %(number)s"
+
+msgid "نمایش با اسکرول"
+msgstr "Show with scroll"
+
+msgid "ردیف"
+msgstr "Row"
+
+msgid "مورد دیگر"
+msgstr "more"
+
+msgid "این انتخاب یک صندلی تکی جا می‌گذارد"
+msgstr "This selection leaves a single seat empty"
+
+msgid "آن را هم انتخاب کنید یا صندلی‌هایتان را جابه‌جا کنید."
+msgstr "Select that one too, or move your seats."
+
+msgid "کد را وارد کنید."
+msgstr "Enter the code."
+
+msgid "خطا"
+msgstr "Error"
+
+msgid "دریافت بلیط (رایگان)"
+msgstr "Get ticket (free)"
+
+msgid "پرداخت"
+msgstr "Pay"
+
+msgid "موجودی کیف پول صفر است."
+msgstr "The wallet balance is zero."
+
+msgid "ریال از کیف پول کسر می‌شود."
+msgstr "IRR will be deducted from the wallet."
+
+msgid "در حال بررسی..."
+msgstr "Checking..."
+
+msgid "خطا در بررسی کد ویژه"
+msgstr "Error checking the special code"
+
+msgid "ثبت شد (بدون استعلام)"
+msgstr "Registered (without verification)"
+
+msgid "تایید شد"
+msgstr "Verified"
+
+msgid "سن:"
+msgstr "Age:"
+
+msgid "سال (زیر ۱۵ سال) - این بلیط رایگان است!"
+msgstr "years (under 15) - this ticket is free!"
+
+msgid "سال"
+msgstr "years"
+
+msgid "عضو باسا"
+msgstr "BASA member"
+
+msgid "تخفیف"
+msgstr "discount"
+
+msgid "استعلام و تایید"
+msgstr "Verify and confirm"
+
+msgid "بلیط انتخاب شده"
+msgstr "tickets selected"
+
+msgid "بلیط"
+msgstr "ticket"
+
+msgid "لینک دانلود هرکدام:"
+msgstr "download link for each:"
+
+msgid "توجه: لینک"
+msgstr "Note: the link for"
+
+msgid "بلیط دیگر هنوز آماده نشده و به اشتراک گذاشته نشد."
+msgstr "other tickets is not ready yet and was not shared."
+
+msgid "خطا در ارتباط با سرور"
+msgstr "Server connection error"
+
+msgid "کد باید دقیقاً ۴ رقم باشد."
+msgstr "The code must be exactly 4 digits."
+
+msgid "لطفاً اطلاعات را به‌درستی وارد کنید."
+msgstr "Please enter the information correctly."
+
+msgid "کد ملی ۱۰ رقم"
+msgstr "10-digit national ID"
+
+msgid "شماره موبایل ۰۹۱۲۳۴۵۶۷۸۹"
+msgstr "Mobile number 09123456789"
+
+msgid "رمز عبور حداقل ۸ کاراکتر"
+msgstr "Password of at least 8 characters"
+
+msgid "تطابق رمز عبور"
+msgstr "Password match"
+
+msgid "درخواست لغو شود؟ مبلغ به کیف پول شما برمی‌گردد."
+msgstr "Cancel the request? The amount returns to your wallet."
+
+msgid "اصلاحیه ثبت شود؟ درخواست دوباره در صف بررسی قرار می‌گیرد."
+msgstr "Submit the correction? The request goes back to the review queue."
+
+msgid "درخواست برداشت ثبت شود؟ مبلغ تا زمان واریز از کیف پول شما کسر می‌ماند."
+msgstr ""
+"Submit the withdrawal request? The amount stays deducted from your wallet "
+"until the payout."
+
+msgid "کلاس ۱"
+msgstr "Class 1"
+
+msgid "بانوان میزبان"
+msgstr "Home women"
+
+msgid "بانوان میهمان"
+msgstr "Away women"
+
+msgid "ورود با شماره تلفن در حال حاضر غیرفعال است."
+msgstr "Login with phone number is currently disabled."
+
+msgid "کاربری با این شماره تلفن یافت نشد. لطفاً ثبت‌نام کنید."
+msgstr "No user with this phone number was found. Please sign up."
+
+msgid ""
+"این روش ورود فقط برای کاربران معمولی است. لطفاً از ورود با رمز عبور استفاده "
+"کنید."
+msgstr ""
+"This login method is only for regular users. Please use login with password."
+
+msgid "کد تأیید به شماره شما ارسال شد."
+msgstr "The verification code was sent to your number."
+
+#, python-format
+msgid ""
+"کد قبلی هنوز معتبر است. %(retry_after)s ثانیه دیگر می‌توانید کد جدید بگیرید."
+msgstr ""
+"The previous code is still valid. You can request a new code in "
+"%(retry_after)s seconds."
+
+msgid "ارسال پیامک موقتاً ممکن نیست. چند لحظه دیگر دوباره تلاش کنید."
+msgstr "Sending SMS is temporarily unavailable. Try again in a few moments."
+
+msgid "این قابلیت غیرفعال است."
+msgstr "This feature is disabled."
+
+msgid "لطفاً ابتدا شماره تلفن را وارد کنید."
+msgstr "Please enter your phone number first."
+
+#, python-format
+msgid "خوش آمدید %(v)s!"
+msgstr "Welcome %(v)s!"
+
+msgid "کاربری با این شماره وجود ندارد."
+msgstr "No user with this number exists."
+
+msgid "❌ تعداد تلاش‌های ناموفق بیش از حد مجاز."
+msgstr "❌ Too many failed attempts."
+
+msgid "❌ کد وارد شده صحیح نیست یا منقضی شده است."
+msgstr "❌ The code entered is incorrect or has expired."
+
+msgid "این قابلیت در حال حاضر غیرفعال است."
+msgstr "This feature is currently disabled."
+
+msgid "✅ کد جدید با موفقیت ارسال شد."
+msgstr "✅ A new code was sent successfully."
+
+#, python-format
+msgid "⏳ لطفاً %(retry_after)s ثانیه صبر کنید و دوباره تلاش کنید."
+msgstr "⏳ Please wait %(retry_after)s seconds and try again."
+
+msgid "❌ ارسال پیامک موقتاً ممکن نیست. چند لحظه دیگر دوباره تلاش کنید."
+msgstr "❌ Sending SMS is temporarily unavailable. Try again in a few moments."
+
+msgid "ثبت‌نام با شماره تلفن در حال حاضر غیرفعال است."
+msgstr "Sign-up with phone number is currently disabled."
+
+msgid "این شماره تلفن قبلاً ثبت شده است."
+msgstr "This phone number is already registered."
+
+msgid "این کد ملی قبلاً ثبت شده است."
+msgstr "This national ID is already registered."
+
+#, python-format
+msgid "✅ کد تأیید به شماره %(phone_number)s ارسال شد."
+msgstr "✅ A verification code was sent to %(phone_number)s."
+
+msgid "❌ ارسال کد تأیید موقتاً ممکن نیست. چند لحظه دیگر دوباره تلاش کنید."
+msgstr ""
+"❌ Sending the verification code is temporarily unavailable. Try again in a "
+"few moments."
+
+msgid "ثبت‌نام با رمز عبور فقط توسط مدیر انجام می‌شود."
+msgstr "Sign-up with a password is done only by an admin."
+
+msgid ""
+"به دلیل تلاش‌های ناموفق زیاد، ورود موقتاً مسدود شده است. چند دقیقه دیگر "
+"دوباره تلاش کنید."
+msgstr ""
+"Login is temporarily blocked due to too many failed attempts. Try again in a"
+" few minutes."
+
+msgid "این روش ورود فقط برای مدیران و کاربران ویژه است."
+msgstr "This login method is only for admins and VIP users."
+
+msgid "نام کاربری یا رمز عبور اشتباه است."
+msgstr "The username or password is incorrect."
+
+msgid "لطفاً اطلاعات را به درستی وارد کنید."
+msgstr "Please enter the information correctly."
+
+msgid "شما از حساب خود خارج شدید."
+msgstr "You have been logged out."
+
+msgid "اطلاعات شما با موفقیت به‌روزرسانی شد."
+msgstr "Your information was updated successfully."
+
+msgid ""
+"⚠️ حالت اضطراری فعال شد: استعلام ثبت‌احوال دیگر برای خرید بلیط لازم نیست. به"
+" محض رفع مشکل سرویس ثبت‌احوال، حتماً این گزینه را دوباره خاموش کنید."
+msgstr ""
+"⚠️ Emergency mode activated: the civil registry check is no longer required "
+"to buy tickets. As soon as the civil registry service is fixed, be sure to "
+"turn this option off again."
+
+msgid "✅ استعلام ثبت‌احوال دوباره برای خرید بلیط الزامی شد."
+msgstr "✅ The civil registry check is required again to buy tickets."
+
+msgid "درخواست نامعتبر است."
+msgstr "The request is invalid."
+
+msgid "شماره موبایل (۰۹۱۲۳۴۵۶۷۸۹)"
+msgstr "Mobile number (09123456789)"
+
+msgid "این شماره موبایل قبلاً ثبت شده است."
+msgstr "This mobile number is already registered."
+
+msgid "شماره موبایل را وارد کنید (مثلاً 09123456789)"
+msgstr "Enter the mobile number (e.g. 09123456789)"
+
+msgid "شماره موبایل باید فقط شامل اعداد باشد."
+msgstr "The mobile number must contain digits only."
+
+msgid "شماره موبایل باید ۱۱ رقم باشد."
+msgstr "The mobile number must be 11 digits."
+
+msgid "شماره موبایل باید با ۰۹ شروع شود."
+msgstr "The mobile number must start with 09."
+
+msgid "کد تأیید"
+msgstr "Verification code"
+
+msgid "کد باید عددی باشد."
+msgstr "The code must be numeric."
+
+msgid "شماره موبایل را وارد کنید"
+msgstr "Enter the mobile number"
+
+#, python-format
+msgid "%(label)s را وارد کنید."
+msgstr "Enter %(label)s."
+
+#, python-format
+msgid "%(label)s باید فقط با حروف فارسی نوشته شود."
+msgstr "%(label)s must be written in Persian letters only."
+
+msgid "شماره موبایل معتبر نیست (۱۱ رقم و با ۰۹ شروع شود)."
+msgstr "The mobile number is not valid (11 digits starting with 09)."
+
+msgid "کد ملی وارد شده معتبر نیست."
+msgstr "The national ID entered is not valid."
+
+msgid "شما دسترسی به این بخش ندارید."
+msgstr "You do not have access to this section."
+
+msgid "هیچ بلیط صادرشده‌ای یافت نشد."
+msgstr "No issued tickets were found."
+
+#, python-format
+msgid "هیچ بلیطی برای مسابقه \"%(selected_match)s\" صادر نشده است."
+msgstr "No tickets have been issued for the match \"%(selected_match)s\"."
+
+msgid "هیچ کدی برای دانلود انتخاب نشده است."
+msgstr "No codes were selected for download."
+
+msgid "کدهای انتخاب‌شده یافت نشد."
+msgstr "The selected codes were not found."
+
+msgid "یافت نشد."
+msgstr "Not found."
+
+msgid "شما دسترسی به این فایل ندارید."
+msgstr "You do not have access to this file."
+
+msgid "خطا در ساخت فایل. دوباره تلاش کنید."
+msgstr "Error creating the file. Try again."
+
+msgid "ظرفیت شما برای این مسابقه تکمیل شده است."
+msgstr "Your capacity for this match is full."
+
+msgid "لطفاً تمام اطلاعات را وارد کنید."
+msgstr "Please enter all the information."
+
+msgid "صندلی انتخاب‌شده معتبر نیست، غیرفعال است یا قبلاً فروخته شده است."
+msgstr "The selected seat is not valid, is inactive or has already been sold."
+
+msgid "ردیف/بلوک این صندلی برای این مسابقه غیرفعال است."
+msgstr "The row/block of this seat is inactive for this match."
+
+msgid "این صندلی از قبل بلیط دارد. لطفاً صندلی دیگری انتخاب کنید."
+msgstr "This seat already has a ticket. Please choose another seat."
+
+#, python-format
+msgid ""
+"✅ بلیط برای %(full_name)s با موفقیت صادر شد.\n"
+"بلوک: %(name)s - ردیف: %(number)s - صندلی: %(number2)s"
+msgstr ""
+"✅ The ticket for %(full_name)s was issued successfully.\n"
+"Block: %(name)s - Row: %(number)s - Seat: %(number2)s"
+
+#, python-format
+msgid ""
+"✅ اطلاعات بلیط %(ticket_number)s با موفقیت ویرایش شد. تولید PDF جدید چند "
+"لحظه طول می‌کشد."
+msgstr ""
+"✅ The information of ticket %(ticket_number)s was edited successfully. "
+"Generating a new PDF takes a few moments."
+
+msgid "✅ بلیط با موفقیت لغو شد و صندلی آزاد شد."
+msgstr "✅ The ticket was cancelled successfully and the seat was released."
+
+msgid "فایل باید شامل ستون‌های \"نام و نام خانوادگی\" و \"کد ملی\" باشد."
+msgstr "The file must contain the columns \"Full name\" and \"National ID\"."
+
+#, python-format
+msgid "تعداد صندلی‌های موجود (%(v)s) کمتر از تعداد درخواست‌ها (%(v2)s) است."
+msgstr ""
+"The number of available seats (%(v)s) is less than the number of requests "
+"(%(v2)s)."
+
+#, python-format
+msgid ""
+"ظرفیت باقی‌مانده شما (%(remaining)s) کمتر از تعداد درخواست‌ها (%(v)s) است."
+msgstr ""
+"Your remaining capacity (%(remaining)s) is less than the number of requests "
+"(%(v)s)."
+
+msgid "صندلی خالی کافی برای ادامه‌ی فایل اکسل باقی نماند."
+msgstr "Not enough free seats were left to continue the Excel file."
+
+#, python-format
+msgid "✅ %(created)s بلیط با موفقیت از فایل اکسل صادر شد."
+msgstr "✅ %(created)s tickets were issued successfully from the Excel file."
+
+#, python-format
+msgid "❌ خطا در خواندن فایل: %(v)s"
+msgstr "❌ Error reading the file: %(v)s"
+
+msgid "فروش بلیط برای این مسابقه غیرفعال است."
+msgstr "Ticket sales are disabled for this match."
+
+msgid "لطفاً ابتدا یک ردیف را انتخاب کنید."
+msgstr "Please select a row first."
+
+msgid "کاربران ویژه امکان خرید بلیط ندارند."
+msgstr "VIP users cannot buy tickets."
+
+msgid "لطفاً ابتدا ردیف را انتخاب کنید."
+msgstr "Please select the row first."
+
+msgid "این ردیف برای این مسابقه در دسترس نیست."
+msgstr "This row is not available for this match."
+
+msgid "رزروهای قبلی شما به دلیل بازگشت به این صفحه لغو شد."
+msgstr ""
+"Your previous reservations were cancelled because you returned to this page."
+
+msgid "هیچ صندلی‌ای برای این ردیف در این مسابقه تعریف نشده است."
+msgstr "No seats are defined for this row in this match."
+
+msgid "هیچ صندلی‌ای انتخاب نشده است."
+msgstr "No seats were selected."
+
+msgid "حداکثر ۵ بلیط مجاز است."
+msgstr "A maximum of 5 tickets is allowed."
+
+msgid "خطا در اطلاعات ارسال شده."
+msgstr "Error in the submitted data."
+
+msgid "یکی از صندلی‌های انتخاب‌شده معتبر نیست."
+msgstr "One of the selected seats is not valid."
+
+msgid "یکی از صندلی‌های انتخاب‌شده در دسترس نیست."
+msgstr "One of the selected seats is not available."
+
+msgid "یکی از صندلی‌های انتخاب‌شده برای این مسابقه در دسترس نیست."
+msgstr "One of the selected seats is not available for this match."
+
+msgid "یکی از صندلی‌های انتخاب‌شده قبلاً فروخته شده است."
+msgstr "One of the selected seats has already been sold."
+
+#, python-format
+msgid ""
+"این انتخاب یک صندلی تکی خالی جا می‌گذارد (%(spots)s%(more)s) که دیگر قابل "
+"فروش نیست. لطفاً آن صندلی را هم به انتخابتان اضافه کنید، یا صندلی‌هایتان را "
+"کمی جابه‌جا کنید."
+msgstr ""
+"This selection leaves a single empty seat (%(spots)s%(more)s) that can no "
+"longer be sold. Please add that seat to your selection too, or move your "
+"seats a little."
+
+msgid "یکی از صندلی‌های انتخاب‌شده قبلاً فروخته یا رزرو شده است."
+msgstr "One of the selected seats has already been sold or reserved."
+
+msgid "خطا در رزرو صندلی. لطفاً دوباره تلاش کنید."
+msgstr "Error reserving the seat. Please try again."
+
+msgid "ابتدا صندلی‌ها را انتخاب کنید."
+msgstr "Select the seats first."
+
+msgid "رزرو یکی از صندلی‌ها منقضی شده است. لطفاً دوباره انتخاب کنید."
+msgstr "The reservation of one of the seats has expired. Please select again."
+
+#, python-format
+msgid "کد تخفیف نامعتبر: %(msg)s"
+msgstr "Invalid discount code: %(msg)s"
+
+msgid "کد تخفیف یافت نشد."
+msgstr "The discount code was not found."
+
+msgid "لطفاً تمام اطلاعات را برای همه صندلی‌ها وارد و استعلام کنید."
+msgstr "Please enter and verify all the information for all seats."
+
+#, python-format
+msgid "کد ملی برای صندلی %(v)s باید ۱۰ رقم باشد."
+msgstr "The national ID for seat %(v)s must be 10 digits."
+
+#, python-format
+msgid ""
+"کد ملی %(national_code)s برای دو صندلی مختلف وارد شده است. هر فرد فقط یک "
+"بلیط می‌تواند داشته باشد."
+msgstr ""
+"The national ID %(national_code)s was entered for two different seats. Each "
+"person can have only one ticket."
+
+#, python-format
+msgid "کد ملی %(national_code)s قبلاً برای این مسابقه بلیط خریداری کرده است."
+msgstr ""
+"The national ID %(national_code)s has already bought a ticket for this "
+"match."
+
+msgid ""
+"این صندلی به‌خاطر سن زیر ۱۵ سال از قبل رایگان است و نیازی به کد ویژه ندارد؛ "
+"لطفاً کد ویژه را برای این صندلی وارد نکنید."
+msgstr ""
+"This seat is already free because of age under 15 and does not need a "
+"special code; please do not enter a special code for this seat."
+
+#, python-format
+msgid ""
+"کد ویژه «%(special_code_input)s» فقط یک‌بار قابل استفاده است و نمی‌تواند "
+"برای دو صندلی وارد شود."
+msgstr ""
+"The special code “%(special_code_input)s” can be used only once and cannot "
+"be entered for two seats."
+
+#, python-format
+msgid "کد ویژه نامعتبر: %(msg)s"
+msgstr "Invalid special code: %(msg)s"
+
+msgid "کد ویژه یافت نشد."
+msgstr "The special code was not found."
+
+msgid "شما هیچ صندلی‌ای برای خرید انتخاب نکرده‌اید."
+msgstr "You have not selected any seats to buy."
+
+#, python-format
+msgid "موجودی کیف پول شما (%(balance)s ریال) کافی نیست."
+msgstr "Your wallet balance (%(balance)s IRR) is not sufficient."
+
+#, python-format
+msgid ""
+"مبلغ قابل پرداخت از کیف پول نمی‌تواند از مبلغ نهایی (%(discounted_total)s "
+"ریال) بیشتر باشد."
+msgstr ""
+"The amount payable from the wallet cannot exceed the final amount "
+"(%(discounted_total)s IRR)."
+
+msgid ""
+"مبلغ نهایی خرید بزرگ‌تر از صفر است. لطفاً از طریق دکمه‌ی پرداخت اقدام کنید."
+msgstr ""
+"The final purchase amount is greater than zero. Please proceed with the pay "
+"button."
+
+#, python-format
+msgid "کد تخفیف دیگر معتبر نیست: %(msg)s"
+msgstr "The discount code is no longer valid: %(msg)s"
+
+#, python-format
+msgid "کد ویژه دیگر معتبر نیست: %(msg)s"
+msgstr "The special code is no longer valid: %(msg)s"
+
+msgid "صندلی مورد نظر معتبر نیست یا قبلاً فروخته شده است."
+msgstr "The seat is not valid or has already been sold."
+
+#, python-format
+msgid "مدت زمان رزرو صندلی %(number)s به پایان رسیده است."
+msgstr "The reservation time for seat %(number)s has ended."
+
+#, python-format
+msgid ""
+"صندلی %(number)s همین الان توسط شخص دیگری خریداری شد. لطفاً صندلی دیگری "
+"انتخاب کنید."
+msgstr ""
+"Seat %(number)s was just bought by someone else. Please choose another seat."
+
+#, python-format
+msgid ""
+"✅ %(v)s بلیط با موفقیت صادر شد. مبلغ %(wallet_amount_used)s ریال از کیف پول "
+"کسر شد."
+msgstr ""
+"✅ %(v)s tickets were issued successfully. %(wallet_amount_used)s IRR was "
+"deducted from the wallet."
+
+#, python-format
+msgid "✅ %(v)s بلیط به صورت رایگان صادر شد."
+msgstr "✅ %(v)s tickets were issued for free."
+
+#, python-format
+msgid "خطا در پردازش خرید: %(v)s"
+msgstr "Error processing the purchase: %(v)s"
+
+msgid "عملیات خرید لغو شد و صندلی‌ها آزاد شدند."
+msgstr "The purchase was cancelled and the seats were released."
+
+msgid "تعداد استعلام‌های شما زیاد است. چند دقیقه صبر کنید."
+msgstr "You have made too many verification requests. Wait a few minutes."
+
+msgid "تمام فیلدها الزامی است"
+msgstr "All fields are required"
+
+msgid "نام و نام خانوادگی باید فقط با حروف فارسی نوشته شود."
+msgstr "The first and last name must be written in Persian letters only."
+
+msgid "کد ملی باید ۱۰ رقم باشد"
+msgstr "The national ID must be 10 digits"
+
+msgid "خطا در دریافت توکن"
+msgstr "Error getting the token"
+
+msgid "خطا در ارتباط با سامانه هواداری. لطفاً مجددا تلاش کنید."
+msgstr "Error connecting to the fan system. Please try again."
+
+#, python-format
+msgid "بلوک «%(name)s» برای این مسابقه غیرفعال است."
+msgstr "The block “%(name)s” is inactive for this match."
+
+#, python-format
+msgid ""
+"تعداد صندلی‌های موجود در بلوک \"%(name)s\" (%(v)s) کافی نیست. به "
+"%(total_needed)s صندلی نیاز است."
+msgstr ""
+"The number of available seats in the block \"%(name)s\" (%(v)s) is not "
+"enough. %(total_needed)s seats are needed."
+
+#, python-format
+msgid "%(created_count)s بلیط برای %(v)s کاربر ویژه از بلوک \"%(name)s\" صادر شد."
+msgstr ""
+"%(created_count)s tickets were issued for %(v)s VIP users from the block "
+"\"%(name)s\"."
+
+msgid "ابتدا یک مسابقه انتخاب کنید."
+msgstr "Select a match first."
+
+msgid "شماره موبایل را وارد کنید."
+msgstr "Enter the mobile number."
+
+msgid "تاریخ تولد را وارد کنید."
+msgstr "Enter the date of birth."
+
+msgid "یک بلوک انتخاب کنید."
+msgstr "Select a block."
+
+msgid ""
+"ابتدا با دکمه‌ی «استعلام و تأیید هویت» اطلاعات را از ثبت‌احوال تأیید کنید."
+msgstr ""
+"First verify the information with the civil registry using the “Verify "
+"identity” button."
+
+#, python-format
+msgid ""
+"برای کد ملی %(national_code)s قبلاً بلیطی برای این مسابقه صادر شده است."
+msgstr ""
+"A ticket has already been issued for this match for the national ID "
+"%(national_code)s."
+
+#, python-format
+msgid "صندلی خالی در بلوک «%(name)s» وجود ندارد."
+msgstr "There is no free seat in the block “%(name)s”."
+
+#, python-format
+msgid ""
+"بلیط شماره %(ticket_number)s برای «%(full_name)s» از بلوک «%(name)s» صادر "
+"شد."
+msgstr ""
+"Ticket number %(ticket_number)s for “%(full_name)s” from the block "
+"“%(name)s” was issued."
+
+msgid "کاربر ویژه مورد نظر یافت نشد."
+msgstr "The VIP user was not found."
+
+msgid "درصد تخفیف و تعداد باید عدد باشند."
+msgstr "The discount percentage and count must be numbers."
+
+msgid "کد تخفیف را وارد کنید."
+msgstr "Enter the discount code."
+
+msgid "برای ساخت کد تخفیف باید یک مسابقه انتخاب کنید."
+msgstr "To create a discount code you must select a match."
+
+msgid "درصد تخفیف باید بین ۰ تا ۱۰۰ باشد."
+msgstr "The discount percentage must be between 0 and 100."
+
+msgid "حداکثر استفاده باید حداقل ۱ باشد."
+msgstr "The maximum usage must be at least 1."
+
+#, python-format
+msgid "کد \"%(code)s\" قبلاً استفاده شده. یک کد دیگر انتخاب کنید."
+msgstr "The code \"%(code)s\" has already been used. Choose another code."
+
+#, python-format
+msgid ""
+"کد تخفیف \"%(code)s\" برای %(v)s (%(home_team)s vs %(away_team)s) ساخته شد."
+msgstr ""
+"The discount code \"%(code)s\" was created for %(v)s (%(home_team)s vs "
+"%(away_team)s)."
+
+msgid "تعداد باید عدد باشد."
+msgstr "The count must be a number."
+
+msgid "برای ساخت کد ویژه باید یک مسابقه انتخاب کنید."
+msgstr "To create a special code you must select a match."
+
+msgid "تعداد باید بین ۱ تا ۵۰۰ باشد."
+msgstr "The count must be between 1 and 500."
+
+#, python-format
+msgid ""
+"%(quantity)s کد ویژه برای %(v)s (%(home_team)s vs %(away_team)s) ساخته شد."
+msgstr ""
+"%(quantity)s special codes were created for %(v)s (%(home_team)s vs "
+"%(away_team)s)."
+
+msgid "هیچ بلیطی برای حذف انتخاب نشده است."
+msgstr "No tickets were selected for deletion."
+
+#, python-format
+msgid ""
+"✅ %(deleted_count)s بلیط با موفقیت حذف شد و صندلی‌های مربوطه آزاد شدند."
+msgstr ""
+"✅ %(deleted_count)s tickets were deleted successfully and their seats were "
+"released."
+
+msgid "هیچ‌کدام از بلیط‌های انتخاب‌شده یافت نشد."
+msgstr "None of the selected tickets were found."
+
+#, python-format
+msgid "✅ بلیط %(ticket_number)s با موفقیت حذف شد و صندلی آزاد شد."
+msgstr ""
+"✅ Ticket %(ticket_number)s was deleted successfully and the seat was "
+"released."
+
+msgid "هیچ بلیطی انتخاب نشده است."
+msgstr "No tickets were selected."
+
+msgid "بلیط‌های انتخاب‌شده معتبر نیستند."
+msgstr "The selected tickets are not valid."
+
+msgid "هیچ فایل PDF معتبری برای دانلود وجود ندارد."
+msgstr "There is no valid PDF file to download."
+
+msgid "شناسه مسابقه مشخص نشده است."
+msgstr "The match ID was not specified."
+
+msgid "مسابقه یافت نشد."
+msgstr "Match not found."
+
+#, python-format
+msgid "کد تخفیف %(discount_percent)s٪ اعمال شد"
+msgstr "Discount code of %(discount_percent)s%% applied"
+
+msgid "کد تخفیف یافت نشد"
+msgstr "Discount code not found"
+
+msgid "کد ویژه معتبر است -- این بلیط رایگان می‌شود"
+msgstr "The special code is valid -- this ticket becomes free"
+
+msgid "کد ویژه یافت نشد"
+msgstr "Special code not found"
+
+#, python-format
+msgid "کاربر \"%(username)s\" قبلاً برای این مسابقه ظرفیت دارد."
+msgstr "The user \"%(username)s\" already has capacity for this match."
+
+#, python-format
+msgid "ظرفیت برای کاربر \"%(username)s\" در مسابقه \"%(match)s\" با موفقیت ایجاد شد."
+msgstr ""
+"Capacity for the user \"%(username)s\" in the match \"%(match)s\" was "
+"created successfully."
+
+msgid "خطا در فرم. لطفاً دوباره تلاش کنید."
+msgstr "Form error. Please try again."
+
+#, python-format
+msgid "ظرفیت کاربر \"%(username)s\" با موفقیت ویرایش شد."
+msgstr "The capacity of the user \"%(username)s\" was edited successfully."
+
+#, python-format
+msgid ""
+"تخصیص ظرفیت کاربر \"%(user_name)s\" برای مسابقه \"%(match_name)s\" با موفقیت"
+" حذف شد."
+msgstr ""
+"The capacity allocation of the user \"%(user_name)s\" for the match "
+"\"%(match_name)s\" was deleted successfully."
+
+msgid "برای ایجاد کد تخفیف، ابتدا باید یک مسابقه فعال ایجاد کنید."
+msgstr "To create a discount code, you must first create an active match."
+
+#, python-format
+msgid "کد تخفیف \"%(code)s\" با موفقیت ایجاد شد."
+msgstr "The discount code \"%(code)s\" was created successfully."
+
+#, python-format
+msgid "کد تخفیف \"%(code)s\" با موفقیت ویرایش شد."
+msgstr "The discount code \"%(code)s\" was edited successfully."
+
+#, python-format
+msgid "کد تخفیف \"%(code)s\" با موفقیت حذف شد."
+msgstr "The discount code \"%(code)s\" was deleted successfully."
+
+#, python-format
+msgid "کد تخفیف \"%(code)s\" %(status)s شد."
+msgstr "The discount code \"%(code)s\" was %(status)s."
+
+#, python-format
+msgid "کد ویژه \"%(code)s\" %(status)s شد."
+msgstr "The special code \"%(code)s\" was %(status)s."
+
+#, python-format
+msgid "کد ویژه \"%(code_str)s\" حذف شد."
+msgstr "The special code \"%(code_str)s\" was deleted."
+
+msgid "درخواست نامعتبر."
+msgstr "Invalid request."
+
+msgid "هیچ مسابقه‌ای انتخاب نشده است."
+msgstr "No matches were selected."
+
+msgid "مسابقه‌های انتخاب‌شده یافت نشدند."
+msgstr "The selected matches were not found."
+
+msgid "مسابقه"
+msgstr "Match"
+
+msgid "کاربران ویژه"
+msgstr "VIP users"
+
+msgid "بلوک (جایگاه)"
+msgstr "Block (stand)"
+
+msgid "تعداد بلیط برای هر کاربر"
+msgstr "Number of tickets per user"
+
+#, python-format
+msgid ""
+"تعداد صندلی‌های موجود در بلوک \"%(name)s\" (%(available_seats)s) کافی نیست. "
+"به %(total_needed)s صندلی نیاز است."
+msgstr ""
+"The number of available seats in the block \"%(name)s\" "
+"(%(available_seats)s) is not enough. %(total_needed)s seats are needed."
+
+msgid "کاربران ویژه به این بخش دسترسی ندارند."
+msgstr "VIP users do not have access to this section."
+
+msgid "برای شارژ کیف پول از دکمه‌ی «پرداخت و شارژ» استفاده کنید."
+msgstr "To charge the wallet, use the “Pay and charge” button."
+
+msgid "✅ شماره شبا توسط بانک تأیید شد و درخواست در انتظار پرداخت قرار گرفت."
+msgstr ""
+"✅ The IBAN was verified by the bank and the request is awaiting payment."
+
+#, python-format
+msgid "اطلاعات درخواست #%(pk)s اصلاح شد و دوباره در انتظار تأیید قرار گرفت."
+msgstr ""
+"The information of request #%(pk)s was corrected and it is awaiting approval"
+" again."
+
+msgid " مبلغ برای شما نگه داشته شده است."
+msgstr " The amount is held for you."
+
+#, python-format
+msgid ""
+"✅ شماره شبا توسط بانک تأیید شد. درخواست #%(pk)s به مبلغ %(amount)s ریال در "
+"انتظار پرداخت قرار گرفت."
+msgstr ""
+"✅ The IBAN was verified by the bank. Request #%(pk)s for %(amount)s IRR is "
+"awaiting payment."
+
+#, python-format
+msgid ""
+"درخواست برداشت #%(pk)s به مبلغ %(amount)s ریال ثبت شد. پس از بررسی و تأیید، "
+"مبلغ به حساب اعلامی شما واریز می‌شود."
+msgstr ""
+"Withdrawal request #%(pk)s for %(amount)s IRR was submitted. After review "
+"and approval, the amount will be paid into your declared account."
+
+msgid "هیچ درخواستی انتخاب نشده است."
+msgstr "No requests were selected."
+
+msgid ""
+"برای این اقدام، نوشتن دلیل الزامی است (همان متن برای همه‌ی انتخاب‌شده‌ها ثبت"
+" می‌شود)."
+msgstr ""
+"Writing a reason is required for this action (the same text is recorded for "
+"all selected items)."
+
+msgid "اقدام نامعتبر است."
+msgstr "The action is invalid."
+
+#, python-format
+msgid "%(done)s درخواست پردازش شد."
+msgstr "%(done)s requests were processed."
+
+msgid "انجام نشد — "
+msgstr "Not done — "
+
+msgid "برای ثبت واریز، شماره پیگیری بانکی الزامی است."
+msgstr "A bank tracking number is required to record the payout."
+
+msgid ""
+"بنویسید چه چیزی باید اصلاح شود (همان متن برای کاربر نمایش داده می‌شود)."
+msgstr ""
+"Write what needs to be corrected (the same text is shown to the user)."
+
+msgid ""
+"برای رد درخواست، ذکر دلیل الزامی است (همان متن برای کاربر نمایش داده "
+"می‌شود)."
+msgstr ""
+"A reason is required to reject the request (the same text is shown to the "
+"user)."
+
+#, python-format
+msgid ""
+"درخواست #%(pk)s لغو شد و %(amount)s ریال به کیف پول شما برگشت. حالا "
+"می‌توانید درخواست تازه با اطلاعات درست ثبت کنید."
+msgstr ""
+"Request #%(pk)s was cancelled and %(amount)s IRR was returned to your "
+"wallet. You can now submit a new request with the correct information."
+
+msgid "کاربر پیدا نشد."
+msgstr "User not found."
+
+msgid "مبلغ باید بزرگ‌تر از صفر باشد."
+msgstr "The amount must be greater than zero."
+
+msgid "دلیل شارژ را بنویسید — در تاریخچه‌ی کاربر ثبت می‌شود."
+msgstr ""
+"Write the reason for the charge — it is recorded in the user’s history."
+
+#, python-format
+msgid "%(amount)s ریال به کیف پول %(v)s اضافه شد و قابل برداشت است."
+msgstr "%(amount)s IRR was added to the wallet of %(v)s and is withdrawable."
+
+msgid "واریز انجام نشد."
+msgstr "The payout was not made."
+
+msgid "فایلی انتخاب نشده است."
+msgstr "No file was selected."
+
+#, python-format
+msgid "فایل خوانده نشد: %(exc)s"
+msgstr "The file could not be read: %(exc)s"
+
+#, python-format
+msgid "%(paid)s واریز از روی فایل ثبت شد."
+msgstr "%(paid)s payouts were recorded from the file."
+
+#, python-format
+msgid "%(skipped)s سطر ثبت نشد: "
+msgstr "%(skipped)s rows were not recorded: "
+
+msgid "هیچ سطری با شماره پیگیری پرشده در فایل نبود."
+msgstr "There were no rows with a filled-in tracking number in the file."
+
+msgid "برای پرداخت باید وارد حساب کاربری خود شوید."
+msgstr "You must log in to your account to pay."
+
+msgid "مبلغ نامعتبر است"
+msgstr "The amount is invalid"
+
+msgid "مبلغ باید بزرگتر از صفر باشد"
+msgstr "The amount must be greater than zero"
+
+#, python-format
+msgid ""
+"کد ملی %(value)s برای دو صندلی مختلف وارد شده است. هر فرد فقط یک بلیط "
+"می‌تواند داشته باشد."
+msgstr ""
+"The national ID %(value)s was entered for two different seats. Each person "
+"can have only one ticket."
+
+msgid ""
+"یکی از کد ملی‌های وارد شده قبلاً برای این مسابقه بلیط خریداری کرده است."
+msgstr ""
+"One of the national IDs entered has already bought a ticket for this match."
+
+msgid "خطا در شروع پرداخت"
+msgstr "Error starting the payment"
+
+msgid "خطا در ارتباط با درگاه پرداخت"
+msgstr "Error connecting to the payment gateway"
+
+msgid "اطلاعات پرداخت یافت نشد"
+msgstr "Payment information not found"
+
+msgid "تراکنش یافت نشد"
+msgstr "Transaction not found"
+
+msgid "این تراکنش قبلاً با موفقیت پردازش شده است."
+msgstr "This transaction has already been processed successfully."
+
+msgid "این تراکنش قبلاً ناموفق اعلام شده است."
+msgstr "This transaction has already been declared failed."
+
+msgid "❌ خطا در تایید پرداخت. لطفاً با پشتیبانی تماس بگیرید."
+msgstr "❌ Error confirming the payment. Please contact support."
+
+#, python-format
+msgid "❌ پرداخت ناموفق! %(error_msg)s"
+msgstr "❌ Payment failed! %(error_msg)s"
+
+msgid "این تراکنش قبلاً پردازش شده است."
+msgstr "This transaction has already been processed."
+
+#, python-format
+msgid "✅ کیف پول شما با موفقیت به مبلغ %(amount)s ریال شارژ شد."
+msgstr "✅ Your wallet was charged successfully with %(amount)s IRR."
+
+msgid "✅ پرداخت با موفقیت انجام شد و بلیط‌های شما صادر شدند."
+msgstr "✅ The payment was successful and your tickets were issued."
+
+#, python-format
+msgid ""
+"❌ در صدور بلیط مشکلی پیش آمد: %(error_msg)s مبلغ %(amount)s ریال به کیف پول "
+"شما بازگردانده شد."
+msgstr ""
+"❌ There was a problem issuing the tickets: %(error_msg)s The amount of "
+"%(amount)s IRR was returned to your wallet."
+
+#, python-format
+msgid ""
+"❌ در صدور بلیط مشکلی پیش آمد: %(error_msg)s اگر مبلغی از حساب شما کسر شده، "
+"با پشتیبانی تماس بگیرید و شماره تراکنش %(track_id)s را اعلام کنید."
+msgstr ""
+"❌ There was a problem issuing the tickets: %(error_msg)s If any amount was "
+"deducted from your account, contact support and provide the transaction "
+"number %(track_id)s."
+
+msgid "لطفاً میزبان یا میهمان را انتخاب کنید."
+msgstr "Please select home or away."
+
+#, python-format
+msgid "بلوک \"%(name)s\" هیچ صندلی‌ای ندارد! لطفاً با مدیر تماس بگیرید."
+msgstr "The block \"%(name)s\" has no seats! Please contact the admin."
+
+msgid "لطفاً یک بلوک را انتخاب کنید."
+msgstr "Please select a block."
+
+msgid "لطفاً ابتدا یک بلوک را انتخاب کنید."
+msgstr "Please select a block first."
+
+msgid "این بلوک برای این مسابقه در دسترس نیست."
+msgstr "This block is not available for this match."
+
+#, python-format
+msgid "هیچ صندلی‌ای برای بلوک \"%(name)s\" یافت نشد."
+msgstr "No seats were found for the block \"%(name)s\"."
+
+msgid "لطفاً ابتدا بلوک را انتخاب کنید."
+msgstr "Please select the block first."
+
+msgid "لطفاً یک ردیف را انتخاب کنید."
+msgstr "Please select a row."
+
+msgid "اطلاعات ناقص."
+msgstr "Incomplete information."
+
+#, python-format
+msgid "%(v)s صندلی جدید برای این مسابقه ایجاد شد."
+msgstr "%(v)s new seats were created for this match."
+
+#, python-format
+msgid "%(activated)s صندلی از بلوک \"%(name)s\" فعال شدند."
+msgstr "%(activated)s seats of the block \"%(name)s\" were activated."
+
+#, python-format
+msgid "%(cancelled)s بلیط موجود در بلوک \"%(name)s\" لغو شدند."
+msgstr "%(cancelled)s existing tickets in the block \"%(name)s\" were cancelled."
+
+#, python-format
+msgid "بلوک \"%(name)s\" برای این مسابقه غیرفعال شد."
+msgstr "The block \"%(name)s\" was deactivated for this match."
+
+msgid "لطفاً یک مسابقه را انتخاب کنید."
+msgstr "Please select a match."
+
+msgid "هیچ صندلی انتخاب نشده است."
+msgstr "No seats were selected."
+
+#, python-format
+msgid "%(activated)s صندلی با موفقیت فعال شدند."
+msgstr "%(activated)s seats were activated successfully."
+
+#, python-format
+msgid "%(deactivated)s صندلی غیرفعال شدند و %(cancelled)s بلیط لغو شدند."
+msgstr ""
+"%(deactivated)s seats were deactivated and %(cancelled)s tickets were "
+"cancelled."
+
+msgid "تعداد باید بزرگتر از صفر باشد."
+msgstr "The count must be greater than zero."
+
+#, python-format
+msgid "%(v)s صندلی با موفقیت فعال شدند."
+msgstr "%(v)s seats were activated successfully."
+
+msgid "هیچ صندلی غیرفعالی برای فعال‌سازی وجود ندارد."
+msgstr "There are no inactive seats to activate."
+
+msgid "هیچ صندلی قابل فعال‌سازی وجود ندارد."
+msgstr "There are no seats that can be activated."
+
+#, python-format
+msgid "%(v)s صندلی غیرفعال شدند و %(cancelled)s بلیط لغو شدند."
+msgstr ""
+"%(v)s seats were deactivated and %(cancelled)s tickets were cancelled."
+
+msgid "هیچ صندلی فعالی برای غیرفعال‌سازی وجود ندارد."
+msgstr "There are no active seats to deactivate."
+
+msgid "خطا: عملیات مشخص نشده است. لطفاً دوباره تلاش کنید."
+msgstr "Error: the operation was not specified. Please try again."
+
+#, python-format
+msgid "صندلی‌های %(v)s دارای بلیط هستند و غیرفعال نشدند."
+msgstr "The seats %(v)s have tickets and were not deactivated."
+
+#, python-format
+msgid "%(count)s صندلی غیرفعال شدند."
+msgstr "%(count)s seats were deactivated."
+
+msgid "همه صندلی‌های انتخاب‌شده قبلاً غیرفعال هستند."
+msgstr "All the selected seats are already inactive."
+
+msgid "صندلی‌های انتخاب‌شده دارای بلیط هستند یا قبلاً فعال هستند."
+msgstr "The selected seats have tickets or are already active."
+
+#, python-format
+msgid "صندلی‌های %(v)s دارای بلیط هستند و تغییر نکردند."
+msgstr "The seats %(v)s have tickets and were not changed."
+
+msgid "هیچ صندلی قابل تغییری انتخاب نشده است."
+msgstr "No changeable seats were selected."
+
+msgid "شماره ردیف مشخص نشده است."
+msgstr "The row number was not specified."
+
+#, python-format
+msgid "همه صندلی‌های ردیف %(row_num)s قبلاً فعال یا دارای بلیط هستند."
+msgstr "All seats of row %(row_num)s are already active or have tickets."
+
+#, python-format
+msgid "ردیف %(row_num)s یافت نشد."
+msgstr "Row %(row_num)s was not found."
+
+msgid "شماره ردیف نامعتبر است."
+msgstr "The row number is invalid."
+
+#, python-format
+msgid "%(count)s صندلی در ردیف %(row_num)s غیرفعال شدند."
+msgstr "%(count)s seats in row %(row_num)s were deactivated."
+
+#, python-format
+msgid "همه صندلی‌های ردیف %(row_num)s قبلاً غیرفعال یا دارای بلیط هستند."
+msgstr "All seats of row %(row_num)s are already inactive or have tickets."
+
+msgid "همه صندلی‌های این بلوک قبلاً فعال یا دارای بلیط هستند."
+msgstr "All seats of this block are already active or have tickets."
+
+#, python-format
+msgid "%(count)s صندلی از کل بلوک غیرفعال شدند."
+msgstr "%(count)s seats of the whole block were deactivated."
+
+msgid "همه صندلی‌های این بلوک قبلاً غیرفعال یا دارای بلیط هستند."
+msgstr "All seats of this block are already inactive or have tickets."
+
+#, python-format
+msgid "عملیات نامعتبر: %(action)s"
+msgstr "Invalid operation: %(action)s"
+
+#, python-format
+msgid "بلوک \"%(name)s\" با موفقیت ذخیره شد."
+msgstr "The block \"%(name)s\" was saved successfully."
+
+#, python-format
+msgid "بلوک \"%(block_name)s\" با موفقیت حذف شد."
+msgstr "The block \"%(block_name)s\" was deleted successfully."
+
+#, python-format
+msgid "مسابقه \"%(home_team)s vs %(away_team)s\" با موفقیت ایجاد شد."
+msgstr "The match \"%(home_team)s vs %(away_team)s\" was created successfully."
+
+#, python-format
+msgid "مسابقه \"%(home_team)s vs %(away_team)s\" با موفقیت ویرایش شد."
+msgstr "The match \"%(home_team)s vs %(away_team)s\" was edited successfully."
+
+#, python-format
+msgid "قیمت وارد‌شده برای بلوک «%(name)s» معتبر نیست."
+msgstr "The price entered for the block “%(name)s” is not valid."
+
+#, python-format
+msgid "قیمت بلوک «%(name)s» نمی‌تواند منفی باشد."
+msgstr "The price of the block “%(name)s” cannot be negative."
+
+msgid "قیمت بلیط‌های اختصاصی این مسابقه ذخیره شد."
+msgstr "The special ticket prices for this match were saved."
+
+msgid "طبقه نامعتبر است."
+msgstr "The floor is invalid."
+
+#, python-format
+msgid "%(v)s سکوی %(scope)s فقط برای این مسابقه %(v2)s شد."
+msgstr "%(v)s stand(s) of %(scope)s were %(v2)s for this match only."
+
+#, python-format
+msgid "%(v)s ردیف بلوک «%(name)s» فقط برای این مسابقه %(v2)s شد."
+msgstr "%(v)s row(s) of the block “%(name)s” were %(v2)s for this match only."
+
+#, python-format
+msgid "نوع جایگاه بلوک «%(name)s» به پیش‌فرض برگشت."
+msgstr "The stand type of the block “%(name)s” was reset to the default."
+
+msgid "نوع جایگاه انتخاب‌شده معتبر نیست."
+msgstr "The selected stand type is not valid."
+
+#, python-format
+msgid ""
+"توجه: %(issued)s بلیط از قبل برای این بلوک صادر شده است. روی PDF آن بلیط‌ها "
+"جایگاه قبلی چاپ شده، ولی گیت از این به بعد «%(label)s» را چک می‌کند — یعنی "
+"دارندگان آن بلیط‌ها باید از گیت «%(label)s» وارد شوند."
+msgstr ""
+"Note: %(issued)s tickets have already been issued for this block. The "
+"previous stand is printed on the PDF of those tickets, but from now on the "
+"gate will check “%(label)s” — meaning holders of those tickets must enter "
+"through the “%(label)s” gate."
+
+#, python-format
+msgid "بلوک «%(name)s» فقط برای این مسابقه %(v)s شد."
+msgstr "The block “%(name)s” was %(v)s for this match only."
+
+#, python-format
+msgid "ردیف %(number)s از بلوک «%(name)s» فقط برای این مسابقه %(v)s شد."
+msgstr "Row %(number)s of the block “%(name)s” was %(v)s for this match only."
+
+#, python-format
+msgid "صندلی %(number)s (ردیف %(number2)s) فقط برای این مسابقه %(v)s شد."
+msgstr "Seat %(number)s (row %(number2)s) was %(v)s for this match only."
+
+#, python-format
+msgid "بلوک «%(name)s» به وضعیت پیش‌فرض برگشت."
+msgstr "The block “%(name)s” was reset to the default state."
+
+msgid "تخفیف باسا برای این مسابقه غیرفعال شد."
+msgstr "The BASA discount was deactivated for this match."
+
+msgid "درصد تخفیف باسا باید عدد باشد."
+msgstr "The BASA discount percentage must be a number."
+
+msgid "درصد تخفیف باسا باید بین ۰ تا ۱۰۰ باشد."
+msgstr "The BASA discount percentage must be between 0 and 100."
+
+#, python-format
+msgid "تخفیف %(percent)s٪ برای اعضای باسا در این مسابقه فعال شد."
+msgstr ""
+"A %(percent)s%% discount was activated for BASA members in this match."
+
+#, python-format
+msgid "مسابقه \"%(match_name)s\" با موفقیت حذف شد."
+msgstr "The match \"%(match_name)s\" was deleted successfully."
+
+msgid "این مسابقه قبلاً لغو شده است."
+msgstr "This match has already been cancelled."
+
+#, python-format
+msgid ""
+"مسابقه لغو شد. %(cancelled_count)s بلیط باطل شد و مجموعاً %(total_refunded)s"
+" ریال به کیف پول %(v)s کاربر بازگشت داده شد."
+msgstr ""
+"The match was cancelled. %(cancelled_count)s tickets were voided and a total"
+" of %(total_refunded)s IRR was returned to the wallets of %(v)s users."
+
+#, python-format
+msgid "ورزشگاه \"%(name)s\" با موفقیت ایجاد شد."
+msgstr "The stadium \"%(name)s\" was created successfully."
+
+#, python-format
+msgid "ورزشگاه \"%(name)s\" با موفقیت ویرایش شد."
+msgstr "The stadium \"%(name)s\" was edited successfully."
+
+#, python-format
+msgid "ورزشگاه \"%(stadium_name)s\" با موفقیت حذف شد."
+msgstr "The stadium \"%(stadium_name)s\" was deleted successfully."
+
+msgid "لطفاً نام ورزشگاه را وارد کنید."
+msgstr "Please enter the stadium name."
+
+msgid "حداقل یک بلوک باید تعریف شود."
+msgstr "At least one block must be defined."
+
+#, python-format
+msgid "بلوک‌های قدیمی ورزشگاه \"%(name)s\" حذف شدند."
+msgstr "The old blocks of the stadium \"%(name)s\" were deleted."
+
+#, python-format
+msgid "بلوک شماره %(i)s نام ندارد، رد شد."
+msgstr "Block number %(i)s has no name, skipped."
+
+#, python-format
+msgid "بلوک \"%(block_name)s\" بدون الگوی ردیف ایجاد شد."
+msgstr "The block \"%(block_name)s\" was created without a row pattern."
+
+#, python-format
+msgid "الگوی %(j)s در بلوک \"%(block_name)s\" ناقص است، رد شد."
+msgstr "Pattern %(j)s in the block \"%(block_name)s\" is incomplete, skipped."
+
+#, python-format
+msgid "محدوده ردیف‌ها در الگوی %(j)s نامعتبر است: %(rows_range)s"
+msgstr "The row range in pattern %(j)s is invalid: %(rows_range)s"
+
+#, python-format
+msgid "شماره ردیف در الگوی %(j)s نامعتبر است: %(rows_range)s"
+msgstr "The row number in pattern %(j)s is invalid: %(rows_range)s"
+
+#, python-format
+msgid "ورزشگاه \"%(name)s\" با %(block_count)s بلوک و ساختار کامل ذخیره شد."
+msgstr ""
+"The stadium \"%(name)s\" was saved with %(block_count)s blocks and the full "
+"structure."
+
+#, python-format
+msgid "خطا در ذخیره‌سازی: %(v)s. احتمالاً نام بلوک تکراری است."
+msgstr "Error saving: %(v)s. The block name is probably duplicated."
+
+#, python-format
+msgid "خطای غیرمنتظره: %(v)s"
+msgstr "Unexpected error: %(v)s"
+
+#, python-format
+msgid "هزینه \"%(description)s\" با موفقیت اضافه شد."
+msgstr "The cost \"%(description)s\" was added successfully."
+
+msgid "هزینه با موفقیت ویرایش شد."
+msgstr "The cost was edited successfully."
+
+msgid "هزینه با موفقیت حذف شد."
+msgstr "The cost was deleted successfully."
+
+#, python-format
+msgid "درآمد \"%(description)s\" با موفقیت اضافه شد."
+msgstr "The revenue \"%(description)s\" was added successfully."
+
+msgid "درآمد با موفقیت ویرایش شد."
+msgstr "The revenue was edited successfully."
+
+msgid "درآمد با موفقیت حذف شد."
+msgstr "The revenue was deleted successfully."
+
+msgid "تاریخ برگزاری"
+msgstr "Event date"
+
+msgid "تاریخ مسابقه را وارد کنید."
+msgstr "Enter the match date."
+
+msgid "فرمت تاریخ نامعتبر است."
+msgstr "The date format is invalid."
+
+msgid "ساعت برگزاری"
+msgstr "Event time"
+
+msgid "اختیاری — اگر خالی بماند، ساعت بازی هیچ‌جا نمایش داده نمی‌شود."
+msgstr "Optional — if left empty, the match time is not shown anywhere."
+
+msgid "فرمت ساعت نامعتبر است."
+msgstr "The time format is invalid."
+
+msgid "توضیح هزینه"
+msgstr "Cost description"
+
+msgid "مبلغ به ریال"
+msgstr "Amount in IRR"
+
+msgid "توضیح درآمد"
+msgstr "Revenue description"
+
+msgid "VIP"
+msgstr "VIP"
+
+msgid "فوتبال"
+msgstr "Football"
+
+msgid "والیبال"
+msgstr "Volleyball"
+
+msgid "هندبال"
+msgstr "Handball"
+
+msgid "بسکتبال"
+msgstr "Basketball"
+
+msgid "فوتسال"
+msgstr "Futsal"
+
+msgid "سایر"
+msgstr "Other"
+
+msgid "پرداخت شده"
+msgstr "Paid"
+
+msgid "لغو شده"
+msgstr "Cancelled"
+
+msgid "تخصیص توسط ادمین"
+msgstr "Assigned by admin"
+
+msgid "صادرشده توسط کاربر ویژه"
+msgstr "Issued by VIP user"
+
+msgid "ناموفق"
+msgstr "Failed"
+
+msgid "درگاه زیبال"
+msgstr "Zibal gateway"
+
+msgid "ترکیبی (کیف پول + زیبال)"
+msgstr "Mixed (wallet + Zibal)"
+
+msgid "صدور بلیط ویژه"
+msgstr "VIP ticket issuance"
+
+msgid "شارژ"
+msgstr "Charge"
+
+msgid "برداشت"
+msgstr "Withdrawal"
+
+msgid "بازگشت وجه"
+msgstr "Refund"
+
+msgid "نیاز به اصلاح اطلاعات"
+msgstr "Needs correction"
+
+msgid "پرداخت انجام شد"
+msgstr "Payment completed"
+
+msgid "رد شد"
+msgstr "Rejected"
+
+msgid "لغو شده توسط شما"
+msgstr "Cancelled by you"
+
+msgid "پرداخت باقی‌مانده‌ی خرید بلیط"
+msgstr "Payment of the remaining amount of a ticket purchase"
+
+msgid "در انتظار بازگشت از درگاه"
+msgstr "Awaiting return from the gateway"
+
+msgid "موفق"
+msgstr "Successful"
+
+msgid "نامشخص"
+msgstr "Unknown"
+
+msgid "Persian"
+msgstr "فارسی"
+
+msgid "English"
+msgstr "English"
+
+msgid "۴۰۳"
+msgstr "403"
+
+msgid "۴۰۴"
+msgstr "404"
+
+msgid "۰۹۱۲۳۴۵۶۷۸۹"
+msgstr "09123456789"
+
+msgid "۰۳۱-۳۷۶۶۰۴۹۱-۴"
+msgstr "031-37660491-4"
+
+msgid "۱"
+msgstr "1"
+
+msgid "۲"
+msgstr "2"
+
+msgid "۳"
+msgstr "3"
+
+msgid "۴"
+msgstr "4"
+
+msgid "۰"
+msgstr "0"

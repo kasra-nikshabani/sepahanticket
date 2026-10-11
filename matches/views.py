@@ -7,6 +7,7 @@ from django.db import transaction, IntegrityError
 from django.db.models import Q, Count, Prefetch, Sum
 from django.http import JsonResponse
 from django.core.cache import cache
+from django.utils.translation import gettext as _t
 
 # ===== عمر کشِ وضعیت صندلی‌ها (ثانیه) =====
 # عمداً کوتاه: فقط برای اینکه ده‌ها کاربری که هم‌زمان یک بلوک را باز
@@ -200,7 +201,7 @@ def select_floor(request, match_id):
     """
     match = get_object_or_404(Match, id=match_id, is_active=True)
     if not match.ticket_sales_enabled:
-        messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
+        messages.error(request, _t("فروش بلیط برای این مسابقه غیرفعال است."))
         return redirect('matches:home')
 
     if request.method == 'POST':
@@ -215,7 +216,7 @@ def select_floor(request, match_id):
             request.session.setdefault('selected_floor', floor if floor in ('ground', 'second') else 'ground')
             return redirect('matches:select_block', match_id=match_id)
         else:
-            messages.error(request, 'لطفاً میزبان یا میهمان را انتخاب کنید.')
+            messages.error(request, _t("لطفاً میزبان یا میهمان را انتخاب کنید."))
 
     return render(request, 'matches/select_floor.html', {'match': match})
 
@@ -224,7 +225,7 @@ def select_floor(request, match_id):
 def select_block(request, match_id):
     match = get_object_or_404(Match, id=match_id, is_active=True)
     if not match.ticket_sales_enabled:
-        messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
+        messages.error(request, _t("فروش بلیط برای این مسابقه غیرفعال است."))
         return redirect('matches:home')
     stadium = match.stadium
 
@@ -338,7 +339,7 @@ def select_block(request, match_id):
             if Seat.objects.filter(row__block=block).count() == 0:
                 messages.error(
                     request,
-                    f'بلوک "{block.name}" هیچ صندلی‌ای ندارد! لطفاً با مدیر تماس بگیرید.'
+                    _t("بلوک \"%(name)s\" هیچ صندلی‌ای ندارد! لطفاً با مدیر تماس بگیرید.") % {"name": block.name}
                 )
                 return redirect('matches:select_block', match_id=match_id)
             # طبقه از خودِ فرم می‌آید، چون کاربر ممکن است بدون بارگذاری
@@ -349,7 +350,7 @@ def select_block(request, match_id):
             request.session['selected_block_id'] = block_id
             return redirect('matches:block_map', match_id=match_id)
         else:
-            messages.error(request, 'لطفاً یک بلوک را انتخاب کنید.')
+            messages.error(request, _t("لطفاً یک بلوک را انتخاب کنید."))
 
     # ===== نقشه‌ی ورزشگاه =====
     # کلِ بلوک‌های همین طبقه رسم می‌شوند، نه فقط آن‌هایی که کاربر می‌تواند
@@ -422,18 +423,18 @@ def select_block(request, match_id):
 def show_block_map(request, match_id):
     match = get_object_or_404(Match, id=match_id, is_active=True)
     if not match.ticket_sales_enabled:
-        messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
+        messages.error(request, _t("فروش بلیط برای این مسابقه غیرفعال است."))
         return redirect('matches:home')
     block_id = request.session.get('selected_block_id')
     if not block_id:
-        messages.error(request, 'لطفاً ابتدا یک بلوک را انتخاب کنید.')
+        messages.error(request, _t("لطفاً ابتدا یک بلوک را انتخاب کنید."))
         return redirect('matches:select_block', match_id=match_id)
 
     block = get_object_or_404(Block, id=block_id)
     # ===== بلوکی که برای همین مسابقه غیرفعال شده نباید قابل خرید باشد، حتی
     # اگر شناسه‌اش از سشن/لینک قدیمی بیاید =====
     if not is_block_active_for_match(match, block):
-        messages.error(request, 'این بلوک برای این مسابقه در دسترس نیست.')
+        messages.error(request, _t("این بلوک برای این مسابقه در دسترس نیست."))
         return redirect('matches:select_block', match_id=match_id)
 
     active_row_ids = get_active_row_ids(match, block=block)
@@ -521,7 +522,7 @@ def show_block_map(request, match_id):
         })
 
     if not map_data:
-        messages.warning(request, f'هیچ صندلی‌ای برای بلوک "{block.name}" یافت نشد.')
+        messages.warning(request, _t("هیچ صندلی‌ای برای بلوک \"%(name)s\" یافت نشد.") % {"name": block.name})
         return redirect('matches:select_block', match_id=match_id)
 
     # ===== داده‌های نمایشی صفحه‌ی انتخاب صندلی: قیمت این بلوک برای همین
@@ -555,16 +556,16 @@ def show_block_map(request, match_id):
 def select_row(request, match_id):
     match = get_object_or_404(Match, id=match_id, is_active=True)
     if not match.ticket_sales_enabled:
-        messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
+        messages.error(request, _t("فروش بلیط برای این مسابقه غیرفعال است."))
         return redirect('matches:home')
     block_id = request.session.get('selected_block_id')
     if not block_id:
-        messages.error(request, 'لطفاً ابتدا بلوک را انتخاب کنید.')
+        messages.error(request, _t("لطفاً ابتدا بلوک را انتخاب کنید."))
         return redirect('matches:select_block', match_id=match_id)
 
     block = get_object_or_404(Block, id=block_id)
     if not is_block_active_for_match(match, block):
-        messages.error(request, 'این بلوک برای این مسابقه در دسترس نیست.')
+        messages.error(request, _t("این بلوک برای این مسابقه در دسترس نیست."))
         return redirect('matches:select_block', match_id=match_id)
     rows = Row.objects.filter(block=block, id__in=get_active_row_ids(match, block=block)).order_by('number')
 
@@ -574,7 +575,7 @@ def select_row(request, match_id):
             request.session['selected_row_id'] = row_id
             return redirect('matches:select_seats', match_id=match_id)
         else:
-            messages.error(request, 'لطفاً یک ردیف را انتخاب کنید.')
+            messages.error(request, _t("لطفاً یک ردیف را انتخاب کنید."))
 
     return render(request, 'matches/select_row.html', {
         'match': match,
@@ -622,7 +623,7 @@ def manage_rows(request):
         match_id_post = request.POST.get('match_id')
 
         if not block_id or not match_id_post or not action:
-            messages.error(request, 'اطلاعات ناقص.')
+            messages.error(request, _t("اطلاعات ناقص."))
             return redirect('matches:manage_rows')
 
         match = get_object_or_404(Match, id=match_id_post)
@@ -637,7 +638,7 @@ def manage_rows(request):
                 new_seats = [MatchSeat(match=match, seat_id=sid, is_available=True) for sid in missing_seat_ids]
                 if new_seats:
                     MatchSeat.objects.bulk_create(new_seats)
-                    messages.info(request, f'{len(new_seats)} صندلی جدید برای این مسابقه ایجاد شد.')
+                    messages.info(request, _t("%(v)s صندلی جدید برای این مسابقه ایجاد شد.") % {"v": len(new_seats)})
 
                 activated = 0
                 for ms in MatchSeat.objects.filter(match=match, seat__in=seats_in_block, is_available=False):
@@ -649,7 +650,7 @@ def manage_rows(request):
                         ms.is_available = True
                         ms.save()
                         activated += 1
-                messages.success(request, f'{activated} صندلی از بلوک "{block.name}" فعال شدند.')
+                messages.success(request, _t("%(activated)s صندلی از بلوک \"%(name)s\" فعال شدند.") % {"activated": activated, "name": block.name})
 
             elif action == 'deactivate':
                 existing = MatchSeat.objects.filter(match=match, seat__in=seats_in_block)
@@ -658,7 +659,7 @@ def manage_rows(request):
                 new_seats = [MatchSeat(match=match, seat_id=sid, is_available=False) for sid in missing_seat_ids]
                 if new_seats:
                     MatchSeat.objects.bulk_create(new_seats)
-                    messages.info(request, f'{len(new_seats)} صندلی جدید برای این مسابقه ایجاد شد.')
+                    messages.info(request, _t("%(v)s صندلی جدید برای این مسابقه ایجاد شد.") % {"v": len(new_seats)})
 
                 MatchSeat.objects.filter(match=match, seat__in=seats_in_block).update(is_available=False)
 
@@ -670,9 +671,9 @@ def manage_rows(request):
                 cancelled = tickets.count()
                 if cancelled > 0:
                     tickets.update(status='cancelled')
-                    messages.warning(request, f'{cancelled} بلیط موجود در بلوک "{block.name}" لغو شدند.')
+                    messages.warning(request, _t("%(cancelled)s بلیط موجود در بلوک \"%(name)s\" لغو شدند.") % {"cancelled": cancelled, "name": block.name})
 
-                messages.success(request, f'بلوک "{block.name}" برای این مسابقه غیرفعال شد.')
+                messages.success(request, _t("بلوک \"%(name)s\" برای این مسابقه غیرفعال شد.") % {"name": block.name})
 
         return redirect(f'{request.path}?match_id={match_id_post}')
 
@@ -730,7 +731,7 @@ def manage_blocks(request):
         match_id_post = request.POST.get('match_id')
 
         if not block_id or not match_id_post or not action:
-            messages.error(request, 'اطلاعات ناقص.')
+            messages.error(request, _t("اطلاعات ناقص."))
             return redirect('matches:manage_blocks')
 
         match = get_object_or_404(Match, id=match_id_post)
@@ -745,7 +746,7 @@ def manage_blocks(request):
                 new_seats = [MatchSeat(match=match, seat_id=sid, is_available=True) for sid in missing_seat_ids]
                 if new_seats:
                     MatchSeat.objects.bulk_create(new_seats)
-                    messages.info(request, f'{len(new_seats)} صندلی جدید برای این مسابقه ایجاد شد.')
+                    messages.info(request, _t("%(v)s صندلی جدید برای این مسابقه ایجاد شد.") % {"v": len(new_seats)})
 
                 activated = 0
                 for ms in MatchSeat.objects.filter(match=match, seat__in=seats_in_block, is_available=False):
@@ -757,7 +758,7 @@ def manage_blocks(request):
                         ms.is_available = True
                         ms.save()
                         activated += 1
-                messages.success(request, f'{activated} صندلی از بلوک "{block.name}" فعال شدند.')
+                messages.success(request, _t("%(activated)s صندلی از بلوک \"%(name)s\" فعال شدند.") % {"activated": activated, "name": block.name})
 
             elif action == 'deactivate':
                 existing = MatchSeat.objects.filter(match=match, seat__in=seats_in_block)
@@ -766,7 +767,7 @@ def manage_blocks(request):
                 new_seats = [MatchSeat(match=match, seat_id=sid, is_available=False) for sid in missing_seat_ids]
                 if new_seats:
                     MatchSeat.objects.bulk_create(new_seats)
-                    messages.info(request, f'{len(new_seats)} صندلی جدید برای این مسابقه ایجاد شد.')
+                    messages.info(request, _t("%(v)s صندلی جدید برای این مسابقه ایجاد شد.") % {"v": len(new_seats)})
 
                 MatchSeat.objects.filter(match=match, seat__in=seats_in_block).update(is_available=False)
 
@@ -778,9 +779,9 @@ def manage_blocks(request):
                 cancelled = tickets.count()
                 if cancelled > 0:
                     tickets.update(status='cancelled')
-                    messages.warning(request, f'{cancelled} بلیط موجود در بلوک "{block.name}" لغو شدند.')
+                    messages.warning(request, _t("%(cancelled)s بلیط موجود در بلوک \"%(name)s\" لغو شدند.") % {"cancelled": cancelled, "name": block.name})
 
-                messages.success(request, f'بلوک "{block.name}" برای این مسابقه غیرفعال شد.')
+                messages.success(request, _t("بلوک \"%(name)s\" برای این مسابقه غیرفعال شد.") % {"name": block.name})
 
         return redirect(f'{request.path}?match_id={match_id_post}')
 
@@ -802,7 +803,7 @@ def manage_seats(request, row_id):
     """مدیریت صندلی‌های یک ردیف برای یک مسابقه خاص"""
     match_id = request.GET.get('match_id')
     if not match_id:
-        messages.error(request, 'لطفاً یک مسابقه را انتخاب کنید.')
+        messages.error(request, _t("لطفاً یک مسابقه را انتخاب کنید."))
         return redirect('matches:manage_rows')
 
     match = get_object_or_404(Match, id=match_id)
@@ -846,11 +847,11 @@ def manage_seats(request, row_id):
             try:
                 seat_ids = json.loads(selected_seats_data)
             except json.JSONDecodeError:
-                messages.error(request, 'خطا در اطلاعات ارسال شده.')
+                messages.error(request, _t("خطا در اطلاعات ارسال شده."))
                 return redirect(f'{request.path}?match_id={match_id}')
 
             if not seat_ids:
-                messages.warning(request, 'هیچ صندلی انتخاب نشده است.')
+                messages.warning(request, _t("هیچ صندلی انتخاب نشده است."))
                 return redirect(f'{request.path}?match_id={match_id}')
 
             # ===== قفل ردیف‌ها قبل از فعال‌سازی (جلوگیری از race condition) =====
@@ -869,18 +870,18 @@ def manage_seats(request, row_id):
                         match_seat_id__in=candidate_ids, status__in=['paid', 'admin_assigned', 'vip_issued']
                     ).values_list('match_seat_id', flat=True)
                 ).update(is_available=True)
-                messages.success(request, f'{activated} صندلی با موفقیت فعال شدند.')
+                messages.success(request, _t("%(activated)s صندلی با موفقیت فعال شدند.") % {"activated": activated})
             return redirect(f'{request.path}?match_id={match_id}')
 
         elif action == 'deactivate_selected' and selected_seats_data:
             try:
                 seat_ids = json.loads(selected_seats_data)
             except json.JSONDecodeError:
-                messages.error(request, 'خطا در اطلاعات ارسال شده.')
+                messages.error(request, _t("خطا در اطلاعات ارسال شده."))
                 return redirect(f'{request.path}?match_id={match_id}')
 
             if not seat_ids:
-                messages.warning(request, 'هیچ صندلی انتخاب نشده است.')
+                messages.warning(request, _t("هیچ صندلی انتخاب نشده است."))
                 return redirect(f'{request.path}?match_id={match_id}')
 
             with transaction.atomic():
@@ -899,13 +900,13 @@ def manage_seats(request, row_id):
                         if tickets.exists():
                             cancelled += tickets.count()
                             tickets.update(status='cancelled')
-                messages.success(request, f'{deactivated} صندلی غیرفعال شدند و {cancelled} بلیط لغو شدند.')
+                messages.success(request, _t("%(deactivated)s صندلی غیرفعال شدند و %(cancelled)s بلیط لغو شدند.") % {"deactivated": deactivated, "cancelled": cancelled})
             return redirect(f'{request.path}?match_id={match_id}')
 
         elif action == 'activate_gradual':
             count = int(request.POST.get('count', 10))
             if count <= 0:
-                messages.error(request, 'تعداد باید بزرگتر از صفر باشد.')
+                messages.error(request, _t("تعداد باید بزرگتر از صفر باشد."))
                 return redirect(f'{request.path}?match_id={match_id}')
 
             # ===== بازبینی has_ticket لحظه‌ای، نه از seats_data (که ممکنه با
@@ -929,9 +930,9 @@ def manage_seats(request, row_id):
                 ids_to_activate = fresh_ids[:count]
                 if ids_to_activate:
                     MatchSeat.objects.filter(id__in=ids_to_activate).update(is_available=True)
-                    messages.success(request, f'{len(ids_to_activate)} صندلی با موفقیت فعال شدند.')
+                    messages.success(request, _t("%(v)s صندلی با موفقیت فعال شدند.") % {"v": len(ids_to_activate)})
                 else:
-                    messages.info(request, 'هیچ صندلی غیرفعالی برای فعال‌سازی وجود ندارد.')
+                    messages.info(request, _t("هیچ صندلی غیرفعالی برای فعال‌سازی وجود ندارد."))
             return redirect(f'{request.path}?match_id={match_id}')
 
         elif action == 'activate_all':
@@ -948,9 +949,9 @@ def manage_seats(request, row_id):
                 )
                 if ids_to_activate:
                     MatchSeat.objects.filter(id__in=ids_to_activate).update(is_available=True)
-                    messages.success(request, f'{len(ids_to_activate)} صندلی با موفقیت فعال شدند.')
+                    messages.success(request, _t("%(v)s صندلی با موفقیت فعال شدند.") % {"v": len(ids_to_activate)})
                 else:
-                    messages.info(request, 'هیچ صندلی قابل فعال‌سازی وجود ندارد.')
+                    messages.info(request, _t("هیچ صندلی قابل فعال‌سازی وجود ندارد."))
             return redirect(f'{request.path}?match_id={match_id}')
 
         elif action == 'deactivate_all':
@@ -973,9 +974,9 @@ def manage_seats(request, row_id):
                             if tickets.exists():
                                 cancelled += tickets.count()
                                 tickets.update(status='cancelled')
-                    messages.success(request, f'{len(active_seat_ids)} صندلی غیرفعال شدند و {cancelled} بلیط لغو شدند.')
+                    messages.success(request, _t("%(v)s صندلی غیرفعال شدند و %(cancelled)s بلیط لغو شدند.") % {"v": len(active_seat_ids), "cancelled": cancelled})
                 else:
-                    messages.info(request, 'هیچ صندلی فعالی برای غیرفعال‌سازی وجود ندارد.')
+                    messages.info(request, _t("هیچ صندلی فعالی برای غیرفعال‌سازی وجود ندارد."))
             return redirect(f'{request.path}?match_id={match_id}')
 
     context = {
@@ -1052,7 +1053,7 @@ def manage_block_seats(request, block_id=None):
 
         # ===== بررسی وجود action =====
         if not action:
-            messages.error(request, 'خطا: عملیات مشخص نشده است. لطفاً دوباره تلاش کنید.')
+            messages.error(request, _t("خطا: عملیات مشخص نشده است. لطفاً دوباره تلاش کنید."))
             return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
 
         # ===== دیباگ =====
@@ -1063,7 +1064,7 @@ def manage_block_seats(request, block_id=None):
         # ---------- ۱. غیرفعال‌سازی انتخاب‌شده‌ها ----------
         if action == 'deactivate':
             if not selected_seats:
-                messages.warning(request, 'هیچ صندلی‌ای انتخاب نشده است.')
+                messages.warning(request, _t("هیچ صندلی‌ای انتخاب نشده است."))
             else:
                 # تفکیک صندلی‌های دارای بلیط
                 seats_with_ticket = Seat.objects.filter(
@@ -1077,19 +1078,19 @@ def manage_block_seats(request, block_id=None):
                 if seats_with_ticket.exists():
                     messages.warning(
                         request,
-                        f'صندلی‌های {", ".join(str(s.number) for s in seats_with_ticket)} دارای بلیط هستند و غیرفعال نشدند.'
+                        _t("صندلی‌های %(v)s دارای بلیط هستند و غیرفعال نشدند.") % {"v": ", ".join(str(s.number) for s in seats_with_ticket)}
                     )
                 if seats_without_ticket.exists():
                     count = seats_without_ticket.update(is_available=False)
-                    messages.success(request, f'{count} صندلی غیرفعال شدند.')
+                    messages.success(request, _t("%(count)s صندلی غیرفعال شدند.") % {"count": count})
                 if not seats_with_ticket.exists() and not seats_without_ticket.exists():
-                    messages.info(request, 'همه صندلی‌های انتخاب‌شده قبلاً غیرفعال هستند.')
+                    messages.info(request, _t("همه صندلی‌های انتخاب‌شده قبلاً غیرفعال هستند."))
             return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
 
         # ---------- ۲. فعال‌سازی انتخاب‌شده‌ها ----------
         elif action == 'activate':
             if not selected_seats:
-                messages.warning(request, 'هیچ صندلی‌ای انتخاب نشده است.')
+                messages.warning(request, _t("هیچ صندلی‌ای انتخاب نشده است."))
             else:
                 # فقط صندلی‌های بدون بلیط را فعال کن
                 seats_without_ticket = Seat.objects.filter(
@@ -1105,13 +1106,13 @@ def manage_block_seats(request, block_id=None):
                         msg += ' بلوک هم به‌صورت خودکار فعال شد.'
                     messages.success(request, msg)
                 else:
-                    messages.info(request, 'صندلی‌های انتخاب‌شده دارای بلیط هستند یا قبلاً فعال هستند.')
+                    messages.info(request, _t("صندلی‌های انتخاب‌شده دارای بلیط هستند یا قبلاً فعال هستند."))
             return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
 
         # ---------- ۳. تغییر وضعیت انتخاب‌شده‌ها ----------
         elif action == 'toggle':
             if not selected_seats:
-                messages.warning(request, 'هیچ صندلی‌ای انتخاب نشده است.')
+                messages.warning(request, _t("هیچ صندلی‌ای انتخاب نشده است."))
             else:
                 seats_with_ticket = Seat.objects.filter(
                     id__in=selected_seats,
@@ -1124,7 +1125,7 @@ def manage_block_seats(request, block_id=None):
                 if seats_with_ticket.exists():
                     messages.warning(
                         request,
-                        f'صندلی‌های {", ".join(str(s.number) for s in seats_with_ticket)} دارای بلیط هستند و تغییر نکردند.'
+                        _t("صندلی‌های %(v)s دارای بلیط هستند و تغییر نکردند.") % {"v": ", ".join(str(s.number) for s in seats_with_ticket)}
                     )
                 if seats_without_ticket.exists():
                     count = seats_without_ticket.count()
@@ -1137,7 +1138,7 @@ def manage_block_seats(request, block_id=None):
                         msg += ' بلوک هم به‌صورت خودکار فعال شد.'
                     messages.success(request, msg)
                 if not seats_with_ticket.exists() and not seats_without_ticket.exists():
-                    messages.info(request, 'هیچ صندلی قابل تغییری انتخاب نشده است.')
+                    messages.info(request, _t("هیچ صندلی قابل تغییری انتخاب نشده است."))
             return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
 
         # ---------- ۴. فعال‌سازی کل ردیف (جدید) ----------
@@ -1146,7 +1147,7 @@ def manage_block_seats(request, block_id=None):
             print(f">>>> Activating row: {row_number}")
 
             if not row_number:
-                messages.error(request, 'شماره ردیف مشخص نشده است.')
+                messages.error(request, _t("شماره ردیف مشخص نشده است."))
                 return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
 
             try:
@@ -1167,11 +1168,11 @@ def manage_block_seats(request, block_id=None):
                             msg += ' بلوک هم به‌صورت خودکار فعال شد.'
                         messages.success(request, msg)
                     else:
-                        messages.info(request, f'همه صندلی‌های ردیف {row_num} قبلاً فعال یا دارای بلیط هستند.')
+                        messages.info(request, _t("همه صندلی‌های ردیف %(row_num)s قبلاً فعال یا دارای بلیط هستند.") % {"row_num": row_num})
                 else:
-                    messages.error(request, f'ردیف {row_num} یافت نشد.')
+                    messages.error(request, _t("ردیف %(row_num)s یافت نشد.") % {"row_num": row_num})
             except ValueError:
-                messages.error(request, 'شماره ردیف نامعتبر است.')
+                messages.error(request, _t("شماره ردیف نامعتبر است."))
             return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
 
         # ---------- ۵. غیرفعال‌سازی کل ردیف ----------
@@ -1180,7 +1181,7 @@ def manage_block_seats(request, block_id=None):
             print(f">>>> Deactivating row: {row_number}")
 
             if not row_number:
-                messages.error(request, 'شماره ردیف مشخص نشده است.')
+                messages.error(request, _t("شماره ردیف مشخص نشده است."))
                 return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
 
             try:
@@ -1195,13 +1196,13 @@ def manage_block_seats(request, block_id=None):
                     )
                     count = seats_without_ticket.update(is_available=False)
                     if count > 0:
-                        messages.success(request, f'{count} صندلی در ردیف {row_num} غیرفعال شدند.')
+                        messages.success(request, _t("%(count)s صندلی در ردیف %(row_num)s غیرفعال شدند.") % {"count": count, "row_num": row_num})
                     else:
-                        messages.info(request, f'همه صندلی‌های ردیف {row_num} قبلاً غیرفعال یا دارای بلیط هستند.')
+                        messages.info(request, _t("همه صندلی‌های ردیف %(row_num)s قبلاً غیرفعال یا دارای بلیط هستند.") % {"row_num": row_num})
                 else:
-                    messages.error(request, f'ردیف {row_num} یافت نشد.')
+                    messages.error(request, _t("ردیف %(row_num)s یافت نشد.") % {"row_num": row_num})
             except ValueError:
-                messages.error(request, 'شماره ردیف نامعتبر است.')
+                messages.error(request, _t("شماره ردیف نامعتبر است."))
             return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
 
         # ---------- ۶. فعال‌سازی کل بلوک (جدید) ----------
@@ -1222,7 +1223,7 @@ def manage_block_seats(request, block_id=None):
                     msg += ' بلوک هم به‌صورت خودکار فعال شد.'
                 messages.success(request, msg)
             else:
-                messages.info(request, 'همه صندلی‌های این بلوک قبلاً فعال یا دارای بلیط هستند.')
+                messages.info(request, _t("همه صندلی‌های این بلوک قبلاً فعال یا دارای بلیط هستند."))
             return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
 
         # ---------- ۷. غیرفعال‌سازی کل بلوک ----------
@@ -1237,14 +1238,14 @@ def manage_block_seats(request, block_id=None):
             )
             count = seats_without_ticket.update(is_available=False)
             if count > 0:
-                messages.success(request, f'{count} صندلی از کل بلوک غیرفعال شدند.')
+                messages.success(request, _t("%(count)s صندلی از کل بلوک غیرفعال شدند.") % {"count": count})
             else:
-                messages.info(request, 'همه صندلی‌های این بلوک قبلاً غیرفعال یا دارای بلیط هستند.')
+                messages.info(request, _t("همه صندلی‌های این بلوک قبلاً غیرفعال یا دارای بلیط هستند."))
             return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
 
         # ---------- ۸. در صورت دریافت action ناشناخته ----------
         else:
-            messages.error(request, f'عملیات نامعتبر: {action}')
+            messages.error(request, _t("عملیات نامعتبر: %(action)s") % {"action": action})
             return redirect(f'{reverse("matches:manage_block_seats")}?block_id={selected_block.id}')
 
     # ===== نمایش صفحه (GET) =====
@@ -2170,10 +2171,10 @@ def admin_block_edit(request, block_id=None):
         form = BlockForm(request.POST, instance=block)
         if form.is_valid():
             form.save()
-            messages.success(request, f'بلوک "{form.instance.name}" با موفقیت ذخیره شد.')
+            messages.success(request, _t("بلوک \"%(name)s\" با موفقیت ذخیره شد.") % {"name": form.instance.name})
             return redirect('matches:admin_block_list')
         else:
-            messages.error(request, 'خطا در فرم. لطفاً دوباره تلاش کنید.')
+            messages.error(request, _t("خطا در فرم. لطفاً دوباره تلاش کنید."))
     else:
         form = BlockForm(instance=block)
 
@@ -2186,7 +2187,7 @@ def admin_block_delete(request, block_id):
     if request.method == 'POST':
         block_name = block.name
         block.delete()
-        messages.success(request, f'بلوک "{block_name}" با موفقیت حذف شد.')
+        messages.success(request, _t("بلوک \"%(block_name)s\" با موفقیت حذف شد.") % {"block_name": block_name})
         return redirect('matches:admin_block_list')
     return render(request, 'matches/admin_block_confirm_delete.html', {'block': block, 'selected_block': block})
 
@@ -2242,7 +2243,7 @@ def admin_match_create(request):
             match = form.save(commit=False)
             match.created_by = request.user
             match.save()
-            messages.success(request, f'مسابقه "{match.home_team} vs {match.away_team}" با موفقیت ایجاد شد.')
+            messages.success(request, _t("مسابقه \"%(home_team)s vs %(away_team)s\" با موفقیت ایجاد شد.") % {"home_team": match.home_team, "away_team": match.away_team})
             return redirect('matches:admin_match_list')
         else:
             for field, errors in form.errors.items():
@@ -2263,7 +2264,7 @@ def admin_match_edit(request, match_id):
         form = MatchForm(request.POST, request.FILES, instance=match)
         if form.is_valid():
             form.save()
-            messages.success(request, f'مسابقه "{match.home_team} vs {match.away_team}" با موفقیت ویرایش شد.')
+            messages.success(request, _t("مسابقه \"%(home_team)s vs %(away_team)s\" با موفقیت ویرایش شد.") % {"home_team": match.home_team, "away_team": match.away_team})
             return redirect('matches:admin_match_list')
         else:
             for field, errors in form.errors.items():
@@ -2311,10 +2312,10 @@ def admin_match_block_prices(request, match_id):
         try:
             price = Decimal(raw)
         except (InvalidOperation, ValueError):
-            messages.error(request, f'قیمت وارد‌شده برای بلوک «{block.name}» معتبر نیست.')
+            messages.error(request, _t("قیمت وارد‌شده برای بلوک «%(name)s» معتبر نیست.") % {"name": block.name})
             continue
         if price < 0:
-            messages.error(request, f'قیمت بلوک «{block.name}» نمی‌تواند منفی باشد.')
+            messages.error(request, _t("قیمت بلوک «%(name)s» نمی‌تواند منفی باشد.") % {"name": block.name})
             continue
         MatchBlockPrice.objects.update_or_create(match=match, block=block, defaults={'price': price})
         if block.price != price:
@@ -2323,7 +2324,7 @@ def admin_match_block_prices(request, match_id):
         changed += 1
 
     if changed:
-        messages.success(request, 'قیمت بلیط‌های اختصاصی این مسابقه ذخیره شد.')
+        messages.success(request, _t("قیمت بلیط‌های اختصاصی این مسابقه ذخیره شد."))
     return redirect('matches:admin_match_edit', match_id=match.id)
 
 
@@ -2426,14 +2427,14 @@ def admin_match_bulk_toggle_floor(request, match_id, floor):
     invalidate_match_capacity(match.id)
     desired = request.POST.get('desired')
     if desired not in ('on', 'off'):
-        messages.error(request, 'درخواست نامعتبر است.')
+        messages.error(request, _t("درخواست نامعتبر است."))
         return redirect('matches:admin_match_stadium_layout', match_id=match.id)
     new_state = (desired == 'on')
 
     blocks = Block.objects.filter(stadium=match.stadium)
     if floor != 'all':
         if floor not in dict(Block.FLOOR_CHOICES):
-            messages.error(request, 'طبقه نامعتبر است.')
+            messages.error(request, _t("طبقه نامعتبر است."))
             return redirect('matches:admin_match_stadium_layout', match_id=match.id)
         blocks = blocks.filter(floor=floor)
 
@@ -2444,8 +2445,7 @@ def admin_match_bulk_toggle_floor(request, match_id, floor):
     scope = 'همه‌ی طبقات' if floor == 'all' else f'طبقه‌ی «{dict(Block.FLOOR_CHOICES)[floor]}»'
     messages.success(
         request,
-        f'{blocks.count()} سکوی {scope} فقط برای این مسابقه '
-        f'{"فعال" if new_state else "غیرفعال"} شد.'
+        _t("%(v)s سکوی %(scope)s فقط برای این مسابقه %(v2)s شد.") % {"v": blocks.count(), "scope": scope, "v2": "فعال" if new_state else "غیرفعال"}
     )
     return redirect('matches:admin_match_stadium_layout', match_id=match.id)
 
@@ -2460,7 +2460,7 @@ def admin_match_bulk_toggle_rows(request, match_id, block_id):
     block = get_object_or_404(Block, id=block_id, stadium=match.stadium)
     desired = request.POST.get('desired')
     if desired not in ('on', 'off'):
-        messages.error(request, 'درخواست نامعتبر است.')
+        messages.error(request, _t("درخواست نامعتبر است."))
         return redirect('matches:admin_match_block_layout', match_id=match.id, block_id=block.id)
     new_state = (desired == 'on')
 
@@ -2471,8 +2471,7 @@ def admin_match_bulk_toggle_rows(request, match_id, block_id):
         )
     messages.success(
         request,
-        f'{rows.count()} ردیف بلوک «{block.name}» فقط برای این مسابقه '
-        f'{"فعال" if new_state else "غیرفعال"} شد.'
+        _t("%(v)s ردیف بلوک «%(name)s» فقط برای این مسابقه %(v2)s شد.") % {"v": rows.count(), "name": block.name, "v2": "فعال" if new_state else "غیرفعال"}
     )
     return redirect('matches:admin_match_block_layout', match_id=match.id, block_id=block.id)
 
@@ -2492,12 +2491,12 @@ def admin_match_set_block_zone(request, match_id, block_id):
         deleted, _ = MatchBlockZone.objects.filter(match=match, block=block).delete()
         if deleted:
             invalidate_block_zone_cache(match.id)
-        messages.success(request, f'نوع جایگاه بلوک «{block.name}» به پیش‌فرض برگشت.')
+        messages.success(request, _t("نوع جایگاه بلوک «%(name)s» به پیش‌فرض برگشت.") % {"name": block.name})
         return redirect('matches:admin_match_stadium_layout', match_id=match.id)
 
     valid_zones = {z for z, _ in ZONE_CHOICES}
     if zone not in valid_zones:
-        messages.error(request, 'نوع جایگاه انتخاب‌شده معتبر نیست.')
+        messages.error(request, _t("نوع جایگاه انتخاب‌شده معتبر نیست."))
         return redirect('matches:admin_match_stadium_layout', match_id=match.id)
 
     MatchBlockZone.objects.update_or_create(
@@ -2518,9 +2517,7 @@ def admin_match_set_block_zone(request, match_id, block_id):
     if issued:
         messages.warning(
             request,
-            f'توجه: {issued} بلیط از قبل برای این بلوک صادر شده است. روی PDF آن بلیط‌ها '
-            f'جایگاه قبلی چاپ شده، ولی گیت از این به بعد «{label}» را چک می‌کند — '
-            f'یعنی دارندگان آن بلیط‌ها باید از گیت «{label}» وارد شوند.'
+            _t("توجه: %(issued)s بلیط از قبل برای این بلوک صادر شده است. روی PDF آن بلیط‌ها جایگاه قبلی چاپ شده، ولی گیت از این به بعد «%(label)s» را چک می‌کند — یعنی دارندگان آن بلیط‌ها باید از گیت «%(label)s» وارد شوند.") % {"issued": issued, "label": label}
         )
     messages.success(request, msg)
     return redirect('matches:admin_match_stadium_layout', match_id=match.id)
@@ -2631,7 +2628,7 @@ def admin_match_toggle_block(request, match_id, block_id):
     )
     messages.success(
         request,
-        f'بلوک «{block.name}» فقط برای این مسابقه {"فعال" if new_state else "غیرفعال"} شد.'
+        _t("بلوک «%(name)s» فقط برای این مسابقه %(v)s شد.") % {"name": block.name, "v": "فعال" if new_state else "غیرفعال"}
     )
     return redirect('matches:admin_match_stadium_layout', match_id=match.id)
 
@@ -2655,8 +2652,7 @@ def admin_match_toggle_row(request, match_id, row_id):
     )
     messages.success(
         request,
-        f'ردیف {row.number} از بلوک «{row.block.name}» فقط برای این مسابقه '
-        f'{"فعال" if new_state else "غیرفعال"} شد.'
+        _t("ردیف %(number)s از بلوک «%(name)s» فقط برای این مسابقه %(v)s شد.") % {"number": row.number, "name": row.block.name, "v": "فعال" if new_state else "غیرفعال"}
     )
     return redirect('matches:admin_match_block_layout', match_id=match.id, block_id=row.block_id)
 
@@ -2681,8 +2677,7 @@ def admin_match_toggle_seat(request, match_id, seat_id):
     match_seat.save(update_fields=['is_enabled'])
     messages.success(
         request,
-        f'صندلی {seat.number} (ردیف {seat.row.number}) فقط برای این مسابقه '
-        f'{"فعال" if match_seat.is_enabled else "غیرفعال"} شد.'
+        _t("صندلی %(number)s (ردیف %(number2)s) فقط برای این مسابقه %(v)s شد.") % {"number": seat.number, "number2": seat.row.number, "v": "فعال" if match_seat.is_enabled else "غیرفعال"}
     )
     return redirect('matches:admin_match_block_layout', match_id=match.id, block_id=seat.row.block_id)
 
@@ -2697,7 +2692,7 @@ def admin_match_reset_block(request, match_id, block_id):
     block = get_object_or_404(Block, id=block_id, stadium=match.stadium)
     deleted, _ = MatchBlockActive.objects.filter(match=match, block=block).delete()
     if deleted:
-        messages.success(request, f'بلوک «{block.name}» به وضعیت پیش‌فرض برگشت.')
+        messages.success(request, _t("بلوک «%(name)s» به وضعیت پیش‌فرض برگشت.") % {"name": block.name})
     return redirect('matches:admin_match_stadium_layout', match_id=match.id)
 
 
@@ -2712,21 +2707,21 @@ def admin_match_basa_discount(request, match_id):
     raw = request.POST.get('basa_discount_percent', '').strip()
     if raw == '':
         MatchBasaDiscount.objects.filter(match=match).delete()
-        messages.success(request, 'تخفیف باسا برای این مسابقه غیرفعال شد.')
+        messages.success(request, _t("تخفیف باسا برای این مسابقه غیرفعال شد."))
         return redirect('matches:admin_match_edit', match_id=match.id)
 
     try:
         percent = int(raw)
     except ValueError:
-        messages.error(request, 'درصد تخفیف باسا باید عدد باشد.')
+        messages.error(request, _t("درصد تخفیف باسا باید عدد باشد."))
         return redirect('matches:admin_match_edit', match_id=match.id)
 
     if not (0 <= percent <= 100):
-        messages.error(request, 'درصد تخفیف باسا باید بین ۰ تا ۱۰۰ باشد.')
+        messages.error(request, _t("درصد تخفیف باسا باید بین ۰ تا ۱۰۰ باشد."))
         return redirect('matches:admin_match_edit', match_id=match.id)
 
     MatchBasaDiscount.objects.update_or_create(match=match, defaults={'discount_percent': percent})
-    messages.success(request, f'تخفیف {percent}٪ برای اعضای باسا در این مسابقه فعال شد.')
+    messages.success(request, _t("تخفیف %(percent)s٪ برای اعضای باسا در این مسابقه فعال شد.") % {"percent": percent})
     return redirect('matches:admin_match_edit', match_id=match.id)
 
 
@@ -2736,7 +2731,7 @@ def admin_match_delete(request, match_id):
     if request.method == 'POST':
         match_name = f"{match.home_team} vs {match.away_team}"
         match.delete()
-        messages.success(request, f'مسابقه "{match_name}" با موفقیت حذف شد.')
+        messages.success(request, _t("مسابقه \"%(match_name)s\" با موفقیت حذف شد.") % {"match_name": match_name})
         return redirect('matches:admin_match_list')
     return render(request, 'matches/admin_match_confirm_delete.html', {'match': match})
 
@@ -2756,7 +2751,7 @@ def admin_match_cancel(request, match_id):
     match = get_object_or_404(Match, id=match_id)
 
     if match.is_cancelled:
-        messages.info(request, 'این مسابقه قبلاً لغو شده است.')
+        messages.info(request, _t("این مسابقه قبلاً لغو شده است."))
         return redirect('matches:admin_match_detail', match_id=match.id)
 
     if request.method == 'POST':
@@ -2764,7 +2759,7 @@ def admin_match_cancel(request, match_id):
             # قفل مسابقه تا از لغو دوباره/هم‌زمان (و بازگشت وجه دوباره) جلوگیری شود
             match = Match.objects.select_for_update().get(id=match_id)
             if match.is_cancelled:
-                messages.info(request, 'این مسابقه قبلاً لغو شده است.')
+                messages.info(request, _t("این مسابقه قبلاً لغو شده است."))
                 return redirect('matches:admin_match_detail', match_id=match.id)
 
             tickets = Ticket.objects.filter(
@@ -2819,8 +2814,7 @@ def admin_match_cancel(request, match_id):
 
         messages.success(
             request,
-            f'مسابقه لغو شد. {cancelled_count} بلیط باطل شد و مجموعاً {total_refunded:,} ریال '
-            f'به کیف پول {len(affected_users)} کاربر بازگشت داده شد.'
+            _t("مسابقه لغو شد. %(cancelled_count)s بلیط باطل شد و مجموعاً %(total_refunded)s ریال به کیف پول %(v)s کاربر بازگشت داده شد.") % {"cancelled_count": cancelled_count, "total_refunded": format(total_refunded, ","), "v": len(affected_users)}
         )
         return redirect('matches:admin_match_detail', match_id=match.id)
 
@@ -2868,10 +2862,10 @@ def admin_stadium_create(request):
         form = StadiumForm(request.POST, request.FILES)  # ← FILES اضافه شد
         if form.is_valid():
             stadium = form.save()
-            messages.success(request, f'ورزشگاه "{stadium.name}" با موفقیت ایجاد شد.')
+            messages.success(request, _t("ورزشگاه \"%(name)s\" با موفقیت ایجاد شد.") % {"name": stadium.name})
             return redirect('matches:admin_stadium_list')
         else:
-            messages.error(request, 'خطا در فرم. لطفاً دوباره تلاش کنید.')
+            messages.error(request, _t("خطا در فرم. لطفاً دوباره تلاش کنید."))
     else:
         form = StadiumForm()
     return render(request, 'matches/admin_stadium_form.html', {'form': form, 'is_edit': False})
@@ -2890,7 +2884,7 @@ def admin_stadium_edit(request, stadium_id):
         form = StadiumForm(request.POST, request.FILES, instance=stadium)  # ← FILES مهم است
         if form.is_valid():
             stadium = form.save()
-            messages.success(request, f'ورزشگاه "{stadium.name}" با موفقیت ویرایش شد.')
+            messages.success(request, _t("ورزشگاه \"%(name)s\" با موفقیت ویرایش شد.") % {"name": stadium.name})
             return redirect('matches:admin_stadium_list')
         else:
             for field, errors in form.errors.items():
@@ -2913,7 +2907,7 @@ def admin_stadium_delete(request, stadium_id):
     if request.method == 'POST':
         stadium_name = stadium.name
         stadium.delete()
-        messages.success(request, f'ورزشگاه "{stadium_name}" با موفقیت حذف شد.')
+        messages.success(request, _t("ورزشگاه \"%(stadium_name)s\" با موفقیت حذف شد.") % {"stadium_name": stadium_name})
         return redirect('matches:admin_stadium_list')
 
     return render(request, 'matches/admin_stadium_confirm_delete.html', {'stadium': stadium})
@@ -2981,7 +2975,7 @@ def admin_stadium_configure(request, stadium_id=None):
         stadium_image = request.FILES.get('stadium_image')
 
         if not stadium_name:
-            messages.error(request, 'لطفاً نام ورزشگاه را وارد کنید.')
+            messages.error(request, _t("لطفاً نام ورزشگاه را وارد کنید."))
             return render(request, 'matches/admin_stadium_configure.html', {
                 'stadium': stadium,
                 'blocks_data': blocks_data,
@@ -2998,7 +2992,7 @@ def admin_stadium_configure(request, stadium_id=None):
             block_count = 0
 
         if block_count == 0:
-            messages.error(request, 'حداقل یک بلوک باید تعریف شود.')
+            messages.error(request, _t("حداقل یک بلوک باید تعریف شود."))
             return render(request, 'matches/admin_stadium_configure.html', {
                 'stadium': stadium,
                 'blocks_data': blocks_data,
@@ -3013,7 +3007,7 @@ def admin_stadium_configure(request, stadium_id=None):
                         stadium.image = stadium_image
                     stadium.save()
                     Block.objects.filter(stadium=stadium).delete()
-                    messages.info(request, f'بلوک‌های قدیمی ورزشگاه "{stadium.name}" حذف شدند.')
+                    messages.info(request, _t("بلوک‌های قدیمی ورزشگاه \"%(name)s\" حذف شدند.") % {"name": stadium.name})
                 else:
                     stadium = Stadium.objects.create(
                         name=stadium_name,
@@ -3025,7 +3019,7 @@ def admin_stadium_configure(request, stadium_id=None):
                 for i in range(1, block_count + 1):
                     block_name = request.POST.get(f'block_name_{i}', '').strip()
                     if not block_name:
-                        messages.warning(request, f'بلوک شماره {i} نام ندارد، رد شد.')
+                        messages.warning(request, _t("بلوک شماره %(i)s نام ندارد، رد شد.") % {"i": i})
                         continue
 
                     zone_type = request.POST.get(f'block_zone_{i}', 'home')
@@ -3056,7 +3050,7 @@ def admin_stadium_configure(request, stadium_id=None):
                         pattern_count = 0
 
                     if pattern_count == 0:
-                        messages.warning(request, f'بلوک "{block_name}" بدون الگوی ردیف ایجاد شد.')
+                        messages.warning(request, _t("بلوک \"%(block_name)s\" بدون الگوی ردیف ایجاد شد.") % {"block_name": block_name})
                         continue
 
                     for j in range(1, pattern_count + 1):
@@ -3074,7 +3068,7 @@ def admin_stadium_configure(request, stadium_id=None):
                         if not rows_range or seat_end == 0:
                             messages.warning(
                                 request,
-                                f'الگوی {j} در بلوک "{block_name}" ناقص است، رد شد.'
+                                _t("الگوی %(j)s در بلوک \"%(block_name)s\" ناقص است، رد شد.") % {"j": j, "block_name": block_name}
                             )
                             continue
 
@@ -3084,7 +3078,7 @@ def admin_stadium_configure(request, stadium_id=None):
                             except ValueError:
                                 messages.warning(
                                     request,
-                                    f'محدوده ردیف‌ها در الگوی {j} نامعتبر است: {rows_range}'
+                                    _t("محدوده ردیف‌ها در الگوی %(j)s نامعتبر است: %(rows_range)s") % {"j": j, "rows_range": rows_range}
                                 )
                                 continue
                         else:
@@ -3093,7 +3087,7 @@ def admin_stadium_configure(request, stadium_id=None):
                             except ValueError:
                                 messages.warning(
                                     request,
-                                    f'شماره ردیف در الگوی {j} نامعتبر است: {rows_range}'
+                                    _t("شماره ردیف در الگوی %(j)s نامعتبر است: %(rows_range)s") % {"j": j, "rows_range": rows_range}
                                 )
                                 continue
 
@@ -3107,18 +3101,18 @@ def admin_stadium_configure(request, stadium_id=None):
 
                 messages.success(
                     request,
-                    f'ورزشگاه "{stadium.name}" با {block_count} بلوک و ساختار کامل ذخیره شد.'
+                    _t("ورزشگاه \"%(name)s\" با %(block_count)s بلوک و ساختار کامل ذخیره شد.") % {"name": stadium.name, "block_count": block_count}
                 )
                 return redirect('matches:admin_stadium_list')
 
             except IntegrityError as e:
-                messages.error(request, f'خطا در ذخیره‌سازی: {str(e)}. احتمالاً نام بلوک تکراری است.')
+                messages.error(request, _t("خطا در ذخیره‌سازی: %(v)s. احتمالاً نام بلوک تکراری است.") % {"v": str(e)})
                 return render(request, 'matches/admin_stadium_configure.html', {
                     'stadium': stadium,
                     'blocks_data': blocks_data,
                 })
             except Exception as e:
-                messages.error(request, f'خطای غیرمنتظره: {str(e)}')
+                messages.error(request, _t("خطای غیرمنتظره: %(v)s") % {"v": str(e)})
                 return render(request, 'matches/admin_stadium_configure.html', {
                     'stadium': stadium,
                     'blocks_data': blocks_data,
@@ -3195,7 +3189,7 @@ def add_match_cost(request, match_id):
             cost = form.save(commit=False)
             cost.match = match
             cost.save()
-            messages.success(request, f'هزینه "{cost.description}" با موفقیت اضافه شد.')
+            messages.success(request, _t("هزینه \"%(description)s\" با موفقیت اضافه شد.") % {"description": cost.description})
             return redirect('matches:financial_report', match_id=match.id)
     else:
         form = MatchCostForm()
@@ -3217,7 +3211,7 @@ def edit_match_cost(request, cost_id):
         form = MatchCostForm(request.POST, instance=cost)
         if form.is_valid():
             form.save()
-            messages.success(request, f'هزینه با موفقیت ویرایش شد.')
+            messages.success(request, _t("هزینه با موفقیت ویرایش شد.") % {})
             return redirect('matches:financial_report', match_id=match.id)
     else:
         form = MatchCostForm(instance=cost)
@@ -3237,7 +3231,7 @@ def delete_match_cost(request, cost_id):
 
     if request.method == 'POST':
         cost.delete()
-        messages.success(request, 'هزینه با موفقیت حذف شد.')
+        messages.success(request, _t("هزینه با موفقیت حذف شد."))
         return redirect('matches:financial_report', match_id=match_id)
 
     return render(request, 'matches/delete_confirm.html', {
@@ -3261,7 +3255,7 @@ def add_match_revenue(request, match_id):
             revenue = form.save(commit=False)
             revenue.match = match
             revenue.save()
-            messages.success(request, f'درآمد "{revenue.description}" با موفقیت اضافه شد.')
+            messages.success(request, _t("درآمد \"%(description)s\" با موفقیت اضافه شد.") % {"description": revenue.description})
             return redirect('matches:financial_report', match_id=match.id)
     else:
         form = MatchRevenueForm()
@@ -3283,7 +3277,7 @@ def edit_match_revenue(request, revenue_id):
         form = MatchRevenueForm(request.POST, instance=revenue)
         if form.is_valid():
             form.save()
-            messages.success(request, f'درآمد با موفقیت ویرایش شد.')
+            messages.success(request, _t("درآمد با موفقیت ویرایش شد.") % {})
             return redirect('matches:financial_report', match_id=match.id)
     else:
         form = MatchRevenueForm(instance=revenue)
@@ -3303,7 +3297,7 @@ def delete_match_revenue(request, revenue_id):
 
     if request.method == 'POST':
         revenue.delete()
-        messages.success(request, 'درآمد با موفقیت حذف شد.')
+        messages.success(request, _t("درآمد با موفقیت حذف شد."))
         return redirect('matches:financial_report', match_id=match_id)
 
     return render(request, 'matches/delete_confirm.html', {

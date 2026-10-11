@@ -2,6 +2,7 @@ from django import forms
 from .models import Block
 from .models import Match, Stadium
 from .models import MatchCost, MatchRevenue
+from django.utils.translation import gettext_lazy as _tl
 
 
 class BlockForm(forms.ModelForm):
@@ -28,13 +29,13 @@ class MatchForm(forms.ModelForm):
     مشخص می‌کند ساعتِ ذخیره‌شده واقعی است یا فقط جای‌پرکن.
     """
     match_date = forms.DateField(
-        label='تاریخ برگزاری',
+        label=_tl("تاریخ برگزاری"),
         widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-        error_messages={'required': 'تاریخ مسابقه را وارد کنید.',
-                        'invalid': 'فرمت تاریخ نامعتبر است.'},
+        error_messages={'required': _tl("تاریخ مسابقه را وارد کنید."),
+                        'invalid': _tl("فرمت تاریخ نامعتبر است.")},
     )
     match_time = forms.TimeField(
-        label='ساعت برگزاری',
+        label=_tl("ساعت برگزاری"),
         required=False,
         # format='%H:%M' حیاتی است: بدون آن جنگو مقدار را «19:30:00» رندر
         # می‌کند و <input type="time"> (که ثانیه نمی‌پذیرد مگر با step) آن را
@@ -43,8 +44,8 @@ class MatchForm(forms.ModelForm):
         widget=forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'},
                                format='%H:%M'),
         input_formats=['%H:%M', '%H:%M:%S'],
-        help_text='اختیاری — اگر خالی بماند، ساعت بازی هیچ‌جا نمایش داده نمی‌شود.',
-        error_messages={'invalid': 'فرمت ساعت نامعتبر است.'},
+        help_text=_tl("اختیاری — اگر خالی بماند، ساعت بازی هیچ‌جا نمایش داده نمی‌شود."),
+        error_messages={'invalid': _tl("فرمت ساعت نامعتبر است.")},
     )
 
     def __init__(self, *args, **kwargs):
@@ -158,11 +159,11 @@ class MatchCostForm(forms.ModelForm):
         widgets = {
             'description': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'توضیح هزینه'
+                'placeholder': _tl("توضیح هزینه")
             }),
             'amount': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'مبلغ به ریال'
+                'placeholder': _tl("مبلغ به ریال")
             }),
         }
 
@@ -174,10 +175,10 @@ class MatchRevenueForm(forms.ModelForm):
         widgets = {
             'description': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'توضیح درآمد'
+                'placeholder': _tl("توضیح درآمد")
             }),
             'amount': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'مبلغ به ریال'
+                'placeholder': _tl("مبلغ به ریال")
             }),
         }

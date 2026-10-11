@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 {% load currency_filters %}
 
-{% block title %}ثبت‌نام با شماره تلفن{% endblock %}
+{% block title %}{% trans "ثبت‌نام با شماره تلفن" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -319,10 +320,10 @@
         <!-- ===== هدر ===== -->
         <div class="register-phone-header">
             <div class="header-logo">
-                <img src="{% static 'img/sepahan-logo.png' %}" alt="لوگو سپاهان" onerror="this.style.display='none'">
+                <img src="{% static 'img/sepahan-logo.png' %}" alt="{% trans 'لوگو سپاهان' %}" onerror="this.style.display='none'">
             </div>
-            <h2>ثبت‌نام</h2>
-            <p class="subtitle">با شماره تلفن خود ثبت‌نام کنید</p>
+            <h2>{% trans "ثبت‌نام" %}</h2>
+            <p class="subtitle">{% trans "با شماره تلفن خود ثبت‌نام کنید" %}</p>
         </div>
 
         <!-- ===== بدنه ===== -->
@@ -332,11 +333,11 @@
 
                 <!-- نام -->
                 <div class="form-group">
-                    <label><i class="fas fa-user label-icon"></i> نام</label>
+                    <label><i class="fas fa-user label-icon"></i> {% trans "نام" %}</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-id-card"></i></span>
                         <input type="text" name="first_name" class="form-control persian-name-input"
-                               placeholder="نام خود را به فارسی وارد کنید"
+                               placeholder="{% trans 'نام خود را به فارسی وارد کنید' %}"
                                value="{{ form.first_name.value|default:'' }}" required>
                     </div>
                     {% if form.first_name.errors %}
@@ -349,11 +350,11 @@
 
                 <!-- نام خانوادگی -->
                 <div class="form-group">
-                    <label><i class="fas fa-user label-icon"></i> نام خانوادگی</label>
+                    <label><i class="fas fa-user label-icon"></i> {% trans "نام خانوادگی" %}</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-id-card"></i></span>
                         <input type="text" name="last_name" class="form-control persian-name-input"
-                               placeholder="نام خانوادگی خود را به فارسی وارد کنید"
+                               placeholder="{% trans 'نام خانوادگی خود را به فارسی وارد کنید' %}"
                                value="{{ form.last_name.value|default:'' }}" required>
                     </div>
                     {% if form.last_name.errors %}
@@ -366,14 +367,14 @@
 
                 <!-- شماره تلفن -->
                 <div class="form-group">
-                    <label><i class="fas fa-mobile-alt label-icon"></i> شماره تلفن</label>
+                    <label><i class="fas fa-mobile-alt label-icon"></i> {% trans "شماره تلفن" %}</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-phone"></i></span>
                         <input type="tel" name="phone_number" class="form-control"
-                               placeholder="۰۹۱۲۳۴۵۶۷۸۹" dir="ltr" maxlength="11"
+                               placeholder="{% trans '۰۹۱۲۳۴۵۶۷۸۹' %}" dir="ltr" maxlength="11"
                                pattern="09[0-9]{9}" inputmode="numeric" required>
                     </div>
-                    <small class="form-text"><i class="fas fa-info-circle"></i> شماره تلفن را به صورت ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید</small>
+                    <small class="form-text"><i class="fas fa-info-circle"></i> {% trans "شماره تلفن را به صورت ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید" %}</small>
                     {% if form.phone_number.errors %}
                         <div class="error-message">
                             <i class="fas fa-exclamation-circle"></i>
@@ -384,11 +385,11 @@
 
                 <!-- کد ملی -->
                 <div class="form-group">
-                    <label><i class="fas fa-id-badge label-icon"></i> کد ملی</label>
+                    <label><i class="fas fa-id-badge label-icon"></i> {% trans "کد ملی" %}</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-id-card"></i></span>
                         <input type="text" name="national_code" class="form-control"
-                               placeholder="۱۰ رقم کد ملی" dir="ltr" maxlength="10"
+                               placeholder="{% trans '۱۰ رقم کد ملی' %}" dir="ltr" maxlength="10"
                                inputmode="numeric" value="{{ form.national_code.value|default:'' }}" required>
                     </div>
                     {% if form.national_code.errors %}
@@ -401,17 +402,17 @@
 
                 <!-- جنسیت -->
                 <div class="form-group">
-                    <label><i class="fas fa-venus-mars label-icon"></i> جنسیت</label>
+                    <label><i class="fas fa-venus-mars label-icon"></i> {% trans "جنسیت" %}</label>
                     <div class="gender-options">
                         <label class="gender-option">
                             <input type="radio" name="gender" value="male"
                                    {% if form.gender.value == 'male' %}checked{% endif %} required>
-                            <span><i class="fas fa-mars"></i> مرد</span>
+                            <span><i class="fas fa-mars"></i> {% trans "مرد" %}</span>
                         </label>
                         <label class="gender-option">
                             <input type="radio" name="gender" value="female"
                                    {% if form.gender.value == 'female' %}checked{% endif %} required>
-                            <span><i class="fas fa-venus"></i> زن</span>
+                            <span><i class="fas fa-venus"></i> {% trans "زن" %}</span>
                         </label>
                     </div>
                     {% if form.gender.errors %}
@@ -423,22 +424,22 @@
                 </div>
 
                 <button type="submit" class="btn-register-phone">
-                    <i class="fas fa-paper-plane"></i> دریافت کد تأیید
+                    <i class="fas fa-paper-plane"></i> {% trans "دریافت کد تأیید" %}
                 </button>
             </form>
 
             <!-- ===== فوتر ===== -->
             <div class="register-phone-footer">
                 <p>
-                    قبلاً ثبت‌نام کرده‌اید؟
+                    {% trans "قبلاً ثبت‌نام کرده‌اید؟" %}
                     <a href="{% url 'accounts:phone_login' %}">
-                        <i class="fas fa-arrow-left"></i> وارد شوید
+                        <i class="fas fa-arrow-left"></i> {% trans "وارد شوید" %}
                     </a>
                 </p>
                 <p class="text-muted small mt-1">
                     <i class="fas fa-info-circle"></i>
-                    با ثبت‌نام، شما با <a href="#" style="color: #D4AF37;">قوانین</a> و
-                    <a href="#" style="color: #D4AF37;">حریم خصوصی</a> موافقت می‌کنید.
+                    {% trans "با ثبت‌نام، شما با" %} <a href="#" style="color: #D4AF37;">{% trans "قوانین" %}</a> {% trans "و" %}
+                    <a href="#" style="color: #D4AF37;">{% trans "حریم خصوصی" %}</a> {% trans "موافقت می‌کنید." %}
                 </p>
             </div>
         </div>
@@ -499,14 +500,14 @@
 
             if (!ok) {
                 e.preventDefault();
-                alert('⚠️ نام و نام خانوادگی باید فقط با حروف فارسی وارد شود.');
+                alert('{% trans "⚠️ نام و نام خانوادگی باید فقط با حروف فارسی وارد شود." %}');
                 return;
             }
 
             if (!phonePattern.test(phone)) {
                 e.preventDefault();
                 phoneInput.classList.add('is-invalid');
-                alert('⚠️ شماره تلفن معتبر نیست. لطفاً به صورت ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید.');
+                alert('{% trans "⚠️ شماره تلفن معتبر نیست. لطفاً به صورت ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید." %}');
                 return;
             } else {
                 phoneInput.classList.remove('is-invalid');
@@ -515,7 +516,7 @@
             if (!isValidNationalCode(nationalCodeInput.value)) {
                 e.preventDefault();
                 nationalCodeInput.classList.add('is-invalid');
-                alert('⚠️ کد ملی وارد شده معتبر نیست.');
+                alert('{% trans "⚠️ کد ملی وارد شده معتبر نیست." %}');
                 return;
             } else {
                 nationalCodeInput.classList.remove('is-invalid');
@@ -524,7 +525,7 @@
             const genderChecked = document.querySelector('input[name="gender"]:checked');
             if (!genderChecked) {
                 e.preventDefault();
-                alert('⚠️ لطفاً جنسیت را انتخاب کنید.');
+                alert('{% trans "⚠️ لطفاً جنسیت را انتخاب کنید." %}');
             }
         });
 

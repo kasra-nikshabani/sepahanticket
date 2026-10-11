@@ -1,3 +1,4 @@
+{% load i18n %}
 <!-- templates/includes/footer.html -->
 {% load currency_filters %}
 <footer class="footer">
@@ -5,10 +6,10 @@
         <div class="row g-4">
             <div class="col-lg-4 col-md-6">
                 <div class="footer-logo">
-                    <i class="fas fa-futbol"></i> فولاد مبارکه سپاهان
+                    <i class="fas fa-futbol"></i> {% trans "فولاد مبارکه سپاهان" %}
                 </div>
                 <p class="footer-description">
-                    سامانه فروش بلیط مسابقات تیم فوتبال فولاد مبارکه سپاهان
+                    {% trans "سامانه فروش بلیط مسابقات تیم فوتبال فولاد مبارکه سپاهان" %}
                 </p>
                 <div>
                     <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
@@ -18,31 +19,31 @@
             </div>
 
             <div class="col-lg-2 col-md-6">
-                <h5 class="footer-title">لینک‌ها</h5>
+                <h5 class="footer-title">{% trans "لینک‌ها" %}</h5>
                 <ul class="footer-links">
-                    <li><a href="{% url 'matches:home' %}"><i class="fas fa-chevron-left"></i> صفحه اصلی</a></li>
-                    <li><a href="#"><i class="fas fa-chevron-left"></i> مسابقات</a></li>
+                    <li><a href="{% url 'matches:home' %}"><i class="fas fa-chevron-left"></i> {% trans "صفحه اصلی" %}</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-left"></i> {% trans "مسابقات" %}</a></li>
                 </ul>
             </div>
 
             <div class="col-lg-2 col-md-6">
-                <h5 class="footer-title">حساب کاربری</h5>
+                <h5 class="footer-title">{% trans "حساب کاربری" %}</h5>
                 <ul class="footer-links">
                     {% if user.is_authenticated %}
-                        <li><a href="{% url 'accounts:profile' %}"><i class="fas fa-chevron-left"></i> پروفایل</a></li>
-                        <li><a href="{% url 'accounts:logout' %}"><i class="fas fa-chevron-left"></i> خروج</a></li>
+                        <li><a href="{% url 'accounts:profile' %}"><i class="fas fa-chevron-left"></i> {% trans "پروفایل" %}</a></li>
+                        <li><a href="{% url 'accounts:logout' %}"><i class="fas fa-chevron-left"></i> {% trans "خروج" %}</a></li>
                     {% else %}
-                        <li><a href="{% url 'accounts:login' %}"><i class="fas fa-chevron-left"></i> ورود</a></li>
-                        <li><a href="{% url 'accounts:register' %}"><i class="fas fa-chevron-left"></i> ثبت‌نام</a></li>
+                        <li><a href="{% url 'accounts:login' %}"><i class="fas fa-chevron-left"></i> {% trans "ورود" %}</a></li>
+                        <li><a href="{% url 'accounts:register' %}"><i class="fas fa-chevron-left"></i> {% trans "ثبت‌نام" %}</a></li>
                     {% endif %}
                 </ul>
             </div>
 
             <div class="col-lg-4 col-md-6">
-                <h5 class="footer-title">تماس با ما</h5>
+                <h5 class="footer-title">{% trans "تماس با ما" %}</h5>
                 <ul class="footer-contact">
-                    <li><i class="fas fa-map-marker-alt"></i> اصفهان، ورزشگاه نقش جهان</li>
-                    <li><i class="fas fa-phone"></i> ۰۳۱-۳۷۶۶۰۴۹۱-۴</li>
+                    <li><i class="fas fa-map-marker-alt"></i> {% trans "اصفهان، ورزشگاه نقش جهان" %}</li>
+                    <li><i class="fas fa-phone"></i> <span dir="ltr">{% trans "۰۳۱-۳۷۶۶۰۴۹۱-۴" %}</span></li>
                     <li><i class="fas fa-envelope"></i> info@sepahansc.com</li>
                 </ul>
             </div>
@@ -52,13 +53,12 @@
         <div class="row align-items-center">
             <div class="col-md-6 text-md-start text-center">
                 <p class="footer-copy">
-                    &copy; ۲۰۲۶ تمامی حقوق محفوظ است.
-                    باشگاه فرهنگی ورزشی فولاد مبارکه سپاهان
+                    {% trans "&copy; ۲۰۲۶ تمامی حقوق محفوظ است. باشگاه فرهنگی ورزشی فولاد مبارکه سپاهان" %}
                 </p>
             </div>
             <div class="col-md-6 text-md-end text-center">
-                <span class="badge-gold">نسخه ۱.۰</span>
-                <span class="badge-dark">ورزشگاه نقش جهان</span>
+                <span class="badge-gold">{% trans "نسخه ۱.۰" %}</span>
+                <span class="badge-dark">{% trans "ورزشگاه نقش جهان" %}</span>
             </div>
         </div>
     </div>

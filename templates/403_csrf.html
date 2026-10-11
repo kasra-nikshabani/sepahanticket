@@ -1,3 +1,4 @@
+{% load i18n %}
 {% comment %}
 ===== صفحه‌ی خطای CSRF =====
 جنگو این قالب را با Context ساده رندر می‌کند، نه RequestContext -- یعنی
@@ -11,11 +12,11 @@
 -- آن نوع کامنت چندخطی نیست و اگر چندخطی نوشته شود عیناً در خروجی چاپ می‌شود و
 چون قبل از DOCTYPE می‌افتد، مرورگر را به quirks mode می‌برد و صفحه به‌هم می‌ریزد.
 {% endcomment %}<!DOCTYPE html>
-<html lang="fa" dir="rtl">
+{% get_current_language as LANG %}{% get_current_language_bidi as BIDI %}<html lang="{{ LANG }}" dir="{% if BIDI %}rtl{% else %}ltr{% endif %}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>نشست منقضی شده — بلیط سپاهان</title>
+<title>{% trans "نشست منقضی شده — بلیط سپاهان" %}</title>
 <style>
     * { box-sizing: border-box; }
     body {
@@ -62,25 +63,23 @@
 <body>
 <div class="box">
     <div class="top">
-        <p class="code">۴۰۳</p>
-        <h1>درخواست شما تأیید نشد</h1>
+        <p class="code">{% trans "۴۰۳" %}</p>
+        <h1>{% trans "درخواست شما تأیید نشد" %}</h1>
     </div>
     <div class="body">
         <p>
-            به دلایل امنیتی، این درخواست پذیرفته نشد. اطلاعاتی که فرستادید ثبت نشده
-            و هیچ تغییری در حساب شما ایجاد نشده است.
+            {% trans "به دلایل امنیتی، این درخواست پذیرفته نشد. اطلاعاتی که فرستادید ثبت نشده و هیچ تغییری در حساب شما ایجاد نشده است." %}
         </p>
         <div class="why">
-            <b>چرا این اتفاق افتاد؟</b><br>
-            معمولاً وقتی پیش می‌آید که صفحه مدت زیادی باز مانده باشد و نشست شما
-            منقضی شده باشد، یا در یک تب دیگر از حساب خارج و دوباره وارد شده باشید.
+            <b>{% trans "چرا این اتفاق افتاد؟" %}</b><br>
+            {% trans "معمولاً وقتی پیش می‌آید که صفحه مدت زیادی باز مانده باشد و نشست شما منقضی شده باشد، یا در یک تب دیگر از حساب خارج و دوباره وارد شده باشید." %}
         </div>
         <p style="font-size:.9rem;">
-            کافی است صفحه را تازه کنید و دوباره تلاش کنید.
+            {% trans "کافی است صفحه را تازه کنید و دوباره تلاش کنید." %}
         </p>
         <div class="acts">
-            <button type="button" class="btn gold" onclick="location.reload(true)">تازه کردن صفحه</button>
-            <a href="/" class="btn ghost">صفحه اصلی</a>
+            <button type="button" class="btn gold" onclick="location.reload(true)">{% trans "تازه کردن صفحه" %}</button>
+            <a href="/" class="btn ghost">{% trans "صفحه اصلی" %}</a>
         </div>
     </div>
 </div>

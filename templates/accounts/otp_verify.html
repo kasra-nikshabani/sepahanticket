@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 {% load currency_filters %}
 
-{% block title %}تأیید کد{% endblock %}
+{% block title %}{% trans "تأیید کد" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -564,8 +565,8 @@
             <div class="icon-wrapper">
                 <i class="fas fa-shield-alt"></i>
             </div>
-            <h2>تأیید هویت</h2>
-            <p class="subtitle">کد تأیید به شماره زیر ارسال شد</p>
+            <h2>{% trans "تأیید هویت" %}</h2>
+            <p class="subtitle">{% trans "کد تأیید به شماره زیر ارسال شد" %}</p>
             <span class="phone-display">
                 <i class="fas fa-mobile-alt"></i>
                 {{ phone_masked|default:phone_number }}
@@ -576,9 +577,9 @@
         <div class="otp-body">
 
             <p class="info-text">
-                کد <strong class="highlight">۴ رقمی</strong> ارسال‌شده را در کادر زیر وارد کنید.
+                {% trans "کد" %} <strong class="highlight">{% trans "۴ رقمی" %}</strong> {% trans "ارسال‌شده را در کادر زیر وارد کنید." %}
                 <br>
-                <span style="font-size: 12px; color: #8a9aaa;">این کد تا ۵ دقیقه اعتبار دارد.</span>
+                <span style="font-size: 12px; color: #8a9aaa;">{% trans "این کد تا ۵ دقیقه اعتبار دارد." %}</span>
             </p>
 
             <!-- ===== فرم ===== -->
@@ -590,13 +591,13 @@
                 <div class="otp-input-group">
                     <div class="otp-boxes" id="otpBoxes" dir="ltr">
                         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
-                               class="otp-box" autocomplete="one-time-code" aria-label="رقم ۱">
+                               class="otp-box" autocomplete="one-time-code" aria-label="{% trans 'رقم ۱' %}">
                         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
-                               class="otp-box" autocomplete="one-time-code" aria-label="رقم ۲">
+                               class="otp-box" autocomplete="one-time-code" aria-label="{% trans 'رقم ۲' %}">
                         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
-                               class="otp-box" autocomplete="one-time-code" aria-label="رقم ۳">
+                               class="otp-box" autocomplete="one-time-code" aria-label="{% trans 'رقم ۳' %}">
                         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
-                               class="otp-box" autocomplete="one-time-code" aria-label="رقم ۴">
+                               class="otp-box" autocomplete="one-time-code" aria-label="{% trans 'رقم ۴' %}">
                     </div>
                     {{ form.otp_code }}
                     {% if form.otp_code.errors %}
@@ -607,22 +608,22 @@
                             {% endfor %}
                         </div>
                     {% endif %}
-                    <small class="hint-text"><i class="fas fa-info-circle"></i> کد را به‌صورت پیوسته وارد کنید</small>
+                    <small class="hint-text"><i class="fas fa-info-circle"></i> {% trans "کد را به‌صورت پیوسته وارد کنید" %}</small>
                 </div>
 
                 <!-- ===== دکمه‌ها ===== -->
                 <div class="otp-actions">
                     <button type="submit" class="btn-verify" id="verifyBtn">
-                        <i class="fas fa-check-circle"></i> تأیید و ورود
+                        <i class="fas fa-check-circle"></i> {% trans "تأیید و ورود" %}
                         <span class="spinner" id="btnSpinner"></span>
                     </button>
 
                     <button type="button" class="btn-outline-secondary-custom btn-resend" id="resendBtn">
-                        <i class="fas fa-redo"></i> <span id="resendBtnText">ارسال مجدد کد</span>
+                        <i class="fas fa-redo"></i> <span id="resendBtnText">{% trans "ارسال مجدد کد" %}</span>
                     </button>
 
                     <a href="{% url 'accounts:phone_login' %}" class="btn-outline-danger-custom btn-full">
-                        <i class="fas fa-times"></i> تغییر شماره
+                        <i class="fas fa-times"></i> {% trans "تغییر شماره" %}
                     </a>
                 </div>
 
@@ -664,12 +665,12 @@
                 resendBtn.disabled = true;
                 resendBtn.classList.add('counting');
                 resendBtn.classList.remove('ready');
-                resendBtnText.innerHTML = `ارسال مجدد کد <span class="countdown">(${formatTime(remaining)})</span>`;
+                resendBtnText.innerHTML = `{% trans "ارسال مجدد کد" %} <span class="countdown">(${formatTime(remaining)})</span>`;
             } else {
                 resendBtn.disabled = false;
                 resendBtn.classList.remove('counting');
                 resendBtn.classList.add('ready');
-                resendBtnText.textContent = 'ارسال مجدد کد';
+                resendBtnText.textContent = '{% trans "ارسال مجدد کد" %}';
             }
         }
 
@@ -721,7 +722,7 @@
                 }
             })
             .catch(() => {
-                resendFeedback.innerHTML = `<span class="text-danger">❌ خطا در ارتباط با سرور</span>`;
+                resendFeedback.innerHTML = `<span class="text-danger">❌ {% trans "خطا در ارتباط با سرور" %}</span>`;
                 resendFeedback.style.display = 'block';
             });
         });
@@ -795,11 +796,11 @@
                     const parent = document.querySelector('.otp-input-group');
                     err = document.createElement('div');
                     err.className = 'field-errors';
-                    err.innerHTML = `<i class="fas fa-exclamation-circle"></i> کد باید دقیقاً ۴ رقم باشد.`;
+                    err.innerHTML = `<i class="fas fa-exclamation-circle"></i> {% trans "کد باید دقیقاً ۴ رقم باشد." %}`;
                     parent.appendChild(err);
                 } else {
                     err.style.display = 'flex';
-                    err.innerHTML = `<i class="fas fa-exclamation-circle"></i> کد باید دقیقاً ۴ رقم باشد.`;
+                    err.innerHTML = `<i class="fas fa-exclamation-circle"></i> {% trans "کد باید دقیقاً ۴ رقم باشد." %}`;
                 }
                 return false;
             }

@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
+{% load i18n %}{% load persian_filters %}
 {% load static %}
 {% load currency_filters %}
-{% block title %}کیف پول من{% endblock %}
+{% block title %}{% trans "کیف پول من" %}{% endblock %}
 
 {% block extra_css %}
     <style>
@@ -726,7 +727,7 @@
             <div class="header-content">
                 <div class="header-title">
                     <i class="fas fa-wallet"></i>
-                    <span>کیف پول من</span>
+                    <span>{% trans "کیف پول من" %}</span>
                 </div>
                 <div class="header-actions">
                     {% comment %}
@@ -736,16 +737,16 @@
                     {% endcomment %}
                     {% if wallet_charge_enabled %}
                     <a href="{% url 'wallet:charge' %}" class="btn-charge">
-                        <i class="fas fa-plus-circle"></i> شارژ کیف پول
+                        <i class="fas fa-plus-circle"></i> {% trans "شارژ کیف پول" %}
                     </a>
                     {% endif %}
                     {% if withdrawal_enabled and withdrawable %}
                     <a href="{% url 'wallet:withdraw' %}" class="btn-withdraw">
-                        <i class="fas fa-money-bill-transfer"></i> برداشت وجه
+                        <i class="fas fa-money-bill-transfer"></i> {% trans "برداشت وجه" %}
                     </a>
                     {% endif %}
                     <a href="{% url 'matches:home' %}" class="btn-back">
-                        <i class="fas fa-arrow-right"></i> بازگشت
+                        <i class="fas fa-arrow-right"></i> {% trans "بازگشت" %}
                     </a>
                 </div>
             </div>
@@ -757,49 +758,46 @@
                     border-radius:12px; padding:14px 18px; margin-bottom:18px;
                     font-size:.9rem; color:#922b21; line-height:1.95;">
             <i class="fas fa-ban"></i>
-            <strong>کیف پول در حال حاضر غیرفعال است.</strong>
-            امکان شارژ کیف پول و پرداخت هزینه‌ی بلیط از کیف پول وجود ندارد.
-            موجودی شما محفوظ است و به محض فعال شدن دوباره، قابل استفاده خواهد بود.
+            <strong>{% trans "کیف پول در حال حاضر غیرفعال است." %}</strong>
+            {% trans "امکان شارژ کیف پول و پرداخت هزینه‌ی بلیط از کیف پول وجود ندارد. موجودی شما محفوظ است و به محض فعال شدن دوباره، قابل استفاده خواهد بود." %}
         </div>
         {% endif %}
 
         <!-- ===== موجودی ===== -->
         <div class="balance-card">
-            <div class="balance-label"><i class="fas fa-coins"></i> موجودی کیف پول</div>
+            <div class="balance-label"><i class="fas fa-coins"></i> {% trans "موجودی کیف پول" %}</div>
             <div class="balance-amount">
                 {{ wallet.balance|rial_display }}
-                <span class="currency">ریال</span>
+                <span class="currency">{% trans "ریال" %}</span>
             </div>
             <div class="balance-updated">
                 <i class="fas fa-clock"></i>
-                آخرین به‌روزرسانی: {{ wallet.updated_at|date:"Y/m/d - H:i" }}
+                {% blocktrans with updated_at=wallet.updated_at|date:"Y/m/d - H:i" trimmed %}آخرین به‌روزرسانی: {{ updated_at }}{% endblocktrans %}
             </div>
 
             {% if withdrawal_enabled %}
             <div class="wd-strip">
                 <div class="wd-main">
-                    <span class="wd-lbl"><i class="fas fa-money-bill-transfer"></i> قابل برداشت به حساب بانکی</span>
-                    <span class="wd-val">{{ withdrawable|rial_display }} <small>ریال</small></span>
+                    <span class="wd-lbl"><i class="fas fa-money-bill-transfer"></i> {% trans "قابل برداشت به حساب بانکی" %}</span>
+                    <span class="wd-val">{{ withdrawable|rial_display }} <small>{% trans "ریال" %}</small></span>
                 </div>
 
                 {% if held_amount %}
                 <div class="wd-sub">
                     <i class="fas fa-lock"></i>
-                    {{ held_amount|rial_display }} ریال بابت درخواست در جریان نگه داشته شده و
-                    به موجودی برنمی‌گردد مگر درخواست لغو یا رد شود.
+                    {% blocktrans with held_amount=held_amount|rial_display trimmed %}{{ held_amount }} ریال بابت درخواست در جریان نگه داشته شده و به موجودی برنمی‌گردد مگر درخواست لغو یا رد شود.{% endblocktrans %}
                 </div>
                 {% endif %}
 
                 {% if withdrawable %}
                     <a href="{% url 'wallet:withdraw' %}" class="wd-cta">
-                        <i class="fas fa-paper-plane"></i> درخواست برداشت
+                        <i class="fas fa-paper-plane"></i> {% trans "درخواست برداشت" %}
                     </a>
                 {% elif not held_amount and wallet.balance %}
                 <div class="wd-sub">
                     <i class="fas fa-circle-info"></i>
-                    از موجودی فعلی شما چیزی قابل برداشت نیست. فقط مبلغی که <strong>باشگاه</strong>
-                    به کیف پول شما برگردانده — بابت بلیط صادرنشده، لغو مسابقه یا بازگشت وجه —
-                    قابل برداشت است؛ مبلغی که خودتان شارژ کرده‌اید برای خرید بلیط قابل استفاده است.
+                    {% trans "از موجودی فعلی شما چیزی قابل برداشت نیست. فقط مبلغی که" %} <strong>{% trans "باشگاه" %}</strong>
+                    {% trans "به کیف پول شما برگردانده — بابت بلیط صادرنشده، لغو مسابقه یا بازگشت وجه — قابل برداشت است؛ مبلغی که خودتان شارژ کرده‌اید برای خرید بلیط قابل استفاده است." %}
                 </div>
                 {% endif %}
             </div>
@@ -811,29 +809,29 @@
             <div class="stat-card gold">
                 <span class="stat-icon"><i class="fas fa-wallet"></i></span>
                 <div class="stat-number">{{ wallet.balance|rial_display }}</div>
-                <div class="stat-label">موجودی فعلی (ریال)</div>
+                <div class="stat-label">{% trans "موجودی فعلی (ریال)" %}</div>
             </div>
             <div class="stat-card green">
                 <span class="stat-icon"><i class="fas fa-arrow-up"></i></span>
                 <div class="stat-number">{{ total_deposits|rial_display }}</div>
-                <div class="stat-label">کل شارژها (ریال)</div>
+                <div class="stat-label">{% trans "کل شارژها (ریال)" %}</div>
             </div>
             <div class="stat-card red">
                 <span class="stat-icon"><i class="fas fa-arrow-down"></i></span>
                 <div class="stat-number">{{ total_withdrawals|rial_display }}</div>
-                <div class="stat-label">کل برداشت‌ها (ریال)</div>
+                <div class="stat-label">{% trans "کل برداشت‌ها (ریال)" %}</div>
             </div>
             {% if withdrawal_enabled %}
             <div class="stat-card gold">
                 <span class="stat-icon"><i class="fas fa-money-bill-transfer"></i></span>
                 <div class="stat-number">{{ withdrawable|rial_display }}</div>
-                <div class="stat-label">قابل برداشت (ریال)</div>
+                <div class="stat-label">{% trans "قابل برداشت (ریال)" %}</div>
             </div>
             {% endif %}
             <div class="stat-card blue">
                 <span class="stat-icon"><i class="fas fa-exchange-alt"></i></span>
-                <div class="stat-number">{{ total_transactions|default:"۰" }}</div>
-                <div class="stat-label">تعداد تراکنش‌ها</div>
+                <div class="stat-number">{{ total_transactions|default:_("۰") }}</div>
+                <div class="stat-label">{% trans "تعداد تراکنش‌ها" %}</div>
             </div>
         </div>
 
@@ -841,17 +839,17 @@
         {% if withdrawals %}
         <div class="withdrawals-section">
             <div class="section-header">
-                <h5><i class="fas fa-money-bill-transfer"></i> درخواست‌های برداشت</h5>
+                <h5><i class="fas fa-money-bill-transfer"></i> {% trans "درخواست‌های برداشت" %}</h5>
             </div>
             <div class="table-responsive-custom">
                 <table class="table-custom">
                     <thead>
                     <tr>
-                        <th><i class="fas fa-calendar-day"></i> تاریخ</th>
-                        <th><i class="fas fa-money-bill"></i> مبلغ (ریال)</th>
-                        <th><i class="fas fa-building-columns"></i> شبا</th>
-                        <th><i class="fas fa-circle-info"></i> وضعیت</th>
-                        <th><i class="fas fa-comment-dots"></i> توضیح</th>
+                        <th><i class="fas fa-calendar-day"></i> {% trans "تاریخ" %}</th>
+                        <th><i class="fas fa-money-bill"></i> {% trans "مبلغ (ریال)" %}</th>
+                        <th><i class="fas fa-building-columns"></i> {% trans "شبا" %}</th>
+                        <th><i class="fas fa-circle-info"></i> {% trans "وضعیت" %}</th>
+                        <th><i class="fas fa-comment-dots"></i> {% trans "توضیح" %}</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -865,65 +863,62 @@
                             <td style="direction:ltr; text-align:left; font-family:monospace; font-size:13px;">
                                 {{ w.iban_display }}
                             </td>
-                            <td><span class="wd-status {{ w.status }}">{{ w.get_status_display }}</span></td>
+                            <td><span class="wd-status {{ w.status }}">{{ w.get_status_display|t }}</span></td>
                             <td style="font-size:13px; color:#6c757d;">
                                 {% if w.status == 'paid' %}
                                     {% if w.bank_reference %}
                                         <div class="paid-ref">
-                                            <i class="fas fa-receipt"></i> شناسه پیگیری واریز
+                                            <i class="fas fa-receipt"></i> {% trans "شناسه پیگیری واریز" %}
                                             <div class="ref-value">{{ w.bank_reference }}</div>
-                                            <small>این شماره را برای پیگیری در بانک نگه دارید.</small>
+                                            <small>{% trans "این شماره را برای پیگیری در بانک نگه دارید." %}</small>
                                         </div>
                                     {% else %}
-                                        واریز شد
+                                        {% trans "واریز شد" %}
                                     {% endif %}
                                 {% elif w.status == 'rejected' %}
                                     <div class="reject-box">
                                         <i class="fas fa-circle-exclamation"></i>
-                                        <strong>دلیل رد:</strong> {{ w.admin_note|default:"اعلام نشده" }}
+                                        <strong>{% trans "دلیل رد:" %}</strong> {{ w.admin_note|default:_("اعلام نشده") }}
                                         <div style="margin-top:6px;">
-                                            مبلغ به کیف پول شما برگشت. می‌توانید با اطلاعات درست
-                                            <a href="{% url 'wallet:withdraw' %}" style="color:#0a58ca; font-weight:700;">درخواست تازه</a>
-                                            ثبت کنید.
+                                            {% trans "مبلغ به کیف پول شما برگشت. می‌توانید با اطلاعات درست" %}
+                                            <a href="{% url 'wallet:withdraw' %}" style="color:#0a58ca; font-weight:700;">{% trans "درخواست تازه" %}</a>
+                                            {% trans "ثبت کنید." %}
                                         </div>
                                     </div>
                                 {% elif w.status == 'approved' %}
                                     <div class="await-box">
                                         <i class="fas fa-circle-check"></i>
-                                        <strong>شماره شبا تأیید شد.</strong>
-                                        درخواست شما <strong>در انتظار پرداخت</strong> است و
-                                        مبلغ طی <strong>۱ تا ۳ روز کاری</strong> به همان حساب
-                                        واریز می‌شود.
+                                        <strong>{% trans "شماره شبا تأیید شد." %}</strong>
+                                        {% trans "درخواست شما" %} <strong>{% trans "در انتظار پرداخت" %}</strong> {% trans "است و مبلغ طی" %} <strong>{% trans "۱ تا ۳ روز کاری" %}</strong> {% trans "به همان حساب واریز می‌شود." %}
                                         <div style="margin-top:5px;">
-                                            پس از واریز، شناسه‌ی پیگیری در همین صفحه نمایش داده می‌شود.
-                                            در این مرحله امکان تغییر اطلاعات وجود ندارد.
+                                            {% trans "پس از واریز، شناسه‌ی پیگیری در همین صفحه نمایش داده می‌شود. در این مرحله امکان تغییر اطلاعات وجود ندارد." %}
                                         </div>
                                     </div>
                                 {% elif w.status == 'cancelled' %}
-                                    شما این درخواست را لغو کردید؛ مبلغ برگشت.
+                                    {% trans "شما این درخواست را لغو کردید؛ مبلغ برگشت." %}
                                 {% elif w.status == 'needs_correction' %}
                                     <div class="reject-box">
                                         <i class="fas fa-triangle-exclamation"></i>
-                                        <strong>باید اصلاح کنید:</strong>
-                                        {{ w.admin_note|default:"اطلاعات واردشده مغایرت دارد." }}
+                                        <strong>{% trans "باید اصلاح کنید:" %}</strong>
+                                        {{ w.admin_note|default:_("اطلاعات واردشده مغایرت دارد.") }}
                                         <div style="margin-top:6px;">
-                                            مبلغ همچنان برای شما نگه داشته شده.
+                                            {% trans "مبلغ همچنان برای شما نگه داشته شده." %}
                                             <a href="{% url 'wallet:withdraw' %}" style="color:#0a58ca; font-weight:700;">
-                                                اصلاح اطلاعات</a>
+                                                {% trans "اصلاح اطلاعات" %}</a>
                                         </div>
                                     </div>
                                 {% else %}
-                                    در انتظار تأیید
+                                    {% trans "در انتظار تأیید" %}
                                     <div style="margin-top:6px;">
                                         <a href="{% url 'wallet:withdraw' %}" class="btn-edit-wd">
-                                            <i class="fas fa-pen-to-square"></i> ویرایش
+                                            <i class="fas fa-pen-to-square"></i> {% trans "ویرایش" %}
                                         </a>
                                         <form method="post" action="{% url 'wallet:withdraw_cancel' w.id %}"
                                               style="display:inline;">
                                             {% csrf_token %}
                                             <button type="submit" class="btn-cancel-wd"
-                                                    onclick="return confirm('درخواست لغو شود؟ مبلغ به کیف پول شما برمی‌گردد.');">
-                                                <i class="fas fa-xmark"></i> لغو
+                                                    onclick="return confirm('{% trans "درخواست لغو شود؟ مبلغ به کیف پول شما برمی‌گردد." %}');">
+                                                <i class="fas fa-xmark"></i> {% trans "لغو" %}
                                             </button>
                                         </form>
                                     </div>
@@ -940,19 +935,19 @@
         <!-- ===== لیست تراکنش‌ها ===== -->
         <div class="transactions-section">
             <div class="section-header">
-                <h5><i class="fas fa-list"></i> تاریخچه تراکنش‌ها</h5>
-                <span class="badge-count">{{ transactions|length }} تراکنش</span>
+                <h5><i class="fas fa-list"></i> {% trans "تاریخچه تراکنش‌ها" %}</h5>
+                <span class="badge-count">{% blocktrans with transactions=transactions|length trimmed %}{{ transactions }} تراکنش{% endblocktrans %}</span>
             </div>
             <div class="table-responsive-custom">
                 {% if transactions %}
                     <table class="table-custom">
                         <thead>
                         <tr>
-                            <th><i class="fas fa-calendar-day"></i> تاریخ</th>
-                            <th><i class="fas fa-tag"></i> نوع</th>
-                            <th><i class="fas fa-money-bill"></i> مبلغ (ریال)</th>
-                            <th><i class="fas fa-info-circle"></i> توضیحات</th>
-                            <th><i class="fas fa-wallet"></i> موجودی بعد (ریال)</th>
+                            <th><i class="fas fa-calendar-day"></i> {% trans "تاریخ" %}</th>
+                            <th><i class="fas fa-tag"></i> {% trans "نوع" %}</th>
+                            <th><i class="fas fa-money-bill"></i> {% trans "مبلغ (ریال)" %}</th>
+                            <th><i class="fas fa-info-circle"></i> {% trans "توضیحات" %}</th>
+                            <th><i class="fas fa-wallet"></i> {% trans "موجودی بعد (ریال)" %}</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -971,7 +966,7 @@
                                     {% elif tx.transaction_type == 'ticket_purchase' %}fa-ticket-alt
                                     {% else %}fa-undo{% endif %}">
                                 </i>
-                                {{ tx.get_transaction_type_display }}
+                                {{ tx.get_transaction_type_display|t }}
                             </span>
                                 </td>
                                 <td>
@@ -996,9 +991,9 @@
                     {% if transactions.has_other_pages %}
                         <div class="table-pagination">
                             <div class="info">
-                                نمایش <strong>{{ transactions.start_index }}</strong> تا
+                                {% trans "نمایش" %} <strong>{{ transactions.start_index }}</strong> {% trans "تا" %}
                                 <strong>{{ transactions.end_index }}</strong>
-                                از <strong>{{ transactions.paginator.count }}</strong> تراکنش
+                                {% trans "از" %} <strong>{{ transactions.paginator.count }}</strong> {% trans "تراکنش" %}
                             </div>
                             <div class="pagination-custom">
                                 {% if transactions.has_previous %}
@@ -1034,17 +1029,17 @@
                 {% else %}
                     <div class="empty-state">
                         <i class="fas fa-receipt"></i>
-                        <h4>هیچ تراکنشی انجام نشده است</h4>
+                        <h4>{% trans "هیچ تراکنشی انجام نشده است" %}</h4>
                         {% if wallet_charge_enabled %}
-                        <p>کیف پول شما خالی است. برای شروع، کیف پول خود را شارژ کنید.</p>
+                        <p>{% trans "کیف پول شما خالی است. برای شروع، کیف پول خود را شارژ کنید." %}</p>
                         <a href="{% url 'wallet:charge' %}" class="btn-charge"
                            style="display:inline-flex; margin-top:12px; border:none;">
-                            <i class="fas fa-plus-circle"></i> شارژ کیف پول
+                            <i class="fas fa-plus-circle"></i> {% trans "شارژ کیف پول" %}
                         </a>
                         {% elif not wallet_enabled %}
-                        <p>کیف پول در حال حاضر غیرفعال است.</p>
+                        <p>{% trans "کیف پول در حال حاضر غیرفعال است." %}</p>
                         {% else %}
-                        <p>شارژ کیف پول در حال حاضر غیرفعال است.</p>
+                        <p>{% trans "شارژ کیف پول در حال حاضر غیرفعال است." %}</p>
                         {% endif %}
                     </div>
                 {% endif %}

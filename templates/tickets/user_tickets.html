@@ -1,15 +1,16 @@
 {% extends 'base.html' %}
+{% load i18n %}{% load persian_filters %}
 {% load currency_filters %}
 {% load static %}
 {% load jalali %}
 
-{% block title %}بلیط‌های من{% endblock %}
+{% block title %}{% trans "بلیط‌های من" %}{% endblock %}
 
 {% block content %}
     <div class="container mt-4">
         <div class="text-center mb-4">
-            <h2 class="text-white">🎫 بلیط‌های من</h2>
-            <p style="color: rgba(255, 255, 255, 0.7);">لیست تمام بلیط‌های مرتبط با شما</p>
+            <h2 class="text-white">{% trans "🎫 بلیط‌های من" %}</h2>
+            <p style="color: rgba(255, 255, 255, 0.7);">{% trans "لیست تمام بلیط‌های مرتبط با شما" %}</p>
         </div>
 
         <!-- ===== فیلترها ===== -->
@@ -17,10 +18,10 @@
             <form method="get" class="d-flex flex-wrap align-items-center gap-3" id="filterForm">
                 <!-- فیلتر مسابقه -->
                 <div class="filter-group">
-                    <label class="fw-bold me-2"><i class="fas fa-calendar-alt"></i> مسابقه:</label>
+                    <label class="fw-bold me-2"><i class="fas fa-calendar-alt"></i> {% trans "مسابقه:" %}</label>
                     <select name="match_id" class="form-select" style="width:200px; display:inline-block;"
                             onchange="this.form.submit()">
-                        <option value="">همه مسابقات</option>
+                        <option value="">{% trans "همه مسابقات" %}</option>
                         {% for match in matches %}
                             <option value="{{ match.id }}" {% if selected_match_id == match.id %}selected{% endif %}>
                                 {{ match.home_team }} vs {{ match.away_team }} ({{ match.date_time|date:"Y/m/d" }})
@@ -32,17 +33,17 @@
                 <!-- فیلتر وضعیت (فقط برای VIP) -->
                 {% if user.user_type == 'vip' %}
                     <div class="filter-group">
-                        <label class="fw-bold me-2"><i class="fas fa-tag"></i> وضعیت:</label>
+                        <label class="fw-bold me-2"><i class="fas fa-tag"></i> {% trans "وضعیت:" %}</label>
                         <select name="status" class="form-select" style="width:180px; display:inline-block;"
                                 onchange="this.form.submit()">
-                            <option value="">همه</option>
-                            <option value="paid" {% if selected_status == 'paid' %}selected{% endif %}>خریداری‌شده
+                            <option value="">{% trans "همه" %}</option>
+                            <option value="paid" {% if selected_status == 'paid' %}selected{% endif %}>{% trans "خریداری‌شده" %}
                             </option>
                             <option value="admin_assigned"
-                                    {% if selected_status == 'admin_assigned' %}selected{% endif %}>تخصیص ادمین
+                                    {% if selected_status == 'admin_assigned' %}selected{% endif %}>{% trans "تخصیص ادمین" %}
                             </option>
                             <option value="vip_issued" {% if selected_status == 'vip_issued' %}selected{% endif %}>
-                                صادرشده توسط کاربر
+                                {% trans "صادرشده توسط کاربر" %}
                             </option>
                         </select>
                     </div>
@@ -51,12 +52,12 @@
                 <!-- دکمه حذف فیلتر -->
                 {% if selected_match_id or selected_status %}
                     <a href="{% url 'tickets:user_tickets' %}" class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-times"></i> حذف فیلترها
+                        <i class="fas fa-times"></i> {% trans "حذف فیلترها" %}
                     </a>
                 {% endif %}
 
                 <span class="text-muted small ms-auto">
-                <i class="fas fa-info-circle"></i> {{ tickets|length }} بلیط
+                <i class="fas fa-info-circle"></i> {% blocktrans with tickets=tickets|length trimmed %}{{ tickets }} بلیط{% endblocktrans %}
             </span>
             </form>
         </div>
@@ -64,18 +65,18 @@
         {% if tickets %}
             <div class="toolbar mb-3 d-flex flex-wrap align-items-center gap-2">
                 <button type="button" class="btn btn-success btn-sm" id="selectAllBtn">
-                    <i class="fas fa-check-double"></i> انتخاب همه
+                    <i class="fas fa-check-double"></i> {% trans "انتخاب همه" %}
                 </button>
                 <button type="button" class="btn btn-secondary btn-sm" id="deselectAllBtn">
-                    <i class="fas fa-times"></i> لغو انتخاب
+                    <i class="fas fa-times"></i> {% trans "لغو انتخاب" %}
                 </button>
-                <span class="text-muted small" id="selectedCount">۰ بلیط انتخاب شده</span>
+                <span class="text-muted small" id="selectedCount">{% trans "۰ بلیط انتخاب شده" %}</span>
                 <div class="ms-auto d-flex gap-2">
                     <button type="button" class="btn btn-primary btn-sm" id="downloadSelectedBtn" disabled>
-                        <i class="fas fa-download"></i> دانلود انتخاب‌شده‌ها
+                        <i class="fas fa-download"></i> {% trans "دانلود انتخاب‌شده‌ها" %}
                     </button>
                     <button type="button" class="btn btn-info btn-sm" id="shareSelectedBtn" disabled>
-                        <i class="fas fa-share-alt"></i> اشتراک‌گذاری
+                        <i class="fas fa-share-alt"></i> {% trans "اشتراک‌گذاری" %}
                     </button>
                 </div>
             </div>
@@ -117,7 +118,7 @@
                                     {% elif ticket.status == 'admin_assigned' %}bg-dark
                                     {% elif ticket.status == 'vip_issued' %}bg-primary
                                     {% else %}bg-light text-dark{% endif %}">
-                                    {{ ticket.get_status_display }}
+                                    {{ ticket.get_status_display|t }}
                                 </span>
                                 </div>
                             </div>
@@ -126,7 +127,7 @@
                                 {% if ticket.status == 'cancelled' %}
                                     <div class="alert alert-danger py-2 px-3 mb-2" style="font-size: 0.85rem;">
                                         <i class="fas fa-info-circle"></i>
-                                        این مسابقه لغو شده است. مبلغ این بلیط به کیف پول شما بازگشت داده شد.
+                                        {% trans "این مسابقه لغو شده است. مبلغ این بلیط به کیف پول شما بازگشت داده شد." %}
                                     </div>
                                 {% endif %}
                                 <h5 class="card-title">
@@ -143,21 +144,21 @@
                                 <hr>
                                 <div class="row">
                                     <div class="col-6">
-                                        <small class="text-muted">نام خریدار</small>
+                                        <small class="text-muted">{% trans "نام خریدار" %}</small>
                                         <p class="fw-bold">{{ ticket.full_name }}</p>
                                     </div>
                                     <div class="col-6">
-                                        <small class="text-muted">کد ملی</small>
+                                        <small class="text-muted">{% trans "کد ملی" %}</small>
                                         <p class="fw-bold">{{ ticket.national_code }}</p>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-6">
-                                        <small class="text-muted">سکو / ردیف</small>
+                                        <small class="text-muted">{% trans "سکو / ردیف" %}</small>
                                         <p class="fw-bold">{{ ticket.seat.row.name }}</p>
                                     </div>
                                     <div class="col-6">
-                                        <small class="text-muted">صندلی</small>
+                                        <small class="text-muted">{% trans "صندلی" %}</small>
                                         <p class="fw-bold">{{ ticket.seat.number }}</p>
                                     </div>
                                 </div>
@@ -171,7 +172,7 @@
                                     {% elif ticket.block_type_label == 'بانوان میزبان' %}bg-pink
                                     {% elif ticket.block_type_label == 'بانوان میهمان' %}bg-pink
                                     {% else %}bg-secondary{% endif %}">
-                                    {{ ticket.block_type_label }}
+                                    {{ ticket.block_type_label|t }}
                                 </span>
                                 </div>
 
@@ -182,9 +183,9 @@
                                         {% else %}bg-success{% endif %}"
                                           style="font-size: 13px; padding: 5px 12px;">
                                         {% if ticket.is_used %}
-                                            ❌ استفاده شده
+                                            {% trans "❌ استفاده شده" %}
                                         {% else %}
-                                            ✅ استفاده نشده
+                                            {% trans "✅ استفاده نشده" %}
                                         {% endif %}
                                     </span>
                                     {% if ticket.is_used and ticket.used_at %}
@@ -200,11 +201,11 @@
                                 </small>
                                 {% if ticket.pdf_file %}
                                 <a href="{% url 'tickets:download_ticket_pdf' ticket.id %}" target="_blank" class="btn btn-sm btn-primary pdf-slot">
-                                    <i class="fas fa-file-pdf"></i> دانلود
+                                    <i class="fas fa-file-pdf"></i> {% trans "دانلود" %}
                                 </a>
                                 {% else %}
                                 <span class="btn btn-sm btn-secondary disabled pdf-slot">
-                                    <i class="fas fa-clock"></i> در حال آماده‌سازی...
+                                    <i class="fas fa-clock"></i> {% trans "در حال آماده‌سازی..." %}
                                 </span>
                                 {% endif %}
                             </div>
@@ -216,16 +217,16 @@
             <!-- ===== حالت خالی ===== -->
             <div class="empty-state text-center py-5">
                 <i class="fas fa-ticket-alt" style="font-size: 64px; color: #ddd;"></i>
-                <h4 class="mt-3">هیچ بلیطی یافت نشد</h4>
+                <h4 class="mt-3">{% trans "هیچ بلیطی یافت نشد" %}</h4>
                 <p class="text-muted">
                     {% if request.user.user_type == 'vip' %}
-                        شما هنوز بلیطی دریافت نکرده‌اید یا بلیطی صادر نکرده‌اید.
+                        {% trans "شما هنوز بلیطی دریافت نکرده‌اید یا بلیطی صادر نکرده‌اید." %}
                     {% else %}
-                        شما هنوز بلیطی خریداری نکرده‌اید.
+                        {% trans "شما هنوز بلیطی خریداری نکرده‌اید." %}
                     {% endif %}
                 </p>
                 <a href="{% url 'matches:home' %}" class="btn btn-primary">
-                    <i class="fas fa-search"></i> مشاهده مسابقات
+                    <i class="fas fa-search"></i> {% trans "مشاهده مسابقات" %}
                 </a>
             </div>
         {% endif %}
@@ -308,7 +309,7 @@
             function updateSelection() {
                 const checked = document.querySelectorAll('.ticket-checkbox:checked');
                 const count = checked.length;
-                selectedCountSpan.textContent = `${count} بلیط انتخاب شده`;
+                selectedCountSpan.textContent = count + ' {% trans "بلیط انتخاب شده" %}';
                 downloadSelectedBtn.disabled = count === 0;
                 shareSelectedBtn.disabled = count === 0;
 
@@ -358,32 +359,32 @@
                 const withoutLink = cards.filter(c => !c.dataset.shareUrl);
 
                 if (withLink.length === 0) {
-                    alert('❌ لینک این بلیط(ها) هنوز آماده نشده. چند لحظه دیگر دوباره امتحان کنید.');
+                    alert('{% trans "❌ لینک این بلیط(ها) هنوز آماده نشده. چند لحظه دیگر دوباره امتحان کنید." %}');
                     return;
                 }
 
                 const links = withLink.map(c => c.dataset.shareUrl);
                 const shareData = links.length === 1
                     ? {
-                        title: 'بلیط سپاهان تیکت',
-                        text: '🎫 برای دانلود فایل PDF بلیط، لینک زیر را باز کنید:',
+                        title: '{% trans "بلیط سپاهان تیکت" %}',
+                        text: '{% trans "🎫 برای دانلود فایل PDF بلیط، لینک زیر را باز کنید:" %}',
                         url: links[0],
                     }
                     : {
-                        title: 'بلیط سپاهان تیکت',
-                        text: `🎫 ${links.length} بلیط -- لینک دانلود هرکدام:\n${links.join('\n')}`,
+                        title: '{% trans "بلیط سپاهان تیکت" %}',
+                        text: '🎫 ' + links.length + ' {% trans "بلیط" %} -- {% trans "لینک دانلود هرکدام:" %}\n' + links.join('\n'),
                     };
 
                 function fallbackCopy() {
                     const text = links.length === 1 ? links[0] : links.join('\n');
                     if (navigator.clipboard) {
                         navigator.clipboard.writeText(text).then(function () {
-                            alert('✅ لینک بلیط در کلیپ‌بورد کپی شد.');
+                            alert('{% trans "✅ لینک بلیط در کلیپ‌بورد کپی شد." %}');
                         }).catch(function () {
-                            prompt('لینک را کپی کنید:', text);
+                            prompt('{% trans "لینک را کپی کنید:" %}', text);
                         });
                     } else {
-                        prompt('لینک را کپی کنید:', text);
+                        prompt('{% trans "لینک را کپی کنید:" %}', text);
                     }
                 }
 
@@ -398,7 +399,7 @@
                 }
 
                 if (withoutLink.length > 0) {
-                    alert(`توجه: لینک ${withoutLink.length} بلیط دیگر هنوز آماده نشده و به اشتراک گذاشته نشد.`);
+                    alert('{% trans "توجه: لینک" %} ' + withoutLink.length + ' {% trans "بلیط دیگر هنوز آماده نشده و به اشتراک گذاشته نشد." %}');
                 }
             });
 
@@ -439,7 +440,7 @@
                                 item.dataset.shareUrl = info.share_url;
                                 const slot = item.querySelector('.pdf-slot');
                                 if (slot) {
-                                    slot.outerHTML = `<a href="${info.pdf_url}" target="_blank" class="btn btn-sm btn-primary pdf-slot"><i class="fas fa-file-pdf"></i> دانلود</a>`;
+                                    slot.outerHTML = `<a href="${info.pdf_url}" target="_blank" class="btn btn-sm btn-primary pdf-slot"><i class="fas fa-file-pdf"></i> {% trans "دانلود" %}</a>`;
                                 }
                             });
                             setTimeout(tick, nextDelay());

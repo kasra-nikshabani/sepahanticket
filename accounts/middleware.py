@@ -109,3 +109,32 @@ class GeoAccessMiddleware:
                 return render(request, 'accounts/geo_blocked.html', status=403)
 
         return self.get_response(request)
+
+
+class CookieLocaleMiddleware:
+    """زبان فقط از کوکی django_language (که دکمه‌ی تغییر زبان ست می‌کند) خوانده می‌شود.
+
+    LocaleMiddleware پیش‌فرض جنگو هدر Accept-Language مرورگر را هم نگاه می‌کند؛
+    اینجا عمداً نادیده‌اش می‌گیریم تا سایت برای همه (و برای اپ اسکنر گیت) پیش‌فرض
+    فارسی بماند و فقط با انتخاب صریح کاربر انگلیسی شود.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        from django.conf import settings
+        from django.utils import translation
+        supported = {code for code, _name in settings.LANGUAGES}
+        lang = request.COOKIES.get(settings.LANGUAGE_COOKIE_NAME)
+        if lang not in supported:
+            lang = settings.LANGUAGE_CODE
+        translation.activate(lang)
+        request.LANGUAGE_CODE = translation.get_language()
+        response = self.get_response(request)
+        if 'Content-Language' not in response:
+            response['Content-Language'] = translation.get_language()
+        from django.utils.cache import patch_vary_headers
+        patch_vary_headers(response, ('Cookie',))
+        translation.deactivate()
+        return response

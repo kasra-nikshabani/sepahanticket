@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 {% load currency_filters %}
 
-{% block title %}تکمیل اطلاعات خریدار{% endblock %}
+{% block title %}{% trans "تکمیل اطلاعات خریدار" %}{% endblock %}
 
 {% block content %}
 <style>
@@ -111,7 +112,7 @@
 <div class="container mt-4 mb-5">
     {% include 'includes/purchase_timeline.html' with current_step=4 %}
     <div class="text-center mb-4">
-        <h2 class="fw-bold text-white">تکمیل اطلاعات خریدار</h2>
+        <h2 class="fw-bold text-white">{% trans "تکمیل اطلاعات خریدار" %}</h2>
         <div class="d-inline-block bg-light px-4 py-2 rounded-pill shadow-sm mt-2">
             <span class="fw-bold text-dark">{{ match.home_team }}</span>
             <span class="mx-2 text-muted">🆚</span>
@@ -141,13 +142,13 @@
                     <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
                         <h5 class="mb-0 fw-bold">
                             <i class="fas fa-couch text-primary ms-2"></i>
-                            صندلی {{ seat.number }} - {{ seat.row_name }}
+                            {% blocktrans with number=seat.number row_name=seat.row_name trimmed %}صندلی {{ number }} - {{ row_name }}{% endblocktrans %}
                         </h5>
                         <div class="d-flex align-items-center">
                             <span class="badge bg-light text-dark p-2 fs-6 ticket-price" data-base="{{ seat.price|default:0 }}" data-seat-index="{{ forloop.counter }}">
-                                {{ seat.price|rial_display }} ریال
+                                {% blocktrans with price=seat.price|rial_display trimmed %}{{ price }} ریال{% endblocktrans %}
                             </span>
-                            <button type="button" class="btn remove-btn ms-3" onclick="removeTicket({{ forloop.counter }})" title="حذف این بلیط">
+                            <button type="button" class="btn remove-btn ms-3" onclick="removeTicket({{ forloop.counter }})" title="{% trans 'حذف این بلیط' %}">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
@@ -155,35 +156,35 @@
 
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold text-muted">نام</label>
-                            <input type="text" id="name_{{ forloop.counter }}" class="form-control form-control-modern name-input" placeholder="مثال: علی" data-seat-index="{{ forloop.counter }}" oninput="this.value = this.value.replace(/[^؀-ۿ‌ ]/g, '');" required>
+                            <label class="form-label small fw-bold text-muted">{% trans "نام" %}</label>
+                            <input type="text" id="name_{{ forloop.counter }}" class="form-control form-control-modern name-input" placeholder="{% trans 'مثال: علی' %}" data-seat-index="{{ forloop.counter }}" oninput="this.value = this.value.replace(/[^؀-ۿ‌ ]/g, '');" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold text-muted">نام خانوادگی</label>
-                            <input type="text" id="famil_{{ forloop.counter }}" class="form-control form-control-modern famil-input" placeholder="مثال: رضایی" data-seat-index="{{ forloop.counter }}" oninput="this.value = this.value.replace(/[^؀-ۿ‌ ]/g, '');" required>
+                            <label class="form-label small fw-bold text-muted">{% trans "نام خانوادگی" %}</label>
+                            <input type="text" id="famil_{{ forloop.counter }}" class="form-control form-control-modern famil-input" placeholder="{% trans 'مثال: رضایی' %}" data-seat-index="{{ forloop.counter }}" oninput="this.value = this.value.replace(/[^؀-ۿ‌ ]/g, '');" required>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold text-muted">کد ملی (۱۰ رقم)</label>
+                            <label class="form-label small fw-bold text-muted">{% trans "کد ملی (۱۰ رقم)" %}</label>
                             <input type="text" id="kodeMeli_{{ forloop.counter }}" class="form-control form-control-modern kode-meli-input" placeholder="XXXXXXXXXX" maxlength="10" data-seat-index="{{ forloop.counter }}" oninput="this.value = this.value.replace(/[^0-9]/g, '');" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold text-muted">شماره موبایل</label>
+                            <label class="form-label small fw-bold text-muted">{% trans "شماره موبایل" %}</label>
                             <input type="tel" id="shomareyeHamrah_{{ forloop.counter }}" class="form-control form-control-modern mobile-input" placeholder="09XXXXXXXXX" maxlength="11" inputmode="numeric" pattern="09[0-9]{9}" dir="ltr" data-seat-index="{{ forloop.counter }}" oninput="this.value = this.value.replace(/[^0-9]/g, '');" required>
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label small fw-bold text-muted">تاریخ تولد</label>
+                            <label class="form-label small fw-bold text-muted">{% trans "تاریخ تولد" %}</label>
                             <div class="row g-2">
                                 <div class="col-4">
                                     <select class="form-select form-select-modern dob-day" data-seat-index="{{ forloop.counter }}" required></select>
                                 </div>
                                 <div class="col-4">
                                     <select class="form-select form-select-modern dob-month" data-seat-index="{{ forloop.counter }}" required>
-                                        <option value="01">فروردین</option><option value="02">اردیبهشت</option><option value="03">خرداد</option>
-                                        <option value="04">تیر</option><option value="05">مرداد</option><option value="06">شهریور</option>
-                                        <option value="07">مهر</option><option value="08">آبان</option><option value="09">آذر</option>
-                                        <option value="10">دی</option><option value="11">بهمن</option><option value="12">اسفند</option>
+                                        <option value="01">{% trans "فروردین" %}</option><option value="02">{% trans "اردیبهشت" %}</option><option value="03">{% trans "خرداد" %}</option>
+                                        <option value="04">{% trans "تیر" %}</option><option value="05">{% trans "مرداد" %}</option><option value="06">{% trans "شهریور" %}</option>
+                                        <option value="07">{% trans "مهر" %}</option><option value="08">{% trans "آبان" %}</option><option value="09">{% trans "آذر" %}</option>
+                                        <option value="10">{% trans "دی" %}</option><option value="11">{% trans "بهمن" %}</option><option value="12">{% trans "اسفند" %}</option>
                                     </select>
                                 </div>
                                 <div class="col-4">
@@ -195,23 +196,23 @@
 
                         <div class="col-12 mt-3">
                             <button type="button" class="btn btn-inquiry w-100 py-2 inquiry-btn" data-seat-index="{{ forloop.counter }}">
-                                <i class="fas fa-check-double"></i> استعلام و تایید اطلاعات
+                                <i class="fas fa-check-double"></i> {% trans "استعلام و تایید اطلاعات" %}
                             </button>
                         </div>
                     </div>
 
                     <div id="loading_{{ forloop.counter }}" style="display:none; margin-top: 15px;" class="text-center text-primary">
-                        <div class="spinner-border spinner-border-sm" role="status"></div> در حال استعلام از ثبت احوال...
+                        <div class="spinner-border spinner-border-sm" role="status"></div> {% trans "در حال استعلام از ثبت احوال..." %}
                     </div>
 
                     <div class="mt-3 special-code-wrap" id="specialCodeWrap_{{ forloop.counter }}" style="display:none;">
                         <label class="form-label small fw-bold text-muted">
-                            <i class="fas fa-gift text-warning"></i> کد ویژه (اختیاری -- این بلیط را رایگان می‌کند)
+                            <i class="fas fa-gift text-warning"></i> {% trans "کد ویژه (اختیاری -- این بلیط را رایگان می‌کند)" %}
                         </label>
                         <div class="input-group input-group-sm">
-                            <input type="text" class="form-control form-control-modern special-code-input" id="specialCode_{{ forloop.counter }}" name="special_code_{{ seat.id }}" placeholder="کد ویژه را وارد کنید" data-seat-index="{{ forloop.counter }}" style="direction:ltr; text-transform:uppercase;" disabled>
+                            <input type="text" class="form-control form-control-modern special-code-input" id="specialCode_{{ forloop.counter }}" name="special_code_{{ seat.id }}" placeholder="{% trans 'کد ویژه را وارد کنید' %}" data-seat-index="{{ forloop.counter }}" style="direction:ltr; text-transform:uppercase;" disabled>
                             <button type="button" class="btn special-code-check-btn" data-seat-index="{{ forloop.counter }}" disabled>
-                                <i class="fas fa-magic"></i> بررسی کد
+                                <i class="fas fa-magic"></i> {% trans "بررسی کد" %}
                             </button>
                         </div>
                         <div id="specialCodeMsg_{{ forloop.counter }}" class="mt-1 small"></div>
@@ -233,24 +234,24 @@
             <div class="col-lg-4">
                 <div class="sticky-summary">
                     <div class="timer-box-modern text-center mb-3">
-                        <i class="fas fa-clock"></i> زمان باقی‌مانده:
+                        <i class="fas fa-clock"></i> {% trans "زمان باقی‌مانده:" %}
                         <span id="timer-display" style="font-size: 1.5rem; direction: ltr; display: inline-block; min-width: 80px;">00:00</span>
                     </div>
 
                     <div class="card summary-card">
                         <div class="card-header bg-white py-3 border-bottom">
-                            <h5 class="mb-0 fw-bold"><i class="fas fa-receipt text-primary ms-2"></i> خلاصه سفارش</h5>
+                            <h5 class="mb-0 fw-bold"><i class="fas fa-receipt text-primary ms-2"></i> {% trans "خلاصه سفارش" %}</h5>
                         </div>
                         <div class="card-body">
                             <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">مجموع بلیط‌ها:</span>
-                                <span class="fw-bold" id="totalPriceDisplay">{{ total_price|rial_display }} ریال</span>
+                                <span class="text-muted">{% trans "مجموع بلیط‌ها:" %}</span>
+                                <span class="fw-bold" id="totalPriceDisplay">{% blocktrans with total_price=total_price|rial_display trimmed %}{{ total_price }} ریال{% endblocktrans %}</span>
                             </div>
 
                             <div class="mt-3">
                                 <div class="input-group input-group-sm">
-                                    <input type="text" id="discount_code" class="form-control form-control-modern" placeholder="کد تخفیف...">
-                                    <button type="button" class="btn btn-outline-primary" onclick="applyDiscount()">اعمال</button>
+                                    <input type="text" id="discount_code" class="form-control form-control-modern" placeholder="{% trans 'کد تخفیف...' %}">
+                                    <button type="button" class="btn btn-outline-primary" onclick="applyDiscount()">{% trans "اعمال" %}</button>
                                 </div>
                                 <div id="discount_msg" class="mt-1 small"></div>
                                 <input type="hidden" name="discount_code" id="discount_code_input" value="">
@@ -262,7 +263,7 @@
                                 <div class="form-check form-switch mb-2">
                                     <input class="form-check-input" type="checkbox" id="useWalletSwitch" onchange="toggleWallet(this.checked)">
                                     <label class="form-check-label small fw-bold" for="useWalletSwitch">
-                                        استفاده از کیف پول (موجودی: {{ wallet_balance|rial_display }})
+                                        {% blocktrans with wallet_balance=wallet_balance|rial_display trimmed %}استفاده از کیف پول (موجودی: {{ wallet_balance }}){% endblocktrans %}
                                     </label>
                                 </div>
                                 <div id="wallet_info" class="small text-muted"></div>
@@ -270,18 +271,18 @@
                             {% endif %}
 
                             <div class="mt-3 border-top pt-3 d-flex justify-content-between align-items-center">
-                                <span class="fw-bold text-dark">مبلغ نهایی:</span>
-                                <span class="fw-bold text-success fs-5" id="finalAmountDisplay">{{ total_price|rial_display }} ریال</span>
+                                <span class="fw-bold text-dark">{% trans "مبلغ نهایی:" %}</span>
+                                <span class="fw-bold text-success fs-5" id="finalAmountDisplay">{% blocktrans with total_price=total_price|rial_display trimmed %}{{ total_price }} ریال{% endblocktrans %}</span>
                             </div>
 
                             <button type="submit" class="btn btn-success w-100 mt-4 py-3 fw-bold shadow-sm" id="btn-buy" disabled>
-                                <i class="fas fa-credit-card"></i> پرداخت و دریافت بلیط
-                                <span id="finalPriceDisplay" class="badge bg-light text-dark ms-2 mt-1">{{ total_price|rial_display }} ریال</span>
+                                <i class="fas fa-credit-card"></i> {% trans "پرداخت و دریافت بلیط" %}
+                                <span id="finalPriceDisplay" class="badge bg-light text-dark ms-2 mt-1">{% blocktrans with total_price=total_price|rial_display trimmed %}{{ total_price }} ریال{% endblocktrans %}</span>
                             </button>
-                            <small id="btn-hint" class="text-danger d-block text-center mt-2" style="font-size: 11px;">⚠️ لطفاً اطلاعات همه صندلی‌ها را استعلام کنید</small>
+                            <small id="btn-hint" class="text-danger d-block text-center mt-2" style="font-size: 11px;">{% trans "⚠️ لطفاً اطلاعات همه صندلی‌ها را استعلام کنید" %}</small>
 
                             <a href="{% url 'tickets:cancel_reservation' match.id %}" class="btn btn-link w-100 mt-2 text-danger small">
-                                <i class="fas fa-times-circle"></i> انصراف و آزادسازی صندلی‌ها
+                                <i class="fas fa-times-circle"></i> {% trans "انصراف و آزادسازی صندلی‌ها" %}
                             </a>
                         </div>
                     </div>
@@ -301,7 +302,7 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         function toRial(amount) {
-            if (amount === 0 || amount === null || amount === undefined) return '۰';
+            if (amount === 0 || amount === null || amount === undefined) return '{% trans "۰" %}';
             return amount.toLocaleString('fa-IR');
         }
 
@@ -363,8 +364,8 @@
                 if (remaining < 60) timerDisplay.parentElement.style.color = '#dc3545';
                 if (remaining <= 0) {
                     clearInterval(timerInterval);
-                    timerDisplay.textContent = 'پایان یافت';
-                    alert('⏰ زمان شما برای تکمیل خرید به پایان رسید.');
+                    timerDisplay.textContent = '{% trans "پایان یافت" %}';
+                    alert('{% trans "⏰ زمان شما برای تکمیل خرید به پایان رسید." %}');
                     window.location.href = "{% url 'tickets:cancel_reservation' match.id %}";
                 }
             }, 1000);
@@ -395,7 +396,7 @@
             const code = document.getElementById('discount_code').value.trim();
             const msg = document.getElementById('discount_msg');
             if (!code) {
-                msg.innerHTML = '<span class="text-warning">⚠️ کد را وارد کنید.</span>';
+                msg.innerHTML = '<span class="text-warning">⚠️ {% trans "کد را وارد کنید." %}</span>';
                 return;
             }
             const matchId = {{ match.id }};
@@ -420,7 +421,7 @@
                 window.updateAll();
             })
             .catch(error => {
-                msg.innerHTML = '<span class="text-danger">❌ خطا</span>';
+                msg.innerHTML = '<span class="text-danger">❌ {% trans "خطا" %}</span>';
                 window.discountPercent = 0;
                 window.updateAll();
             });
@@ -437,25 +438,25 @@
 
                 const base = parseInt(el.dataset.base);
                 if (window.specialCodeSeats[seatIndex]) {
-                    el.textContent = 'رایگان (کد ویژه)';
+                    el.textContent = '{% trans "رایگان (کد ویژه)" %}';
                     el.classList.add('text-success');
                     currentTotal += 0;
                 } else if (window.freeSeats[seatIndex]) {
-                    el.textContent = 'رایگان';
+                    el.textContent = '{% trans "رایگان" %}';
                     el.classList.add('text-success');
                     currentTotal += 0;
                 } else {
                     const basaPercent = window.basaSeats[seatIndex] || 0;
                     const afterBasa = Math.round(base * (1 - basaPercent / 100));
                     const final = Math.round(afterBasa * (1 - (window.discountPercent || 0) / 100));
-                    el.textContent = toRial(final) + ' ریال' + (basaPercent > 0 ? ' (با تخفیف باسا)' : '');
+                    el.textContent = toRial(final) + ' {% trans "ریال" %}' + (basaPercent > 0 ? ' {% trans "(با تخفیف باسا)" %}' : '');
                     el.classList.remove('text-success');
                     currentTotal += final;
                 }
             });
             const totalEl = document.getElementById('totalPriceDisplay');
             if (totalEl) {
-                totalEl.textContent = toRial(currentTotal) + ' ریال';
+                totalEl.textContent = toRial(currentTotal) + ' {% trans "ریال" %}';
                 totalEl.dataset.current = currentTotal;
             }
         };
@@ -498,11 +499,11 @@
 
         function updateSubmitButton(finalAmount) {
             if (finalAmount === 0) {
-                finalPriceDisplay.textContent = 'رایگان';
-                submitBtn.innerHTML = `<i class="fas fa-check-circle"></i> دریافت بلیط (رایگان)`;
+                finalPriceDisplay.textContent = '{% trans "رایگان" %}';
+                submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> {% trans "دریافت بلیط (رایگان)" %}';
             } else {
-                finalPriceDisplay.textContent = toRial(finalAmount) + ' ریال';
-                submitBtn.innerHTML = `<i class="fas fa-credit-card"></i> پرداخت <span class="badge bg-light text-dark ms-2">${toRial(finalAmount)} ریال</span>`;
+                finalPriceDisplay.textContent = toRial(finalAmount) + ' {% trans "ریال" %}';
+                submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> {% trans "پرداخت" %} <span class="badge bg-light text-dark ms-2">' + toRial(finalAmount) + ' {% trans "ریال" %}</span>';
             }
         }
 
@@ -518,7 +519,7 @@
                 if (walletBalance <= 0) {
                     if (useWalletSwitch) useWalletSwitch.checked = false;
                     useWalletInput.value = 'false';
-                    if (walletInfo) walletInfo.innerHTML = `<span class="text-danger">موجودی کیف پول صفر است.</span>`;
+                    if (walletInfo) walletInfo.innerHTML = '<span class="text-danger">{% trans "موجودی کیف پول صفر است." %}</span>';
                     updateSubmitButton(totalWithDiscount);
                     walletAmountInput.value = 0;
                     finalAmountInput.value = totalWithDiscount;
@@ -532,11 +533,11 @@
             }
 
             if (walletInfo) {
-                walletInfo.innerHTML = checked && walletPay > 0 ? `${toRial(walletPay)} ریال از کیف پول کسر می‌شود.` : '';
+                walletInfo.innerHTML = checked && walletPay > 0 ? toRial(walletPay) + ' {% trans "ریال از کیف پول کسر می‌شود." %}' : '';
             }
             walletAmountInput.value = walletPay;
             finalAmountInput.value = finalAmount;
-            finalAmountDisplay.textContent = toRial(finalAmount) + ' ریال';
+            finalAmountDisplay.textContent = toRial(finalAmount) + ' {% trans "ریال" %}';
             updateSubmitButton(finalAmount);
         };
 
@@ -552,12 +553,12 @@
             }
             if (visibleSeatsCount === 0) {
                 e.preventDefault();
-                alert('⚠️ شما تمام صندلی‌ها را حذف کرده‌اید!');
+                alert('{% trans "⚠️ شما تمام صندلی‌ها را حذف کرده‌اید!" %}');
                 return false;
             }
             if (!allInquired) {
                 e.preventDefault();
-                alert('⚠️ لطفاً برای همه صندلی‌ها اطلاعات را وارد و دکمه استعلام را بزنید.');
+                alert('{% trans "⚠️ لطفاً برای همه صندلی‌ها اطلاعات را وارد و دکمه استعلام را بزنید." %}');
                 return false;
             }
             if (parseInt(document.getElementById('finalAmountInput').value) === 0) {
@@ -599,7 +600,7 @@
             return;
         }
 
-        msgDiv.innerHTML = '<span class="text-muted">در حال بررسی...</span>';
+        msgDiv.innerHTML = '<span class="text-muted">{% trans "در حال بررسی..." %}</span>';
         fetch("{% url 'tickets:check_special_code' %}", {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCookie('csrftoken') },
@@ -618,7 +619,7 @@
         })
         .catch(function() {
             delete window.specialCodeSeats[index];
-            msgDiv.innerHTML = '<span class="text-danger">❌ خطا در بررسی کد ویژه</span>';
+            msgDiv.innerHTML = '<span class="text-danger">❌ {% trans "خطا در بررسی کد ویژه" %}</span>';
             window.updateAll();
         });
     }
@@ -640,18 +641,18 @@
 
         if (!name || !famil || !kodeMeli || !shomareyeHamrah || !tarikheTavallod) {
             card.classList.add('is-invalid');
-            showInquiryMessage(index, '❌ لطفاً تمام فیلدها (به خصوص تاریخ تولد) را پر کنید.', 'danger');
+            showInquiryMessage(index, '{% trans "❌ لطفاً تمام فیلدها (به خصوص تاریخ تولد) را پر کنید." %}', 'danger');
             return;
         }
         const persianNameRe = /^[؀-ۿ‌ ]+$/;
         if (!persianNameRe.test(name) || !persianNameRe.test(famil)) {
             card.classList.add('is-invalid');
-            showInquiryMessage(index, '❌ نام و نام خانوادگی باید فقط با حروف فارسی نوشته شود.', 'danger');
+            showInquiryMessage(index, '{% trans "❌ نام و نام خانوادگی باید فقط با حروف فارسی نوشته شود." %}', 'danger');
             return;
         }
         if (kodeMeli.length !== 10) {
             card.classList.add('is-invalid');
-            showInquiryMessage(index, '❌ کد ملی باید ۱۰ رقم باشد.', 'danger');
+            showInquiryMessage(index, '{% trans "❌ کد ملی باید ۱۰ رقم باشد." %}', 'danger');
             return;
         }
 
@@ -680,24 +681,24 @@
 
                 const msgStyle = data.bypass ? 'warning' : 'success';
                 const prefix = data.bypass
-                    ? '⚠️ حالت اضطراری فعال است -- بدون استعلام از ثبت‌احوال، '
+                    ? '{% trans "⚠️ حالت اضطراری فعال است -- بدون استعلام از ثبت‌احوال،" %} '
                     : '✅ ';
                 btn.innerHTML = data.bypass
-                    ? '<i class="fas fa-check-circle"></i> ثبت شد (بدون استعلام)'
-                    : '<i class="fas fa-check-circle"></i> تایید شد';
+                    ? '<i class="fas fa-check-circle"></i> {% trans "ثبت شد (بدون استعلام)" %}'
+                    : '<i class="fas fa-check-circle"></i> {% trans "تایید شد" %}';
                 btn.classList.add('btn-inquiry-verified');
 
                 if (data.is_free) {
                     window.freeSeats[index] = true;
                     window.basaSeats[index] = 0;
-                    showInquiryMessage(index, `${prefix}سن: ${data.age} سال (زیر ۱۵ سال) - این بلیط رایگان است!`, msgStyle);
+                    showInquiryMessage(index, prefix + '{% trans "سن:" %} ' + data.age + ' {% trans "سال (زیر ۱۵ سال) - این بلیط رایگان است!" %}', msgStyle);
                 } else {
                     window.freeSeats[index] = false;
                     window.basaSeats[index] = data.basa_discount_percent || 0;
                     if (data.is_basa) {
-                        showInquiryMessage(index, `${prefix}سن: ${data.age} سال - عضو باسا (${data.basa_discount_percent}% تخفیف)`, msgStyle);
+                        showInquiryMessage(index, prefix + '{% trans "سن:" %} ' + data.age + ' {% trans "سال" %} - {% trans "عضو باسا" %} (' + data.basa_discount_percent + '% {% trans "تخفیف" %})', msgStyle);
                     } else {
-                        showInquiryMessage(index, `${prefix}سن: ${data.age} سال`, msgStyle);
+                        showInquiryMessage(index, prefix + '{% trans "سن:" %} ' + data.age + ' {% trans "سال" %}', msgStyle);
                     }
                 }
 
@@ -729,9 +730,9 @@
                 card.classList.add('is-invalid');
                 document.getElementById('fan_id_' + index).value = '';
                 window.freeSeats[index] = false;
-                btn.innerHTML = '<i class="fas fa-check-double"></i> استعلام و تایید';
+                btn.innerHTML = '<i class="fas fa-check-double"></i> {% trans "استعلام و تایید" %}';
                 btn.classList.remove('btn-inquiry-verified');
-                showInquiryMessage(index, '❌ ' + (data.error || 'اطلاعات نامعتبر است'), 'danger');
+                showInquiryMessage(index, '❌ ' + (data.error || '{% trans "اطلاعات نامعتبر است" %}'), 'danger');
                 window.updateAll();
             }
         })
@@ -739,7 +740,7 @@
             loadingDiv.style.display = 'none';
             btn.disabled = false;
             card.classList.add('is-invalid');
-            showInquiryMessage(index, '❌ خطا در ارتباط با سرور: ' + error.message, 'danger');
+            showInquiryMessage(index, '{% trans "❌ خطا در ارتباط با سرور:" %} ' + error.message, 'danger');
         });
     }
 
@@ -765,12 +766,12 @@
         const btnHint = document.getElementById('btn-hint');
         if (allDone && visibleSeats > 0) {
             btnBuy.disabled = false;
-            btnHint.textContent = '✅ تمام اطلاعات تأیید شد. می‌توانید خرید کنید.';
+            btnHint.textContent = '{% trans "✅ تمام اطلاعات تأیید شد. می‌توانید خرید کنید." %}';
             btnHint.classList.remove('text-danger');
             btnHint.classList.add('text-success');
         } else {
             btnBuy.disabled = true;
-            btnHint.textContent = '⚠️ لطفاً برای همه صندلی‌ها اطلاعات را وارد و استعلام کنید';
+            btnHint.textContent = '{% trans "⚠️ لطفاً برای همه صندلی‌ها اطلاعات را وارد و استعلام کنید" %}';
             btnHint.classList.add('text-danger');
             btnHint.classList.remove('text-success');
         }

@@ -17,6 +17,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from .forms import RegisterForm, LoginForm, PhoneLoginForm, OTPVerifyForm, PhoneRegisterForm
 from .models import OTP
 from .services import create_otp, get_valid_otp, OTPRateLimitError, SMSProviderBusyError
+from django.utils.translation import gettext as _t
 
 User = get_user_model()
 
@@ -54,7 +55,7 @@ def choose_login(request):
 def phone_login(request):
     """ورود با شماره تلفن (فقط کاربران معمولی)"""
     if not getattr(settings, 'OTP_ENABLED', False):
-        messages.error(request, 'ورود با شماره تلفن در حال حاضر غیرفعال است.')
+        messages.error(request, _t("ورود با شماره تلفن در حال حاضر غیرفعال است."))
         return redirect('accounts:login_password')
 
     if request.user.is_authenticated:
@@ -68,30 +69,30 @@ def phone_login(request):
             try:
                 user = User.objects.get(phone_number=phone_number)
             except User.DoesNotExist:
-                messages.error(request, 'کاربری با این شماره تلفن یافت نشد. لطفاً ثبت‌نام کنید.')
+                messages.error(request, _t("کاربری با این شماره تلفن یافت نشد. لطفاً ثبت‌نام کنید."))
                 return redirect('accounts:phone_register')
 
             # فقط کاربران معمولی اجازه ورود با OTP دارند
             if user.user_type != 'normal':
                 messages.error(request,
-                               'این روش ورود فقط برای کاربران معمولی است. لطفاً از ورود با رمز عبور استفاده کنید.')
+                               _t("این روش ورود فقط برای کاربران معمولی است. لطفاً از ورود با رمز عبور استفاده کنید."))
                 return redirect('accounts:login_password')
 
             try:
                 create_otp(phone_number)
                 request.session['otp_phone'] = phone_number
-                messages.success(request, 'کد تأیید به شماره شما ارسال شد.')
+                messages.success(request, _t("کد تأیید به شماره شما ارسال شد."))
                 return redirect('accounts:otp_verify')
             except OTPRateLimitError as e:
                 # کد قبلی هنوز معتبر است؛ کاربر را همان‌جا به صفحه‌ی تأیید می‌فرستیم
                 request.session['otp_phone'] = phone_number
-                messages.info(request, f'کد قبلی هنوز معتبر است. {e.retry_after} ثانیه دیگر می‌توانید کد جدید بگیرید.')
+                messages.info(request, _t("کد قبلی هنوز معتبر است. %(retry_after)s ثانیه دیگر می‌توانید کد جدید بگیرید.") % {"retry_after": e.retry_after})
                 return redirect('accounts:otp_verify')
             except SMSProviderBusyError as e:
                 messages.error(request, e.message)
             except Exception as e:
                 logger.error("create_otp failed for %s***: %s", phone_number[:6], e)
-                messages.error(request, 'ارسال پیامک موقتاً ممکن نیست. چند لحظه دیگر دوباره تلاش کنید.')
+                messages.error(request, _t("ارسال پیامک موقتاً ممکن نیست. چند لحظه دیگر دوباره تلاش کنید."))
         else:
             for error in form.errors.values():
                 messages.error(request, error)
@@ -105,7 +106,7 @@ def phone_login(request):
 def otp_verify(request):
     """تأیید کد OTP برای ورود/ثبت‌نام"""
     if not getattr(settings, 'OTP_ENABLED', False):
-        messages.error(request, 'این قابلیت غیرفعال است.')
+        messages.error(request, _t("این قابلیت غیرفعال است."))
         return redirect('accounts:login_password')
 
     if request.user.is_authenticated:
@@ -113,7 +114,7 @@ def otp_verify(request):
 
     phone_number = request.session.get('otp_phone')
     if not phone_number:
-        messages.error(request, 'لطفاً ابتدا شماره تلفن را وارد کنید.')
+        messages.error(request, _t("لطفاً ابتدا شماره تلفن را وارد کنید."))
         return redirect('accounts:phone_login')
 
     form = OTPVerifyForm()
@@ -139,7 +140,7 @@ def otp_verify(request):
                     request.session['user_type'] = user.user_type
 
                     request.session.pop('otp_phone', None)
-                    messages.success(request, f'خوش آمدید {user.get_full_name() or user.phone_number}!')
+                    messages.success(request, _t("خوش آمدید %(v)s!") % {"v": user.get_full_name() or user.phone_number})
 
                     # ===== جلوگیری از کش =====
                     response = redirect(request.GET.get('next', 'matches:home'))
@@ -170,22 +171,22 @@ def otp_verify(request):
                         request.session['user_type'] = user.user_type
                         request.session.pop('otp_phone', None)
                         request.session.pop('pending_registration', None)
-                        messages.success(request, f'خوش آمدید {user.get_full_name()}!')
+                        messages.success(request, _t("خوش آمدید %(v)s!") % {"v": user.get_full_name()})
 
                         response = redirect(request.GET.get('next', 'matches:home'))
                         response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
                         return response
-                    messages.error(request, 'کاربری با این شماره وجود ندارد.')
+                    messages.error(request, _t("کاربری با این شماره وجود ندارد."))
             else:
                 try:
                     latest_otp = OTP.objects.filter(phone_number=phone_number, is_used=False).latest('created_at')
                     latest_otp.increment_attempts()
                     if latest_otp.attempts >= 3:
-                        messages.error(request, '❌ تعداد تلاش‌های ناموفق بیش از حد مجاز.')
+                        messages.error(request, _t("❌ تعداد تلاش‌های ناموفق بیش از حد مجاز."))
                     else:
-                        messages.error(request, '❌ کد وارد شده صحیح نیست یا منقضی شده است.')
+                        messages.error(request, _t("❌ کد وارد شده صحیح نیست یا منقضی شده است."))
                 except OTP.DoesNotExist:
-                    messages.error(request, '❌ کد وارد شده صحیح نیست یا منقضی شده است.')
+                    messages.error(request, _t("❌ کد وارد شده صحیح نیست یا منقضی شده است."))
         else:
             for field, errors in form.errors.items():
                 for error in errors:
@@ -209,7 +210,7 @@ def otp_verify(request):
 def resend_otp(request):
     """ارسال مجدد کد OTP"""
     if not getattr(settings, 'OTP_ENABLED', False):
-        messages.error(request, 'این قابلیت در حال حاضر غیرفعال است.')
+        messages.error(request, _t("این قابلیت در حال حاضر غیرفعال است."))
         return redirect('accounts:login')
 
     if request.user.is_authenticated:
@@ -217,17 +218,17 @@ def resend_otp(request):
 
     phone_number = request.session.get('otp_phone')
     if not phone_number:
-        messages.error(request, 'لطفاً ابتدا شماره تلفن را وارد کنید.')
+        messages.error(request, _t("لطفاً ابتدا شماره تلفن را وارد کنید."))
         return redirect('accounts:phone_login')
 
     # ===== محدودیت واقعی درخواست مجدد -- سمت بک‌اند، مستقل از session =====
     # (پیاده‌سازی داخل create_otp؛ اینجا فقط خطای آن را به فرانت‌اند برمی‌گردانیم)
     try:
         create_otp(phone_number)
-        return JsonResponse({'status': 'success', 'message': '✅ کد جدید با موفقیت ارسال شد.'})
+        return JsonResponse({'status': 'success', 'message': _t("✅ کد جدید با موفقیت ارسال شد.")})
     except OTPRateLimitError as e:
         return JsonResponse(
-            {'status': 'error', 'message': f'⏳ لطفاً {e.retry_after} ثانیه صبر کنید و دوباره تلاش کنید.',
+            {'status': 'error', 'message': _t("⏳ لطفاً %(retry_after)s ثانیه صبر کنید و دوباره تلاش کنید.") % {"retry_after": e.retry_after},
              'retry_after': e.retry_after},
             status=429,
         )
@@ -241,7 +242,7 @@ def resend_otp(request):
         logger.error("resend_otp failed for %s***: %s", (phone_number or '')[:6], e)
         return JsonResponse(
             {'status': 'error',
-             'message': '❌ ارسال پیامک موقتاً ممکن نیست. چند لحظه دیگر دوباره تلاش کنید.'},
+             'message': _t("❌ ارسال پیامک موقتاً ممکن نیست. چند لحظه دیگر دوباره تلاش کنید.")},
             status=503,
         )
 
@@ -253,7 +254,7 @@ def resend_otp(request):
 def phone_register(request):
     """ثبت‌نام با شماره تلفن (فقط کاربران معمولی)"""
     if not getattr(settings, 'OTP_ENABLED', False):
-        messages.error(request, 'ثبت‌نام با شماره تلفن در حال حاضر غیرفعال است.')
+        messages.error(request, _t("ثبت‌نام با شماره تلفن در حال حاضر غیرفعال است."))
         return redirect('accounts:register_password')
 
     if request.user.is_authenticated:
@@ -271,11 +272,11 @@ def phone_register(request):
             gender = form.cleaned_data['gender']
 
             if User.objects.filter(phone_number=phone_number).exists():
-                messages.error(request, 'این شماره تلفن قبلاً ثبت شده است.')
+                messages.error(request, _t("این شماره تلفن قبلاً ثبت شده است."))
                 return render(request, 'accounts/phone_register.html', {'form': form})
 
             if User.objects.filter(national_code=national_code).exists():
-                messages.error(request, 'این کد ملی قبلاً ثبت شده است.')
+                messages.error(request, _t("این کد ملی قبلاً ثبت شده است."))
                 return render(request, 'accounts/phone_register.html', {'form': form})
 
             pending_data = {
@@ -291,13 +292,13 @@ def phone_register(request):
                 create_otp(phone_number)
                 request.session['otp_phone'] = phone_number
                 request.session['pending_registration'] = pending_data
-                messages.success(request, f'✅ کد تأیید به شماره {phone_number} ارسال شد.')
+                messages.success(request, _t("✅ کد تأیید به شماره %(phone_number)s ارسال شد.") % {"phone_number": phone_number})
                 return redirect('accounts:otp_verify')
             except OTPRateLimitError as e:
                 # کد قبلی هنوز معتبر است؛ کاربر را همان‌جا به صفحه‌ی تأیید می‌فرستیم
                 request.session['otp_phone'] = phone_number
                 request.session['pending_registration'] = pending_data
-                messages.info(request, f'کد قبلی هنوز معتبر است. {e.retry_after} ثانیه دیگر می‌توانید کد جدید بگیرید.')
+                messages.info(request, _t("کد قبلی هنوز معتبر است. %(retry_after)s ثانیه دیگر می‌توانید کد جدید بگیرید.") % {"retry_after": e.retry_after})
                 return redirect('accounts:otp_verify')
             except SMSProviderBusyError as e:
                 # ===== خرابیِ سرویس پیامک، نه خطای کاربر =====
@@ -312,7 +313,7 @@ def phone_register(request):
                 messages.error(request, e.message)
             except Exception as e:
                 logger.error("phone_register failed for %s***: %s", phone_number[:6], e)
-                messages.error(request, '❌ ارسال کد تأیید موقتاً ممکن نیست. چند لحظه دیگر دوباره تلاش کنید.')
+                messages.error(request, _t("❌ ارسال کد تأیید موقتاً ممکن نیست. چند لحظه دیگر دوباره تلاش کنید."))
         else:
             # نمایش خطاهای فرم
             for field, errors in form.errors.items():
@@ -330,7 +331,7 @@ def register_view(request):
 
     # فقط کاربرانی که مجوز دارند (مثلاً ادمین) می‌توانند ثبت‌نام کنند
     # برای سادگی، فعلاً غیرفعال می‌کنیم
-    messages.warning(request, 'ثبت‌نام با رمز عبور فقط توسط مدیر انجام می‌شود.')
+    messages.warning(request, _t("ثبت‌نام با رمز عبور فقط توسط مدیر انجام می‌شود."))
     return redirect('accounts:login_password')
 
 
@@ -361,8 +362,7 @@ def login_view(request):
             logger.warning("ورود مسدود شد (تلاش زیاد) username=%s ip=%s", attempted_username, ip)
             messages.error(
                 request,
-                'به دلیل تلاش‌های ناموفق زیاد، ورود موقتاً مسدود شده است. '
-                'چند دقیقه دیگر دوباره تلاش کنید.'
+                _t("به دلیل تلاش‌های ناموفق زیاد، ورود موقتاً مسدود شده است. چند دقیقه دیگر دوباره تلاش کنید.")
             )
             return render(request, 'accounts/login_password.html', {'form': LoginForm()})
 
@@ -391,7 +391,7 @@ def login_view(request):
                     # ===== به‌روزرسانی سشن =====
                     request.session['user_type'] = user.user_type
 
-                    messages.success(request, f'خوش آمدید {user.get_full_name() or user.username}!')
+                    messages.success(request, _t("خوش آمدید %(v)s!") % {"v": user.get_full_name() or user.username})
 
                     # ===== بازگشت به صفحه قبلی =====
                     # next از URL می‌آید؛ بدون اعتبارسنجی، لینکی مثل
@@ -414,12 +414,12 @@ def login_view(request):
 
                     return response
                 else:
-                    messages.error(request, 'این روش ورود فقط برای مدیران و کاربران ویژه است.')
+                    messages.error(request, _t("این روش ورود فقط برای مدیران و کاربران ویژه است."))
                     return redirect('accounts:phone_login')
             else:
-                messages.error(request, 'نام کاربری یا رمز عبور اشتباه است.')
+                messages.error(request, _t("نام کاربری یا رمز عبور اشتباه است."))
         else:
-            messages.error(request, 'لطفاً اطلاعات را به درستی وارد کنید.')
+            messages.error(request, _t("لطفاً اطلاعات را به درستی وارد کنید."))
     else:
         form = LoginForm()
 
@@ -433,7 +433,7 @@ def logout_view(request):
     logout(request)
     request.session.flush()
 
-    messages.info(request, 'شما از حساب خود خارج شدید.')
+    messages.info(request, _t("شما از حساب خود خارج شدید."))
 
     response = redirect('matches:home')
     response["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -455,7 +455,7 @@ def edit_profile_view(request):
         user.first_name = request.POST.get('full_name', user.first_name)
         user.email = request.POST.get('email', user.email)
         user.save()
-        messages.success(request, 'اطلاعات شما با موفقیت به‌روزرسانی شد.')
+        messages.success(request, _t("اطلاعات شما با موفقیت به‌روزرسانی شد."))
         return redirect('accounts:profile')
     return render(request, 'accounts/edit_profile.html', {'user': request.user})
 
@@ -546,11 +546,10 @@ def admin_emergency_settings(request):
         if new_value:
             messages.warning(
                 request,
-                '⚠️ حالت اضطراری فعال شد: استعلام ثبت‌احوال دیگر برای خرید بلیط لازم نیست. '
-                'به محض رفع مشکل سرویس ثبت‌احوال، حتماً این گزینه را دوباره خاموش کنید.'
+                _t("⚠️ حالت اضطراری فعال شد: استعلام ثبت‌احوال دیگر برای خرید بلیط لازم نیست. به محض رفع مشکل سرویس ثبت‌احوال، حتماً این گزینه را دوباره خاموش کنید.")
             )
         else:
-            messages.success(request, '✅ استعلام ثبت‌احوال دوباره برای خرید بلیط الزامی شد.')
+            messages.success(request, _t("✅ استعلام ثبت‌احوال دوباره برای خرید بلیط الزامی شد."))
         return redirect('accounts:admin_emergency_settings')
 
     context = {'settings_obj': settings_obj}
@@ -606,7 +605,7 @@ def admin_site_settings(request):
     if request.method == 'POST':
         field = request.POST.get('setting')
         if field not in TOGGLES:
-            messages.error(request, 'درخواست نامعتبر است.')
+            messages.error(request, _t("درخواست نامعتبر است."))
             return redirect('accounts:admin_site_settings')
 
         new_value = request.POST.get('value') == 'on'

@@ -1,11 +1,12 @@
+{% load i18n %}
 {% load currency_filters %}
 {% load static %}
 <!DOCTYPE html>
-<html dir="rtl" lang="fa">
+{% get_current_language as LANG %}{% get_current_language_bidi as BIDI %}<html dir="{% if BIDI %}rtl{% else %}ltr{% endif %}" lang="{{ LANG }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سپاهان تیکت</title>
+    <title>{% trans "سپاهان تیکت" %}</title>
     <!-- فونت وزیرمتن (لوکال) -->
     <link href="{% static 'vendor/vazirmatn/Vazirmatn-font-face.css' %}" rel="stylesheet">
     <style>
@@ -18,7 +19,7 @@
 
         body {
             font-family: 'Vazirmatn', 'Tahoma', 'Arial', sans-serif;
-            direction: rtl;
+            direction: {% if BIDI %}rtl{% else %}ltr{% endif %};
             height: 100vh;
             overflow: hidden;
             background: url('{% static "vendor/img/splash-728882.webp" %}') no-repeat center center fixed;
@@ -211,29 +212,29 @@
 
         <!-- لوگو -->
         <div class="logo-wrapper">
-            <img src="{% static 'img/sepahan-logo.png' %}" alt="سپاهان تیکت" id="logoImage"
+            <img src="{% static 'img/sepahan-logo.png' %}" alt="{% trans 'سپاهان تیکت' %}" id="logoImage"
                  onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\'font-size:60px; color:#D4AF37;\'>⚽</span>'">
         </div>
 
         <!-- عنوان -->
         <div class="splash-title">
-             <span>فولاد مبارکه سپاهان</span>
+             <span>{% trans "فولاد مبارکه سپاهان" %}</span>
         </div>
         <div class="splash-subtitle">
-           سامانه فروش بلیط آنلاین
+           {% trans "سامانه فروش بلیط آنلاین" %}
         </div>
 
         <!-- نوار لودینگ -->
         <div class="loading-bar">
             <div class="fill"></div>
         </div>
-        <div class="loading-text">در حال بارگذاری ...</div>
+        <div class="loading-text">{% trans "در حال بارگذاری ..." %}</div>
 
     </div>
 
     <!-- ===== فوتر ===== -->
     <div class="splash-footer">
-        © ۱۴۰۵ باشگاه فرهنگی ورزشی فولاد مبارکه سپاهان
+        {% trans "© ۱۴۰۵ باشگاه فرهنگی ورزشی فولاد مبارکه سپاهان" %}
     </div>
 
     <!-- ===== اسکریپت‌ها ===== -->

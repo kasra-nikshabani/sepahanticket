@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}{% load persian_filters %}
 {% load static %}
 {% load currency_filters %}
 {% load jalali %}
@@ -477,11 +478,11 @@
     <div class="text-center mb-4">
         <h2 class="fw-bold" style="color: #ffffff; text-shadow: 0 2px 20px rgba(0,0,0,0.20);">
             <i class="fas fa-trophy" style="color: #D4AF37;"></i>
-            مسابقات سپاهان
+            {% trans "مسابقات سپاهان" %}
         </h2>
         <p style="color: rgba(255, 255, 255, 0.5);">
             <i class="fas fa-ticket-alt" style="color: #D4AF37;"></i>
-            برای خرید بلیط، روی دکمه زیر کلیک کنید
+            {% trans "برای خرید بلیط، روی دکمه زیر کلیک کنید" %}
         </p>
     </div>
 
@@ -499,7 +500,7 @@
                         {% elif match.sport_type == 'volleyball' %}fa-volleyball-ball
                         {% else %}fa-sports-ball{% endif %}
                     "></i>
-                    {{ match.get_sport_type_display }}
+                    {{ match.get_sport_type_display|t }}
                 </span>
 
                 <span class="match-meta-item">
@@ -533,7 +534,7 @@
                         <div class="team-logo-placeholder">{{ match.home_team|slice:":2" }}</div>
                     {% endif %}
                     <span class="team-name">{{ match.home_team }}</span>
-                    <span class="team-role home">🏠 میزبان</span>
+                    <span class="team-role home">{% trans "🏠 میزبان" %}</span>
                 </div>
 
                 <!-- ===== VS ===== -->
@@ -550,7 +551,7 @@
                         <div class="team-logo-placeholder">{{ match.away_team|slice:":2" }}</div>
                     {% endif %}
                     <span class="team-name">{{ match.away_team }}</span>
-                    <span class="team-role away">✈️ میهمان</span>
+                    <span class="team-role away">{% trans "✈️ میهمان" %}</span>
                 </div>
             </div>
 
@@ -560,19 +561,19 @@
                     {% if match.ticket_sales_enabled %}
                         <a href="{% url 'matches:select_floor' match.id %}" class="btn-buy-match">
                             <i class="fas fa-ticket-alt"></i>
-                            خرید بلیط
+                            {% trans "خرید بلیط" %}
                             <i class="fas fa-arrow-left"></i>
                         </a>
                     {% else %}
                         <span class="btn-vip-match">
                             <i class="fas fa-ban"></i>
-                            فروش بلیط غیرفعال است
+                            {% trans "فروش بلیط غیرفعال است" %}
                         </span>
                     {% endif %}
                 {% else %}
                     <span class="btn-vip-match">
                         <i class="fas fa-star"></i>
-                        صدور از پنل ویژه
+                        {% trans "صدور از پنل ویژه" %}
                     </span>
                 {% endif %}
             </div>
@@ -583,8 +584,8 @@
     {% empty %}
     <div class="empty-state">
         <i class="fas fa-calendar-times"></i>
-        <h4>هیچ مسابقه فعالی وجود ندارد</h4>
-        <p>به زودی مسابقات جدید برگزار خواهد شد.</p>
+        <h4>{% trans "هیچ مسابقه فعالی وجود ندارد" %}</h4>
+        <p>{% trans "به زودی مسابقات جدید برگزار خواهد شد." %}</p>
     </div>
     {% endfor %}
 </div>

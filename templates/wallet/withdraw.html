@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
+{% load i18n %}{% load persian_filters %}
 {% load currency_filters %}
-{% block title %}برداشت وجه{% endblock %}
+{% block title %}{% trans "برداشت وجه" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -126,9 +127,9 @@
 <div class="wd-wrap">
 
     <div class="wd-header">
-        <h2><i class="fas fa-money-bill-transfer"></i> برداشت وجه</h2>
+        <h2><i class="fas fa-money-bill-transfer"></i> {% trans "برداشت وجه" %}</h2>
         <a href="{% url 'wallet:dashboard' %}" class="btn-back">
-            <i class="fas fa-arrow-right"></i> بازگشت به کیف پول
+            <i class="fas fa-arrow-right"></i> {% trans "بازگشت به کیف پول" %}
         </a>
     </div>
 
@@ -140,37 +141,33 @@
         <div class="pending-card">
             <div style="font-weight:700; margin-bottom:8px;">
                 <i class="fas fa-hourglass-half" style="color:#D4AF37;"></i>
-                یک درخواست برداشت در جریان دارید
+                {% trans "یک درخواست برداشت در جریان دارید" %}
             </div>
-            <div class="amt">{{ pending.amount|rial_display }} <small style="font-size:14px;">ریال</small></div>
-            <div>وضعیت: <strong>{{ pending.get_status_display }}</strong></div>
-            <div>شبا: <span style="direction:ltr; display:inline-block;">{{ pending.iban_display }}</span></div>
-            <div>تاریخ ثبت: {{ pending.created_at|date:"Y/m/d - H:i" }}</div>
+            <div class="amt">{{ pending.amount|rial_display }} <small style="font-size:14px;">{% trans "ریال" %}</small></div>
+            <div>{% trans "وضعیت:" %} <strong>{{ pending.get_status_display|t }}</strong></div>
+            <div>{% trans "شبا:" %} <span style="direction:ltr; display:inline-block;">{{ pending.iban_display }}</span></div>
+            <div>{% blocktrans with created_at=pending.created_at|date:"Y/m/d - H:i" trimmed %}تاریخ ثبت: {{ created_at }}{% endblocktrans %}</div>
             <div style="margin-top:12px; color:#6c757d; font-size:13.5px;">
-                پس از تأیید و واریز، مبلغ معمولاً طی یک تا سه روز کاری بانکی به حساب شما می‌نشیند.
-                تا تعیین تکلیف این درخواست، امکان ثبت درخواست تازه وجود ندارد.
+                {% trans "پس از تأیید و واریز، مبلغ معمولاً طی یک تا سه روز کاری بانکی به حساب شما می‌نشیند. تا تعیین تکلیف این درخواست، امکان ثبت درخواست تازه وجود ندارد." %}
             </div>
 
             {% if pending.status == 'pending' %}
             <div class="fix-box">
-                <strong><i class="fas fa-pen-to-square"></i> اطلاعات را اشتباه وارد کرده‌اید؟</strong>
-                تا وقتی درخواست بررسی نشده می‌توانید خودتان لغوش کنید؛ مبلغ بلافاصله به کیف پول
-                برمی‌گردد و می‌توانید درخواست تازه با شبای درست ثبت کنید.
+                <strong><i class="fas fa-pen-to-square"></i> {% trans "اطلاعات را اشتباه وارد کرده‌اید؟" %}</strong>
+                {% trans "تا وقتی درخواست بررسی نشده می‌توانید خودتان لغوش کنید؛ مبلغ بلافاصله به کیف پول برمی‌گردد و می‌توانید درخواست تازه با شبای درست ثبت کنید." %}
                 <form method="post" action="{% url 'wallet:withdraw_cancel' pending.id %}" style="margin-top:10px;">
                     {% csrf_token %}
                     <button type="submit" class="btn-cancel"
-                            onclick="return confirm('درخواست لغو شود؟ مبلغ به کیف پول شما برمی‌گردد.');">
-                        <i class="fas fa-xmark"></i> لغو درخواست و اصلاح اطلاعات
+                            onclick="return confirm('{% trans "درخواست لغو شود؟ مبلغ به کیف پول شما برمی‌گردد." %}');">
+                        <i class="fas fa-xmark"></i> {% trans "لغو درخواست و اصلاح اطلاعات" %}
                     </button>
                 </form>
             </div>
             {% else %}
             <div class="fix-box">
-                <strong><i class="fas fa-circle-info"></i> اطلاعات اشتباه است؟</strong>
-                این درخواست تأیید شده و ممکن است همین حالا در حال واریز باشد، پس دیگر خودتان
-                نمی‌توانید لغوش کنید. با پشتیبانی تماس بگیرید و شماره‌ی درخواست
-                <strong>#{{ pending.id }}</strong> را اعلام کنید؛ اگر هنوز واریز نشده باشد،
-                رد می‌شود و مبلغ به کیف پولتان برمی‌گردد.
+                <strong><i class="fas fa-circle-info"></i> {% trans "اطلاعات اشتباه است؟" %}</strong>
+                {% trans "این درخواست تأیید شده و ممکن است همین حالا در حال واریز باشد، پس دیگر خودتان نمی‌توانید لغوش کنید. با پشتیبانی تماس بگیرید و شماره‌ی درخواست" %}
+                <strong>#{{ pending.id }}</strong> {% trans "را اعلام کنید؛ اگر هنوز واریز نشده باشد، رد می‌شود و مبلغ به کیف پولتان برمی‌گردد." %}
             </div>
             {% endif %}
         </div>
@@ -178,85 +175,70 @@
     {% elif max_amount < min_amount %}
         <div class="warn-box">
             <i class="fas fa-circle-info"></i>
-            مبلغ قابل برداشت شما <strong>{{ max_amount|rial_display }} ریال</strong> است که از
-            حداقل مجاز ({{ min_amount|rial_display }} ریال) کمتر است.
+            {% trans "مبلغ قابل برداشت شما" %} <strong>{% blocktrans with max_amount=max_amount|rial_display trimmed %}{{ max_amount }} ریال{% endblocktrans %}</strong> {% blocktrans with min_amount=min_amount|rial_display trimmed %}است که از حداقل مجاز ({{ min_amount }} ریال) کمتر است.{% endblocktrans %}
             <br>
-            توجه: فقط مبلغی که <strong>باشگاه به کیف پول شما برگردانده</strong> — مثل جبران بلیط
-            صادرنشده یا بازگشت وجه — قابل برداشت است. مبلغی که خودتان کیف پول را با آن شارژ
-            کرده‌اید قابل برداشت نیست ولی برای خرید بلیط قابل استفاده است.
+            {% trans "توجه: فقط مبلغی که" %} <strong>{% trans "باشگاه به کیف پول شما برگردانده" %}</strong> {% trans "— مثل جبران بلیط صادرنشده یا بازگشت وجه — قابل برداشت است. مبلغی که خودتان کیف پول را با آن شارژ کرده‌اید قابل برداشت نیست ولی برای خرید بلیط قابل استفاده است." %}
         </div>
 
     {% else %}
         {% if editing and editing.status == 'needs_correction' %}
         <div class="correction-box">
             <div class="correction-title">
-                <i class="fas fa-triangle-exclamation"></i> اطلاعات این درخواست باید اصلاح شود
+                <i class="fas fa-triangle-exclamation"></i> {% trans "اطلاعات این درخواست باید اصلاح شود" %}
             </div>
-            <div class="correction-reason">{{ editing.admin_note|default:"اطلاعات واردشده مغایرت دارد." }}</div>
+            <div class="correction-reason">{{ editing.admin_note|default:_("اطلاعات واردشده مغایرت دارد.") }}</div>
             <p>
-                مبلغ <strong>{{ editing.amount|rial_display }} ریال</strong> همچنان برای شما نگه داشته
-                شده است. اطلاعات زیر را درست کنید و دوباره بفرستید؛ درخواست به صف بررسی برمی‌گردد.
+                {% trans "مبلغ" %} <strong>{% blocktrans with amount=editing.amount|rial_display trimmed %}{{ amount }} ریال{% endblocktrans %}</strong> {% trans "همچنان برای شما نگه داشته شده است. اطلاعات زیر را درست کنید و دوباره بفرستید؛ درخواست به صف بررسی برمی‌گردد." %}
             </p>
         </div>
         {% elif editing %}
         <div class="editing-box">
             <i class="fas fa-pen-to-square"></i>
-            در حال ویرایش <strong>درخواست #{{ editing.id }}</strong> که هنوز تأیید نشده است.
-            هر تغییری بدهید، درخواست دوباره در صف بررسی قرار می‌گیرد.
+            {% trans "در حال ویرایش" %} <strong>{% blocktrans with id=editing.id trimmed %}درخواست #{{ id }}{% endblocktrans %}</strong> {% trans "که هنوز تأیید نشده است. هر تغییری بدهید، درخواست دوباره در صف بررسی قرار می‌گیرد." %}
         </div>
         {% endif %}
 
         <div class="amount-card">
-            <div class="lbl"><i class="fas fa-coins"></i> حداکثر مبلغ قابل برداشت</div>
-            <div class="val">{{ max_amount|rial_display }} <small>ریال</small></div>
+            <div class="lbl"><i class="fas fa-coins"></i> {% trans "حداکثر مبلغ قابل برداشت" %}</div>
+            <div class="val">{{ max_amount|rial_display }} <small>{% trans "ریال" %}</small></div>
         </div>
 
         <div class="guide">
-            <div class="guide-title"><i class="fas fa-list-check"></i> برداشت در سه مرحله</div>
+            <div class="guide-title"><i class="fas fa-list-check"></i> {% trans "برداشت در سه مرحله" %}</div>
             <div class="steps">
                 <div class="step">
-                    <div class="num">۱</div>
+                    <div class="num">{% trans "۱" %}</div>
                     <div>
-                        <strong>شماره شبا را از بانک خودتان بگیرید</strong>
-                        <p>در اپلیکیشن یا اینترنت‌بانک، بخش «مشخصات حساب» شماره‌ی شبا را نشان می‌دهد.
-                           روی کارت بانکی نوشته نشده. شبا با <span class="mono">IR</span> شروع می‌شود
-                           و ۲۴ رقم دارد.</p>
+                        <strong>{% trans "شماره شبا را از بانک خودتان بگیرید" %}</strong>
+                        <p>{% trans "در اپلیکیشن یا اینترنت‌بانک، بخش «مشخصات حساب» شماره‌ی شبا را نشان می‌دهد. روی کارت بانکی نوشته نشده. شبا با" %} <span class="mono">IR</span> {% trans "شروع می‌شود و ۲۴ رقم دارد." %}</p>
                     </div>
                 </div>
                 <div class="step">
-                    <div class="num">۲</div>
+                    <div class="num">{% trans "۲" %}</div>
                     <div>
-                        <strong>فرم زیر را پر کنید</strong>
-                        <p>مبلغ، شماره شبا، نام صاحب حساب و کد ملی. حساب باید
-                           <strong>به نام و کد ملی خودتان</strong> باشد — این را از بانک
-                           استعلام می‌کنیم و واریز به حساب شخص دیگر انجام نمی‌شود.
-                           فاصله و خط تیره در شبا اشکالی ندارد.</p>
+                        <strong>{% trans "فرم زیر را پر کنید" %}</strong>
+                        <p>{% trans "مبلغ، شماره شبا، نام صاحب حساب و کد ملی. حساب باید" %}
+                           <strong>{% trans "به نام و کد ملی خودتان" %}</strong> {% trans "باشد — این را از بانک استعلام می‌کنیم و واریز به حساب شخص دیگر انجام نمی‌شود. فاصله و خط تیره در شبا اشکالی ندارد." %}</p>
                     </div>
                 </div>
                 <div class="step">
-                    <div class="num">۳</div>
+                    <div class="num">{% trans "۳" %}</div>
                     <div>
-                        <strong>منتظر واریز بمانید</strong>
-                        <p>مبلغ همان لحظه از کیف پول کسر و تا زمان واریز محفوظ می‌شود.
-                           پس از تأیید، واریز بانکی معمولاً <strong>۱ تا ۳ روز کاری</strong> طول می‌کشد.
-                           <strong>شناسه‌ی پیگیری واریز</strong> در همین صفحه‌ی کیف پول به شما نشان
-                           داده می‌شود.</p>
+                        <strong>{% trans "منتظر واریز بمانید" %}</strong>
+                        <p>{% trans "مبلغ همان لحظه از کیف پول کسر و تا زمان واریز محفوظ می‌شود. پس از تأیید، واریز بانکی معمولاً" %} <strong>{% trans "۱ تا ۳ روز کاری" %}</strong> {% trans "طول می‌کشد." %}
+                           <strong>{% trans "شناسه‌ی پیگیری واریز" %}</strong> {% trans "در همین صفحه‌ی کیف پول به شما نشان داده می‌شود." %}</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="note-box">
-            <i class="fas fa-circle-question"></i> چند سؤال رایج:
+            <i class="fas fa-circle-question"></i> {% trans "چند سؤال رایج:" %}
             <ul>
-                <li><strong>اگر شبا را اشتباه وارد کنم؟</strong> تا وقتی درخواست بررسی نشده،
-                    خودتان می‌توانید از صفحه‌ی کیف پول لغوش کنید و دوباره ثبت کنید. اگر هم
-                    کارشناس متوجه مغایرت شود، درخواست را با ذکر دلیل رد می‌کند و
-                    <strong>تمام مبلغ به کیف پول شما برمی‌گردد</strong>.</li>
-                <li><strong>چرا همه‌ی موجودی‌ام قابل برداشت نیست؟</strong> فقط مبلغی که باشگاه به
-                    کیف پول شما برگردانده (بابت بلیط صادرنشده، لغو مسابقه یا بازگشت وجه) قابل
-                    برداشت است. مبلغی که خودتان شارژ کرده‌اید برای خرید بلیط قابل استفاده است.</li>
-                <li><strong>می‌توانم چند درخواست هم‌زمان بدهم؟</strong> نه، در هر زمان یک درخواست باز.</li>
+                <li><strong>{% trans "اگر شبا را اشتباه وارد کنم؟" %}</strong> {% trans "تا وقتی درخواست بررسی نشده، خودتان می‌توانید از صفحه‌ی کیف پول لغوش کنید و دوباره ثبت کنید. اگر هم کارشناس متوجه مغایرت شود، درخواست را با ذکر دلیل رد می‌کند و" %}
+                    <strong>{% trans "تمام مبلغ به کیف پول شما برمی‌گردد" %}</strong>.</li>
+                <li><strong>{% trans "چرا همه‌ی موجودی‌ام قابل برداشت نیست؟" %}</strong> {% trans "فقط مبلغی که باشگاه به کیف پول شما برگردانده (بابت بلیط صادرنشده، لغو مسابقه یا بازگشت وجه) قابل برداشت است. مبلغی که خودتان شارژ کرده‌اید برای خرید بلیط قابل استفاده است." %}</li>
+                <li><strong>{% trans "می‌توانم چند درخواست هم‌زمان بدهم؟" %}</strong> {% trans "نه، در هر زمان یک درخواست باز." %}</li>
             </ul>
         </div>
 
@@ -264,70 +246,67 @@
             {% csrf_token %}
 
             <div class="field">
-                <label for="amount">مبلغ برداشت (ریال)</label>
+                <label for="amount">{% trans "مبلغ برداشت (ریال)" %}</label>
                 <input type="number" name="amount" id="amount" required
                        min="{{ min_amount }}" max="{{ max_amount }}" step="1"
                        value="{{ form.amount }}" placeholder="{{ max_amount }}">
                 <span class="hint">
-                    حداقل {{ min_amount|rial_display }} و حداکثر {{ max_amount|rial_display }} ریال
+                    {% blocktrans with min_amount=min_amount|rial_display max_amount=max_amount|rial_display trimmed %}حداقل {{ min_amount }} و حداکثر {{ max_amount }} ریال{% endblocktrans %}
                 </span>
             </div>
 
             <div class="field">
-                <label for="iban">شماره شبا</label>
+                <label for="iban">{% trans "شماره شبا" %}</label>
                 <input type="text" name="iban" id="iban" required class="iban-field"
                        value="{{ form.iban }}" placeholder="IR000000000000000000000000"
                        autocomplete="off" spellcheck="false">
-                <span class="hint">۲۴ رقم پس از IR. فاصله و خط تیره اشکالی ندارد.</span>
+                <span class="hint">{% trans "۲۴ رقم پس از IR. فاصله و خط تیره اشکالی ندارد." %}</span>
             </div>
 
             <div class="field">
-                <label for="account_holder">نام صاحب حساب</label>
+                <label for="account_holder">{% trans "نام صاحب حساب" %}</label>
                 <input type="text" name="account_holder" id="account_holder" required
-                       value="{{ form.account_holder }}" placeholder="نام و نام خانوادگی دقیقاً مطابق حساب بانکی">
+                       value="{{ form.account_holder }}" placeholder="{% trans 'نام و نام خانوادگی دقیقاً مطابق حساب بانکی' %}">
                 <span class="hint">
-                    دقیقاً همان‌طور که در بانک ثبت شده است.
+                    {% trans "دقیقاً همان‌طور که در بانک ثبت شده است." %}
                 </span>
             </div>
 
             <div class="field">
-                <label for="national_code">کد ملی</label>
+                <label for="national_code">{% trans "کد ملی" %}</label>
                 <input type="text" name="national_code" id="national_code" required
                        inputmode="numeric" maxlength="10" class="iban-field"
-                       value="{{ form.national_code }}" placeholder="۱۰ رقم"
+                       value="{{ form.national_code }}" placeholder="{% trans '۱۰ رقم' %}"
                        {% if profile_code %}readonly{% endif %}>
                 <span class="hint">
                     {% if profile_code %}
-                        کد ملی ثبت‌شده در حساب شماست و قابل تغییر نیست؛ حساب بانکی باید
-                        به همین کد ملی باشد.
+                        {% trans "کد ملی ثبت‌شده در حساب شماست و قابل تغییر نیست؛ حساب بانکی باید به همین کد ملی باشد." %}
                     {% else %}
-                        با این کد ملی از بانک استعلام می‌شود که حساب متعلق به خودتان باشد.
+                        {% trans "با این کد ملی از بانک استعلام می‌شود که حساب متعلق به خودتان باشد." %}
                     {% endif %}
                 </span>
             </div>
 
             <div class="verify-note">
                 <i class="fas fa-shield-halved"></i>
-                پس از ثبت، <strong>مالکیت حساب از بانک استعلام می‌شود</strong>.
-                اگر حساب به نام و کد ملی خودتان باشد، درخواست بلافاصله تأیید و وارد
-                انتظار پرداخت قرار می‌گیرد؛ در غیر این صورت برای اصلاح به شما برمی‌گردد.
+                {% trans "پس از ثبت،" %} <strong>{% trans "مالکیت حساب از بانک استعلام می‌شود" %}</strong>{% trans ". اگر حساب به نام و کد ملی خودتان باشد، درخواست بلافاصله تأیید و وارد انتظار پرداخت قرار می‌گیرد؛ در غیر این صورت برای اصلاح به شما برمی‌گردد." %}
             </div>
 
             <button type="submit" class="btn-submit"
-                    onclick="return confirm('{% if editing %}اصلاحیه ثبت شود؟ درخواست دوباره در صف بررسی قرار می‌گیرد.{% else %}درخواست برداشت ثبت شود؟ مبلغ تا زمان واریز از کیف پول شما کسر می‌ماند.{% endif %}');">
+                    onclick="return confirm('{% if editing %}{% trans "اصلاحیه ثبت شود؟ درخواست دوباره در صف بررسی قرار می‌گیرد." %}{% else %}{% trans "درخواست برداشت ثبت شود؟ مبلغ تا زمان واریز از کیف پول شما کسر می‌ماند." %}{% endif %}');">
                 <i class="fas fa-paper-plane"></i>
-                {% if editing %}ثبت اصلاحیه{% else %}ثبت درخواست برداشت{% endif %}
+                {% if editing %}{% trans "ثبت اصلاحیه" %}{% else %}{% trans "ثبت درخواست برداشت" %}{% endif %}
             </button>
         </form>
 
         {% if editing %}
         <div class="fix-box">
-            دیگر نمی‌خواهید برداشت کنید؟
+            {% trans "دیگر نمی‌خواهید برداشت کنید؟" %}
             <form method="post" action="{% url 'wallet:withdraw_cancel' editing.id %}" style="margin-top:8px;">
                 {% csrf_token %}
                 <button type="submit" class="btn-cancel"
-                        onclick="return confirm('درخواست لغو شود؟ مبلغ به کیف پول شما برمی‌گردد.');">
-                    <i class="fas fa-xmark"></i> لغو کامل درخواست
+                        onclick="return confirm('{% trans "درخواست لغو شود؟ مبلغ به کیف پول شما برمی‌گردد." %}');">
+                    <i class="fas fa-xmark"></i> {% trans "لغو کامل درخواست" %}
                 </button>
             </form>
         </div>

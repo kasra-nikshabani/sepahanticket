@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
+{% load i18n %}{% load persian_filters %}
 {% load static %}
 {% load currency_filters %}
-{% block title %}انتخاب سکو{% endblock %}
+{% block title %}{% trans "انتخاب سکو" %}{% endblock %}
 
 {% block extra_css %}
     <style>
@@ -353,7 +354,7 @@
                         {% endif %}
                         <span style="color:#1A1A2E; font-weight:700; font-size:0.9rem; display:block; margin-top:4px;">
                         {{ match.home_team }}
-                        <span style="color:#28a745; font-weight:600; font-size:0.7rem; display:block;">میزبان</span>
+                        <span style="color:#28a745; font-weight:600; font-size:0.7rem; display:block;">{% trans "میزبان" %}</span>
                     </span>
                     </div>
 
@@ -374,7 +375,7 @@
                         {% endif %}
                         <span style="color:#1A1A2E; font-weight:700; font-size:0.9rem; display:block; margin-top:4px;">
                         {{ match.away_team }}
-                        <span style="color:#dc3545; font-weight:600; font-size:0.7rem; display:block;">میهمان</span>
+                        <span style="color:#dc3545; font-weight:600; font-size:0.7rem; display:block;">{% trans "میهمان" %}</span>
                     </span>
                     </div>
                 </div>
@@ -394,7 +395,7 @@
                 <!-- راهنما -->
                 <p class="filter-info mb-0" style="font-size:0.95rem; color:#5f6368;">
                     <i class="fas fa-info-circle" style="color:#D4AF37;"></i>
-                    برای انتخاب سکو، روی دکمه‌ی <strong>"انتخاب سکو"</strong> کلیک کنید.
+                    {% trans "برای انتخاب سکو، روی دکمه‌ی" %} <strong>{% trans "\"انتخاب سکو\"" %}</strong> {% trans "کلیک کنید." %}
                 </p>
 
 
@@ -414,41 +415,41 @@
                 <button type="button" id="fswGround" onclick="setFloor('ground')"
                         class="fsw {% if selected_floor == 'ground' %}on{% endif %}">
                     <i class="fas fa-arrow-down"></i>
-                    <span><b>طبقه پایین</b><small>{{ ground_count }} جایگاه باز</small></span>
+                    <span><b>{% trans "طبقه پایین" %}</b><small>{% blocktrans trimmed %}{{ ground_count }} جایگاه باز{% endblocktrans %}</small></span>
                 </button>
                 <button type="button" id="fswSecond" onclick="setFloor('second')"
                         class="fsw {% if selected_floor == 'second' %}on{% endif %}">
                     <i class="fas fa-arrow-up"></i>
-                    <span><b>طبقه دوم</b><small>{{ second_count }} جایگاه باز</small></span>
+                    <span><b>{% trans "طبقه دوم" %}</b><small>{% blocktrans trimmed %}{{ second_count }} جایگاه باز{% endblocktrans %}</small></span>
                 </button>
             </div>
             <input type="hidden" name="floor" id="floorInput" value="{{ selected_floor }}">
 
             <div class="floor-empty" id="floorEmpty" hidden>
                 <i class="fas fa-circle-info"></i>
-                در این طبقه جایگاهی برای شما باز نیست — طبقه‌ی دیگر را ببینید.
+                {% trans "در این طبقه جایگاهی برای شما باز نیست — طبقه‌ی دیگر را ببینید." %}
             </div>
 
             <div class="map-bar">
                 <div class="map-hint">
                     <i class="fas fa-hand-pointer"></i>
-                    روی جایگاه موردنظرتان روی نقشه بزنید
+                    {% trans "روی جایگاه موردنظرتان روی نقشه بزنید" %}
                 </div>
                 <div class="map-tools">
-                    <button type="button" class="mtool" onclick="mapZoom(-1)" aria-label="بزرگ‌نمایی کمتر">−</button>
-                    <button type="button" class="mtool" onclick="mapZoom(0)" aria-label="اندازه اصلی">
+                    <button type="button" class="mtool" onclick="mapZoom(-1)" aria-label="{% trans 'بزرگ‌نمایی کمتر' %}">−</button>
+                    <button type="button" class="mtool" onclick="mapZoom(0)" aria-label="{% trans 'اندازه اصلی' %}">
                         <i class="fas fa-expand"></i>
                     </button>
-                    <button type="button" class="mtool" onclick="mapZoom(1)" aria-label="بزرگ‌نمایی بیشتر">+</button>
+                    <button type="button" class="mtool" onclick="mapZoom(1)" aria-label="{% trans 'بزرگ‌نمایی بیشتر' %}">+</button>
                     <button type="button" class="mtool wide" onclick="toggleList()" id="listBtn">
-                        <i class="fas fa-list"></i> فهرست
+                        <i class="fas fa-list"></i> {% trans "فهرست" %}
                     </button>
                 </div>
             </div>
 
             <div class="map-frame" id="mapFrame">
                 <svg id="stadiumSvg" viewBox="0 0 1000 680" xmlns="http://www.w3.org/2000/svg"
-                     role="img" aria-label="نقشه ورزشگاه">
+                     role="img" aria-label="{% trans 'نقشه ورزشگاه' %}">
                     <defs>
                         <radialGradient id="pitchGrad" cx="50%" cy="42%" r="72%">
                             <stop offset="0%" stop-color="#54b862"/>
@@ -490,10 +491,10 @@
                         <rect x="612" y="300" width="32" height="80"/>
                     </g>
 
-                    <text x="500" y="30" class="compass">شمال</text>
-                    <text x="500" y="662" class="compass">جنوب</text>
-                    <text x="26" y="346" class="compass" text-anchor="start">غرب</text>
-                    <text x="974" y="346" class="compass" text-anchor="end">شرق</text>
+                    <text x="500" y="30" class="compass">{% trans "شمال" %}</text>
+                    <text x="500" y="662" class="compass">{% trans "جنوب" %}</text>
+                    <text x="26" y="346" class="compass" text-anchor="start">{% trans "غرب" %}</text>
+                    <text x="974" y="346" class="compass" text-anchor="end">{% trans "شرق" %}</text>
 
                     <g class="floor-layer{% if selected_floor != "ground" %} off{% endif %}" data-floor="ground">
                     {% for p in floor_maps.ground %}
@@ -502,21 +503,21 @@
                        style="--px: {{ p.pop_x }}px; --py: {{ p.pop_y }}px; --d: {{ p.delay }}ms"
                        {% if p.selectable %}
                        tabindex="0" role="button"
-                       aria-label="{{ p.block.name }} — {{ p.zone_label }} — {{ p.free|default_if_none:0 }} صندلی خالی"
+                       aria-label="{{ p.block.name }} — {{ p.zone_label|t }} — {{ p.free|default_if_none:0 }} {% trans 'صندلی خالی' %}"
                        onclick="pickBlock({{ p.block.id }})"
                        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();pickBlock({{ p.block.id }});}"
                        onmouseenter="showTip(event, this)" onmousemove="moveTip(event)" onmouseleave="hideTip()"
                        onfocus="showTip(null, this)" onblur="hideTip()"
-                       data-name="{{ p.block.name }}" data-zone="{{ p.zone_label }}"
+                       data-name="{{ p.block.name }}" data-zone="{{ p.zone_label|t }}"
                        data-free="{{ p.free|default_if_none:0 }}" data-total="{{ p.total|default_if_none:0 }}"
                        data-occ="{{ p.occupancy|default_if_none:0 }}"
                        data-price="{{ p.price|floatformat:0 }}" data-fill="{{ p.fill }}"
-                       data-gender="{{ p.gender_label }}" data-gcolor="{{ p.gender_color }}"
+                       data-gender="{{ p.gender_label|t }}" data-gcolor="{{ p.gender_color }}"
                        data-gicon="{{ p.gender_icon }}"
                        {% else %}
                        onmouseenter="showTip(event, this)" onmousemove="moveTip(event)" onmouseleave="hideTip()"
-                       data-name="{{ p.block.name }}" data-zone="{{ p.zone_label }}" data-off="1"
-                       data-gender="{{ p.gender_label }}" data-gcolor="{{ p.gender_color }}"
+                       data-name="{{ p.block.name }}" data-zone="{{ p.zone_label|t }}" data-off="1"
+                       data-gender="{{ p.gender_label|t }}" data-gcolor="{{ p.gender_color }}"
                        data-gicon="{{ p.gender_icon }}"
                        {% endif %}>
                         <path d="{{ p.path }}" fill="{{ p.fill }}"/>
@@ -533,21 +534,21 @@
                        style="--px: {{ p.pop_x }}px; --py: {{ p.pop_y }}px; --d: {{ p.delay }}ms"
                        {% if p.selectable %}
                        tabindex="0" role="button"
-                       aria-label="{{ p.block.name }} — {{ p.zone_label }} — {{ p.free|default_if_none:0 }} صندلی خالی"
+                       aria-label="{{ p.block.name }} — {{ p.zone_label|t }} — {{ p.free|default_if_none:0 }} {% trans 'صندلی خالی' %}"
                        onclick="pickBlock({{ p.block.id }})"
                        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();pickBlock({{ p.block.id }});}"
                        onmouseenter="showTip(event, this)" onmousemove="moveTip(event)" onmouseleave="hideTip()"
                        onfocus="showTip(null, this)" onblur="hideTip()"
-                       data-name="{{ p.block.name }}" data-zone="{{ p.zone_label }}"
+                       data-name="{{ p.block.name }}" data-zone="{{ p.zone_label|t }}"
                        data-free="{{ p.free|default_if_none:0 }}" data-total="{{ p.total|default_if_none:0 }}"
                        data-occ="{{ p.occupancy|default_if_none:0 }}"
                        data-price="{{ p.price|floatformat:0 }}" data-fill="{{ p.fill }}"
-                       data-gender="{{ p.gender_label }}" data-gcolor="{{ p.gender_color }}"
+                       data-gender="{{ p.gender_label|t }}" data-gcolor="{{ p.gender_color }}"
                        data-gicon="{{ p.gender_icon }}"
                        {% else %}
                        onmouseenter="showTip(event, this)" onmousemove="moveTip(event)" onmouseleave="hideTip()"
-                       data-name="{{ p.block.name }}" data-zone="{{ p.zone_label }}" data-off="1"
-                       data-gender="{{ p.gender_label }}" data-gcolor="{{ p.gender_color }}"
+                       data-name="{{ p.block.name }}" data-zone="{{ p.zone_label|t }}" data-off="1"
+                       data-gender="{{ p.gender_label|t }}" data-gcolor="{{ p.gender_color }}"
                        data-gicon="{{ p.gender_icon }}"
                        {% endif %}>
                         <path d="{{ p.path }}" fill="{{ p.fill }}"/>
@@ -567,12 +568,12 @@
                     <div class="tip-gender" id="tGender"><i></i><span></span></div>
                     <div class="tip-zone" id="tZone"></div>
                     <div class="tip-rows" id="tRows">
-                        <div><span>صندلی خالی</span><b id="tFree"></b></div>
-                        <div><span>قیمت</span><b class="gold" id="tPrice"></b></div>
+                        <div><span>{% trans "صندلی خالی" %}</span><b id="tFree"></b></div>
+                        <div><span>{% trans "قیمت" %}</span><b class="gold" id="tPrice"></b></div>
                     </div>
                     <div class="tip-bar" id="tBarWrap"><i id="tBar"></i></div>
                     <div class="tip-occ" id="tOcc"></div>
-                    <div class="tip-off" id="tOff" hidden>در این مسابقه برای شما در دسترس نیست</div>
+                    <div class="tip-off" id="tOff" hidden>{% trans "در این مسابقه برای شما در دسترس نیست" %}</div>
                 </div>
             </div>
 
@@ -580,7 +581,7 @@
                 {% for key, z in legend.items %}
                 <span class="lg"><i style="background:{{ z.fill }}"></i>{{ z.label }}</span>
                 {% endfor %}
-                <span class="lg"><i style="background:#5b6270"></i>خارج از دسترس شما</span>
+                <span class="lg"><i style="background:#5b6270"></i>{% trans "خارج از دسترس شما" %}</span>
             </div>
         </div>
 
@@ -598,11 +599,11 @@
                     <span class="lname">{{ p.block.name }}</span>
                     <span class="lzone">
                         <b class="lgender" style="color:{{ p.gender_color }}">
-                            <i class="fas fa-{{ p.gender_icon }}"></i> {{ p.gender_label }}</b>
-                        · {{ p.zone_label }}
+                            <i class="fas fa-{{ p.gender_icon }}"></i> {{ p.gender_label|t }}</b>
+                        · {{ p.zone_label|t }}
                     </span>
-                    <span class="lseat">{{ p.free|default_if_none:0 }} صندلی</span>
-                    <span class="lprice">{{ p.price|floatformat:0 }} ریال</span>
+                    <span class="lseat">{% blocktrans with free=p.free|default_if_none:0 trimmed %}{{ free }} صندلی{% endblocktrans %}</span>
+                    <span class="lprice">{% blocktrans with price=p.price|floatformat:0 trimmed %}{{ price }} ریال{% endblocktrans %}</span>
                 </button>
                 {% endif %}{% endfor %}
             </div>
@@ -618,7 +619,7 @@
                     <div class="sheet-name" id="sName">—</div>
                     <div class="sheet-zone" id="sZone">—</div>
                 </div>
-                <button type="button" class="sheet-x" onclick="closeSheet()" aria-label="بستن">✕</button>
+                <button type="button" class="sheet-x" onclick="closeSheet()" aria-label="{% trans 'بستن' %}">✕</button>
             </div>
 
             {% comment %}
@@ -629,11 +630,11 @@
             <div class="big-banner" id="sGender"><i></i><span></span></div>
             <div class="big-banner zone" id="sZoneBig"><i class="fas fa-location-dot"></i><span></span></div>
             <div class="sheet-facts">
-                <div><span class="k">صندلی خالی</span><span class="v" id="sFree">—</span></div>
-                <div><span class="k">قیمت هر صندلی</span><span class="v gold" id="sPrice">—</span></div>
+                <div><span class="k">{% trans "صندلی خالی" %}</span><span class="v" id="sFree">—</span></div>
+                <div><span class="k">{% trans "قیمت هر صندلی" %}</span><span class="v gold" id="sPrice">—</span></div>
             </div>
             <button type="submit" class="sheet-go">
-                <i class="fas fa-arrow-left"></i> ادامه و انتخاب صندلی
+                <i class="fas fa-arrow-left"></i> {% trans "ادامه و انتخاب صندلی" %}
             </button>
         </div>
     </form>
@@ -643,7 +644,7 @@
     ============================================================ -->
     <div class="text-center mt-3">
         <a href="{% url 'matches:home' %}" class="btn-home">
-            <i class="fas fa-arrow-right"></i> بازگشت به صفحه اصلی
+            <i class="fas fa-arrow-right"></i> {% trans "بازگشت به صفحه اصلی" %}
         </a>
     </div>
     </div>
@@ -761,10 +762,10 @@
             var occ = parseInt(g.dataset.occ || '0', 10);
             var price = parseInt(g.dataset.price || '0', 10);
             document.getElementById('tFree').textContent =
-                free > 0 ? free.toLocaleString('fa-IR') + ' از ' + total.toLocaleString('fa-IR') : 'تکمیل';
-            document.getElementById('tPrice').textContent = price.toLocaleString('fa-IR') + ' ریال';
+                free > 0 ? free.toLocaleString('fa-IR') + ' {% trans "از" %} ' + total.toLocaleString('fa-IR') : '{% trans "تکمیل" %}';
+            document.getElementById('tPrice').textContent = price.toLocaleString('fa-IR') + ' {% trans "ریال" %}';
             document.getElementById('tBar').style.width = occ + '%';
-            document.getElementById('tOcc').textContent = occ.toLocaleString('fa-IR') + '٪ پر شده';
+            document.getElementById('tOcc').textContent = occ.toLocaleString('fa-IR') + '{% trans "٪ پر شده" %}';
         }
 
         tip.hidden = false;
@@ -810,13 +811,13 @@
         gb.querySelector('i').className = 'fas fa-' + (g.dataset.gicon || 'circle-question');
         gb.querySelector('span').textContent = g.dataset.gender || '';
         document.getElementById('sZoneBig').querySelector('span').textContent =
-            'جایگاه ' + (g.dataset.zone || '');
+            '{% trans "جایگاه" %} ' + (g.dataset.zone || '');
         document.getElementById('sDot').style.background = g.dataset.fill || '#D4AF37';
         var free = parseInt(g.dataset.free || '0', 10);
         document.getElementById('sFree').textContent =
-            free > 0 ? free.toLocaleString('fa-IR') + ' از ' + parseInt(g.dataset.total || '0', 10).toLocaleString('fa-IR') : 'تکمیل';
+            free > 0 ? free.toLocaleString('fa-IR') + ' {% trans "از" %} ' + parseInt(g.dataset.total || '0', 10).toLocaleString('fa-IR') : '{% trans "تکمیل" %}';
         var price = parseInt(g.dataset.price || '0', 10);
-        document.getElementById('sPrice').textContent = price.toLocaleString('fa-IR') + ' ریال';
+        document.getElementById('sPrice').textContent = price.toLocaleString('fa-IR') + ' {% trans "ریال" %}';
 
         var sheet = document.getElementById('sheet');
         fitSheetAboveNav();
@@ -873,8 +874,8 @@
         var lv = document.getElementById('listView');
         lv.hidden = !lv.hidden;
         document.getElementById('listBtn').innerHTML = lv.hidden
-            ? '<i class="fas fa-list"></i> فهرست'
-            : '<i class="fas fa-map"></i> نقشه';
+            ? '<i class="fas fa-list"></i> {% trans "فهرست" %}'
+            : '<i class="fas fa-map"></i> {% trans "نقشه" %}';
     };
 
     (function initFloor() {
@@ -887,7 +888,7 @@
     document.getElementById('blockForm').addEventListener('submit', function (e) {
         if (!document.getElementById('pickedBlock').value) {
             e.preventDefault();
-            alert('لطفاً ابتدا یک جایگاه را از روی نقشه انتخاب کنید.');
+            alert('{% trans "لطفاً ابتدا یک جایگاه را از روی نقشه انتخاب کنید." %}');
         }
     });
 })();

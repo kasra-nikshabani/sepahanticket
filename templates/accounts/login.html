@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
 
+{% load i18n %}
 {% load static %}
 {% load currency_filters %}
-{% block title %}ورود{% endblock %}
+{% block title %}{% trans "ورود" %}{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
@@ -10,31 +11,31 @@
         <div class="col-md-5">
             <div class="card shadow">
                 <div class="card-header bg-success text-white text-center">
-                    <h3><i class="fas fa-sign-in-alt"></i> ورود</h3>
+                    <h3><i class="fas fa-sign-in-alt"></i> {% trans "ورود" %}</h3>
                 </div>
                 <div class="card-body">
                     <form method="post">
                         {% csrf_token %}
-                        <p style="text-align: center">ورود</p>
+                        <p style="text-align: center">{% trans "ورود" %}</p>
                         <div class="mb-3">
-                            <label class="form-label">نام کاربری</label>
-                            <input type="text" name="username" class="form-control" placeholder="نام کاربری" required>
+                            <label class="form-label">{% trans "نام کاربری" %}</label>
+                            <input type="text" name="username" class="form-control" placeholder="{% trans 'نام کاربری' %}" required>
                         </div>
                         
                         <div class="mb-3">
-                            <label class="form-label">رمز عبور</label>
-                            <input type="password" name="password" class="form-control" placeholder="رمز عبور" required>
+                            <label class="form-label">{% trans "رمز عبور" %}</label>
+                            <input type="password" name="password" class="form-control" placeholder="{% trans 'رمز عبور' %}" required>
                         </div>
                         
                         <button type="submit" class="btn btn-success w-100">
-                            <i class="fas fa-sign-in-alt"></i> ورود
+                            <i class="fas fa-sign-in-alt"></i> {% trans "ورود" %}
                         </button>
                     </form>
                     
                     <hr>
                     <p class="text-center">
-                        ثبت‌نام نکرده‌اید؟
-                        <a href="{% url 'accounts:register' %}">ثبت‌نام کنید</a>
+                        {% trans "ثبت‌نام نکرده‌اید؟" %}
+                        <a href="{% url 'accounts:register' %}">{% trans "ثبت‌نام کنید" %}</a>
                     </p>
                 </div>
             </div>

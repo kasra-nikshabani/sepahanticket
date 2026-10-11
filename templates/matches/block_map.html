@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load currency_filters %}
 {% load static %}
 
-{% block title %}نقشه سکو {{ selected_block.name }}{% endblock %}
+{% block title %}{% blocktrans with name=selected_block.name trimmed %}نقشه سکو {{ name }}{% endblocktrans %}{% endblock %}
 
 {% block extra_css %}
     <style>
@@ -622,13 +623,13 @@
             </div>
             <div class="header-badges">
                 <span class="block-name"><i class="fas fa-layer-group"></i> {{ selected_block.name }}</span>
-                <span class="price-badge"><i class="fas fa-tag"></i> {{ block_price|rial_display }} ریال</span>
+                <span class="price-badge"><i class="fas fa-tag"></i> {% blocktrans with block_price=block_price|rial_display trimmed %}{{ block_price }} ریال{% endblocktrans %}</span>
             </div>
             <div class="capacity-wrap">
                 <div class="capacity-bar"><div class="capacity-fill" style="width: {{ seat_occupancy }}%;"></div></div>
                 <div class="capacity-text">
-                    <span><b>{{ seat_available|rial_display }}</b> صندلی خالی از {{ seat_total|rial_display }}</span>
-                    <span>{{ seat_occupancy }}٪ پر شده</span>
+                    <span><b>{{ seat_available|rial_display }}</b> {% blocktrans with seat_total=seat_total|rial_display trimmed %}صندلی خالی از {{ seat_total }}{% endblocktrans %}</span>
+                    <span>{% blocktrans trimmed %}{{ seat_occupancy }}٪ پر شده{% endblocktrans %}</span>
                 </div>
             </div>
         </div>
@@ -636,7 +637,7 @@
         <!-- دکمه تغییر حالت -->
         <div class="view-toggle">
             <button class="btn-toggle" id="toggleViewBtn">
-                <i class="fas fa-expand"></i> نمایش همه صندلی‌ها
+                <i class="fas fa-expand"></i> {% trans "نمایش همه صندلی‌ها" %}
             </button>
         </div>
 
@@ -654,7 +655,7 @@
                                  data-row="{{ row_data.row_number }}"
                                  data-number="{{ seat.number }}"
                                  data-available="{{ seat.is_available|yesno:"true,false" }}"
-                                 title="ردیف {{ row_data.row_number }} — صندلی {{ seat.number }}"
+                                 title="{% blocktrans with row=row_data.row_number number=seat.number trimmed %}ردیف {{ row }} — صندلی {{ number }}{% endblocktrans %}"
                                  {% if not seat.id %}style="display:none;"{% endif %}>
                                 {{ seat.number }}
                             </div>
@@ -662,14 +663,14 @@
                     </div>
                 </div>
             {% empty %}
-                <div class="alert alert-warning text-center">هیچ صندلی‌ای برای این سکو تعریف نشده است.</div>
+                <div class="alert alert-warning text-center">{% trans "هیچ صندلی‌ای برای این سکو تعریف نشده است." %}</div>
             {% endfor %}
         </div>
 
         <!-- زمین چمن -->
         <div class="pitch-area">
             <div class="pitch-line"></div>
-            <span>⚽ ورزشگاه نقش جهان ⚽</span>
+            <span>{% trans "⚽ ورزشگاه نقش جهان ⚽" %}</span>
             <div class="pitch-line"></div>
         </div>
 
@@ -677,19 +678,19 @@
         <div class="legend">
             <div class="legend-item">
                 <div class="legend-box available"></div>
-                خالی <b>({{ seat_available|rial_display }})</b>
+                {% trans "خالی" %} <b>({{ seat_available|rial_display }})</b>
             </div>
             <div class="legend-item">
                 <div class="legend-box unavailable"></div>
-                فروخته شده
+                {% trans "فروخته شده" %}
             </div>
             <div class="legend-item">
                 <div class="legend-box selected"></div>
-                انتخاب شما
+                {% trans "انتخاب شما" %}
             </div>
             <div class="legend-item">
                 <div class="legend-box reserved"></div>
-                در حال رزرو
+                {% trans "در حال رزرو" %}
             </div>
         </div>
 
@@ -697,23 +698,23 @@
         <div class="selection-bar">
           <div class="selection-bar-inner">
             <a href="{% url 'matches:select_floor' match.id %}" class="btn-back">
-                <i class="fas fa-arrow-right"></i> بازگشت
+                <i class="fas fa-arrow-right"></i> {% trans "بازگشت" %}
             </a>
             <!-- روی موبایل این بخش تا وقتی صندلی‌ای انتخاب نشده مخفی است -->
             <div class="selection-cta" id="selectionCta">
                 <div class="selection-info">
                     <div class="sel-line">
-                        <i class="fas fa-ticket"></i> انتخاب‌شده:
-                        <strong id="selectedCount">0</strong> از ۵
+                        <i class="fas fa-ticket"></i> {% trans "انتخاب‌شده:" %}
+                        <strong id="selectedCount">0</strong> {% trans "از ۵" %}
                         <span class="sel-total" id="selTotalWrap" hidden>
-                            — جمع: <b id="selTotal">0</b> ریال
+                            {% trans "— جمع:" %} <b id="selTotal">0</b> {% trans "ریال" %}
                         </span>
                     </div>
                     <div class="sel-chips" id="selChips"></div>
                     <div class="orphan-warn-line" id="orphanWarn" hidden></div>
                 </div>
                 <button class="btn-continue" id="continueBtn" disabled>
-                    <i class="fas fa-credit-card"></i> ادامه به اطلاعات خریدار
+                    <i class="fas fa-credit-card"></i> {% trans "ادامه به اطلاعات خریدار" %}
                 </button>
             </div>
           </div>
@@ -746,11 +747,11 @@
             const seatGrids = document.querySelectorAll('.seat-grid');
 
             if (!toggleBtn) {
-                console.error('❌ دکمه toggleViewBtn پیدا نشد!');
+                console.error('{% trans "❌ دکمه toggleViewBtn پیدا نشد!" %}');
                 return;
             }
             if (!seatGrids.length) {
-                console.warn('⚠️ هیچ المنت .seat-grid یافت نشد!');
+                console.warn('{% trans "⚠️ هیچ المنت .seat-grid یافت نشد!" %}');
             }
 
             let wrapMode = true; // نمایش همه صندلی‌ها به‌صورت پیش‌فرض
@@ -760,8 +761,8 @@
                     grid.classList.toggle('wrap-mode', wrapMode);
                 });
                 toggleBtn.innerHTML = wrapMode ?
-                    '<i class="fas fa-compress"></i> نمایش با اسکرول' :
-                    '<i class="fas fa-expand"></i> نمایش همه صندلی‌ها';
+                    '<i class="fas fa-compress"></i> {% trans "نمایش با اسکرول" %}' :
+                    '<i class="fas fa-expand"></i> {% trans "نمایش همه صندلی‌ها" %}';
             }
 
             updateView();
@@ -811,7 +812,7 @@
             // سایت (رقم لاتین + جداکننده‌ی فارسی ٬) تا با بَج قیمت بالای
             // همین صفحه و بقیه‌ی سایت یکدست بماند.
             function faNum(n) {
-                return Number(n).toLocaleString('fa-IR').replace(/,/g, '٬');
+                return Number(n).toLocaleString('{% if LANGUAGE_CODE == 'fa' %}fa-IR{% else %}en-US{% endif %}').replace(/,/g, '٬');
             }
             function moneyFmt(n) {
                 return Number(n).toLocaleString('en-US').replace(/,/g, '٬');
@@ -827,7 +828,7 @@
                     if (!el) return;
                     const chip = document.createElement('span');
                     chip.className = 'sel-chip';
-                    chip.innerHTML = `ردیف ${faNum(el.dataset.row)} · صندلی ${faNum(el.dataset.number)} <span class="x">×</span>`;
+                    chip.innerHTML = '{% trans "ردیف" %} ' + faNum(el.dataset.row) + ' · {% trans "صندلی" %} ' + faNum(el.dataset.number) + ' <span class="x">×</span>';
                     chip.querySelector('.x').addEventListener('click', () => {
                         el.classList.remove('selected');
                         el.classList.add('available');
@@ -886,12 +887,12 @@
 
                 if (offenders.length) {
                     const spots = offenders.slice(0, 3)
-                        .map(el => `ردیف ${faNum(el.dataset.row)} صندلی ${faNum(el.dataset.number)}`)
+                        .map(el => '{% trans "ردیف" %} ' + faNum(el.dataset.row) + ' {% trans "صندلی" %} ' + faNum(el.dataset.number))
                         .join('، ');
-                    const more = offenders.length > 3 ? ` و ${faNum(offenders.length - 3)} مورد دیگر` : '';
+                    const more = offenders.length > 3 ? ' {% trans "و" %} ' + faNum(offenders.length - 3) + ' {% trans "مورد دیگر" %}' : '';
                     orphanWarnEl.innerHTML =
-                        `<i class="fas fa-triangle-exclamation"></i> این انتخاب یک صندلی تکی جا می‌گذارد ` +
-                        `(${spots}${more}). آن را هم انتخاب کنید یا صندلی‌هایتان را جابه‌جا کنید.`;
+                        '<i class="fas fa-triangle-exclamation"></i> {% trans "این انتخاب یک صندلی تکی جا می‌گذارد" %} ' +
+                        '(' + spots + more + '). {% trans "آن را هم انتخاب کنید یا صندلی‌هایتان را جابه‌جا کنید." %}';
                     orphanWarnEl.hidden = false;
                 } else {
                     orphanWarnEl.hidden = true;
@@ -924,7 +925,7 @@
                     }
 
                     if (selectedSeats.size >= 5) {
-                        alert('حداکثر ۵ صندلی می‌توانید انتخاب کنید.');
+                        alert('{% trans "حداکثر ۵ صندلی می‌توانید انتخاب کنید." %}');
                         return;
                     }
 
@@ -1000,7 +1001,7 @@
                                 });
                             }
                         })
-                        .catch(error => console.error('خطا در بروزرسانی صندلی‌ها:', error));
+                        .catch(error => console.error('{% trans "خطا در بروزرسانی صندلی‌ها:" %}', error));
                 }
 
                 // ===== نرخ بروزرسانی =====

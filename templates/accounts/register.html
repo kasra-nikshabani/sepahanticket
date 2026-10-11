@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 {% load currency_filters %}
 
-{% block title %}ثبت‌نام{% endblock %}
+{% block title %}{% trans "ثبت‌نام" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -280,10 +281,10 @@
         <!-- ===== هدر ===== -->
         <div class="register-header">
             <div class="register-logo">
-                <img src="{% static 'img/sepahan-logo.png' %}" alt="لوگو سپاهان" onerror="this.style.display='none'">
+                <img src="{% static 'img/sepahan-logo.png' %}" alt="{% trans 'لوگو سپاهان' %}" onerror="this.style.display='none'">
             </div>
-            <h2>ثبت‌نام</h2>
-            <p class="subtitle">ایجاد حساب کاربری جدید</p>
+            <h2>{% trans "ثبت‌نام" %}</h2>
+            <p class="subtitle">{% trans "ایجاد حساب کاربری جدید" %}</p>
         </div>
 
         <!-- ===== بدنه ===== -->
@@ -293,11 +294,11 @@
 
                 <!-- نام و نام خانوادگی -->
                 <div class="form-group">
-                    <label><i class="fas fa-user label-icon"></i> نام و نام خانوادگی</label>
+                    <label><i class="fas fa-user label-icon"></i> {% trans "نام و نام خانوادگی" %}</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-id-card"></i></span>
                         <input type="text" name="full_name" class="form-control"
-                               placeholder="نام و نام خانوادگی خود را وارد کنید" required>
+                               placeholder="{% trans 'نام و نام خانوادگی خود را وارد کنید' %}" required>
                     </div>
                     {% if form.full_name.errors %}
                         <div class="error-message">
@@ -309,11 +310,11 @@
 
                 <!-- نام کاربری -->
                 <div class="form-group">
-                    <label><i class="fas fa-user-tag label-icon"></i> نام کاربری</label>
+                    <label><i class="fas fa-user-tag label-icon"></i> {% trans "نام کاربری" %}</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-user"></i></span>
                         <input type="text" name="username" class="form-control"
-                               placeholder="نام کاربری خود را وارد کنید" required>
+                               placeholder="{% trans 'نام کاربری خود را وارد کنید' %}" required>
                     </div>
                     {% if form.username.errors %}
                         <div class="error-message">
@@ -325,14 +326,14 @@
 
                 <!-- کد ملی -->
                 <div class="form-group">
-                    <label><i class="fas fa-id-badge label-icon"></i> کد ملی</label>
+                    <label><i class="fas fa-id-badge label-icon"></i> {% trans "کد ملی" %}</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-fingerprint"></i></span>
                         <input type="text" name="national_code" class="form-control"
-                               placeholder="کد ملی (۱۰ رقم)" maxlength="10"
+                               placeholder="{% trans 'کد ملی (۱۰ رقم)' %}" maxlength="10"
                                pattern="\d{10}" inputmode="numeric" required>
                     </div>
-                    <small class="form-text"><i class="fas fa-info-circle"></i> کد ملی باید ۱۰ رقم باشد.</small>
+                    <small class="form-text"><i class="fas fa-info-circle"></i> {% trans "کد ملی باید ۱۰ رقم باشد." %}</small>
                     {% if form.national_code.errors %}
                         <div class="error-message">
                             <i class="fas fa-exclamation-circle"></i>
@@ -343,14 +344,14 @@
 
                 <!-- شماره موبایل -->
                 <div class="form-group">
-                    <label><i class="fas fa-mobile-alt label-icon"></i> شماره موبایل</label>
+                    <label><i class="fas fa-mobile-alt label-icon"></i> {% trans "شماره موبایل" %}</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-phone"></i></span>
                         <input type="tel" name="phone_number" class="form-control"
-                               placeholder="۰۹۱۲۳۴۵۶۷۸۹" maxlength="11"
+                               placeholder="{% trans '۰۹۱۲۳۴۵۶۷۸۹' %}" maxlength="11"
                                pattern="09[0-9]{9}" inputmode="numeric" required>
                     </div>
-                    <small class="form-text"><i class="fas fa-info-circle"></i> شماره موبایل را به صورت ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید.</small>
+                    <small class="form-text"><i class="fas fa-info-circle"></i> {% trans "شماره موبایل را به صورت ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید." %}</small>
                     {% if form.phone_number.errors %}
                         <div class="error-message">
                             <i class="fas fa-exclamation-circle"></i>
@@ -361,13 +362,13 @@
 
                 <!-- رمز عبور -->
                 <div class="form-group">
-                    <label><i class="fas fa-key label-icon"></i> رمز عبور</label>
+                    <label><i class="fas fa-key label-icon"></i> {% trans "رمز عبور" %}</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-lock"></i></span>
                         <input type="password" name="password1" class="form-control"
-                               placeholder="رمز عبور خود را وارد کنید" required>
+                               placeholder="{% trans 'رمز عبور خود را وارد کنید' %}" required>
                     </div>
-                    <small class="form-text"><i class="fas fa-info-circle"></i> حداقل ۸ کاراکتر و شامل حروف و اعداد</small>
+                    <small class="form-text"><i class="fas fa-info-circle"></i> {% trans "حداقل ۸ کاراکتر و شامل حروف و اعداد" %}</small>
                     {% if form.password1.errors %}
                         <div class="error-message">
                             <i class="fas fa-exclamation-circle"></i>
@@ -378,11 +379,11 @@
 
                 <!-- تکرار رمز عبور -->
                 <div class="form-group">
-                    <label><i class="fas fa-check-circle label-icon"></i> تکرار رمز عبور</label>
+                    <label><i class="fas fa-check-circle label-icon"></i> {% trans "تکرار رمز عبور" %}</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-shield-alt"></i></span>
                         <input type="password" name="password2" class="form-control"
-                               placeholder="رمز عبور را مجدداً وارد کنید" required>
+                               placeholder="{% trans 'رمز عبور را مجدداً وارد کنید' %}" required>
                     </div>
                     {% if form.password2.errors %}
                         <div class="error-message">
@@ -393,21 +394,21 @@
                 </div>
 
                 <button type="submit" class="btn-register">
-                    <i class="fas fa-check-circle"></i> ثبت‌نام
+                    <i class="fas fa-check-circle"></i> {% trans "ثبت‌نام" %}
                 </button>
             </form>
 
             <!-- ===== فوتر ===== -->
             <div class="register-footer">
                 <p>
-                    قبلاً ثبت‌نام کرده‌اید؟
+                    {% trans "قبلاً ثبت‌نام کرده‌اید؟" %}
                     <a href="{% url 'accounts:login' %}">
-                        <i class="fas fa-arrow-left"></i> وارد شوید
+                        <i class="fas fa-arrow-left"></i> {% trans "وارد شوید" %}
                     </a>
                 </p>
                 <p class="text-muted small mt-1">
                     <i class="fas fa-info-circle"></i>
-                    این فرم مخصوص ثبت‌نام مدیران و کاربران ویژه است.
+                    {% trans "این فرم مخصوص ثبت‌نام مدیران و کاربران ویژه است." %}
                 </p>
             </div>
         </div>
@@ -474,7 +475,7 @@
             if (hasError) {
                 e.preventDefault();
                 // نمایش پیام هشدار
-                alert('⚠️ لطفاً اطلاعات را به‌درستی وارد کنید.\n- کد ملی ۱۰ رقم\n- شماره موبایل ۰۹۱۲۳۴۵۶۷۸۹\n- رمز عبور حداقل ۸ کاراکتر\n- تطابق رمز عبور');
+                alert('⚠️ {% trans "لطفاً اطلاعات را به‌درستی وارد کنید." %}\n- {% trans "کد ملی ۱۰ رقم" %}\n- {% trans "شماره موبایل ۰۹۱۲۳۴۵۶۷۸۹" %}\n- {% trans "رمز عبور حداقل ۸ کاراکتر" %}\n- {% trans "تطابق رمز عبور" %}');
             }
         });
 

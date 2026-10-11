@@ -13,6 +13,7 @@ from matches.models import Match
 from tickets.models import Ticket, is_free_for_age
 from wallet.models import (is_wallet_enabled, is_wallet_charge_enabled,
                            WALLET_DISABLED_MESSAGE, WALLET_CHARGE_DISABLED_MESSAGE)
+from django.utils.translation import gettext as _t
 logger = logging.getLogger(__name__)
 
 
@@ -51,17 +52,17 @@ def payment_request(request):
         return redirect('matches:home')
 
     if not request.user.is_authenticated:
-        messages.error(request, 'برای پرداخت باید وارد حساب کاربری خود شوید.')
+        messages.error(request, _t("برای پرداخت باید وارد حساب کاربری خود شوید."))
         return redirect('accounts:choose_login')
 
     try:
         gateway_amount = int(request.POST.get('amount'))
     except (TypeError, ValueError):
-        messages.error(request, "مبلغ نامعتبر است")
+        messages.error(request, _t("مبلغ نامعتبر است"))
         return redirect('wallet:dashboard')
 
     if gateway_amount <= 0:
-        messages.error(request, "مبلغ باید بزرگتر از صفر باشد")
+        messages.error(request, _t("مبلغ باید بزرگتر از صفر باشد"))
         return redirect('wallet:dashboard')
 
     match_id = request.POST.get('match_id')
@@ -78,7 +79,7 @@ def payment_request(request):
         try:
             match_obj = Match.objects.get(id=match_id)
         except Match.DoesNotExist:
-            messages.error(request, "مسابقه یافت نشد.")
+            messages.error(request, _t("مسابقه یافت نشد."))
             return redirect('matches:home')
 
         if request.user.user_type != 'vip':
@@ -88,7 +89,7 @@ def payment_request(request):
                     # ۱. جلوگیری از تکرار کد ملی در همین فرم
                     if value in submitted_codes:
                         messages.error(request,
-                                       f"کد ملی {value} برای دو صندلی مختلف وارد شده است. هر فرد فقط یک بلیط می‌تواند داشته باشد.")
+                                       _t("کد ملی %(value)s برای دو صندلی مختلف وارد شده است. هر فرد فقط یک بلیط می‌تواند داشته باشد.") % {"value": value})
                         return redirect('tickets:ticket_info', match_id=match_id)
                     submitted_codes.append(value)
 
@@ -101,7 +102,7 @@ def payment_request(request):
                 ).exists()
 
                 if already_bought:
-                    messages.error(request, "یکی از کد ملی‌های وارد شده قبلاً برای این مسابقه بلیط خریداری کرده است.")
+                    messages.error(request, _t("یکی از کد ملی‌های وارد شده قبلاً برای این مسابقه بلیط خریداری کرده است."))
                     return redirect('tickets:ticket_info', match_id=match_id)
         # ===== پایان بررسی محدودیت =====
 
@@ -211,7 +212,7 @@ def payment_request(request):
         if not track_id:
             payment.status = 'failed'
             payment.save(update_fields=['status', 'updated_at'])
-            messages.error(request, "خطا در شروع پرداخت")
+            messages.error(request, _t("خطا در شروع پرداخت"))
             return redirect('wallet:dashboard')
 
         payment.track_id = track_id
@@ -224,7 +225,7 @@ def payment_request(request):
         logger.error(f"خطا در درخواست پرداخت: {e}")
         payment.status = 'failed'
         payment.save(update_fields=['status', 'updated_at'])
-        messages.error(request, "خطا در ارتباط با درگاه پرداخت")
+        messages.error(request, _t("خطا در ارتباط با درگاه پرداخت"))
         return redirect('wallet:dashboard')
 def payment_verify(request):
     """
@@ -233,13 +234,13 @@ def payment_verify(request):
     track_id = request.GET.get('trackId') or request.GET.get('track_id')
 
     if not track_id:
-        messages.error(request, "اطلاعات پرداخت یافت نشد")
+        messages.error(request, _t("اطلاعات پرداخت یافت نشد"))
         return redirect('matches:home')
 
     try:
         payment = Payment.objects.select_related('user').get(track_id=track_id)
     except Payment.DoesNotExist:
-        messages.error(request, "تراکنش یافت نشد")
+        messages.error(request, _t("تراکنش یافت نشد"))
         return redirect('matches:home')
 
     # دوباره اعتبارسنجی می‌شود، نه فقط موقع ذخیره -- رکوردهای قدیمیِ Payment
@@ -247,11 +248,11 @@ def payment_verify(request):
     next_url = _safe_next_url(payment.next_url, reverse('matches:home'))
 
     if payment.status == 'success':
-        messages.info(request, "این تراکنش قبلاً با موفقیت پردازش شده است.")
+        messages.info(request, _t("این تراکنش قبلاً با موفقیت پردازش شده است."))
         return redirect(next_url)
 
     if payment.status == 'failed':
-        messages.error(request, "این تراکنش قبلاً ناموفق اعلام شده است.")
+        messages.error(request, _t("این تراکنش قبلاً ناموفق اعلام شده است."))
         return redirect(next_url)
 
     client = ZibalClient(merchant_id=settings.ZIBAL_MERCHANT_ID, sandbox=settings.ZIBAL_SANDBOX)
@@ -261,7 +262,7 @@ def payment_verify(request):
         result_code = result.get('result')
     except Exception as e:
         logger.error(f"خطا در تایید پرداخت: {e}")
-        messages.error(request, "❌ خطا در تایید پرداخت. لطفاً با پشتیبانی تماس بگیرید.")
+        messages.error(request, _t("❌ خطا در تایید پرداخت. لطفاً با پشتیبانی تماس بگیرید."))
         return redirect(next_url)
 
     if result_code not in [100, 101]:
@@ -281,7 +282,7 @@ def payment_verify(request):
                 if payment.purpose == 'ticket_purchase':
                     _release_payment_seats(payment)
 
-        messages.error(request, f"❌ پرداخت ناموفق! {error_msg}")
+        messages.error(request, _t("❌ پرداخت ناموفق! %(error_msg)s") % {"error_msg": error_msg})
         return redirect(next_url)
 
     amount = result.get('amount', payment.gateway_amount)
@@ -289,7 +290,7 @@ def payment_verify(request):
         payment = Payment.objects.select_for_update().get(pk=payment.pk)
 
         if payment.status != 'pending':
-            messages.info(request, "این تراکنش قبلاً پردازش شده است.")
+            messages.info(request, _t("این تراکنش قبلاً پردازش شده است."))
             return redirect(next_url)
 
         # ===== اول «پول گرفته شد» را ثبت کن، بعد سراغ بلیط برو =====
@@ -317,12 +318,12 @@ def payment_verify(request):
                     "money was already captured at the gateway.", payment.id, track_id,
                 )
             wallet.add_balance(amount=amount, description=f'شارژ کیف پول از طریق زیبال - تراکنش {track_id}', reference_id=track_id)
-            messages.success(request, f"✅ کیف پول شما با موفقیت به مبلغ {amount:,} ریال شارژ شد.")
+            messages.success(request, _t("✅ کیف پول شما با موفقیت به مبلغ %(amount)s ریال شارژ شد.") % {"amount": format(amount, ",")})
 
         else:
             success, error_msg = _finalize_ticket_purchase(payment, amount)
             if success:
-                messages.success(request, "✅ پرداخت با موفقیت انجام شد و بلیط‌های شما صادر شدند.")
+                messages.success(request, _t("✅ پرداخت با موفقیت انجام شد و بلیط‌های شما صادر شدند."))
             else:
                 # صندلی‌ها را آزاد می‌کنیم (چه به‌خاطر عدم تطابق مبلغ، چه به هر
                 # دلیل دیگری) و تراکنش را ناموفق علامت می‌زنیم -- قبلاً در این
@@ -359,15 +360,12 @@ def payment_verify(request):
                 if refunded:
                     messages.error(
                         request,
-                        f"❌ در صدور بلیط مشکلی پیش آمد: {error_msg} "
-                        f"مبلغ {amount:,} ریال به کیف پول شما بازگردانده شد."
+                        _t("❌ در صدور بلیط مشکلی پیش آمد: %(error_msg)s مبلغ %(amount)s ریال به کیف پول شما بازگردانده شد.") % {"error_msg": error_msg, "amount": format(amount, ",")}
                     )
                 else:
                     messages.error(
                         request,
-                        f"❌ در صدور بلیط مشکلی پیش آمد: {error_msg} "
-                        f"اگر مبلغی از حساب شما کسر شده، با پشتیبانی تماس بگیرید و "
-                        f"شماره تراکنش {track_id} را اعلام کنید."
+                        _t("❌ در صدور بلیط مشکلی پیش آمد: %(error_msg)s اگر مبلغی از حساب شما کسر شده، با پشتیبانی تماس بگیرید و شماره تراکنش %(track_id)s را اعلام کنید.") % {"error_msg": error_msg, "track_id": track_id}
                     )
                 return redirect(next_url)
 

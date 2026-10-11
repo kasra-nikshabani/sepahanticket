@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load static %}
 {% load currency_filters %}
 
@@ -6,27 +7,28 @@
         <div class="container">
             <!-- لوگو -->
             <a class="navbar-brand" href="{% url 'matches:home' %}">
-                <img src="{% static 'img/sepahan-logo.png' %}" alt="لوگوی سپاهان" height="70"
+                <img src="{% static 'img/sepahan-logo.png' %}" alt="{% trans 'لوگوی سپاهان' %}" height="70"
                      onerror="this.style.display='none'">
                 <div class="brand-text-wrapper">
-                    <span class="brand-text">باشگاه فرهنگی ورزشی فولاد مبارکه سپاهان</span>
+                    <span class="brand-text">{% trans "باشگاه فرهنگی ورزشی فولاد مبارکه سپاهان" %}</span>
                 </div>
             </a>
 
             <!-- ===== منوی دسکتاپ فقط ===== -->
             <div class="d-none d-lg-flex align-items-center">
                 <ul class="navbar-nav ms-auto gap-2 align-items-center">
+                    <li class="nav-item">{% include 'includes/lang_switch.html' with mode='nav' %}</li>
                     <!-- خانه -->
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'matches:home' %}">
-                            <i class="fas fa-home"></i> خانه
+                            <i class="fas fa-home"></i> {% trans "خانه" %}
                         </a>
                     </li>
 
                     <!-- راهنما -->
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'tutorial' %}">
-                            <i class="fas fa-question-circle"></i> راهنما
+                            <i class="fas fa-question-circle"></i> {% trans "راهنما" %}
                         </a>
                     </li>
 
@@ -35,53 +37,53 @@
                         {% if user.user_type == 'normal' %}
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'tickets:user_tickets' %}">
-                                    <i class="fas fa-ticket-alt"></i> بلیط‌های من
+                                    <i class="fas fa-ticket-alt"></i> {% trans "بلیط‌های من" %}
                                 </a>
                             </li>
                             {% if wallet_enabled %}
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'wallet:dashboard' %}">
-                                    <i class="fas fa-wallet"></i> کیف پول
+                                    <i class="fas fa-wallet"></i> {% trans "کیف پول" %}
                                 </a>
                             </li>
                             {% endif %}
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'accounts:profile' %}">
-                                    <i class="fas fa-user"></i> حساب کاربری
+                                    <i class="fas fa-user"></i> {% trans "حساب کاربری" %}
                                 </a>
                             </li>
 
                         {% elif user.user_type == 'vip' %}
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'tickets:vip_dashboard' %}">
-                                    <i class="fas fa-star"></i> داشبورد
+                                    <i class="fas fa-star"></i> {% trans "داشبورد" %}
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'tickets:vip_tickets' %}">
-                                    <i class="fas fa-ticket-alt"></i> بلیط‌های من
+                                    <i class="fas fa-ticket-alt"></i> {% trans "بلیط‌های من" %}
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'accounts:profile' %}">
-                                    <i class="fas fa-user"></i> حساب کاربری
+                                    <i class="fas fa-user"></i> {% trans "حساب کاربری" %}
                                 </a>
                             </li>
 
                         {% elif user.user_type == 'admin' %}
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'admin:index' %}">
-                                    <i class="fas fa-cogs"></i> مدیریت
+                                    <i class="fas fa-cogs"></i> {% trans "مدیریت" %}
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'tickets:sales_report' %}">
-                                    <i class="fas fa-chart-bar"></i> گزارشات
+                                    <i class="fas fa-chart-bar"></i> {% trans "گزارشات" %}
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'accounts:profile' %}">
-                                    <i class="fas fa-user"></i> حساب کاربری
+                                    <i class="fas fa-user"></i> {% trans "حساب کاربری" %}
                                 </a>
                             </li>
                         {% endif %}
@@ -89,7 +91,7 @@
                         <!-- ===== دکمه خروج ===== -->
                         <li class="nav-item">
                             <a href="{% url 'accounts:logout' %}" class="btn btn-outline-light btn-sm" id="logoutBtn">
-                                <i class="fas fa-sign-out-alt"></i> خروج
+                                <i class="fas fa-sign-out-alt"></i> {% trans "خروج" %}
                             </a>
                         </li>
 
@@ -97,12 +99,12 @@
                         <!-- ===== کاربر مهمان ===== -->
                         <li class="nav-item">
                             <a href="{% url 'accounts:phone_login' %}" class="btn btn-light btn-sm">
-                                <i class="fas fa-arrow-left"></i> ورود
+                                <i class="fas fa-arrow-left"></i> {% trans "ورود" %}
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="{% url 'accounts:phone_register' %}" class="btn btn-outline-light btn-sm">
-                                <i class="fas fa-user-plus"></i> ثبت‌نام
+                                <i class="fas fa-user-plus"></i> {% trans "ثبت‌نام" %}
                             </a>
                         </li>
                     {% endif %}

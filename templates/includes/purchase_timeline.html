@@ -1,26 +1,27 @@
+{% load i18n %}
 <!-- ===== تایم‌لاین مراحل خرید بلیط ===== -->
 <div class="purchase-timeline">
     <div class="pt-step {% if current_step > 1 %}pt-done{% elif current_step == 1 %}pt-active{% endif %}">
-        <div class="pt-circle">{% if current_step > 1 %}<i class="fas fa-check"></i>{% else %}۱{% endif %}</div>
-        <div class="pt-label">طبقه و تیم</div>
+        <div class="pt-circle">{% if current_step > 1 %}<i class="fas fa-check"></i>{% else %}{% trans "۱" %}{% endif %}</div>
+        <div class="pt-label">{% trans "طبقه و تیم" %}</div>
     </div>
     <div class="pt-line {% if current_step > 1 %}pt-done{% endif %}"></div>
 
     <div class="pt-step {% if current_step > 2 %}pt-done{% elif current_step == 2 %}pt-active{% endif %}">
-        <div class="pt-circle">{% if current_step > 2 %}<i class="fas fa-check"></i>{% else %}۲{% endif %}</div>
-        <div class="pt-label">انتخاب سکو</div>
+        <div class="pt-circle">{% if current_step > 2 %}<i class="fas fa-check"></i>{% else %}{% trans "۲" %}{% endif %}</div>
+        <div class="pt-label">{% trans "انتخاب سکو" %}</div>
     </div>
     <div class="pt-line {% if current_step > 2 %}pt-done{% endif %}"></div>
 
     <div class="pt-step {% if current_step > 3 %}pt-done{% elif current_step == 3 %}pt-active{% endif %}">
-        <div class="pt-circle">{% if current_step > 3 %}<i class="fas fa-check"></i>{% else %}۳{% endif %}</div>
-        <div class="pt-label">انتخاب صندلی</div>
+        <div class="pt-circle">{% if current_step > 3 %}<i class="fas fa-check"></i>{% else %}{% trans "۳" %}{% endif %}</div>
+        <div class="pt-label">{% trans "انتخاب صندلی" %}</div>
     </div>
     <div class="pt-line {% if current_step > 3 %}pt-done{% endif %}"></div>
 
     <div class="pt-step {% if current_step > 4 %}pt-done{% elif current_step == 4 %}pt-active{% endif %}">
-        <div class="pt-circle">{% if current_step > 4 %}<i class="fas fa-check"></i>{% else %}۴{% endif %}</div>
-        <div class="pt-label">اطلاعات و پرداخت</div>
+        <div class="pt-circle">{% if current_step > 4 %}<i class="fas fa-check"></i>{% else %}{% trans "۴" %}{% endif %}</div>
+        <div class="pt-label">{% trans "اطلاعات و پرداخت" %}</div>
     </div>
 </div>
 

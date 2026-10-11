@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}دسترسی مجاز نیست{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "دسترسی مجاز نیست" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -54,37 +55,35 @@
     <div class="err-card">
         <div class="err-top">
             <div class="err-icon"><i class="fas fa-lock"></i></div>
-            <p class="err-code">۴۰۳</p>
-            <h1 class="err-title">دسترسی به این صفحه مجاز نیست</h1>
+            <p class="err-code">{% trans "۴۰۳" %}</p>
+            <h1 class="err-title">{% trans "دسترسی به این صفحه مجاز نیست" %}</h1>
         </div>
         <div class="err-body">
             {% if user.is_authenticated %}
                 <p class="err-text">
-                    حساب کاربری شما اجازه‌ی دیدن این صفحه را ندارد.
-                    اگر فکر می‌کنید این یک اشتباه است، با مدیر سامانه تماس بگیرید.
+                    {% trans "حساب کاربری شما اجازه‌ی دیدن این صفحه را ندارد. اگر فکر می‌کنید این یک اشتباه است، با مدیر سامانه تماس بگیرید." %}
                 </p>
             {% else %}
                 <p class="err-text">
-                    برای دیدن این صفحه باید وارد حساب کاربری خود شوید.
+                    {% trans "برای دیدن این صفحه باید وارد حساب کاربری خود شوید." %}
                 </p>
                 <div class="err-hint">
                     <i class="fas fa-info-circle"></i>
-                    اگر قبلاً وارد شده بودید، ممکن است نشست شما به دلیل بی‌فعالیتی منقضی شده باشد.
-                    کافی است دوباره وارد شوید.
+                    {% trans "اگر قبلاً وارد شده بودید، ممکن است نشست شما به دلیل بی‌فعالیتی منقضی شده باشد. کافی است دوباره وارد شوید." %}
                 </div>
             {% endif %}
 
             <div class="err-actions">
                 {% if not user.is_authenticated %}
                     <a href="{% url 'accounts:phone_login' %}" class="err-btn primary">
-                        <i class="fas fa-sign-in-alt"></i> ورود به حساب
+                        <i class="fas fa-sign-in-alt"></i> {% trans "ورود به حساب" %}
                     </a>
                 {% endif %}
                 <a href="{% url 'matches:home' %}" class="err-btn {% if user.is_authenticated %}primary{% else %}ghost{% endif %}">
-                    <i class="fas fa-home"></i> صفحه اصلی
+                    <i class="fas fa-home"></i> {% trans "صفحه اصلی" %}
                 </a>
                 <a href="javascript:history.back()" class="err-btn ghost">
-                    <i class="fas fa-arrow-right"></i> صفحه قبل
+                    <i class="fas fa-arrow-right"></i> {% trans "صفحه قبل" %}
                 </a>
             </div>
         </div>

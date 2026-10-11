@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 
-{% block title %}انتخاب طبقه و تیم{% endblock %}
+{% block title %}{% trans "انتخاب طبقه و تیم" %}{% endblock %}
 
 {% block extra_css %}
     <style>
@@ -175,7 +176,7 @@
             <!-- مرحله ۱: انتخاب تیم (با لوگو) -->
             <div class="step-card">
                 <div class="step-title">
-                    <i class="fas fa-users"></i> تیم مورد نظر خود را انتخاب کنید
+                    <i class="fas fa-users"></i> {% trans "تیم مورد نظر خود را انتخاب کنید" %}
                 </div>
                 <div class="selection-grid">
 
@@ -186,7 +187,7 @@
                         {% else %}
                             <div class="team-logo-placeholder">{{ match.home_team|slice:":2" }}</div>
                         {% endif %}
-                        <h5>میزبان</h5>
+                        <h5>{% trans "میزبان" %}</h5>
                         <p>{{ match.home_team }}</p>
                     </div>
 
@@ -197,7 +198,7 @@
                         {% else %}
                             <div class="team-logo-placeholder">{{ match.away_team|slice:":2" }}</div>
                         {% endif %}
-                        <h5>میهمان</h5>
+                        <h5>{% trans "میهمان" %}</h5>
                         <p>{{ match.away_team }}</p>
                     </div>
 

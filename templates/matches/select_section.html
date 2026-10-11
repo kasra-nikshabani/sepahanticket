@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load currency_filters %}
 {% block content %}
     <div class="container mt-4">
-        <h2 class="text-center">انتخاب ردیف</h2>
+        <h2 class="text-center">{% trans "انتخاب ردیف" %}</h2>
         <p class="text-center">{{ match.home_team }} vs {{ match.away_team }}</p>
 
         <form method="post">
@@ -14,15 +15,15 @@
                             <div class="card-body text-center">
                                 <h5 class="card-title">{{ section.name }}</h5>
                                 <span class="badge {% if section.is_home %}bg-success{% else %}bg-warning text-dark{% endif %}">
-                                    {% if section.is_home %}میزبان{% else %}میهمان{% endif %}
+                                    {% if section.is_home %}{% trans "میزبان" %}{% else %}{% trans "میهمان" %}{% endif %}
                                 </span>
                                 <p class="card-text">
-                                    تعداد صندلی: {{ section.seat_count }}<br>
-                                    قیمت: {{ section.price }} ریال
+                                    {% blocktrans with seat_count=section.seat_count trimmed %}تعداد صندلی: {{ seat_count }}{% endblocktrans %}<br>
+                                    {% blocktrans with price=section.price trimmed %}قیمت: {{ price }} ریال{% endblocktrans %}
                                 </p>
                                 <button type="submit" name="section_id" value="{{ section.id }}"
                                         class="btn btn-primary">
-                                    انتخاب
+                                    {% trans "انتخاب" %}
                                 </button>
                             </div>
                         </div>

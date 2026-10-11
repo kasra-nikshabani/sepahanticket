@@ -1,10 +1,11 @@
+{% load i18n %}
 <!DOCTYPE html>
 {% load currency_filters %}
 {% load static %}
 <html dir="rtl" lang="fa">
 <head>
     <meta charset="UTF-8">
-    <title>بلیط ورود به ورزشگاه</title>
+    <title>{% trans "بلیط ورود به ورزشگاه" %}</title>
     <style>
         /* ===== تنظیمات پایه ===== */
         * {
@@ -151,7 +152,7 @@
     <!-- هدر -->
     <div class="header">
         <div class="header-top">
-            <h2>بلیط ورود به ورزشگاه</h2>
+            <h2>{% trans "بلیط ورود به ورزشگاه" %}</h2>
         </div>
         <div class="match-title">
             {{ match.home_team }} <span style="font-weight:normal;color:#888;">vs</span> {{ match.away_team }}
@@ -167,36 +168,36 @@
         {% if qr_base64 %}
             <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR Code">
         {% else %}
-            <p style="color:#999;">QR Code موجود نیست</p>
+            <p style="color:#999;">{% trans "QR Code موجود نیست" %}</p>
         {% endif %}
     </div>
 
     <!-- اطلاعات بلیط -->
     <div class="info-grid">
         <div class="info-row">
-            <span class="label">شماره بلیط</span>
+            <span class="label">{% trans "شماره بلیط" %}</span>
             <span class="value ticket-number">{{ ticket.ticket_number }}</span>
         </div>
         <div class="info-row">
-            <span class="label">نام و نام خانوادگی</span>
+            <span class="label">{% trans "نام و نام خانوادگی" %}</span>
             <span class="value">{{ ticket.full_name }}</span>
         </div>
         <div class="info-row">
-            <span class="label">کد ملی</span>
+            <span class="label">{% trans "کد ملی" %}</span>
             <span class="value">{{ ticket.national_code }}</span>
         </div>
         {% if ticket.age is not None %}
         <div class="info-row">
-            <span class="label">سن</span>
+            <span class="label">{% trans "سن" %}</span>
             <span class="value">{{ ticket.age }}</span>
         </div>
         {% endif %}
         <div class="info-row">
-            <span class="label">سکو / ردیف</span>
+            <span class="label">{% trans "سکو / ردیف" %}</span>
             <span class="value">{{ ticket.seat.row.name }}</span>
         </div>
         <div class="info-row">
-            <span class="label">شماره صندلی</span>
+            <span class="label">{% trans "شماره صندلی" %}</span>
             <span class="value">{{ ticket.seat.number }}</span>
         </div>
     </div>
@@ -227,8 +228,8 @@
 
     <!-- فوتر -->
     <div class="footer">
-        این بلیط فقط با ارائه کارت ملی معتبر است.<br>
-        لطفاً ۳۰ دقیقه قبل از شروع مسابقه در ورزشگاه حاضر باشید.
+        {% trans "این بلیط فقط با ارائه کارت ملی معتبر است." %}<br>
+        {% trans "لطفاً ۳۰ دقیقه قبل از شروع مسابقه در ورزشگاه حاضر باشید." %}
     </div>
 </div>
 </body>

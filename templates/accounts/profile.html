@@ -1,24 +1,25 @@
 <!-- templates/accounts/profile.html -->
 {% extends 'base.html' %}
+{% load i18n %}
 {% load currency_filters %}
-{% block title %}پروفایل کاربری{% endblock %}
+{% block title %}{% trans "پروفایل کاربری" %}{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-md-4">
         <div class="card">
             <div class="card-header bg-primary text-white">
-                <h5><i class="fas fa-user-cog"></i> پنل کاربری</h5>
+                <h5><i class="fas fa-user-cog"></i> {% trans "پنل کاربری" %}</h5>
             </div>
             <div class="list-group list-group-flush">
                 <a href="{% url 'accounts:profile' %}" class="list-group-item list-group-item-action active">
-                    <i class="fas fa-id-card"></i> اطلاعات کاربری
+                    <i class="fas fa-id-card"></i> {% trans "اطلاعات کاربری" %}
                 </a>
                 <a href="{% url 'tickets:user_tickets' %}" class="list-group-item list-group-item-action">
-                    <i class="fas fa-ticket-alt"></i> بلیط‌های من
+                    <i class="fas fa-ticket-alt"></i> {% trans "بلیط‌های من" %}
                 </a>
                 <a href="{% url 'accounts:edit_profile' %}" class="list-group-item list-group-item-action">
-                    <i class="fas fa-edit"></i> ویرایش پروفایل
+                    <i class="fas fa-edit"></i> {% trans "ویرایش پروفایل" %}
                 </a>
             </div>
         </div>
@@ -26,21 +27,21 @@
     <div class="col-md-8">
         <div class="card">
             <div class="card-header">
-                <h4>اطلاعات کاربری</h4>
+                <h4>{% trans "اطلاعات کاربری" %}</h4>
             </div>
             <div class="card-body">
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item"><strong>نام کاربری:</strong> {{ user.username }}</li>
-                    <li class="list-group-item"><strong>نام و نام خانوادگی:</strong> {{ user.get_full_name }}</li>
-                    <li class="list-group-item"><strong>کد ملی:</strong> {{ user.national_code }}</li>
-                    <li class="list-group-item"><strong>شماره موبایل:</strong> {{ user.phone_number }}</li>
-                    <li class="list-group-item"><strong>نوع کاربر:</strong>
+                    <li class="list-group-item"><strong>{% trans "نام کاربری:" %}</strong> {{ user.username }}</li>
+                    <li class="list-group-item"><strong>{% trans "نام و نام خانوادگی:" %}</strong> {{ user.get_full_name }}</li>
+                    <li class="list-group-item"><strong>{% trans "کد ملی:" %}</strong> {{ user.national_code }}</li>
+                    <li class="list-group-item"><strong>{% trans "شماره موبایل:" %}</strong> {{ user.phone_number }}</li>
+                    <li class="list-group-item"><strong>{% trans "نوع کاربر:" %}</strong>
                         {% if user.user_type == 'admin' %}
-                            <span class="badge bg-danger">مدیر</span>
+                            <span class="badge bg-danger">{% trans "مدیر" %}</span>
                         {% elif user.user_type == 'vip' %}
-                            <span class="badge bg-warning text-dark">کاربر ویژه</span>
+                            <span class="badge bg-warning text-dark">{% trans "کاربر ویژه" %}</span>
                         {% else %}
-                            <span class="badge bg-info">کاربر معمولی</span>
+                            <span class="badge bg-info">{% trans "کاربر معمولی" %}</span>
                         {% endif %}
                     </li>
                 </ul>

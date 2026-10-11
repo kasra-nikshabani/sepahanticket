@@ -1,17 +1,23 @@
+{% load i18n %}
 {% load static %}
 {% load currency_filters %}
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+{% get_current_language as LANG %}{% get_current_language_bidi as BIDI %}
+<html lang="{{ LANG }}" dir="{% if BIDI %}rtl{% else %}ltr{% endif %}">
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>{% block title %}فروش بلیط سپاهان{% endblock %}</title>
+    <title>{% block title %}{% trans "فروش بلیط سپاهان" %}{% endblock %}</title>
 
     <!-- Bootstrap 5 RTL (لوکال -- در صورت قطعی اینترنت خارج هم کار کند) -->
+    {% if BIDI %}
     <link rel="stylesheet" href="{% static 'vendor/bootstrap/css/bootstrap.rtl.min.css' %}"/>
+    {% else %}
+    <link rel="stylesheet" href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}"/>
+    {% endif %}
     <!-- Font Awesome 6 (لوکال) -->
     <link rel="stylesheet" href="{% static 'vendor/fontawesome/css/all.min.css' %}"/>
     <!-- فونت وزیرمتن (لوکال) -->
@@ -749,7 +755,7 @@
             <div class="container-fluid">
                 <div class="admin-header-inner">
                     <a class="header-brand" href="{% url 'matches:home' %}">
-                        <i class="fas fa-futbol"></i> بلیط سپاهان
+                        <i class="fas fa-futbol"></i> {% trans "بلیط سپاهان" %}
                     </a>
                     <button class="sidebar-toggle" id="sidebarToggle">
                         <i class="fas fa-bars"></i>
@@ -786,7 +792,7 @@
                         <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
                             <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
                             {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="بستن"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans 'بستن' %}"></button>
                         </div>
                     {% endfor %}
                 </div>
@@ -809,14 +815,15 @@
             <a href="{% url 'matches:home' %}"
                class="bottom-nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
                 <i class="fas fa-home"></i>
-                <span>خانه</span>
+                <span>{% trans "خانه" %}</span>
             </a>
 
+            {% include 'includes/lang_switch.html' with mode='bottom' %}
             <!-- راهنما -->
             <a href="{% url 'tutorial' %}"
                class="bottom-nav-item {% if request.resolver_match.url_name == 'tutorial' %}active{% endif %}">
                 <i class="fas fa-question-circle"></i>
-                <span>راهنما</span>
+                <span>{% trans "راهنما" %}</span>
             </a>
 
             {% if user.is_authenticated %}
@@ -826,21 +833,21 @@
                     <a href="{% url 'tickets:user_tickets' %}"
                        class="bottom-nav-item {% if request.resolver_match.url_name == 'user_tickets' %}active{% endif %}">
                         <i class="fas fa-ticket-alt"></i>
-                        <span>بلیط‌ها</span>
+                        <span>{% trans "بلیط‌ها" %}</span>
                     </a>
                     <!-- کیف پول -->
                     {% if wallet_enabled %}
                     <a href="{% url 'wallet:dashboard' %}"
                        class="bottom-nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                         <i class="fas fa-wallet"></i>
-                        <span>کیف پول</span>
+                        <span>{% trans "کیف پول" %}</span>
                     </a>
                     {% endif %}
                     <!-- پروفایل -->
                     <a href="{% url 'accounts:profile' %}"
                        class="bottom-nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
                         <i class="fas fa-user"></i>
-                        <span>پروفایل</span>
+                        <span>{% trans "پروفایل" %}</span>
                     </a>
 
                 {% elif user.user_type == 'vip' %}
@@ -848,55 +855,55 @@
                     <a href="{% url 'tickets:vip_dashboard' %}"
                        class="bottom-nav-item {% if request.resolver_match.url_name == 'vip_dashboard' %}active{% endif %}">
                         <i class="fas fa-star"></i>
-                        <span>داشبورد</span>
+                        <span>{% trans "داشبورد" %}</span>
                     </a>
                     <!-- بلیط‌های VIP -->
                     <a href="{% url 'tickets:vip_tickets' %}"
                        class="bottom-nav-item {% if request.resolver_match.url_name == 'vip_tickets' %}active{% endif %}">
                         <i class="fas fa-ticket-alt"></i>
-                        <span>بلیط‌ها</span>
+                        <span>{% trans "بلیط‌ها" %}</span>
                     </a>
                     <!-- پروفایل -->
                     <a href="{% url 'accounts:profile' %}"
                        class="bottom-nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
                         <i class="fas fa-user"></i>
-                        <span>پروفایل</span>
+                        <span>{% trans "پروفایل" %}</span>
                     </a>
 
                 {% elif user.user_type == 'admin' %}
                     <!-- مدیریت -->
                     <a href="{% url 'admin:index' %}" class="bottom-nav-item">
                         <i class="fas fa-cogs"></i>
-                        <span>مدیریت</span>
+                        <span>{% trans "مدیریت" %}</span>
                     </a>
                     <!-- گزارشات -->
                     <a href="{% url 'tickets:admin_reports' %}" class="bottom-nav-item">
                         <i class="fas fa-chart-bar"></i>
-                        <span>گزارشات</span>
+                        <span>{% trans "گزارشات" %}</span>
                     </a>
                     <!-- پروفایل -->
                     <a href="{% url 'accounts:profile' %}"
                        class="bottom-nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
                         <i class="fas fa-user"></i>
-                        <span>پروفایل</span>
+                        <span>{% trans "پروفایل" %}</span>
                     </a>
                 {% endif %}
 
                 <!-- خروج -->
                 <a href="{% url 'accounts:logout' %}" class="bottom-nav-item logout-item">
                     <i class="fas fa-sign-out-alt"></i>
-                    <span>خروج</span>
+                    <span>{% trans "خروج" %}</span>
                 </a>
 
             {% else %}
                 <!-- ===== کاربر مهمان ===== -->
                 <a href="{% url 'accounts:phone_login' %}" class="bottom-nav-item login-item">
                     <i class="fas fa-arrow-left"></i>
-                    <span>ورود</span>
+                    <span>{% trans "ورود" %}</span>
                 </a>
                 <a href="{% url 'accounts:phone_register' %}" class="bottom-nav-item register-item">
                     <i class="fas fa-user-plus"></i>
-                    <span>ثبت‌نام</span>
+                    <span>{% trans "ثبت‌نام" %}</span>
                 </a>
             {% endif %}
 
