@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n %}{% load static %}
 <!-- templates/includes/footer.html -->
 {% load currency_filters %}
 <footer class="footer">
@@ -23,6 +23,7 @@
                 <ul class="footer-links">
                     <li><a href="{% url 'matches:home' %}"><i class="fas fa-chevron-left"></i> {% trans "صفحه اصلی" %}</a></li>
                     <li><a href="#"><i class="fas fa-chevron-left"></i> {% trans "مسابقات" %}</a></li>
+                    <li><a href="{% static 'docs/stadium-ground-rules.pdf' %}" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> {% trans "قوانین ورزشگاه" %}</a></li>
                 </ul>
             </div>
 

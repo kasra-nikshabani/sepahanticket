@@ -3198,3 +3198,6 @@ msgstr "4"
 
 msgid "۰"
 msgstr "0"
+
+msgid "قوانین ورزشگاه"
+msgstr "Stadium ground rules"
