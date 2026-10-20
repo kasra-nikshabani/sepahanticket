@@ -3204,3 +3204,9 @@ msgstr "Stadium ground rules"
 
 msgid "مقررات"
 msgstr "Rules"
+
+msgid "در حال انتقال به درگاه پرداخت..."
+msgstr "Redirecting to the payment gateway..."
+
+msgid "اگر منتقل نشدید اینجا را بزنید"
+msgstr "If you are not redirected, click here"

@@ -218,8 +218,10 @@ def payment_request(request):
         payment.track_id = track_id
         payment.save(update_fields=['track_id', 'updated_at'])
 
-        payment_url = client.generate_payment_url(track_id)
-        return redirect(payment_url)
+        # شاپرک الزام کرده Referer درخواست به صفحه‌ی start درگاه با دامنه‌ی
+        # ثبت‌شده یکی باشد؛ پس اول به یک صفحه‌ی واسط روی همین دامنه می‌رویم
+        # و از آنجا به درگاه هدایت می‌شویم (payment_start).
+        return redirect(reverse('payments:payment_start', args=[track_id]))
 
     except Exception as e:
         logger.error(f"خطا در درخواست پرداخت: {e}")
@@ -751,3 +753,46 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
         # اگر هر خطایی در صدور بلیط رخ دهد، آن را لاگ می‌کنیم تا 502 ندهد
         logger.error(f"❌ CRITICAL ERROR in _finalize_ticket_purchase: {str(e)}", exc_info=True)
         return False, str(e)
+
+
+
+def payment_start(request, track_id):
+    """صفحه‌ی واسط پیش از درگاه زیبال.
+
+    طبق الزام شاپرک، Referer درخواست به gateway.zibal.ir/start/<trackId> باید
+    دامنه‌ی ثبت‌شده‌ی ترمینال باشد. ریدایرکت مستقیم ۳۰۲ از سرور Referer
+    نمی‌فرستد، پس کاربر ابتدا اینجا می‌آید و مرورگر از همین صفحه (با Referer
+    برابر دامنه‌ی ما) به درگاه می‌رود. هدر Referrer-Policy باید origin باشد
+    چون پیش‌فرض جنگو (same-origin) Referer را برای دامنه‌ی دیگر حذف می‌کند.
+    """
+    from django.http import HttpResponse
+    from django.utils.html import escape
+
+    if not request.user.is_authenticated:
+        return redirect('accounts:login')
+
+    # فقط پرداخت در انتظارِ خود کاربر؛ track_id حدس‌زدنی نباید برای دیگران کار کند.
+    if not Payment.objects.filter(track_id=track_id, user=request.user, status='pending').exists():
+        messages.error(request, _t("اطلاعات پرداخت یافت نشد"))
+        return redirect('wallet:dashboard')
+
+    client = ZibalClient(merchant_id=settings.ZIBAL_MERCHANT_ID, sandbox=settings.ZIBAL_SANDBOX)
+    url = escape(client.generate_payment_url(track_id))
+    html = (
+        '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        '<meta name="referrer" content="origin">'
+        '<title>Sepahan Ticket</title>'
+        f'<meta http-equiv="refresh" content="1;url={url}">'
+        '<style>body{font-family:Tahoma,sans-serif;background:#1A1A2E;color:#fff;'
+        'display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center}'
+        'a{color:#D4AF37}</style></head><body><div>'
+        f'<p>{escape(_t("در حال انتقال به درگاه پرداخت..."))}</p>'
+        f'<a href="{url}" referrerpolicy="origin">{escape(_t("اگر منتقل نشدید اینجا را بزنید"))}</a>'
+        f'</div><script>setTimeout(function(){{location.href="{url}";}},100);</script>'
+        '</body></html>'
+    )
+    response = HttpResponse(html)
+    response['Referrer-Policy'] = 'origin'
+    response['Cache-Control'] = 'no-store'
+    return response
