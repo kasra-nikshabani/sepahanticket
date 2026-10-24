@@ -942,6 +942,9 @@
                             <span class="status-badge {% if item.match.ticket_sales_enabled %}active{% else %}inactive{% endif %}">
                         <span class="dot"></span> {{ item.match.ticket_sales_enabled|yesno:"فروش بلیط فعال,فروش بلیط غیرفعال" }}
                     </span>
+                            {% if item.match.is_free %}
+                            <span class="status-badge active"><span class="dot"></span> رایگان</span>
+                            {% endif %}
                         </div>
                     </div>
 

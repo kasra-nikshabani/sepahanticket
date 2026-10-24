@@ -146,7 +146,7 @@
                         </h5>
                         <div class="d-flex align-items-center">
                             <span class="badge bg-light text-dark p-2 fs-6 ticket-price" data-base="{{ seat.price|default:0 }}" data-seat-index="{{ forloop.counter }}">
-                                {% blocktrans with price=seat.price|rial_display trimmed %}{{ price }} ریال{% endblocktrans %}
+                                {% if seat.price %}{% blocktrans with price=seat.price|rial_display trimmed %}{{ price }} ریال{% endblocktrans %}{% else %}{% trans "رایگان" %}{% endif %}
                             </span>
                             <button type="button" class="btn remove-btn ms-3" onclick="removeTicket({{ forloop.counter }})" title="{% trans 'حذف این بلیط' %}">
                                 <i class="fas fa-times"></i>

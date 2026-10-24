@@ -3210,3 +3210,9 @@ msgstr "Redirecting to the payment gateway..."
 
 msgid "اگر منتقل نشدید اینجا را بزنید"
 msgstr "If you are not redirected, click here"
+
+msgid "ورود رایگان"
+msgstr "Free entry"
+
+msgid "این مسابقه رایگان است و نیازی به پرداخت از درگاه نیست."
+msgstr "This match is free and does not need a gateway payment."

@@ -177,3 +177,43 @@ class SelectBlockPageTests(TestCase):
         # آنچه در قالب پایه است و داخل شرط صدا زده می‌شود، از این بررسی خارج
         allowed = {'sidebarToggle', 'sidebarBackdrop'}
         self.assertEqual(sorted(used - ids - allowed), [])
+
+
+class FreeMatchTests(TestCase):
+    def setUp(self):
+        from accounts.models import SiteSettings
+        s = SiteSettings.get_solo()
+        s.block_foreign_ips = False
+        s.save()
+        self.user = User.objects.create_user(username='fan2', password='pw12345')
+        self.stadium = Stadium.objects.create(name='نقش جهان', capacity=1000)
+        self.block = Block.objects.create(
+            stadium=self.stadium, name='A', price=250000, zone_type='home')
+        self.match = Match.objects.create(
+            home_team='سپاهان', away_team='حریف', stadium=self.stadium,
+            date_time=timezone.now() + timedelta(days=2), is_free=True)
+        self.client.force_login(self.user)
+
+    def test_every_block_price_is_zero(self):
+        from .models import get_block_price_for_match, get_block_price_map
+        self.assertEqual(get_block_price_for_match(self.match, self.block), 0)
+        self.assertEqual(get_block_price_map(self.match)[self.block.id], 0)
+
+    def test_gateway_payment_is_refused(self):
+        resp = self.client.post('/payments/request/', {
+            'amount': '250000',
+            'match_id': str(self.match.id),
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(f'/tickets/ticket-info/{self.match.id}/', resp['Location'])
+
+    def test_select_block_says_free(self):
+        resp = self.client.get(f'/matches/select-block/{self.match.id}/', follow=True)
+        self.assertContains(resp, 'رایگان')
+
+    def test_admin_form_has_the_switch(self):
+        self.user.is_staff = True
+        self.user.save()
+        resp = self.client.get(f'/matches/admin/match/edit/{self.match.id}/')
+        self.assertContains(resp, 'id_is_free')
+        self.assertContains(resp, 'checked')

@@ -88,7 +88,7 @@ class MatchForm(forms.ModelForm):
             'sport_type',
             'home_team', 'away_team',
             'home_team_logo', 'away_team_logo',
-            'stadium', 'date_time', 'is_active', 'ticket_sales_enabled'
+            'stadium', 'date_time', 'is_active', 'ticket_sales_enabled', 'is_free'
         ]
         widgets = {
             'sport_type': forms.Select(attrs={'class': 'form-select'}),
@@ -100,6 +100,7 @@ class MatchForm(forms.ModelForm):
             'date_time': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'ticket_sales_enabled': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_free': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
         # چون سایت به‌جای i18n جنگو (که LANGUAGE_CODE روی 'en-us' مونده) با
         # متن فارسیِ مستقیم کار می‌کنه، پیام‌های پیش‌فرض جنگو (مثل "This field
@@ -114,6 +115,7 @@ class MatchForm(forms.ModelForm):
             'date_time': 'تاریخ و ساعت برگزاری',
             'is_active': 'فعال',
             'ticket_sales_enabled': 'فروش بلیط فعال',
+            'is_free': 'مسابقه رایگان',
         }
         error_messages = {
             'sport_type': {'required': 'رشته ورزشی را انتخاب کنید.'},

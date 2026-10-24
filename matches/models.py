@@ -285,6 +285,14 @@ class Match(models.Model):
     )
     is_active = models.BooleanField(default=True)
     ticket_sales_enabled = models.BooleanField(default=True, verbose_name="فروش بلیط فعال")
+    # وقتی روشن باشد، قیمت همه‌ی بلیط‌های این مسابقه صفر است: نمایش «رایگان»،
+    # صدور بدون درگاه، و رد شدنِ پرداخت از درگاه. بلیط‌هایی که قبلاً فروخته
+    # شده‌اند قیمت ذخیره‌شده‌ی خودشان را نگه می‌دارند.
+    is_free = models.BooleanField(
+        default=False,
+        verbose_name="مسابقه رایگان",
+        help_text="اگر روشن باشد، همه‌ی بلیط‌های این مسابقه رایگان صادر می‌شوند.",
+    )
     is_cancelled = models.BooleanField(default=False, verbose_name="لغو شده")
     cancelled_at = models.DateTimeField(null=True, blank=True, verbose_name="زمان لغو")
     created_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True)
@@ -342,7 +350,16 @@ class MatchBlockPrice(models.Model):
 def get_block_price_map(match):
     """قیمت هر بلوک برای این مسابقه: {block_id: price} -- قیمت اختصاصی مسابقه
     در صورت وجود، در غیر این صورت Block.price. یک کوئری برای همهٔ بلوک‌های
-    آن ورزشگاه + یک کوئری برای override های همین مسابقه (بدون N+1)."""
+    آن ورزشگاه + یک کوئری برای override های همین مسابقه (بدون N+1).
+
+    مسابقه‌ی رایگان همه‌ی بلوک‌ها را صفر برمی‌گرداند تا هیچ مسیری (نقشه،
+    خرید، صدور ادمین/ویژه، گزارش) به قیمت واقعی برنگردد.
+    """
+    if getattr(match, 'is_free', False):
+        return {
+            block_id: 0
+            for block_id in Block.objects.filter(stadium=match.stadium_id).values_list('id', flat=True)
+        }
     prices = {
         block_id: price
         for block_id, price in Block.objects.filter(stadium=match.stadium_id).values_list('id', 'price')
@@ -354,6 +371,8 @@ def get_block_price_map(match):
 
 def get_block_price_for_match(match, block):
     """قیمت یک بلوک مشخص برای یک مسابقهٔ مشخص (قیمت اختصاصی در صورت وجود)."""
+    if getattr(match, 'is_free', False):
+        return 0
     override = MatchBlockPrice.objects.filter(match=match, block=block).values_list('price', flat=True).first()
     return override if override is not None else block.price
 

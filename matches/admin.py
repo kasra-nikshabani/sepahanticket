@@ -107,7 +107,7 @@ class MatchAdmin(admin.ModelAdmin):
     inlines = []
     readonly_fields = ('created_by',)
     fields = ('sport_type', 'home_team', 'away_team', 'home_team_logo', 'away_team_logo', 'stadium', 'date_time',
-              'is_active', 'created_by')
+              'is_active', 'ticket_sales_enabled', 'is_free', 'created_by')
 
     def report_link(self, obj):
         url = reverse('admin:match_report', args=[obj.id])

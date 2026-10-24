@@ -82,6 +82,10 @@ def payment_request(request):
             messages.error(request, _t("مسابقه یافت نشد."))
             return redirect('matches:home')
 
+        if match_obj.is_free:
+            messages.error(request, _t("این مسابقه رایگان است و نیازی به پرداخت از درگاه نیست."))
+            return redirect('tickets:ticket_info', match_id=match_id)
+
         if request.user.user_type != 'vip':
             submitted_codes = []
             for key, value in request.POST.items():

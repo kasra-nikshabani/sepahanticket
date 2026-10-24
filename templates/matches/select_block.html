@@ -603,7 +603,7 @@
                         · {{ p.zone_label|t }}
                     </span>
                     <span class="lseat">{% blocktrans with free=p.free|default_if_none:0 trimmed %}{{ free }} صندلی{% endblocktrans %}</span>
-                    <span class="lprice">{% blocktrans with price=p.price|floatformat:0 trimmed %}{{ price }} ریال{% endblocktrans %}</span>
+                    <span class="lprice">{% if p.price %}{% blocktrans with price=p.price|floatformat:0 trimmed %}{{ price }} ریال{% endblocktrans %}{% else %}{% trans "رایگان" %}{% endif %}</span>
                 </button>
                 {% endif %}{% endfor %}
             </div>
@@ -763,7 +763,9 @@
             var price = parseInt(g.dataset.price || '0', 10);
             document.getElementById('tFree').textContent =
                 free > 0 ? free.toLocaleString('fa-IR') + ' {% trans "از" %} ' + total.toLocaleString('fa-IR') : '{% trans "تکمیل" %}';
-            document.getElementById('tPrice').textContent = price.toLocaleString('fa-IR') + ' {% trans "ریال" %}';
+            document.getElementById('tPrice').textContent = price > 0
+                ? price.toLocaleString('fa-IR') + ' {% trans "ریال" %}'
+                : '{% trans "رایگان" %}';
             document.getElementById('tBar').style.width = occ + '%';
             document.getElementById('tOcc').textContent = occ.toLocaleString('fa-IR') + '{% trans "٪ پر شده" %}';
         }
@@ -817,7 +819,9 @@
         document.getElementById('sFree').textContent =
             free > 0 ? free.toLocaleString('fa-IR') + ' {% trans "از" %} ' + parseInt(g.dataset.total || '0', 10).toLocaleString('fa-IR') : '{% trans "تکمیل" %}';
         var price = parseInt(g.dataset.price || '0', 10);
-        document.getElementById('sPrice').textContent = price.toLocaleString('fa-IR') + ' {% trans "ریال" %}';
+        document.getElementById('sPrice').textContent = price > 0
+            ? price.toLocaleString('fa-IR') + ' {% trans "ریال" %}'
+            : '{% trans "رایگان" %}';
 
         var sheet = document.getElementById('sheet');
         fitSheetAboveNav();

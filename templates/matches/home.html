@@ -559,6 +559,9 @@
             <div class="text-center mt-4">
                 {% if user.user_type != 'vip' %}
                     {% if match.ticket_sales_enabled %}
+                        {% if match.is_free %}
+                        <div class="mb-2"><span class="badge bg-success">{% trans "ورود رایگان" %}</span></div>
+                        {% endif %}
                         <a href="{% url 'matches:select_floor' match.id %}" class="btn-buy-match">
                             <i class="fas fa-ticket-alt"></i>
                             {% trans "خرید بلیط" %}

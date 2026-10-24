@@ -105,6 +105,14 @@
                                 </div>
                             </div>
 
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.is_free }}
+                                    <label class="form-check-label" for="id_is_free">مسابقه رایگان</label>
+                                    <small class="text-muted d-block">اگر روشن باشد، همه‌ی بلیط‌های این مسابقه بدون پرداخت صادر می‌شوند. بلیط‌هایی که قبلاً فروخته شده‌اند تغییری نمی‌کنند.</small>
+                                </div>
+                            </div>
+
                             <div class="d-grid gap-2 mt-3">
                                 <button type="submit" class="btn btn-success btn-lg">
                                     <i class="fas fa-save"></i> {% if is_edit %}ذخیره تغییرات{% else %}ایجاد

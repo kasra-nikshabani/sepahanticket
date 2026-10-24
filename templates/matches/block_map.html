@@ -623,7 +623,7 @@
             </div>
             <div class="header-badges">
                 <span class="block-name"><i class="fas fa-layer-group"></i> {{ selected_block.name }}</span>
-                <span class="price-badge"><i class="fas fa-tag"></i> {% blocktrans with block_price=block_price|rial_display trimmed %}{{ block_price }} ریال{% endblocktrans %}</span>
+                <span class="price-badge"><i class="fas fa-tag"></i> {% if block_price %}{% blocktrans with block_price=block_price|rial_display trimmed %}{{ block_price }} ریال{% endblocktrans %}{% else %}{% trans "رایگان" %}{% endif %}</span>
             </div>
             <div class="capacity-wrap">
                 <div class="capacity-bar"><div class="capacity-fill" style="width: {{ seat_occupancy }}%;"></div></div>
