@@ -313,8 +313,8 @@ def vip_issued_tickets(request):
 
 @login_required
 def vip_special_codes(request):
-    """پنل کاربر ویژه برای دیدن کدهای ویژه‌ای که ادمین براش صادر کرده -- به
-    تفکیک هر مسابقه، با امکان انتخاب چندتایی و دانلود گروهی به‌صورت PDF."""
+    """پنل کاربر ویژه: اول مسابقه را انتخاب می‌کند، بعد فقط کدهای همان
+    مسابقه را می‌بیند (کپی / دانلود PDF / دانلود گروهی)."""
     if request.user.user_type != 'vip':
         messages.error(request, _t("شما دسترسی به این بخش ندارید."))
         return redirect('matches:home')
@@ -325,27 +325,48 @@ def vip_special_codes(request):
     except (TypeError, ValueError):
         match_id = None
 
-    codes_qs = SpecialCode.objects.filter(vip_owner=request.user).select_related('match').order_by('-created_at')
-    # لیست مسابقاتی که این VIP برایشان کد دارد (برای فیلتر بالای صفحه)
-    matches = Match.objects.filter(
-        id__in=codes_qs.values_list('match_id', flat=True).distinct()
-    ).order_by('-date_time')
-
-    if match_id:
-        codes_qs = codes_qs.filter(match_id=match_id)
-
-    groups_by_match = {}
-    for sc in codes_qs:
-        g = groups_by_match.setdefault(sc.match_id, {'match': sc.match, 'codes': [], 'used_count': 0})
-        g['codes'].append(sc)
+    all_codes = SpecialCode.objects.filter(vip_owner=request.user).select_related('match')
+    match_stats = {}
+    for sc in all_codes:
+        st = match_stats.setdefault(sc.match_id, {
+            'match': sc.match, 'total': 0, 'used': 0, 'ready': 0,
+        })
+        st['total'] += 1
         if sc.is_used:
-            g['used_count'] += 1
-    special_code_groups = sorted(groups_by_match.values(), key=lambda g: g['match'].date_time, reverse=True)
+            st['used'] += 1
+        elif sc.is_active:
+            st['ready'] += 1
+
+    match_cards = sorted(match_stats.values(), key=lambda g: g['match'].date_time, reverse=True)
+
+    # اگر فقط یک مسابقه دارد، مستقیم همان را نشان بده
+    if match_id is None and len(match_cards) == 1:
+        match_id = match_cards[0]['match'].id
+
+    selected_match = None
+    codes = []
+    used_count = 0
+    ready_count = 0
+    if match_id:
+        selected_match = next((c['match'] for c in match_cards if c['match'].id == match_id), None)
+        if selected_match is None:
+            selected_match = Match.objects.filter(id=match_id).first()
+        if selected_match:
+            codes = list(
+                SpecialCode.objects.filter(vip_owner=request.user, match=selected_match)
+                .order_by('is_used', '-is_active', '-created_at')
+            )
+            used_count = sum(1 for c in codes if c.is_used)
+            ready_count = sum(1 for c in codes if c.is_active and not c.is_used)
 
     context = {
-        'special_code_groups': special_code_groups,
-        'matches': matches,
-        'selected_match_id': match_id,
+        'match_cards': match_cards,
+        'selected_match': selected_match,
+        'selected_match_id': match_id if selected_match else None,
+        'codes': codes,
+        'used_count': used_count,
+        'ready_count': ready_count,
+        'total_count': len(codes),
     }
     return render(request, 'tickets/vip_special_codes.html', context)
 
