@@ -319,7 +319,21 @@ def vip_special_codes(request):
         messages.error(request, _t("شما دسترسی به این بخش ندارید."))
         return redirect('matches:home')
 
+    match_id = request.GET.get('match_id')
+    try:
+        match_id = int(match_id) if match_id else None
+    except (TypeError, ValueError):
+        match_id = None
+
     codes_qs = SpecialCode.objects.filter(vip_owner=request.user).select_related('match').order_by('-created_at')
+    # لیست مسابقاتی که این VIP برایشان کد دارد (برای فیلتر بالای صفحه)
+    matches = Match.objects.filter(
+        id__in=codes_qs.values_list('match_id', flat=True).distinct()
+    ).order_by('-date_time')
+
+    if match_id:
+        codes_qs = codes_qs.filter(match_id=match_id)
+
     groups_by_match = {}
     for sc in codes_qs:
         g = groups_by_match.setdefault(sc.match_id, {'match': sc.match, 'codes': [], 'used_count': 0})
@@ -328,7 +342,11 @@ def vip_special_codes(request):
             g['used_count'] += 1
     special_code_groups = sorted(groups_by_match.values(), key=lambda g: g['match'].date_time, reverse=True)
 
-    context = {'special_code_groups': special_code_groups}
+    context = {
+        'special_code_groups': special_code_groups,
+        'matches': matches,
+        'selected_match_id': match_id,
+    }
     return render(request, 'tickets/vip_special_codes.html', context)
 
 

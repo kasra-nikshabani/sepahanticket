@@ -22,18 +22,59 @@
     }
     .sc-help b { color: #F2D57A; }
 
+    .sc-filter {
+        background: #fff; border: 1px solid #e8eaed; border-radius: 18px;
+        padding: 14px; margin-bottom: 14px; box-shadow: 0 4px 16px rgba(0,0,0,.04);
+    }
+    .sc-filter label { display: block; font-weight: 800; color: #1A1A2E; margin-bottom: 8px; font-size: 14px; }
+    .sc-filter select {
+        width: 100%; border: 2px solid #e5e7eb; border-radius: 14px;
+        padding: 14px; font-size: 16px; background: #fafafa; font-weight: 700;
+    }
+    .sc-filter select:focus {
+        outline: none; border-color: #D4AF37; background: #fff;
+        box-shadow: 0 0 0 4px rgba(212,175,55,.15);
+    }
+    .sc-filter-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .sc-filter .sc-btn { min-height: 48px; padding: 12px 16px; }
+    .sc-btn-soft { background: #f3f4f6; color: #1A1A2E; border: 1px solid #e5e7eb; }
+    .sc-btn-dark { background: #1A1A2E; color: #D4AF37; }
+
+    .sc-match-tabs {
+        display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;
+    }
+    .sc-match-tab {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: #fff; border: 2px solid #eef0f3; border-radius: 14px;
+        padding: 10px 14px; text-decoration: none; color: #1A1A2E;
+        font-weight: 800; font-size: 13px; transition: .15s ease;
+    }
+    .sc-match-tab:hover { border-color: #D4AF37; }
+    .sc-match-tab.is-active {
+        background: #1A1A2E; color: #D4AF37; border-color: #1A1A2E;
+    }
+    .sc-match-tab img { width: 22px; height: 22px; object-fit: contain; border-radius: 50%; background: #fff; }
+
     .sc-match {
         background: #fff; border: 2px solid #eef0f3; border-radius: 20px;
-        margin-bottom: 14px; overflow: hidden; box-shadow: 0 6px 18px rgba(0,0,0,.04);
+        margin-bottom: 18px; overflow: hidden; box-shadow: 0 6px 18px rgba(0,0,0,.04);
     }
     .sc-match-head {
-        background: #f8f9fb; padding: 14px 16px; border-bottom: 1px solid #eef0f3;
-        display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center;
+        background: linear-gradient(135deg, #1A1A2E, #2a1848); color: #fff;
+        padding: 16px 18px; border-bottom: 3px solid #D4AF37;
+        display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center;
     }
-    .sc-match-title { font-size: 16px; font-weight: 900; color: #1A1A2E; }
-    .sc-match-meta { color: #6c757d; font-size: 13px; margin-top: 4px; }
+    .sc-match-teams {
+        display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .sc-match-teams img {
+        width: 36px; height: 36px; object-fit: contain; border-radius: 50%;
+        background: #fff; padding: 2px;
+    }
+    .sc-match-title { font-size: 17px; font-weight: 900; color: #fff; }
+    .sc-match-meta { color: rgba(255,255,255,.7); font-size: 13px; margin-top: 4px; }
     .sc-badge {
-        background: rgba(212,175,55,.15); color: #8a6d12; border: 1px solid rgba(212,175,55,.3);
+        background: rgba(212,175,55,.18); color: #F2D57A; border: 1px solid rgba(212,175,55,.35);
         border-radius: 999px; padding: 8px 12px; font-weight: 800; font-size: 13px;
     }
     .sc-select-row {
@@ -133,15 +174,57 @@
         </div>
     </div>
 
+    {% if matches %}
+    <form method="get" class="sc-filter">
+        <label for="match_id">کدام مسابقه را می‌خواهید؟</label>
+        <select name="match_id" id="match_id" onchange="this.form.submit()">
+            <option value="">همه مسابقات</option>
+            {% for m in matches %}
+                <option value="{{ m.id }}" {% if selected_match_id == m.id %}selected{% endif %}>
+                    {{ m.home_team }} vs {{ m.away_team }} — {{ m.date_time|date:"Y/m/d" }}
+                </option>
+            {% endfor %}
+        </select>
+        {% if selected_match_id %}
+        <div class="sc-filter-actions">
+            <a href="{% url 'tickets:vip_special_codes' %}" class="sc-btn sc-btn-soft">نمایش همه مسابقات</a>
+        </div>
+        {% endif %}
+    </form>
+
+    {% if matches|length > 1 %}
+    <div class="sc-match-tabs">
+        <a href="{% url 'tickets:vip_special_codes' %}"
+           class="sc-match-tab {% if not selected_match_id %}is-active{% endif %}">همه</a>
+        {% for m in matches %}
+        <a href="?match_id={{ m.id }}"
+           class="sc-match-tab {% if selected_match_id == m.id %}is-active{% endif %}">
+            {% if m.home_team_logo %}<img src="{{ m.home_team_logo.url }}" alt="">{% endif %}
+            {{ m.away_team }}
+            <span style="opacity:.55;font-weight:700;">{{ m.date_time|date:"m/d" }}</span>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endif %}
+
     {% if special_code_groups %}
     <form method="post" action="{% url 'tickets:vip_special_codes_download' %}" id="downloadForm">
         {% csrf_token %}
         {% for group in special_code_groups %}
-        <section class="sc-match">
+        <section class="sc-match" id="match-{{ group.match.id }}">
             <div class="sc-match-head">
                 <div>
-                    <div class="sc-match-title">{{ group.match.home_team }} vs {{ group.match.away_team }}</div>
-                    <div class="sc-match-meta">تاریخ مسابقه: {{ group.match.date_time|date:"Y/m/d" }}</div>
+                    <div class="sc-match-teams">
+                        {% if group.match.home_team_logo %}
+                            <img src="{{ group.match.home_team_logo.url }}" alt="{{ group.match.home_team }}">
+                        {% endif %}
+                        <div class="sc-match-title">{{ group.match.home_team }} vs {{ group.match.away_team }}</div>
+                        {% if group.match.away_team_logo %}
+                            <img src="{{ group.match.away_team_logo.url }}" alt="{{ group.match.away_team }}">
+                        {% endif %}
+                    </div>
+                    <div class="sc-match-meta">تاریخ مسابقه: {{ group.match.date_time|date:"Y/m/d — H:i" }}</div>
                 </div>
                 <div class="sc-badge">
                     {{ group.codes|length }} کد · {{ group.used_count }} استفاده‌شده
@@ -181,6 +264,20 @@
         </section>
         {% endfor %}
     </form>
+    <div class="sc-batch" id="batchBar">
+        <div class="count"><span id="selectedCount">۰</span> کد انتخاب شده</div>
+        <button type="button" class="sc-btn" id="downloadBtn" disabled>
+            <i class="fas fa-file-archive"></i> دانلود گروهی PDF
+        </button>
+        <div class="msg" id="downloadStatusMsg"></div>
+    </div>
+    {% elif matches %}
+        <div class="sc-empty">
+            <i class="fas fa-filter"></i>
+            <h3>کدی برای این مسابقه نیست</h3>
+            <p>مسابقه دیگری را انتخاب کنید یا همه مسابقات را ببینید.</p>
+            <a href="{% url 'tickets:vip_special_codes' %}" class="sc-btn sc-btn-dark" style="margin-top:14px;">نمایش همه</a>
+        </div>
     {% else %}
         <div class="sc-empty">
             <i class="fas fa-gift"></i>
@@ -189,16 +286,6 @@
         </div>
     {% endif %}
 </div>
-
-{% if special_code_groups %}
-<div class="sc-batch" id="batchBar">
-    <div class="count"><span id="selectedCount">۰</span> کد انتخاب شده</div>
-    <button type="button" class="sc-btn" id="downloadBtn" disabled>
-        <i class="fas fa-file-archive"></i> دانلود گروهی PDF
-    </button>
-    <div class="msg" id="downloadStatusMsg"></div>
-</div>
-{% endif %}
 
 <div class="sc-toast" id="toast">کد کپی شد</div>
 {% endblock %}
