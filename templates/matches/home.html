@@ -392,11 +392,6 @@
             </div>
             <div class="seat-stats">
                 <span>
-                    <i class="fas fa-chair"></i>
-                    {% trans "باقیمانده" %}:
-                    <b class="{% if match.available_seats < 100 %}low{% endif %}">{{ match.available_seats|default:0 }}</b>
-                </span>
-                <span>
                     <i class="fas fa-ticket-alt"></i>
                     {% trans "فروخته‌شده" %}:
                     <b>{{ match.sold_tickets|default:0 }}</b>
