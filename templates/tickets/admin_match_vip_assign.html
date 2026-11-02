@@ -1,0 +1,381 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تخصیص VIP — {{ match.home_team }} vs {{ match.away_team }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .vip-assign-page { padding: 12px 0 80px; }
+    .page-head {
+        display: flex; justify-content: space-between; align-items: flex-start;
+        flex-wrap: wrap; gap: 14px; margin-bottom: 18px;
+        padding-bottom: 14px; border-bottom: 2px solid rgba(212,175,55,.3);
+    }
+    .page-head h2 { margin: 0; font-size: 24px; font-weight: 700; color: #1A1A2E; }
+    .page-head h2 i { color: #D4AF37; margin-left: 8px; }
+    .page-head .sub { color: #6c757d; font-size: 13px; margin-top: 6px; }
+    .match-chip {
+        display: inline-flex; align-items: center; gap: 10px;
+        background: #1A1A2E; color: #fff; border-radius: 999px;
+        padding: 6px 14px 6px 8px; font-size: 13px; font-weight: 600;
+    }
+    .match-chip img, .match-chip .ph {
+        width: 28px; height: 28px; border-radius: 50%; object-fit: contain;
+        background: rgba(255,255,255,.1); border: 1px solid rgba(212,175,55,.4);
+    }
+    .match-chip .ph {
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 10px; color: #D4AF37;
+    }
+    .match-chip .vs { color: #D4AF37; font-weight: 800; font-size: 11px; }
+
+    .stats-row {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px; margin-bottom: 16px;
+    }
+    .stat {
+        background: #fff; border: 1px solid #e8eaed; border-radius: 12px;
+        padding: 12px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,.04);
+    }
+    .stat .n { font-size: 22px; font-weight: 700; color: #1A1A2E; }
+    .stat .l { font-size: 12px; color: #6c757d; margin-top: 2px; }
+    .stat.gold .n { color: #D4AF37; }
+    .stat.blue .n { color: #17a2b8; }
+    .stat.purple .n { color: #6f42c1; }
+
+    .toolbar {
+        background: #fff; border: 1px solid #e8eaed; border-radius: 12px;
+        padding: 12px 14px; margin-bottom: 14px;
+        display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;
+        justify-content: space-between;
+    }
+    .toolbar label { display: block; font-size: 11px; color: #6c757d; margin-bottom: 4px; }
+    .toolbar input[type=search], .toolbar select, .toolbar input[type=number],
+    .batch-bar select, .batch-bar input[type=number], .row-actions select, .row-actions input[type=number] {
+        border: 1px solid #ced4da; border-radius: 8px; padding: 8px 10px; background: #fff;
+        min-width: 110px;
+    }
+    .panel {
+        background: #fff; border: 1px solid #e8eaed; border-radius: 14px;
+        box-shadow: 0 2px 12px rgba(0,0,0,.04); overflow: hidden;
+    }
+    .vip-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .vip-table th {
+        background: #f7f8fa; color: #5f6b7a; font-weight: 600;
+        padding: 10px 12px; border-bottom: 1px solid #e8eaed; text-align: right;
+        white-space: nowrap;
+    }
+    .vip-table td {
+        padding: 12px; border-bottom: 1px solid #f0f2f5; vertical-align: middle;
+    }
+    .vip-table tr:hover { background: #fafbfc; }
+    .vip-table tr.selected { background: #fff9e6; }
+    .user-name { font-weight: 700; color: #1A1A2E; }
+    .user-meta { font-size: 12px; color: #6c757d; margin-top: 2px; }
+    .badge-soft {
+        display: inline-block; padding: 3px 8px; border-radius: 999px;
+        background: rgba(212,175,55,.15); color: #8a6d12; font-size: 12px; font-weight: 600;
+    }
+    .badge-blue { background: rgba(23,162,184,.12); color: #117a8b; }
+    .badge-purple { background: rgba(111,66,193,.12); color: #6f42c1; }
+    .row-actions {
+        display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    }
+    .btn-mini {
+        border: none; border-radius: 8px; padding: 7px 10px; font-size: 12px;
+        font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+    }
+    .btn-ticket { background: #1A1A2E; color: #D4AF37; }
+    .btn-code { background: #6f42c1; color: #fff; }
+    .btn-outline {
+        background: #fff; border: 1.5px solid #1A1A2E; color: #1A1A2E;
+        border-radius: 8px; padding: 8px 14px; font-weight: 600; text-decoration: none;
+        display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-primary-dark {
+        background: #1A1A2E; color: #fff; border: none; border-radius: 8px;
+        padding: 8px 14px; font-weight: 600; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 6px;
+    }
+    .empty { text-align: center; color: #98a2b3; padding: 36px !important; }
+
+    .batch-bar {
+        position: sticky; bottom: 12px; z-index: 20;
+        background: #1A1A2E; color: #fff; border-radius: 14px;
+        padding: 12px 16px; margin-top: 16px;
+        display: none; flex-wrap: wrap; gap: 10px; align-items: flex-end;
+        box-shadow: 0 10px 30px rgba(0,0,0,.25);
+        border: 1px solid rgba(212,175,55,.35);
+    }
+    .batch-bar.visible { display: flex; }
+    .batch-bar label { display: block; font-size: 11px; color: rgba(255,255,255,.65); margin-bottom: 4px; }
+    .batch-bar .count { color: #D4AF37; font-weight: 700; margin-left: auto; align-self: center; }
+    .batch-bar select, .batch-bar input[type=number] { color: #1A1A2E; }
+    .hint { font-size: 12px; color: #6c757d; margin-top: 10px; line-height: 1.7; }
+
+    @media (max-width: 991px) {
+        .vip-table .hide-sm { display: none; }
+        .row-actions { max-width: 280px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vip-assign-page">
+    <div class="page-head">
+        <div>
+            <h2><i class="fas fa-star"></i> تخصیص به کاربران ویژه</h2>
+            <div class="sub">برای این مسابقه بلیط صادر کنید یا کد ویژه بدهید — تکی یا گروهی.</div>
+            <div class="mt-2">
+                <span class="match-chip">
+                    {% if match.home_team_logo %}
+                        <img src="{{ match.home_team_logo.url }}" alt="">
+                    {% else %}
+                        <span class="ph">{{ match.home_team|slice:":2" }}</span>
+                    {% endif %}
+                    {{ match.home_team }}
+                    <span class="vs">VS</span>
+                    {{ match.away_team }}
+                    {% if match.away_team_logo %}
+                        <img src="{{ match.away_team_logo.url }}" alt="">
+                    {% else %}
+                        <span class="ph">{{ match.away_team|slice:":2" }}</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <a href="{% url 'matches:admin_match_detail' match.id %}" class="btn-outline">
+                <i class="fas fa-eye"></i> جزئیات مسابقه
+            </a>
+            <a href="{% url 'matches:admin_match_list' %}" class="btn-outline">
+                <i class="fas fa-arrow-right"></i> مدیریت مسابقات
+            </a>
+        </div>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat gold">
+            <div class="n">{{ vip_total }}</div>
+            <div class="l">کاربر ویژه</div>
+        </div>
+        <div class="stat blue">
+            <div class="n">{{ tickets_issued_total }}</div>
+            <div class="l">بلیط صادرشده (این مسابقه)</div>
+        </div>
+        <div class="stat purple">
+            <div class="n">{{ codes_created_total }}</div>
+            <div class="l">کد ویژه ساخته‌شده</div>
+        </div>
+        <div class="stat">
+            <div class="n">{{ blocks|length }}</div>
+            <div class="l">بلوک فعال</div>
+        </div>
+    </div>
+
+    <form method="get" class="toolbar">
+        <div>
+            <label for="q">جستجو</label>
+            <input type="search" id="q" name="q" value="{{ search }}" placeholder="نام، موبایل، نام کاربری…">
+        </div>
+        <button type="submit" class="btn-primary-dark"><i class="fas fa-search"></i> فیلتر</button>
+        {% if search %}
+            <a href="{% url 'tickets:admin_match_vip_assign' match.id %}" class="btn-outline">پاک کردن</a>
+        {% endif %}
+    </form>
+
+    <div class="panel">
+        <table class="vip-table">
+            <thead>
+            <tr>
+                <th style="width:42px;"><input type="checkbox" id="checkAll" title="انتخاب همه"></th>
+                <th>کاربر ویژه</th>
+                <th class="hide-sm">موبایل</th>
+                <th>بلیط این مسابقه</th>
+                <th>کد ویژه</th>
+                <th class="hide-sm">سهمیه</th>
+                <th>صدور تکی</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in vip_rows %}
+                <tr data-user-row>
+                    <td>
+                        <input type="checkbox" class="vip-check" value="{{ row.user.id }}">
+                    </td>
+                    <td>
+                        <div class="user-name">
+                            {{ row.user.get_full_name|default:row.user.username }}
+                        </div>
+                        <div class="user-meta">@{{ row.user.username }}</div>
+                    </td>
+                    <td class="hide-sm" dir="ltr">{{ row.user.phone_number|default:"—" }}</td>
+                    <td><span class="badge-soft badge-blue">{{ row.ticket_count }}</span></td>
+                    <td>
+                        <span class="badge-soft badge-purple">{{ row.code_count }}</span>
+                        {% if row.unused_code_count %}
+                            <small class="text-muted">({{ row.unused_code_count }} آزاد)</small>
+                        {% endif %}
+                    </td>
+                    <td class="hide-sm">
+                        {% if row.quota %}
+                            {{ row.quota.used }}/{{ row.quota.quota }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="row-actions">
+                            <form method="post" class="row-actions">
+                                {% csrf_token %}
+                                <input type="hidden" name="user_id" value="{{ row.user.id }}">
+                                <input type="number" name="quantity" value="1" min="1" max="50" title="تعداد" style="width:64px;">
+                                <select name="block_id" required title="بلوک">
+                                    <option value="">بلوک…</option>
+                                    {% for b in blocks %}
+                                        <option value="{{ b.id }}">{{ b.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" name="action" value="issue_tickets_single" class="btn-mini btn-ticket"
+                                        onclick="return confirm('بلیط برای این کاربر ویژه صادر شود؟');">
+                                    <i class="fas fa-ticket-alt"></i> بلیط
+                                </button>
+                            </form>
+                            <form method="post" class="row-actions">
+                                {% csrf_token %}
+                                <input type="hidden" name="user_id" value="{{ row.user.id }}">
+                                <input type="number" name="quantity" value="1" min="1" max="500" title="تعداد کد" style="width:64px;">
+                                <button type="submit" name="action" value="issue_codes_single" class="btn-mini btn-code"
+                                        onclick="return confirm('کد ویژه برای این کاربر ساخته شود؟');">
+                                    <i class="fas fa-key"></i> کد ویژه
+                                </button>
+                            </form>
+                            <a href="{% url 'tickets:manage_user_tickets' row.user.id %}" class="btn-mini btn-outline" title="مدیریت کامل">
+                                <i class="fas fa-user-cog"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="7" class="empty">کاربر ویژه‌ای یافت نشد.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <form method="post" id="batchForm" class="batch-bar" onsubmit="return prepareBatch(event);">
+        {% csrf_token %}
+        <div id="batchUserInputs"></div>
+        <div class="count"><span id="selectedCount">۰</span> نفر انتخاب‌شده</div>
+        <div>
+            <label>عملیات گروهی</label>
+            <select name="action" id="batchAction" required>
+                <option value="issue_tickets_batch">صدور بلیط</option>
+                <option value="issue_codes_batch">ساخت کد ویژه</option>
+            </select>
+        </div>
+        <div>
+            <label>تعداد برای هر نفر</label>
+            <input type="number" name="quantity" id="batchQty" value="1" min="1" max="500" required>
+        </div>
+        <div id="batchBlockWrap">
+            <label>بلوک (برای بلیط)</label>
+            <select name="block_id" id="batchBlock">
+                <option value="">انتخاب بلوک…</option>
+                {% for b in blocks %}
+                    <option value="{{ b.id }}">{{ b.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn-mini btn-ticket" style="padding:10px 16px;">
+            <i class="fas fa-check"></i> اعمال روی انتخاب‌شده‌ها
+        </button>
+    </form>
+
+    <p class="hint">
+        بلیط‌های صادرشده با وضعیت «تخصیص ادمین» در بخش بلیط‌های دریافتی پنل کاربر ویژه می‌نشینند.
+        کدهای ویژه در بخش کدهای ویژه پنل‌شان ظاهر می‌شوند و هوادار موقع خرید می‌تواند استفاده کند.
+        برای صدور گروهی، چند نفر را تیک بزنید و از نوار پایین استفاده کنید.
+    </p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const checkAll = document.getElementById('checkAll');
+    const checks = () => Array.from(document.querySelectorAll('.vip-check'));
+    const batchBar = document.getElementById('batchForm');
+    const selectedCount = document.getElementById('selectedCount');
+    const batchAction = document.getElementById('batchAction');
+    const batchBlockWrap = document.getElementById('batchBlockWrap');
+    const batchBlock = document.getElementById('batchBlock');
+    const batchUserInputs = document.getElementById('batchUserInputs');
+
+    function faNum(n) {
+        return String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+    }
+
+    function refresh() {
+        const selected = checks().filter(c => c.checked);
+        selectedCount.textContent = faNum(selected.length);
+        batchBar.classList.toggle('visible', selected.length > 0);
+        checks().forEach(c => {
+            const tr = c.closest('tr');
+            if (tr) tr.classList.toggle('selected', c.checked);
+        });
+        if (checkAll) {
+            const all = checks();
+            checkAll.checked = all.length > 0 && selected.length === all.length;
+            checkAll.indeterminate = selected.length > 0 && selected.length < all.length;
+        }
+        toggleBlock();
+    }
+
+    function toggleBlock() {
+        const needBlock = batchAction.value === 'issue_tickets_batch';
+        batchBlockWrap.style.display = needBlock ? '' : 'none';
+        batchBlock.required = needBlock;
+    }
+
+    if (checkAll) {
+        checkAll.addEventListener('change', () => {
+            checks().forEach(c => { c.checked = checkAll.checked; });
+            refresh();
+        });
+    }
+    document.querySelectorAll('.vip-check').forEach(c => c.addEventListener('change', refresh));
+    batchAction.addEventListener('change', toggleBlock);
+
+    window.prepareBatch = function (ev) {
+        const selected = checks().filter(c => c.checked);
+        if (!selected.length) {
+            alert('حداقل یک کاربر ویژه را انتخاب کنید.');
+            ev.preventDefault();
+            return false;
+        }
+        if (batchAction.value === 'issue_tickets_batch' && !batchBlock.value) {
+            alert('برای صدور بلیط باید بلوک را انتخاب کنید.');
+            ev.preventDefault();
+            return false;
+        }
+        const label = batchAction.value === 'issue_tickets_batch' ? 'بلیط' : 'کد ویژه';
+        if (!confirm(label + ' برای ' + selected.length + ' کاربر ویژه اعمال شود؟')) {
+            ev.preventDefault();
+            return false;
+        }
+        batchUserInputs.innerHTML = '';
+        selected.forEach(c => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'user_ids';
+            input.value = c.value;
+            batchUserInputs.appendChild(input);
+        });
+        return true;
+    };
+
+    refresh();
+})();
+</script>
+{% endblock %}

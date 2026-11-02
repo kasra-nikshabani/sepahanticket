@@ -2777,3 +2777,249 @@ def bulk_download_user_tickets(request):
     response = HttpResponse(zip_buffer, content_type='application/zip')
     response['Content-Disposition'] = f'attachment; filename="tickets_{timezone.now().strftime("%Y%m%d")}.zip"'
     return response
+
+
+# ============================================================
+#  پنل تخصیص بلیط / کد ویژه به کاربران VIP برای یک مسابقه
+# ============================================================
+
+def _generate_unique_special_code():
+    import random
+    import string
+    while True:
+        candidate = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+        if not SpecialCode.objects.filter(code=candidate).exists():
+            return candidate
+
+
+def _issue_admin_tickets_to_vips(match, users, block, count_per_user):
+    """صدور بلیط admin_assigned برای لیست کاربران ویژه از یک بلوک.
+
+    همان منطق bulk_issue_tickets -- صندلی‌ها به‌ترتیب ردیف/شماره گرفته
+    می‌شوند. خروجی: (تعداد صادرشده، پیام خطا یا '').
+    """
+    from matches.models import get_block_price_for_match
+
+    if count_per_user < 1 or count_per_user > 50:
+        return 0, _t('تعداد بلیط برای هر نفر باید بین ۱ تا ۵۰ باشد.')
+    if not is_block_active_for_match(match, block):
+        return 0, _t('بلوک «%(name)s» برای این مسابقه غیرفعال است.') % {'name': block.name}
+
+    users = list(users)
+    if not users:
+        return 0, _t('هیچ کاربر ویژه‌ای انتخاب نشده است.')
+
+    seats_in_block = Seat.objects.filter(
+        row__block=block,
+        row_id__in=get_active_row_ids(match, block=block),
+        is_available=True,
+    ).order_by('row__number', 'number')
+
+    available_match_seats = []
+    for seat in seats_in_block:
+        match_seat, _created = MatchSeat.objects.get_or_create(
+            match=match, seat=seat, defaults={'is_available': True},
+        )
+        if match_seat.is_available and match_seat.is_enabled:
+            available_match_seats.append(match_seat)
+
+    total_needed = len(users) * count_per_user
+    if len(available_match_seats) < total_needed:
+        return 0, _t(
+            'صندلی کافی در بلوک «%(name)s» نیست (موجود: %(have)s، لازم: %(need)s).'
+        ) % {
+            'name': block.name,
+            'have': len(available_match_seats),
+            'need': total_needed,
+        }
+
+    block_price = get_block_price_for_match(match, block) or 0
+    created_count = 0
+    ticket_index = 0
+
+    with transaction.atomic():
+        for user in users:
+            for _ in range(count_per_user):
+                match_seat = None
+                while ticket_index < len(available_match_seats):
+                    candidate = available_match_seats[ticket_index]
+                    ticket_index += 1
+                    if not Ticket.objects.filter(
+                        match_seat=candidate,
+                        status__in=['paid', 'admin_assigned', 'vip_issued'],
+                    ).exists():
+                        match_seat = candidate
+                        break
+                if match_seat is None:
+                    break
+                Ticket.objects.create(
+                    user=user,
+                    match=match,
+                    seat=match_seat.seat,
+                    match_seat=match_seat,
+                    full_name=user.get_full_name() or user.username,
+                    national_code=getattr(user, 'national_code', '') or '',
+                    status='admin_assigned',
+                    is_admin_assigned=True,
+                    price=block_price,
+                )
+                match_seat.is_available = False
+                match_seat.save()
+                created_count += 1
+
+    return created_count, ''
+
+
+def _create_special_codes_for_vips(match, users, quantity):
+    """ساخت کد ویژه برای هر کاربر ویژه به تعداد quantity."""
+    if quantity < 1 or quantity > 500:
+        return 0, _t('تعداد کد ویژه باید بین ۱ تا ۵۰۰ باشد.')
+    users = list(users)
+    if not users:
+        return 0, _t('هیچ کاربر ویژه‌ای انتخاب نشده است.')
+
+    created_count = 0
+    with transaction.atomic():
+        for user in users:
+            for _ in range(quantity):
+                SpecialCode.objects.create(
+                    code=_generate_unique_special_code(),
+                    vip_owner=user,
+                    match=match,
+                )
+                created_count += 1
+    return created_count, ''
+
+
+@login_required
+@staff_member_required
+def admin_match_vip_assign(request, match_id):
+    """لیست همه کاربران ویژه برای یک مسابقه + صدور تکی/گروهی بلیط یا کد ویژه.
+
+    بلیط‌های صادرشده در «بلیط‌های دریافتی» پنل VIP می‌نشینند
+    (status=admin_assigned). کدهای ویژه در «کدهای ویژه» پنل VIP دیده می‌شوند.
+    """
+    match = get_object_or_404(Match.objects.select_related('stadium'), id=match_id)
+    search = (request.GET.get('q') or '').strip()
+
+    vip_qs = User.objects.filter(user_type='vip', is_active=True).order_by(
+        'first_name', 'last_name', 'username'
+    )
+    if search:
+        vip_qs = vip_qs.filter(
+            Q(username__icontains=search)
+            | Q(first_name__icontains=search)
+            | Q(last_name__icontains=search)
+            | Q(phone_number__icontains=search)
+            | Q(national_code__icontains=search)
+        )
+
+    vip_ids = list(vip_qs.values_list('id', flat=True))
+    ticket_counts = dict(
+        Ticket.objects.filter(
+            match=match, status='admin_assigned', is_admin_assigned=True,
+            user_id__in=vip_ids,
+        ).values('user_id').annotate(c=Count('id')).values_list('user_id', 'c')
+    )
+    code_counts = dict(
+        SpecialCode.objects.filter(
+            match=match, vip_owner_id__in=vip_ids,
+        ).values('vip_owner_id').annotate(c=Count('id')).values_list('vip_owner_id', 'c')
+    )
+    unused_code_counts = dict(
+        SpecialCode.objects.filter(
+            match=match, is_used=False, is_active=True,
+            vip_owner_id__in=vip_ids,
+        ).values('vip_owner_id').annotate(c=Count('id')).values_list('vip_owner_id', 'c')
+    )
+    quotas = {
+        q.user_id: q
+        for q in VIPQuota.objects.filter(match=match, user_id__in=vip_ids)
+    }
+
+    if request.method == 'POST':
+        action = request.POST.get('action', '').strip()
+        redirect_url = reverse('tickets:admin_match_vip_assign', args=[match.id])
+        if search:
+            redirect_url += f'?q={search}'
+
+        def _selected_users():
+            raw_ids = request.POST.getlist('user_ids')
+            single = request.POST.get('user_id')
+            if single and not raw_ids:
+                raw_ids = [single]
+            ids = []
+            for x in raw_ids:
+                if str(x).isdigit():
+                    ids.append(int(x))
+            return list(User.objects.filter(id__in=ids, user_type='vip', is_active=True))
+
+        users = _selected_users()
+        if not users:
+            messages.error(request, _t('حداقل یک کاربر ویژه را انتخاب کنید.'))
+            return redirect(redirect_url)
+
+        try:
+            quantity = int(request.POST.get('quantity') or '1')
+        except (TypeError, ValueError):
+            messages.error(request, _t('تعداد باید عدد باشد.'))
+            return redirect(redirect_url)
+
+        if action in ('issue_tickets_single', 'issue_tickets_batch'):
+            block_id = request.POST.get('block_id')
+            block = Block.objects.filter(
+                id=block_id, stadium=match.stadium, id__in=get_active_block_ids(match),
+            ).first()
+            if not block:
+                messages.error(request, _t('بلوک معتبر برای این مسابقه انتخاب کنید.'))
+                return redirect(redirect_url)
+            created, err = _issue_admin_tickets_to_vips(match, users, block, quantity)
+            if err:
+                messages.error(request, err)
+            else:
+                messages.success(
+                    request,
+                    _t('%(n)s بلیط از بلوک «%(block)s» برای %(u)s کاربر ویژه صادر شد و در پنل‌شان می‌نشیند.')
+                    % {'n': created, 'block': block.name, 'u': len(users)},
+                )
+            return redirect(redirect_url)
+
+        if action in ('issue_codes_single', 'issue_codes_batch'):
+            created, err = _create_special_codes_for_vips(match, users, quantity)
+            if err:
+                messages.error(request, err)
+            else:
+                messages.success(
+                    request,
+                    _t('%(n)s کد ویژه برای %(u)s کاربر ویژه ساخته شد و در پنل کدهای ویژه‌شان می‌نشیند.')
+                    % {'n': created, 'u': len(users)},
+                )
+            return redirect(redirect_url)
+
+        messages.error(request, _t('عملیات نامعتبر است.'))
+        return redirect(redirect_url)
+
+    vip_rows = []
+    for u in vip_qs:
+        vip_rows.append({
+            'user': u,
+            'ticket_count': ticket_counts.get(u.id, 0),
+            'code_count': code_counts.get(u.id, 0),
+            'unused_code_count': unused_code_counts.get(u.id, 0),
+            'quota': quotas.get(u.id),
+        })
+
+    blocks = Block.objects.filter(
+        stadium=match.stadium, id__in=get_active_block_ids(match),
+    ).order_by('order', 'name')
+
+    context = {
+        'match': match,
+        'vip_rows': vip_rows,
+        'vip_total': len(vip_rows),
+        'blocks': blocks,
+        'search': search,
+        'tickets_issued_total': sum(ticket_counts.values()),
+        'codes_created_total': sum(code_counts.values()),
+    }
+    return render(request, 'tickets/admin_match_vip_assign.html', context)

@@ -1091,6 +1091,11 @@
                             <a href="{% url 'matches:admin_match_detail' item.match.id %}" class="btn-sm btn-detail">
                                 <i class="fas fa-eye"></i>
                             </a>
+                            <a href="{% url 'tickets:admin_match_vip_assign' item.match.id %}"
+                               class="btn-sm btn-blocks" title="تخصیص بلیط/کد ویژه به VIPها"
+                               style="background:#D4AF37;color:#1A1A2E;">
+                                <i class="fas fa-star"></i>
+                            </a>
                             <a href="{% url 'matches:admin_block_list' %}?match_id={{ item.match.id }}"
                                class="btn-sm btn-blocks" title="مدیریت بلوک‌های این مسابقه">
                                 <i class="fas fa-layer-group"></i>

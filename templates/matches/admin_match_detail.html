@@ -632,6 +632,9 @@
                 </div>
             </div>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <a href="{% url 'tickets:admin_match_vip_assign' match.id %}" class="btn-back" style="background:#6f42c1; color:#fff; border-color:#6f42c1;">
+                    <i class="fas fa-star"></i> تخصیص به کاربران ویژه
+                </a>
                 <a href="{% url 'matches:admin_match_full_report' match.id %}" class="btn-back" style="background:#D4AF37; color:#1A1A2E; border-color:#D4AF37;">
                     <i class="fas fa-file-alt"></i> گزارش کامل مسابقه
                 </a>

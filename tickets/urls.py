@@ -22,6 +22,11 @@ urlpatterns = [
     path('admin/issue-ticket/', views.admin_issue_ticket, name='admin_issue_ticket'),
     path('manage-vip-users/', views.manage_vip_users, name='manage_vip_users'),
     path('manage-user-tickets/<int:user_id>/', views.manage_user_tickets, name='manage_user_tickets'),
+    path(
+        'admin/match/<int:match_id>/vip-assign/',
+        views.admin_match_vip_assign,
+        name='admin_match_vip_assign',
+    ),
     path('row-occupancy/', views.row_occupancy_report, name='row_occupancy'),
     path('bulk-download/', views.bulk_download_tickets, name='bulk_download'),
     path('bulk-download-received/', views.bulk_download_received_tickets, name='bulk_download_received'),
