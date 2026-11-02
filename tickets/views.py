@@ -325,7 +325,12 @@ def vip_special_codes(request):
     except (TypeError, ValueError):
         match_id = None
 
-    all_codes = SpecialCode.objects.filter(vip_owner=request.user).select_related('match')
+    # فقط مسابقه‌های فعال — کدهای مسابقه‌های قدیمی/غیرفعال نشان داده نمی‌شود
+    all_codes = (
+        SpecialCode.objects
+        .filter(vip_owner=request.user, match__is_active=True)
+        .select_related('match')
+    )
     match_stats = {}
     for sc in all_codes:
         st = match_stats.setdefault(sc.match_id, {
@@ -339,7 +344,7 @@ def vip_special_codes(request):
 
     match_cards = sorted(match_stats.values(), key=lambda g: g['match'].date_time, reverse=True)
 
-    # اگر فقط یک مسابقه دارد، مستقیم همان را نشان بده
+    # اگر فقط یک مسابقه فعال دارد، مستقیم همان را نشان بده
     if match_id is None and len(match_cards) == 1:
         match_id = match_cards[0]['match'].id
 
@@ -349,8 +354,7 @@ def vip_special_codes(request):
     ready_count = 0
     if match_id:
         selected_match = next((c['match'] for c in match_cards if c['match'].id == match_id), None)
-        if selected_match is None:
-            selected_match = Match.objects.filter(id=match_id).first()
+        # مسابقه غیرفعال یا متعلق به این VIP نباشد → نشان نده
         if selected_match:
             codes = list(
                 SpecialCode.objects.filter(vip_owner=request.user, match=selected_match)
