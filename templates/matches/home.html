@@ -275,12 +275,12 @@
                 {% if match.has_time %}
                 <span class="chip">
                     <i class="far fa-clock"></i>
-                    {{ match.date_time|date:"H:i" }}
+                    {{ match.date_time|to_jalali_time }}
                 </span>
                 {% endif %}
                 <span class="chip">
                     <i class="fas fa-map-marker-alt"></i>
-                    {{ match.stadium.name }}
+                    {{ match.stadium.name|to_persian }}
                 </span>
                 {% if match.is_free %}
                 <span class="chip free"><i class="fas fa-gift"></i> {% trans "ورود رایگان" %}</span>

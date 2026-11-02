@@ -11,6 +11,14 @@ def _is_fa():
     return (translation.get_language() or 'fa').startswith('fa')
 
 
+_FA_DIGITS = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')
+
+
+def _fa_digits(text):
+    """ارقام غربی را در خروجی فارسی به ارقام پارسی تبدیل می‌کند."""
+    return str(text).translate(_FA_DIGITS) if text is not None else ''
+
+
 def _greg(date_obj, fmt):
     """نمایش میلادی (برای زبان انگلیسی) با ساعت محلی تهران."""
     if not date_obj or not isinstance(date_obj, datetime):
@@ -40,7 +48,7 @@ def to_jalali(date_obj):
     jalali_date = _to_local_jalali(date_obj)
     if not jalali_date:
         return ''
-    return jalali_date.strftime('%Y/%m/%d - %H:%M')
+    return _fa_digits(jalali_date.strftime('%Y/%m/%d - %H:%M'))
 
 @register.filter
 def to_jalali_date(date_obj):
@@ -50,7 +58,7 @@ def to_jalali_date(date_obj):
     jalali_date = _to_local_jalali(date_obj)
     if not jalali_date:
         return ''
-    return jalali_date.strftime('%Y/%m/%d')
+    return _fa_digits(jalali_date.strftime('%Y/%m/%d'))
 
 @register.filter
 def to_jalali_time(date_obj):
@@ -60,7 +68,7 @@ def to_jalali_time(date_obj):
     jalali_date = _to_local_jalali(date_obj)
     if not jalali_date:
         return ''
-    return jalali_date.strftime('%H:%M')
+    return _fa_digits(jalali_date.strftime('%H:%M'))
 
 @register.filter
 def to_jalali_full(date_obj):
@@ -73,4 +81,6 @@ def to_jalali_full(date_obj):
     months = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
               'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند']
     weekdays = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه']
-    return f"{weekdays[jalali_date.weekday()]} {jalali_date.day} {months[jalali_date.month-1]} {jalali_date.year} - {jalali_date.strftime('%H:%M')}"
+    return _fa_digits(
+        f"{weekdays[jalali_date.weekday()]} {jalali_date.day} {months[jalali_date.month-1]} {jalali_date.year} - {jalali_date.strftime('%H:%M')}"
+    )
