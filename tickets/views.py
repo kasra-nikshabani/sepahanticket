@@ -97,18 +97,24 @@ def user_tickets(request):
     if match_id:
         tickets_qs = tickets_qs.filter(match_id=match_id)
 
+    tickets_qs = tickets_qs.select_related(
+        'match', 'seat__row__block', 'match__stadium'
+    )
+
     local_tz = pytz.timezone('Asia/Tehran')
-    for ticket in tickets_qs:
+    tickets = list(tickets_qs)
+    for ticket in tickets:
         if ticket.used_at:
             ticket.used_at_local = ticket.used_at.astimezone(local_tz)
         else:
             ticket.used_at_local = None
 
     context = {
-        'tickets': tickets_qs,
+        'tickets': tickets,
         'matches': matches,
         'selected_match_id': int(match_id) if match_id else None,
         'selected_status': status_filter,
+        'total_count': len(tickets),
     }
     return render(request, 'tickets/user_tickets.html', context)
 
