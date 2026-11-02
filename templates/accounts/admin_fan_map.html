@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+{% block title %}نقشه هواداران استان اصفهان{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}"/>
+<style>
+    .fan-map-page { padding: 12px 0 40px; }
+    .fan-map-header {
+        display: flex; justify-content: space-between; align-items: flex-start;
+        flex-wrap: wrap; gap: 16px; margin-bottom: 22px;
+        padding-bottom: 16px; border-bottom: 2px solid rgba(212,175,55,.3);
+    }
+    .fan-map-header h2 {
+        margin: 0; font-weight: 700; color: #1A1A2E; font-size: 26px;
+    }
+    .fan-map-header h2 i { color: #D4AF37; margin-left: 10px; }
+    .fan-map-header .note {
+        color: #6c757d; font-size: 13px; margin-top: 6px; max-width: 640px; line-height: 1.7;
+    }
+    .stats-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 14px; margin-bottom: 22px;
+    }
+    .stat-card {
+        background: #fff; border: 1px solid #e8eaed; border-radius: 12px;
+        padding: 14px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,.04);
+    }
+    .stat-card .n { font-size: 24px; font-weight: 700; color: #1A1A2E; }
+    .stat-card .l { font-size: 12px; color: #6c757d; margin-top: 4px; }
+    .stat-card.gold .n { color: #D4AF37; }
+    .stat-card.green .n { color: #28a745; }
+    .stat-card.blue .n { color: #17a2b8; }
+    .stat-card.purple .n { color: #6f42c1; }
+
+    .filter-bar {
+        background: #fff; border: 1px solid #e8eaed; border-radius: 12px;
+        padding: 14px 16px; margin-bottom: 22px; display: flex; flex-wrap: wrap;
+        gap: 12px; align-items: flex-end;
+    }
+    .filter-bar label { display: block; font-size: 12px; color: #6c757d; margin-bottom: 4px; }
+    .filter-bar select {
+        min-width: 260px; border: 1px solid #ced4da; border-radius: 8px;
+        padding: 8px 10px; background: #fff;
+    }
+
+    .map-panel, .side-panel {
+        background: #fff; border: 1px solid #e8eaed; border-radius: 14px;
+        box-shadow: 0 2px 12px rgba(0,0,0,.04); overflow: hidden;
+    }
+    .panel-title {
+        padding: 14px 16px; border-bottom: 1px solid #eef0f3;
+        font-weight: 700; color: #1A1A2E; font-size: 15px;
+    }
+    .panel-title i { color: #D4AF37; margin-left: 8px; }
+    #isfahanFanMap {
+        height: 520px; width: 100%; background: #e9eef5;
+    }
+    .leaflet-popup-content { font-family: Vazirmatn, Tahoma, sans-serif; font-size: 13px; }
+    .leaflet-popup-content b { color: #1A1A2E; }
+
+    .city-table, .loyal-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .city-table th, .loyal-table th {
+        background: #f7f8fa; color: #5f6b7a; font-weight: 600;
+        padding: 10px 12px; border-bottom: 1px solid #e8eaed; text-align: right;
+    }
+    .city-table td, .loyal-table td {
+        padding: 10px 12px; border-bottom: 1px solid #f0f2f5; vertical-align: middle;
+    }
+    .city-table tr:hover, .loyal-table tr:hover { background: #fafbfc; }
+    .badge-soft {
+        display: inline-block; padding: 3px 8px; border-radius: 999px;
+        background: rgba(212,175,55,.15); color: #8a6d12; font-size: 12px; font-weight: 600;
+    }
+    .badge-loyal {
+        background: rgba(111,66,193,.12); color: #6f42c1;
+    }
+    .empty-row { text-align: center; color: #98a2b3; padding: 28px !important; }
+    .loyal-scroll { max-height: 520px; overflow: auto; }
+    @media (max-width: 991px) {
+        #isfahanFanMap { height: 380px; }
+        .loyal-scroll { max-height: none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fan-map-page">
+    <div class="fan-map-header">
+        <div>
+            <h2><i class="fas fa-map-marked-alt"></i> نقشه هواداران استان اصفهان</h2>
+            <div class="note">
+                محل هر بلیط از روی <strong>۳ رقم اول کد ملی خریدار</strong> (محل صدور شناسنامه) مشخص می‌شود، نه محل سکونت فعلی.
+                هوادار وفادار کسی است که برای <strong>حداقل ۲ مسابقه</strong> بلیط معتبر داشته باشد.
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card gold">
+            <div class="n">{{ total_tickets|rial_display }}</div>
+            <div class="l">بلیط معتبر{% if selected_match %} (این مسابقه){% endif %}</div>
+        </div>
+        <div class="stat-card green">
+            <div class="n">{{ total_buyers|rial_display }}</div>
+            <div class="l">خریدار یکتا{% if selected_match %} (این مسابقه){% endif %}</div>
+        </div>
+        <div class="stat-card blue">
+            <div class="n">{{ isfahan_tickets|rial_display }}</div>
+            <div class="l">بلیط با شناسنامه اصفهان</div>
+        </div>
+        <div class="stat-card purple">
+            <div class="n">{{ loyal_total|rial_display }}</div>
+            <div class="l">هوادار وفادار (کل تاریخچه)</div>
+        </div>
+    </div>
+
+    <form method="get" class="filter-bar">
+        <div>
+            <label for="match_id">فیلتر مسابقه (اختیاری)</label>
+            <select name="match_id" id="match_id" onchange="this.form.submit()">
+                <option value="">همه مسابقات</option>
+                {% for m in matches %}
+                    <option value="{{ m.id }}" {% if selected_match and selected_match.id == m.id %}selected{% endif %}>
+                        {{ m.home_team }} vs {{ m.away_team }} — {{ m.date_time|date:"Y/m/d" }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% if selected_match %}
+            <a href="{% url 'accounts:admin_fan_map' %}" class="btn btn-outline-secondary btn-sm">پاک کردن فیلتر</a>
+        {% endif %}
+    </form>
+
+    <div class="row g-3">
+        <div class="col-lg-7">
+            <div class="map-panel">
+                <div class="panel-title"><i class="fas fa-globe-asia"></i> نقشه شهرستان‌های استان اصفهان</div>
+                <div id="isfahanFanMap"></div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="side-panel">
+                <div class="panel-title"><i class="fas fa-list"></i> آمار شهرها</div>
+                <div style="overflow:auto; max-height:520px;">
+                    <table class="city-table">
+                        <thead>
+                        <tr>
+                            <th>شهر</th>
+                            <th>بلیط</th>
+                            <th>خریدار</th>
+                            <th>وفادار</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for c in table_cities %}
+                            {% if c.tickets or c.loyal %}
+                            <tr>
+                                <td>{{ c.name }}</td>
+                                <td>{{ c.tickets|rial_display }}</td>
+                                <td>{{ c.buyers|rial_display }}</td>
+                                <td><span class="badge-soft badge-loyal">{{ c.loyal|rial_display }}</span></td>
+                            </tr>
+                            {% endif %}
+                        {% empty %}
+                            <tr><td colspan="4" class="empty-row">هنوز بلیطی ثبت نشده است.</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="side-panel mt-3">
+        <div class="panel-title">
+            <i class="fas fa-heart"></i>
+            هواداران وفادار
+            <span class="badge-soft badge-loyal ms-2">{{ loyal_total|rial_display }} نفر</span>
+            <small class="text-muted fw-normal ms-2">(نمایش {{ loyal_fans|length }} نفر برتر)</small>
+        </div>
+        <div class="loyal-scroll">
+            <table class="loyal-table">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>نام</th>
+                    <th>کد ملی</th>
+                    <th>شهر (محل صدور)</th>
+                    <th>مسابقه</th>
+                    <th>بلیط</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for f in loyal_fans %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ f.name }}</td>
+                        <td dir="ltr">{{ f.national_code }}</td>
+                        <td>{{ f.city }}</td>
+                        <td><span class="badge-soft">{{ f.match_count }}</span></td>
+                        <td>{{ f.ticket_count|rial_display }}</td>
+                        <td>
+                            {% if f.user_id %}
+                                <a href="{% url 'accounts:admin_user_detail' f.user_id %}" class="btn btn-sm btn-outline-dark">پروفایل</a>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7" class="empty-row">هنوز هوادار وفاداری یافت نشد.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+<script>
+(function () {
+    const cities = {{ map_cities_json|safe }};
+    const map = L.map('isfahanFanMap', { scrollWheelZoom: true }).setView([32.85, 51.55], 8);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 14,
+        attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    if (!cities.length) {
+        L.popup().setLatLng([32.65, 51.67])
+            .setContent('هنوز بلیطی با کد ملی استان اصفهان ثبت نشده است.')
+            .openOn(map);
+        return;
+    }
+
+    const maxTickets = Math.max.apply(null, cities.map(c => c.tickets));
+    const bounds = [];
+    cities.forEach(function (c) {
+        const radius = 8 + Math.round(22 * (c.tickets / maxTickets));
+        const marker = L.circleMarker([c.lat, c.lng], {
+            radius: radius,
+            color: '#8a6d12',
+            weight: 2,
+            fillColor: '#D4AF37',
+            fillOpacity: 0.75
+        }).addTo(map);
+        marker.bindPopup(
+            '<b>' + c.name + '</b><br>' +
+            'بلیط: ' + c.tickets.toLocaleString('fa-IR') + '<br>' +
+            'خریدار یکتا: ' + c.buyers.toLocaleString('fa-IR') + '<br>' +
+            'هوادار وفادار: ' + c.loyal.toLocaleString('fa-IR')
+        );
+        bounds.push([c.lat, c.lng]);
+    });
+    if (bounds.length) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 10 });
+})();
+</script>
+{% endblock %}

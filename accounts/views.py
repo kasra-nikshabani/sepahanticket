@@ -651,3 +651,150 @@ def admin_site_settings(request):
             status__in=WithdrawalRequest.OPEN_STATUSES).count(),
     }
     return render(request, 'accounts/admin_site_settings.html', context)
+
+
+@login_required
+@staff_member_required
+def admin_fan_map(request):
+    """نقشهٔ استان اصفهان: محل صدور شناسنامهٔ خریداران بلیط + هواداران وفادار.
+
+    محل از ۳ رقم اول کد ملی خریدار روی بلیط گرفته می‌شود (محل صدور شناسنامه)،
+    نه محل سکونت فعلی. هوادار وفادار کسی است که برای حداقل ۲ مسابقهٔ متفاوت
+    بلیط معتبر (پرداخت‌شده / صدور ادمین / صدور ویژه) داشته باشد.
+    """
+    from django.db.models import Count
+    from tickets.models import Ticket
+    from matches.models import Match
+    from .isfahan_geo import ISFAHAN_CITIES, city_for_national_code, OUTSIDE, UNKNOWN
+
+    match_id = request.GET.get('match_id', '').strip()
+    selected_match = None
+
+    tickets_qs = Ticket.objects.filter(
+        status__in=['paid', 'admin_assigned', 'vip_issued'],
+    ).exclude(national_code__isnull=True).exclude(national_code='')
+
+    if match_id.isdigit():
+        selected_match = Match.objects.filter(id=int(match_id)).first()
+        if selected_match:
+            tickets_qs = tickets_qs.filter(match_id=selected_match.id)
+
+    # ===== آمار شهرها از روی بلیط‌ها =====
+    city_stats = {
+        key: {
+            'key': key,
+            'name': city['name'],
+            'lat': city['lat'],
+            'lng': city['lng'],
+            'tickets': 0,
+            'buyers': set(),
+            'loyal': 0,
+        }
+        for key, city in ISFAHAN_CITIES.items()
+    }
+    city_stats[OUTSIDE['key']] = {
+        'key': OUTSIDE['key'], 'name': OUTSIDE['name'],
+        'lat': None, 'lng': None, 'tickets': 0, 'buyers': set(), 'loyal': 0,
+    }
+    city_stats[UNKNOWN['key']] = {
+        'key': UNKNOWN['key'], 'name': UNKNOWN['name'],
+        'lat': None, 'lng': None, 'tickets': 0, 'buyers': set(), 'loyal': 0,
+    }
+
+    for national_code in tickets_qs.values_list('national_code', flat=True).iterator(chunk_size=2000):
+        info = city_for_national_code(national_code)
+        bucket = city_stats[info['key']]
+        bucket['tickets'] += 1
+        bucket['buyers'].add(national_code)
+
+    # ===== هواداران وفادار: ≥۲ مسابقهٔ متفاوت با بلیط معتبر =====
+    # روی کل تاریخچه حساب می‌شود (نه فقط فیلتر مسابقه)، چون وفاداری
+    # یعنی حضور در چند بازی -- فیلتر مسابقه فقط آمار خرید همان بازی را
+    # روی نقشه محدود می‌کند.
+    loyal_rows = (
+        Ticket.objects.filter(status__in=['paid', 'admin_assigned', 'vip_issued'])
+        .exclude(national_code__isnull=True).exclude(national_code='')
+        .values('national_code')
+        .annotate(match_count=Count('match_id', distinct=True), ticket_count=Count('id'))
+        .filter(match_count__gte=2)
+        .order_by('-match_count', '-ticket_count')
+    )
+
+    # نام نمایشی از روی کاربر ثبت‌نام‌شده با همان کد ملی (اگر باشد)
+    loyal_codes = [row['national_code'] for row in loyal_rows]
+    users_by_code = {
+        u.national_code: u
+        for u in User.objects.filter(national_code__in=loyal_codes).only(
+            'id', 'national_code', 'first_name', 'last_name', 'phone_number', 'username'
+        )
+    }
+
+    loyal_fans = []
+    for row in loyal_rows:
+        code = row['national_code']
+        info = city_for_national_code(code)
+        city_stats[info['key']]['loyal'] += 1
+        user = users_by_code.get(code)
+        if user:
+            display = (f'{user.first_name} {user.last_name}').strip() or user.username
+            phone = user.phone_number or '—'
+        else:
+            display = 'بدون حساب کاربری'
+            phone = '—'
+        loyal_fans.append({
+            'national_code': code,
+            'name': display,
+            'phone': phone,
+            'city': info['name'],
+            'city_key': info['key'],
+            'match_count': row['match_count'],
+            'ticket_count': row['ticket_count'],
+            'user_id': user.id if user else None,
+        })
+
+    # آماده‌سازی برای قالب / JSON نقشه
+    map_cities = []
+    table_cities = []
+    total_tickets = 0
+    total_buyers = 0
+    isfahan_tickets = 0
+    for key, bucket in city_stats.items():
+        buyers = len(bucket['buyers'])
+        total_tickets += bucket['tickets']
+        total_buyers += buyers
+        if key not in (OUTSIDE['key'], UNKNOWN['key']):
+            isfahan_tickets += bucket['tickets']
+        row = {
+            'key': key,
+            'name': bucket['name'],
+            'lat': bucket['lat'],
+            'lng': bucket['lng'],
+            'tickets': bucket['tickets'],
+            'buyers': buyers,
+            'loyal': bucket['loyal'],
+        }
+        table_cities.append(row)
+        if bucket['lat'] is not None and bucket['tickets'] > 0:
+            map_cities.append(row)
+
+    table_cities.sort(key=lambda r: (-r['tickets'], r['name']))
+    # فقط ۳۰ هوادار برتر در جدول؛ بقیه در آمار شهرها هست
+    loyal_preview = loyal_fans[:50]
+
+    matches = Match.objects.order_by('-date_time')[:40]
+
+    import json
+    context = {
+        'matches': matches,
+        'selected_match': selected_match,
+        'map_cities_json': json.dumps(map_cities, ensure_ascii=False),
+        'table_cities': table_cities,
+        'loyal_fans': loyal_preview,
+        'loyal_total': len(loyal_fans),
+        'total_tickets': total_tickets,
+        'total_buyers': total_buyers,
+        'isfahan_tickets': isfahan_tickets,
+        'outside_tickets': city_stats[OUTSIDE['key']]['tickets'],
+        'unknown_tickets': city_stats[UNKNOWN['key']]['tickets'],
+    }
+    return render(request, 'accounts/admin_fan_map.html', context)
