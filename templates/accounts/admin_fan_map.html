@@ -226,9 +226,12 @@
 (function () {
     const cities = {{ map_cities_json|safe }};
     const map = L.map('isfahanFanMap', { scrollWheelZoom: true }).setView([32.85, 51.55], 8);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // tile.openstreetmap.org در production مسدود می‌کند (403 / x-blocked)؛
+    // Carto روی همان داده‌ی OSM سرو می‌دهد و برای این پنل مناسب است.
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         maxZoom: 14,
-        attribution: '&copy; OpenStreetMap'
+        subdomains: 'abcd',
+        attribution: '&copy; OpenStreetMap &copy; CARTO'
     }).addTo(map);
 
     if (!cities.length) {
