@@ -111,7 +111,7 @@
     .zone-vip { background: #f3e5f5; color: #6a1b9a; border-color: #ce93d8; }
 
     .vt-actions {
-        display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px;
+        display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 14px;
     }
     .vt-actions .vt-btn { width: 100%; }
     .vt-actions .pdf-slot.disabled,
@@ -145,7 +145,6 @@
         .vt-seat-box { grid-template-columns: 1fr; text-align: right; }
         .vt-seat-box > div { display: flex; justify-content: space-between; align-items: center; }
         .vt-seat-box .k, .vt-seat-box .v { display: inline; margin: 0; font-size: 15px; }
-        .vt-actions { grid-template-columns: 1fr; }
         .vt-batch { bottom: 10px; }
     }
 </style>
@@ -155,7 +154,7 @@
 <div class="vt-page">
     <div class="vt-hero">
         <h1><i class="fas fa-inbox"></i> بلیط‌های دریافتی</h1>
-        <p>اینجا بلیط‌هایی است که باشگاه برای شما فرستاده. فقط دانلود کنید یا برای دیگران بفرستید.</p>
+        <p>اینجا بلیط‌هایی است که باشگاه برای شما فرستاده. فقط دانلود کنید و روی گوشی ذخیره کنید.</p>
         <div class="vt-steps">
             <div class="vt-step">
                 <div class="n">۱</div>
@@ -163,7 +162,7 @@
             </div>
             <div class="vt-step">
                 <div class="n">۲</div>
-                <div><b>دانلود یا ارسال</b><span>دکمه سبز = ذخیره روی گوشی. دکمه آبی = فرستادن برای دیگران.</span></div>
+                <div><b>دانلود کنید</b><span>روی دکمه سبز «دانلود بلیط» بزنید تا فایل روی گوشی ذخیره شود.</span></div>
             </div>
         </div>
     </div>
@@ -214,7 +213,6 @@
                          data-ticket-number="{{ ticket.ticket_number }}"
                          {% if ticket.pdf_file %}
                          data-pdf-url="{% url 'tickets:download_ticket_pdf' ticket.id %}"
-                         data-share-url="{{ request.scheme }}://{{ request.get_host }}{% url 'tickets:shared_ticket_pdf' ticket.share_token %}"
                          {% endif %}>
                     <div class="vt-card-top">
                         <input type="checkbox" name="ticket_ids" value="{{ ticket.id }}"
@@ -242,16 +240,10 @@
                                target="_blank" class="vt-btn vt-btn-green pdf-slot" download>
                                 <i class="fas fa-download"></i> دانلود بلیط
                             </a>
-                            <button type="button" class="vt-btn vt-btn-blue share-one-btn">
-                                <i class="fas fa-share-alt"></i> ارسال برای دیگران
-                            </button>
                         {% else %}
                             <span class="vt-btn btn-wait pdf-slot">
                                 <i class="fas fa-clock"></i> در حال آماده‌سازی…
                             </span>
-                            <button type="button" class="vt-btn vt-btn-soft" disabled>
-                                کمی صبر کنید
-                            </button>
                         {% endif %}
                     </div>
                 </article>
@@ -270,9 +262,6 @@
     <div class="count"><span id="selectedCount">۰</span> بلیط انتخاب شده</div>
     <button type="button" class="vt-btn vt-btn-green" id="downloadBtn">
         <i class="fas fa-file-archive"></i> دانلود همه انتخاب‌شده‌ها
-    </button>
-    <button type="button" class="vt-btn vt-btn-blue" id="shareBtn">
-        <i class="fas fa-share-alt"></i> ارسال همه انتخاب‌شده‌ها
     </button>
 </div>
 {% endblock %}
@@ -310,43 +299,6 @@
     }
     checkboxes().forEach(c => c.addEventListener('change', refresh));
 
-    function shareLinks(links) {
-        if (!links.length) {
-            alert('لینک این بلیط هنوز آماده نیست. چند لحظه دیگر دوباره امتحان کنید.');
-            return;
-        }
-        const shareData = links.length === 1
-            ? { title: 'بلیط سپاهان', text: 'برای دانلود بلیط این لینک را باز کنید:', url: links[0] }
-            : { title: 'بلیط‌های سپاهان', text: links.length + ' بلیط:\n' + links.join('\n') };
-        const fallback = () => {
-            const text = links.join('\n');
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(text).then(() => alert('لینک کپی شد. می‌توانید برای دیگران بفرستید.'));
-            } else {
-                prompt('لینک را کپی کنید:', text);
-            }
-        };
-        if (navigator.share) {
-            navigator.share(shareData).catch(err => { if (err.name !== 'AbortError') fallback(); });
-        } else {
-            fallback();
-        }
-    }
-
-    document.querySelectorAll('.share-one-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const card = btn.closest('.vt-card');
-            shareLinks(card.dataset.shareUrl ? [card.dataset.shareUrl] : []);
-        });
-    });
-
-    document.getElementById('shareBtn').addEventListener('click', () => {
-        const rows = checkboxes().filter(c => c.checked).map(c => c.closest('.vt-card'));
-        const links = rows.map(r => r.dataset.shareUrl).filter(Boolean);
-        if (!rows.length) { alert('اول حداقل یک بلیط را انتخاب کنید.'); return; }
-        shareLinks(links);
-    });
-
     document.getElementById('downloadBtn').addEventListener('click', () => {
         const checked = checkboxes().filter(c => c.checked);
         if (!checked.length) { alert('اول حداقل یک بلیط را انتخاب کنید.'); return; }
@@ -378,15 +330,10 @@
                         const card = document.querySelector(`.vt-card[data-ticket-id="${id}"]`);
                         if (!card) return;
                         card.dataset.pdfUrl = info.pdf_url;
-                        card.dataset.shareUrl = info.share_url;
                         const actions = card.querySelector('.vt-actions');
                         if (actions) {
                             actions.innerHTML =
-                                `<a href="${info.pdf_url}" target="_blank" class="vt-btn vt-btn-green pdf-slot" download><i class="fas fa-download"></i> دانلود بلیط</a>` +
-                                `<button type="button" class="vt-btn vt-btn-blue share-one-btn"><i class="fas fa-share-alt"></i> ارسال برای دیگران</button>`;
-                            actions.querySelector('.share-one-btn').addEventListener('click', () => {
-                                shareLinks([info.share_url]);
-                            });
+                                `<a href="${info.pdf_url}" target="_blank" class="vt-btn vt-btn-green pdf-slot" download><i class="fas fa-download"></i> دانلود بلیط</a>`;
                         }
                     });
                     setTimeout(tick, nextDelay());
