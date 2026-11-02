@@ -28,6 +28,11 @@ urlpatterns = [
     path('admin/users/', views.admin_user_list, name='admin_user_list'),
     path('admin/users/<int:user_id>/', views.admin_user_detail, name='admin_user_detail'),
     path('admin/fan-map/', views.admin_fan_map, name='admin_fan_map'),
+    path(
+        'admin/fan-map/tiles/<int:z>/<int:x>/<int:y>.png',
+        views.admin_fan_map_tile,
+        name='admin_fan_map_tile',
+    ),
 
     # ===== پنل ادمین: تنظیمات اضطراری =====
     path('admin/emergency-settings/', views.admin_emergency_settings, name='admin_emergency_settings'),

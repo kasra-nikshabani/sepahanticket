@@ -55,8 +55,17 @@
     }
     .panel-title i { color: #D4AF37; margin-left: 8px; }
     #isfahanFanMap {
-        height: 520px; width: 100%; background: #e9eef5;
+        height: 520px; width: 100%;
+        background:
+            radial-gradient(ellipse at 50% 45%, #f4f7fb 0%, #e4ebf4 55%, #d5dee9 100%);
     }
+    .fan-city-label {
+        background: transparent !important; border: none !important;
+        box-shadow: none !important; color: #3a4555; font-weight: 700;
+        font-size: 11px; text-shadow: 0 0 3px #fff, 0 0 6px #fff, 1px 1px 0 #fff;
+        white-space: nowrap;
+    }
+    .fan-city-label::before { display: none !important; }
     .leaflet-popup-content { font-family: Vazirmatn, Tahoma, sans-serif; font-size: 13px; }
     .leaflet-popup-content b { color: #1A1A2E; }
 
@@ -225,31 +234,65 @@
 <script>
 (function () {
     const cities = {{ map_cities_json|safe }};
-    const map = L.map('isfahanFanMap', { scrollWheelZoom: true }).setView([32.85, 51.55], 8);
-    // OSM عمومی و Carto بدون API key برای production مسدودند؛
-    // Esri World Street Map بدون کلید برای این پنل داخلی کار می‌کند.
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+    const allCities = {{ all_cities_json|safe }};
+    const map = L.map('isfahanFanMap', {
+        scrollWheelZoom: true,
+        zoomControl: true,
+        attributionControl: true
+    }).setView([32.85, 51.55], 8);
+
+    // تایل از دامنهٔ خود سایت (پروکسی سمت سرور) — مرورگر به CDN خارجی وصل نمی‌شود
+    L.tileLayer('{% url "accounts:admin_fan_map_tile" z=0 x=0 y=0 %}'
+        .replace('/0/0/0.png', '/{z}/{x}/{y}.png'), {
         maxZoom: 14,
-        attribution: 'Tiles &copy; Esri'
+        attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
+    // محدوده تقریبی استان اصفهان (بدون وابستگی به تایل خارجی هم قابل فهم است)
+    const province = L.polygon([
+        [34.45, 50.85], [34.35, 51.75], [34.05, 52.55], [33.55, 53.35],
+        [32.95, 53.55], [32.35, 53.25], [31.55, 52.85], [31.15, 52.15],
+        [31.05, 51.35], [31.35, 50.55], [31.95, 49.95], [32.65, 49.85],
+        [33.35, 49.95], [33.95, 50.25], [34.45, 50.85]
+    ], {
+        color: '#8a6d12',
+        weight: 2,
+        dashArray: '6 4',
+        fillColor: '#D4AF37',
+        fillOpacity: 0.06
+    }).addTo(map);
+
+    allCities.forEach(function (c) {
+        const base = L.circleMarker([c.lat, c.lng], {
+            radius: 3,
+            color: '#94a3b8',
+            weight: 1,
+            fillColor: '#cbd5e1',
+            fillOpacity: 0.9
+        }).addTo(map);
+        base.bindTooltip(c.name, {
+            permanent: c.tickets > 0,
+            direction: 'right',
+            offset: [6, 0],
+            className: 'fan-city-label'
+        });
+    });
+
     if (!cities.length) {
-        L.popup().setLatLng([32.65, 51.67])
-            .setContent('هنوز بلیطی با کد ملی استان اصفهان ثبت نشده است.')
-            .openOn(map);
+        map.fitBounds(province.getBounds(), { padding: [30, 30] });
         return;
     }
 
     const maxTickets = Math.max.apply(null, cities.map(c => c.tickets));
     const bounds = [];
     cities.forEach(function (c) {
-        const radius = 8 + Math.round(22 * (c.tickets / maxTickets));
+        const radius = 10 + Math.round(26 * (c.tickets / maxTickets));
         const marker = L.circleMarker([c.lat, c.lng], {
             radius: radius,
             color: '#8a6d12',
             weight: 2,
             fillColor: '#D4AF37',
-            fillOpacity: 0.75
+            fillOpacity: 0.72
         }).addTo(map);
         marker.bindPopup(
             '<b>' + c.name + '</b><br>' +
@@ -259,7 +302,7 @@
         );
         bounds.push([c.lat, c.lng]);
     });
-    if (bounds.length) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 10 });
+    if (bounds.length) map.fitBounds(bounds, { padding: [50, 50], maxZoom: 10 });
 })();
 </script>
 {% endblock %}

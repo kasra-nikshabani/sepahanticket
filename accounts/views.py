@@ -783,11 +783,26 @@ def admin_fan_map(request):
 
     matches = Match.objects.order_by('-date_time')[:40]
 
+    # همهٔ شهرهای استان برای برچسب روی نقشه (حتی بدون بلیط)
+    all_cities = [
+        {
+            'key': key,
+            'name': city['name'],
+            'lat': city['lat'],
+            'lng': city['lng'],
+            'tickets': city_stats[key]['tickets'],
+            'buyers': len(city_stats[key]['buyers']),
+            'loyal': city_stats[key]['loyal'],
+        }
+        for key, city in ISFAHAN_CITIES.items()
+    ]
+
     import json
     context = {
         'matches': matches,
         'selected_match': selected_match,
         'map_cities_json': json.dumps(map_cities, ensure_ascii=False),
+        'all_cities_json': json.dumps(all_cities, ensure_ascii=False),
         'table_cities': table_cities,
         'loyal_fans': loyal_preview,
         'loyal_total': len(loyal_fans),
@@ -798,3 +813,52 @@ def admin_fan_map(request):
         'unknown_tickets': city_stats[UNKNOWN['key']]['tickets'],
     }
     return render(request, 'accounts/admin_fan_map.html', context)
+
+
+@login_required
+@staff_member_required
+def admin_fan_map_tile(request, z, x, y):
+    """پروکسی تایل نقشه برای پنل ادمین.
+
+    مرورگرهای داخل ایران اغلب به Esri/OSM/Carto مستقیم دسترسی ندارند یا
+    ۴۰۳ می‌گیرند؛ سرور می‌تواند از tile.openstreetmap.de بگیرد و همان را
+    با کش Redis برگرداند تا نقشه از دامنهٔ خودِ سایت لود شود.
+    """
+    from django.core.cache import cache
+    from django.http import HttpResponse, HttpResponseBadRequest
+    import urllib.request
+
+    try:
+        z_i, x_i, y_i = int(z), int(x), int(y)
+    except (TypeError, ValueError):
+        return HttpResponseBadRequest('bad tile')
+    if not (0 <= z_i <= 14 and x_i >= 0 and y_i >= 0):
+        return HttpResponseBadRequest('out of range')
+
+    cache_key = f'fanmap_tile:{z_i}:{x_i}:{y_i}'
+    cached = cache.get(cache_key)
+    if cached:
+        resp = HttpResponse(cached, content_type='image/png')
+        resp['Cache-Control'] = 'public, max-age=86400'
+        return resp
+
+    url = f'https://tile.openstreetmap.de/{z_i}/{x_i}/{y_i}.png'
+    req = urllib.request.Request(
+        url,
+        headers={
+            'User-Agent': 'SepahanTicketAdminFanMap/1.0 (internal staff panel; contact=admin@ticket.sepahansc.com)',
+            'Accept': 'image/png,image/*;q=0.8,*/*;q=0.5',
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=8) as upstream:
+            data = upstream.read()
+            content_type = upstream.headers.get('Content-Type', 'image/png')
+    except Exception:
+        return HttpResponse(status=502)
+
+    if data:
+        cache.set(cache_key, data, timeout=60 * 60 * 24 * 7)
+    resp = HttpResponse(data, content_type=content_type)
+    resp['Cache-Control'] = 'public, max-age=86400'
+    return resp
