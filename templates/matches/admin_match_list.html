@@ -11,76 +11,6 @@
             padding: 20px 0;
         }
 
-        /* ===== هدر کارت مسابقه ===== */
-        .match-card .card-header {
-            background: #f8f9fa !important; /* پس‌زمینه روشن */
-            padding: 14px 18px;
-            border-bottom: 2px solid #D4AF37 !important; /* خط طلایی */
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .match-card .card-header .teams {
-            font-weight: 700;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-wrap: wrap;
-            color: #1A1A2E !important; /* ← مشکی با !important */
-        }
-
-        .match-card .card-header .teams .sport-badge {
-            font-size: 11px;
-            padding: 2px 10px;
-            border-radius: 50px;
-            background: rgba(0, 0, 0, 0.08);
-            color: #D4AF37;
-            font-weight: 600;
-        }
-
-        .match-card .card-header .teams .sport-icon {
-            color: #D4AF37;
-        }
-
-        .match-card .card-header .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 14px;
-            border-radius: 50px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .match-card .card-header .status-badge .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        .match-card .card-header .status-badge.active {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .match-card .card-header .status-badge.active .dot {
-            background: #28a745;
-        }
-
-        .match-card .card-header .status-badge.inactive {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .match-card .card-header .status-badge.inactive .dot {
-            background: #dc3545;
-        }
-
         /* ===== هدر ===== */
         .page-header {
             display: flex;
@@ -315,95 +245,204 @@
         /* ===== کارت‌های مسابقه ===== */
         .matches-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
             gap: 24px;
             margin-bottom: 30px;
         }
 
         .match-card {
             background: #fff;
-            border-radius: 16px;
+            border-radius: 18px;
             border: 1px solid #e8eaed;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
             overflow: hidden;
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
             display: flex;
             flex-direction: column;
         }
 
         .match-card:hover {
             transform: translateY(-6px);
-            box-shadow: 0 12px 40px rgba(212, 175, 55, 0.15);
-            border-color: #D4AF37;
+            box-shadow: 0 16px 40px rgba(26, 26, 46, 0.14);
+            border-color: rgba(212, 175, 55, 0.55);
         }
 
-        .match-card .card-header {
-            background: linear-gradient(135deg, #1A1A2E, #16213E);
-            padding: 14px 18px;
+        .match-card .match-visual {
+            position: relative;
+            background:
+                radial-gradient(ellipse at 20% 30%, rgba(212, 175, 55, 0.18), transparent 45%),
+                radial-gradient(ellipse at 80% 70%, rgba(23, 162, 184, 0.12), transparent 40%),
+                linear-gradient(145deg, #121225 0%, #1A1A2E 45%, #16213E 100%);
+            padding: 18px 16px 20px;
             color: #fff;
+            overflow: hidden;
+        }
+
+        .match-card .match-visual::after {
+            content: '';
+            position: absolute;
+            inset: auto 0 0 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #D4AF37, transparent);
+        }
+
+        .match-card .visual-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
             gap: 8px;
-        }
-
-        .match-card .card-header .teams {
-            font-weight: 700;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            margin-bottom: 14px;
             flex-wrap: wrap;
-            color: #fff;
         }
 
-        .match-card .card-header .teams .sport-badge {
+        .match-card .sport-badge {
             font-size: 11px;
-            padding: 2px 10px;
+            padding: 3px 12px;
             border-radius: 50px;
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.1);
             color: #D4AF37;
             font-weight: 600;
-        }
-
-        .match-card .card-header .teams .sport-icon {
-            color: #D4AF37;
-        }
-
-        .match-card .card-header .status-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 4px 14px;
+        }
+
+        .match-card .status-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .match-card .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
             border-radius: 50px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
         }
 
-        .match-card .card-header .status-badge .dot {
-            width: 8px;
-            height: 8px;
+        .match-card .status-badge .dot {
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
             display: inline-block;
         }
 
-        .match-card .card-header .status-badge.active {
-            background: #d4edda;
-            color: #155724;
+        .match-card .status-badge.active {
+            background: rgba(40, 167, 69, 0.2);
+            color: #8fdf9f;
         }
 
-        .match-card .card-header .status-badge.active .dot {
-            background: #28a745;
+        .match-card .status-badge.active .dot { background: #28a745; }
+
+        .match-card .status-badge.inactive {
+            background: rgba(220, 53, 69, 0.2);
+            color: #f5a3ad;
         }
 
-        .match-card .card-header .status-badge.inactive {
-            background: #f8d7da;
-            color: #721c24;
+        .match-card .status-badge.inactive .dot { background: #dc3545; }
+
+        .match-card .status-badge.free {
+            background: rgba(212, 175, 55, 0.2);
+            color: #D4AF37;
         }
 
-        .match-card .card-header .status-badge.inactive .dot {
-            background: #dc3545;
+        .match-card .status-badge.free .dot { background: #D4AF37; }
+
+        .match-card .teams-showcase {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .match-card .team-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 0;
+            text-align: center;
+        }
+
+        .match-card .team-logo,
+        .match-card .team-logo-fallback {
+            width: 78px;
+            height: 78px;
+            border-radius: 50%;
+            object-fit: contain;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(212, 175, 55, 0.28);
+            padding: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            transition: transform 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+        }
+
+        .match-card:hover .team-logo,
+        .match-card:hover .team-logo-fallback {
+            border-color: #D4AF37;
+            transform: scale(1.06);
+            box-shadow: 0 10px 28px rgba(212, 175, 55, 0.22);
+        }
+
+        .match-card .team-logo-fallback {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.45);
+            letter-spacing: -0.5px;
+        }
+
+        .match-card .team-name {
+            margin-top: 10px;
+            font-weight: 800;
+            font-size: 14px;
+            line-height: 1.35;
+            color: #fff;
+            max-width: 100%;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .match-card .team-role {
+            margin-top: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 999px;
+        }
+
+        .match-card .team-role.home {
+            background: rgba(40, 167, 69, 0.15);
+            color: #8fdf9f;
+        }
+
+        .match-card .team-role.away {
+            background: rgba(255, 193, 7, 0.15);
+            color: #ffd966;
+        }
+
+        .match-card .vs-badge {
+            flex-shrink: 0;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            color: #1A1A2E;
+            background: linear-gradient(135deg, #F2D57A, #D4AF37 55%, #B8960F);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.18), 0 8px 20px rgba(0, 0, 0, 0.25);
         }
 
         .match-card .card-body {
@@ -813,8 +852,20 @@
                 grid-template-columns: 1fr;
             }
 
-            .match-card .card-header .teams {
-                font-size: 14px;
+            .match-card .team-logo,
+            .match-card .team-logo-fallback {
+                width: 64px;
+                height: 64px;
+            }
+
+            .match-card .team-name {
+                font-size: 12px;
+            }
+
+            .match-card .vs-badge {
+                width: 40px;
+                height: 40px;
+                font-size: 12px;
             }
 
             .match-card .card-footer .card-actions .btn-sm {
@@ -923,35 +974,60 @@
         <div class="matches-grid">
             {% for item in page_obj %}
                 <div class="match-card">
-                    <div class="card-header">
-                        <div class="teams">
-                    <span class="sport-icon">
-                        {% if item.match.sport_type == 'football' %}<i class="fas fa-futbol"></i>
-                        {% elif item.match.sport_type == 'volleyball' %}<i class="fas fa-volleyball-ball"></i>
-                        {% elif item.match.sport_type == 'handball' %}<i class="fas fa-handball"></i>
-                        {% elif item.match.sport_type == 'basketball' %}<i class="fas fa-basketball-ball"></i>
-                        {% else %}<i class="fas fa-trophy"></i>{% endif %}
-                    </span>
-                            {{ item.match.home_team }} <i class="fas fa-futbol"></i> {{ item.match.away_team }}
-                            <span class="sport-badge">{{ item.match.get_sport_type_display }}</span>
+                    <div class="match-visual">
+                        <div class="visual-top">
+                            <span class="sport-badge">
+                                {% if item.match.sport_type == 'football' %}<i class="fas fa-futbol"></i>
+                                {% elif item.match.sport_type == 'volleyball' %}<i class="fas fa-volleyball-ball"></i>
+                                {% elif item.match.sport_type == 'handball' %}<i class="fas fa-handball"></i>
+                                {% elif item.match.sport_type == 'basketball' %}<i class="fas fa-basketball-ball"></i>
+                                {% else %}<i class="fas fa-trophy"></i>{% endif %}
+                                {{ item.match.get_sport_type_display }}
+                            </span>
+                            <div class="status-row">
+                                <span class="status-badge {% if item.match.is_active %}active{% else %}inactive{% endif %}">
+                                    <span class="dot"></span> {{ item.match.is_active|yesno:"فعال,غیرفعال" }}
+                                </span>
+                                <span class="status-badge {% if item.match.ticket_sales_enabled %}active{% else %}inactive{% endif %}">
+                                    <span class="dot"></span> {{ item.match.ticket_sales_enabled|yesno:"فروش فعال,فروش غیرفعال" }}
+                                </span>
+                                {% if item.match.is_free %}
+                                    <span class="status-badge free"><span class="dot"></span> رایگان</span>
+                                {% endif %}
+                            </div>
                         </div>
-                        <div class="d-flex gap-1 flex-wrap">
-                            <span class="status-badge {% if item.match.is_active %}active{% else %}inactive{% endif %}">
-                        <span class="dot"></span> {{ item.match.is_active|yesno:"فعال,غیرفعال" }}
-                    </span>
-                            <span class="status-badge {% if item.match.ticket_sales_enabled %}active{% else %}inactive{% endif %}">
-                        <span class="dot"></span> {{ item.match.ticket_sales_enabled|yesno:"فروش بلیط فعال,فروش بلیط غیرفعال" }}
-                    </span>
-                            {% if item.match.is_free %}
-                            <span class="status-badge active"><span class="dot"></span> رایگان</span>
-                            {% endif %}
+
+                        <div class="teams-showcase">
+                            <div class="team-side">
+                                {% if item.match.home_team_logo %}
+                                    <img src="{{ item.match.home_team_logo.url }}" alt="{{ item.match.home_team }}" class="team-logo">
+                                {% else %}
+                                    <div class="team-logo-fallback">{{ item.match.home_team|slice:":2" }}</div>
+                                {% endif %}
+                                <div class="team-name">{{ item.match.home_team }}</div>
+                                <span class="team-role home">میزبان</span>
+                            </div>
+
+                            <div class="vs-badge">VS</div>
+
+                            <div class="team-side">
+                                {% if item.match.away_team_logo %}
+                                    <img src="{{ item.match.away_team_logo.url }}" alt="{{ item.match.away_team }}" class="team-logo">
+                                {% else %}
+                                    <div class="team-logo-fallback">{{ item.match.away_team|slice:":2" }}</div>
+                                {% endif %}
+                                <div class="team-name">{{ item.match.away_team }}</div>
+                                <span class="team-role away">میهمان</span>
+                            </div>
                         </div>
                     </div>
 
                     <div class="card-body">
                         <div class="match-meta">
                             <span><i class="fas fa-calendar-day"></i> {{ item.match.date_time|date:"Y/m/d" }}</span>
-                            <span><i class="fas fa-clock"></i> {{ item.match.date_time|date:"H:i" }}</span>
+                            {% if item.match.has_time %}
+                                <span><i class="fas fa-clock"></i> {{ item.match.date_time|date:"H:i" }}</span>
+                            {% endif %}
                             <span><i class="fas fa-map-marker-alt"></i> {{ item.match.stadium.name }}</span>
                         </div>
 
