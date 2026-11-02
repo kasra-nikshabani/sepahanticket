@@ -5,350 +5,715 @@
 
 {% block extra_css %}
 <style>
-    .vip-assign-page { padding: 12px 0 80px; }
-    .page-head {
-        display: flex; justify-content: space-between; align-items: flex-start;
-        flex-wrap: wrap; gap: 14px; margin-bottom: 18px;
-        padding-bottom: 14px; border-bottom: 2px solid rgba(212,175,55,.3);
+    .va-page { padding: 8px 0 110px; max-width: 1180px; margin: 0 auto; }
+
+    /* ===== Hero مسابقه ===== */
+    .va-hero {
+        position: relative;
+        border-radius: 20px;
+        overflow: hidden;
+        margin-bottom: 18px;
+        color: #fff;
+        background:
+            radial-gradient(ellipse at 15% 20%, rgba(212,175,55,.22), transparent 42%),
+            radial-gradient(ellipse at 90% 80%, rgba(111,66,193,.18), transparent 40%),
+            linear-gradient(135deg, #121225 0%, #1A1A2E 50%, #16213E 100%);
+        box-shadow: 0 12px 36px rgba(26,26,46,.18);
     }
-    .page-head h2 { margin: 0; font-size: 24px; font-weight: 700; color: #1A1A2E; }
-    .page-head h2 i { color: #D4AF37; margin-left: 8px; }
-    .page-head .sub { color: #6c757d; font-size: 13px; margin-top: 6px; }
-    .match-chip {
-        display: inline-flex; align-items: center; gap: 10px;
-        background: #1A1A2E; color: #fff; border-radius: 999px;
-        padding: 6px 14px 6px 8px; font-size: 13px; font-weight: 600;
+    .va-hero-inner {
+        display: flex; justify-content: space-between; align-items: center;
+        gap: 16px; flex-wrap: wrap; padding: 22px 22px 20px;
     }
-    .match-chip img, .match-chip .ph {
-        width: 28px; height: 28px; border-radius: 50%; object-fit: contain;
-        background: rgba(255,255,255,.1); border: 1px solid rgba(212,175,55,.4);
+    .va-hero h1 {
+        margin: 0 0 6px; font-size: 22px; font-weight: 800; letter-spacing: -0.2px;
     }
-    .match-chip .ph {
+    .va-hero h1 i { color: #D4AF37; margin-left: 8px; }
+    .va-hero .lead { margin: 0; color: rgba(255,255,255,.62); font-size: 13px; line-height: 1.7; max-width: 520px; }
+    .va-match {
+        display: flex; align-items: center; gap: 14px; margin-top: 14px;
+    }
+    .va-team { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; }
+    .va-logo, .va-logo-ph {
+        width: 42px; height: 42px; border-radius: 50%; object-fit: contain;
+        background: rgba(255,255,255,.08); border: 2px solid rgba(212,175,55,.35);
+        padding: 4px;
+    }
+    .va-logo-ph {
         display: inline-flex; align-items: center; justify-content: center;
-        font-size: 10px; color: #D4AF37;
+        color: #D4AF37; font-size: 12px; font-weight: 800;
     }
-    .match-chip .vs { color: #D4AF37; font-weight: 800; font-size: 11px; }
+    .va-vs {
+        width: 36px; height: 36px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 11px; font-weight: 900; color: #1A1A2E;
+        background: linear-gradient(135deg, #F2D57A, #D4AF37 60%, #B8960F);
+        box-shadow: 0 0 0 3px rgba(212,175,55,.2);
+    }
+    .va-hero-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .va-btn {
+        display: inline-flex; align-items: center; gap: 7px;
+        border-radius: 10px; padding: 9px 14px; font-weight: 600; font-size: 13px;
+        text-decoration: none; border: none; cursor: pointer; transition: .2s ease;
+    }
+    .va-btn:hover { transform: translateY(-1px); }
+    .va-btn-ghost {
+        background: rgba(255,255,255,.08); color: #fff;
+        border: 1px solid rgba(255,255,255,.14);
+    }
+    .va-btn-ghost:hover { background: rgba(255,255,255,.14); color: #D4AF37; }
+    .va-btn-dark { background: #1A1A2E; color: #D4AF37; }
+    .va-btn-dark:hover { background: #2A2A4E; color: #fff; }
+    .va-btn-gold { background: linear-gradient(135deg, #F2D57A, #D4AF37); color: #1A1A2E; }
+    .va-btn-gold:hover { filter: brightness(1.05); color: #1A1A2E; }
+    .va-btn-purple { background: #6f42c1; color: #fff; }
+    .va-btn-purple:hover { background: #5a32a3; color: #fff; }
+    .va-btn-soft {
+        background: #f3f4f6; color: #1A1A2E; border: 1px solid #e5e7eb;
+    }
+    .va-btn-soft:hover { border-color: #D4AF37; color: #8a6d12; }
 
-    .stats-row {
-        display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 12px; margin-bottom: 16px;
+    /* ===== آمار ===== */
+    .va-stats {
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px;
     }
-    .stat {
-        background: #fff; border: 1px solid #e8eaed; border-radius: 12px;
-        padding: 12px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,.04);
-    }
-    .stat .n { font-size: 22px; font-weight: 700; color: #1A1A2E; }
-    .stat .l { font-size: 12px; color: #6c757d; margin-top: 2px; }
-    .stat.gold .n { color: #D4AF37; }
-    .stat.blue .n { color: #17a2b8; }
-    .stat.purple .n { color: #6f42c1; }
-
-    .toolbar {
-        background: #fff; border: 1px solid #e8eaed; border-radius: 12px;
-        padding: 12px 14px; margin-bottom: 14px;
-        display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;
-        justify-content: space-between;
-    }
-    .toolbar label { display: block; font-size: 11px; color: #6c757d; margin-bottom: 4px; }
-    .toolbar input[type=search], .toolbar select, .toolbar input[type=number],
-    .batch-bar select, .batch-bar input[type=number], .row-actions select, .row-actions input[type=number] {
-        border: 1px solid #ced4da; border-radius: 8px; padding: 8px 10px; background: #fff;
-        min-width: 110px;
-    }
-    .panel {
+    .va-stat {
         background: #fff; border: 1px solid #e8eaed; border-radius: 14px;
-        box-shadow: 0 2px 12px rgba(0,0,0,.04); overflow: hidden;
+        padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,.04);
     }
-    .vip-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .vip-table th {
-        background: #f7f8fa; color: #5f6b7a; font-weight: 600;
-        padding: 10px 12px; border-bottom: 1px solid #e8eaed; text-align: right;
+    .va-stat .ico {
+        width: 40px; height: 40px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .va-stat .n { font-size: 22px; font-weight: 800; color: #1A1A2E; line-height: 1; }
+    .va-stat .l { font-size: 12px; color: #6c757d; margin-top: 3px; }
+    .va-stat.gold .ico { background: rgba(212,175,55,.15); color: #B8960F; }
+    .va-stat.blue .ico { background: rgba(23,162,184,.12); color: #117a8b; }
+    .va-stat.purple .ico { background: rgba(111,66,193,.12); color: #6f42c1; }
+    .va-stat.ink .ico { background: rgba(26,26,46,.08); color: #1A1A2E; }
+
+    /* ===== راهنما ===== */
+    .va-guide {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;
+    }
+    .va-guide-card {
+        background: #fff; border: 1px solid #e8eaed; border-radius: 14px;
+        padding: 12px 14px; display: flex; gap: 10px; align-items: flex-start;
+    }
+    .va-guide-card .step {
+        flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 12px; font-weight: 800; background: #1A1A2E; color: #D4AF37;
+    }
+    .va-guide-card b { display: block; color: #1A1A2E; font-size: 13px; margin-bottom: 2px; }
+    .va-guide-card span { color: #6c757d; font-size: 12px; line-height: 1.6; }
+
+    /* ===== Toolbar ===== */
+    .va-toolbar {
+        background: #fff; border: 1px solid #e8eaed; border-radius: 14px;
+        padding: 12px 14px; margin-bottom: 14px;
+        display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,.03);
+    }
+    .va-search {
+        flex: 1; min-width: 220px; position: relative;
+    }
+    .va-search i {
+        position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+        color: #98a2b3;
+    }
+    .va-search input {
+        width: 100%; border: 1.5px solid #e5e7eb; border-radius: 11px;
+        padding: 11px 38px 11px 12px; background: #fafafa; font-size: 14px;
+        transition: .2s ease;
+    }
+    .va-search input:focus {
+        outline: none; border-color: #D4AF37; background: #fff;
+        box-shadow: 0 0 0 4px rgba(212,175,55,.12);
+    }
+    .va-filter-chip {
+        border: 1px solid #e5e7eb; background: #fff; border-radius: 999px;
+        padding: 8px 12px; font-size: 12px; font-weight: 600; color: #5f6b7a;
+        cursor: pointer;
+    }
+    .va-filter-chip.active {
+        background: #1A1A2E; color: #D4AF37; border-color: #1A1A2E;
+    }
+    .va-select-all {
+        display: inline-flex; align-items: center; gap: 8px;
+        font-size: 13px; font-weight: 600; color: #1A1A2E; cursor: pointer;
+        user-select: none; margin-right: auto;
+    }
+
+    /* ===== کارت کاربران ===== */
+    .va-list { display: flex; flex-direction: column; gap: 10px; }
+    .va-card {
+        background: #fff; border: 1px solid #e8eaed; border-radius: 16px;
+        padding: 14px 16px; display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 14px; align-items: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,.03);
+        transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+    }
+    .va-card:hover {
+        border-color: rgba(212,175,55,.45);
+        box-shadow: 0 8px 24px rgba(26,26,46,.06);
+    }
+    .va-card.is-selected {
+        border-color: #D4AF37;
+        background: linear-gradient(0deg, #fffdf5, #fff);
+        box-shadow: 0 8px 24px rgba(212,175,55,.12);
+    }
+    .va-card.is-hidden { display: none; }
+    .va-check {
+        width: 20px; height: 20px; accent-color: #D4AF37; cursor: pointer;
+    }
+    .va-avatar {
+        width: 46px; height: 46px; border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 800; font-size: 15px; color: #1A1A2E;
+        background: linear-gradient(135deg, #F2D57A, #D4AF37);
+        flex-shrink: 0;
+    }
+    .va-user { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .va-user-text { min-width: 0; }
+    .va-name {
+        font-weight: 800; color: #1A1A2E; font-size: 15px;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .va-meta {
+        display: flex; flex-wrap: wrap; gap: 8px 12px;
+        margin-top: 4px; color: #6c757d; font-size: 12px;
+    }
+    .va-meta span { display: inline-flex; align-items: center; gap: 4px; }
+    .va-meta i { color: #D4AF37; width: 12px; }
+
+    .va-metrics {
+        display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;
+    }
+    .va-metric {
+        min-width: 78px; text-align: center; border-radius: 12px;
+        padding: 8px 10px; background: #f8f9fb; border: 1px solid #eef0f3;
+    }
+    .va-metric .v { display: block; font-weight: 800; font-size: 16px; color: #1A1A2E; }
+    .va-metric .k { display: block; font-size: 11px; color: #6c757d; margin-top: 2px; }
+    .va-metric.ticket .v { color: #117a8b; }
+    .va-metric.code .v { color: #6f42c1; }
+
+    .va-actions {
+        display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;
+        grid-column: 1 / -1;
+        padding-top: 10px; border-top: 1px dashed #eef0f3;
+    }
+
+    .va-empty {
+        text-align: center; padding: 48px 20px; color: #98a2b3;
+        background: #fff; border: 1px dashed #e5e7eb; border-radius: 16px;
+    }
+    .va-empty i { font-size: 42px; margin-bottom: 10px; display: block; color: #e5e7eb; }
+
+    /* ===== نوار گروهی ===== */
+    .va-batch {
+        position: fixed; left: 50%; transform: translateX(-50%) translateY(120%);
+        bottom: 18px; z-index: 40; width: min(920px, calc(100% - 24px));
+        background: #1A1A2E; color: #fff; border-radius: 18px;
+        padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+        box-shadow: 0 16px 40px rgba(0,0,0,.35);
+        border: 1px solid rgba(212,175,55,.35);
+        transition: transform .28s ease;
+    }
+    .va-batch.visible { transform: translateX(-50%) translateY(0); }
+    .va-batch .sel {
+        background: rgba(212,175,55,.15); color: #D4AF37;
+        border-radius: 999px; padding: 8px 12px; font-weight: 800; font-size: 13px;
         white-space: nowrap;
     }
-    .vip-table td {
-        padding: 12px; border-bottom: 1px solid #f0f2f5; vertical-align: middle;
+    .va-seg {
+        display: inline-flex; background: rgba(255,255,255,.08); border-radius: 11px; padding: 3px;
     }
-    .vip-table tr:hover { background: #fafbfc; }
-    .vip-table tr.selected { background: #fff9e6; }
-    .user-name { font-weight: 700; color: #1A1A2E; }
-    .user-meta { font-size: 12px; color: #6c757d; margin-top: 2px; }
-    .badge-soft {
-        display: inline-block; padding: 3px 8px; border-radius: 999px;
-        background: rgba(212,175,55,.15); color: #8a6d12; font-size: 12px; font-weight: 600;
+    .va-seg button {
+        border: none; background: transparent; color: rgba(255,255,255,.7);
+        padding: 8px 12px; border-radius: 9px; font-weight: 700; font-size: 12px; cursor: pointer;
     }
-    .badge-blue { background: rgba(23,162,184,.12); color: #117a8b; }
-    .badge-purple { background: rgba(111,66,193,.12); color: #6f42c1; }
-    .row-actions {
-        display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    .va-seg button.active {
+        background: #D4AF37; color: #1A1A2E;
     }
-    .btn-mini {
-        border: none; border-radius: 8px; padding: 7px 10px; font-size: 12px;
-        font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+    .va-batch label { display: block; font-size: 11px; color: rgba(255,255,255,.55); margin-bottom: 4px; }
+    .va-batch select, .va-batch input[type=number],
+    .va-modal select, .va-modal input[type=number] {
+        border: 1px solid #d0d5dd; border-radius: 10px; padding: 9px 11px;
+        background: #fff; color: #1A1A2E; min-width: 110px; font-size: 13px;
     }
-    .btn-ticket { background: #1A1A2E; color: #D4AF37; }
-    .btn-code { background: #6f42c1; color: #fff; }
-    .btn-outline {
-        background: #fff; border: 1.5px solid #1A1A2E; color: #1A1A2E;
-        border-radius: 8px; padding: 8px 14px; font-weight: 600; text-decoration: none;
-        display: inline-flex; align-items: center; gap: 6px;
+    .va-qty-presets { display: flex; gap: 4px; margin-top: 6px; }
+    .va-qty-presets button {
+        border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.06);
+        color: #fff; border-radius: 8px; padding: 4px 8px; font-size: 11px; cursor: pointer;
     }
-    .btn-primary-dark {
-        background: #1A1A2E; color: #fff; border: none; border-radius: 8px;
-        padding: 8px 14px; font-weight: 600; cursor: pointer;
-        display: inline-flex; align-items: center; gap: 6px;
+    .va-qty-presets button:hover { border-color: #D4AF37; color: #D4AF37; }
+    .va-modal .va-qty-presets button {
+        border-color: #e5e7eb; background: #f8f9fb; color: #1A1A2E;
     }
-    .empty { text-align: center; color: #98a2b3; padding: 36px !important; }
+    .va-modal .va-qty-presets button:hover { border-color: #D4AF37; color: #8a6d12; }
 
-    .batch-bar {
-        position: sticky; bottom: 12px; z-index: 20;
-        background: #1A1A2E; color: #fff; border-radius: 14px;
-        padding: 12px 16px; margin-top: 16px;
-        display: none; flex-wrap: wrap; gap: 10px; align-items: flex-end;
-        box-shadow: 0 10px 30px rgba(0,0,0,.25);
-        border: 1px solid rgba(212,175,55,.35);
+    /* ===== Modal ===== */
+    .va-overlay {
+        position: fixed; inset: 0; background: rgba(15,18,30,.55);
+        z-index: 50; display: none; align-items: center; justify-content: center;
+        padding: 16px; backdrop-filter: blur(3px);
     }
-    .batch-bar.visible { display: flex; }
-    .batch-bar label { display: block; font-size: 11px; color: rgba(255,255,255,.65); margin-bottom: 4px; }
-    .batch-bar .count { color: #D4AF37; font-weight: 700; margin-left: auto; align-self: center; }
-    .batch-bar select, .batch-bar input[type=number] { color: #1A1A2E; }
-    .hint { font-size: 12px; color: #6c757d; margin-top: 10px; line-height: 1.7; }
+    .va-overlay.open { display: flex; }
+    .va-modal {
+        width: min(460px, 100%); background: #fff; border-radius: 18px;
+        box-shadow: 0 24px 60px rgba(0,0,0,.28); overflow: hidden;
+        animation: vaPop .2s ease;
+    }
+    @keyframes vaPop {
+        from { opacity: 0; transform: translateY(10px) scale(.98); }
+        to { opacity: 1; transform: none; }
+    }
+    .va-modal-head {
+        padding: 16px 18px; background: #1A1A2E; color: #fff;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .va-modal-head h3 { margin: 0; font-size: 16px; font-weight: 800; }
+    .va-modal-head h3 i { color: #D4AF37; margin-left: 8px; }
+    .va-modal-close {
+        border: none; background: rgba(255,255,255,.08); color: #fff;
+        width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+    }
+    .va-modal-body { padding: 18px; }
+    .va-target {
+        background: #f8f9fb; border: 1px solid #eef0f3; border-radius: 12px;
+        padding: 10px 12px; margin-bottom: 14px; font-size: 13px; color: #5f6b7a;
+    }
+    .va-target strong { color: #1A1A2E; }
+    .va-field { margin-bottom: 14px; }
+    .va-field > label {
+        display: block; font-size: 12px; font-weight: 700; color: #5f6b7a; margin-bottom: 6px;
+    }
+    .va-modal-foot {
+        padding: 0 18px 18px; display: flex; gap: 8px; justify-content: flex-end;
+    }
 
-    @media (max-width: 991px) {
-        .vip-table .hide-sm { display: none; }
-        .row-actions { max-width: 280px; }
+    @media (max-width: 900px) {
+        .va-stats { grid-template-columns: 1fr 1fr; }
+        .va-guide { grid-template-columns: 1fr; }
+        .va-card {
+            grid-template-columns: auto 1fr;
+        }
+        .va-metrics { grid-column: 1 / -1; justify-content: flex-start; }
+    }
+    @media (max-width: 560px) {
+        .va-stats { grid-template-columns: 1fr; }
+        .va-hero h1 { font-size: 18px; }
+        .va-match { flex-wrap: wrap; }
+        .va-batch { bottom: 10px; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="vip-assign-page">
-    <div class="page-head">
-        <div>
-            <h2><i class="fas fa-star"></i> تخصیص به کاربران ویژه</h2>
-            <div class="sub">برای این مسابقه بلیط صادر کنید یا کد ویژه بدهید — تکی یا گروهی.</div>
-            <div class="mt-2">
-                <span class="match-chip">
-                    {% if match.home_team_logo %}
-                        <img src="{{ match.home_team_logo.url }}" alt="">
-                    {% else %}
-                        <span class="ph">{{ match.home_team|slice:":2" }}</span>
-                    {% endif %}
-                    {{ match.home_team }}
-                    <span class="vs">VS</span>
-                    {{ match.away_team }}
-                    {% if match.away_team_logo %}
-                        <img src="{{ match.away_team_logo.url }}" alt="">
-                    {% else %}
-                        <span class="ph">{{ match.away_team|slice:":2" }}</span>
-                    {% endif %}
-                </span>
+<div class="va-page">
+    <div class="va-hero">
+        <div class="va-hero-inner">
+            <div>
+                <h1><i class="fas fa-star"></i> تخصیص به کاربران ویژه</h1>
+                <p class="lead">بلیط آماده یا کد ویژه بسازید؛ تکی با یک کلیک، گروهی با انتخاب چند نفر.</p>
+                <div class="va-match">
+                    <div class="va-team">
+                        {% if match.home_team_logo %}
+                            <img class="va-logo" src="{{ match.home_team_logo.url }}" alt="">
+                        {% else %}
+                            <span class="va-logo-ph">{{ match.home_team|slice:":2" }}</span>
+                        {% endif %}
+                        {{ match.home_team }}
+                    </div>
+                    <span class="va-vs">VS</span>
+                    <div class="va-team">
+                        {{ match.away_team }}
+                        {% if match.away_team_logo %}
+                            <img class="va-logo" src="{{ match.away_team_logo.url }}" alt="">
+                        {% else %}
+                            <span class="va-logo-ph">{{ match.away_team|slice:":2" }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="va-hero-actions">
+                <a href="{% url 'matches:admin_match_detail' match.id %}" class="va-btn va-btn-ghost">
+                    <i class="fas fa-eye"></i> جزئیات مسابقه
+                </a>
+                <a href="{% url 'matches:admin_match_list' %}" class="va-btn va-btn-ghost">
+                    <i class="fas fa-arrow-right"></i> بازگشت
+                </a>
             </div>
         </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <a href="{% url 'matches:admin_match_detail' match.id %}" class="btn-outline">
-                <i class="fas fa-eye"></i> جزئیات مسابقه
-            </a>
-            <a href="{% url 'matches:admin_match_list' %}" class="btn-outline">
-                <i class="fas fa-arrow-right"></i> مدیریت مسابقات
-            </a>
+    </div>
+
+    <div class="va-stats">
+        <div class="va-stat gold">
+            <div class="ico"><i class="fas fa-users"></i></div>
+            <div><div class="n">{{ vip_total }}</div><div class="l">کاربر ویژه</div></div>
+        </div>
+        <div class="va-stat blue">
+            <div class="ico"><i class="fas fa-ticket-alt"></i></div>
+            <div><div class="n">{{ tickets_issued_total }}</div><div class="l">بلیط صادرشده</div></div>
+        </div>
+        <div class="va-stat purple">
+            <div class="ico"><i class="fas fa-key"></i></div>
+            <div><div class="n">{{ codes_created_total }}</div><div class="l">کد ویژه</div></div>
+        </div>
+        <div class="va-stat ink">
+            <div class="ico"><i class="fas fa-layer-group"></i></div>
+            <div><div class="n">{{ blocks|length }}</div><div class="l">بلوک فعال</div></div>
         </div>
     </div>
 
-    <div class="stats-row">
-        <div class="stat gold">
-            <div class="n">{{ vip_total }}</div>
-            <div class="l">کاربر ویژه</div>
+    <div class="va-guide">
+        <div class="va-guide-card">
+            <div class="step">۱</div>
+            <div>
+                <b>صدور تکی</b>
+                <span>روی کارت هر نفر، «صدور بلیط» یا «کد ویژه» را بزنید و تعداد را تأیید کنید.</span>
+            </div>
         </div>
-        <div class="stat blue">
-            <div class="n">{{ tickets_issued_total }}</div>
-            <div class="l">بلیط صادرشده (این مسابقه)</div>
-        </div>
-        <div class="stat purple">
-            <div class="n">{{ codes_created_total }}</div>
-            <div class="l">کد ویژه ساخته‌شده</div>
-        </div>
-        <div class="stat">
-            <div class="n">{{ blocks|length }}</div>
-            <div class="l">بلوک فعال</div>
+        <div class="va-guide-card">
+            <div class="step">۲</div>
+            <div>
+                <b>صدور گروهی</b>
+                <span>چند نفر را تیک بزنید؛ نوار پایین باز می‌شود و یک‌جا برای همه اعمال می‌کند.</span>
+            </div>
         </div>
     </div>
 
-    <form method="get" class="toolbar">
-        <div>
-            <label for="q">جستجو</label>
-            <input type="search" id="q" name="q" value="{{ search }}" placeholder="نام، موبایل، نام کاربری…">
+    <div class="va-toolbar">
+        <label class="va-select-all">
+            <input type="checkbox" id="checkAll" class="va-check">
+            انتخاب همهٔ نمایش‌داده‌شده
+        </label>
+        <button type="button" class="va-filter-chip active" data-filter="all">همه</button>
+        <button type="button" class="va-filter-chip" data-filter="no-ticket">بدون بلیط</button>
+        <button type="button" class="va-filter-chip" data-filter="no-code">بدون کد</button>
+        <div class="va-search">
+            <i class="fas fa-search"></i>
+            <input type="search" id="liveSearch" value="{{ search }}" placeholder="جستجوی نام، موبایل یا نام کاربری…">
         </div>
-        <button type="submit" class="btn-primary-dark"><i class="fas fa-search"></i> فیلتر</button>
-        {% if search %}
-            <a href="{% url 'tickets:admin_match_vip_assign' match.id %}" class="btn-outline">پاک کردن</a>
-        {% endif %}
-    </form>
+    </div>
 
-    <div class="panel">
-        <table class="vip-table">
-            <thead>
-            <tr>
-                <th style="width:42px;"><input type="checkbox" id="checkAll" title="انتخاب همه"></th>
-                <th>کاربر ویژه</th>
-                <th class="hide-sm">موبایل</th>
-                <th>بلیط این مسابقه</th>
-                <th>کد ویژه</th>
-                <th class="hide-sm">سهمیه</th>
-                <th>صدور تکی</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for row in vip_rows %}
-                <tr data-user-row>
-                    <td>
-                        <input type="checkbox" class="vip-check" value="{{ row.user.id }}">
-                    </td>
-                    <td>
-                        <div class="user-name">
-                            {{ row.user.get_full_name|default:row.user.username }}
+    <div class="va-list" id="vipList">
+        {% for row in vip_rows %}
+            {% with name=row.user.get_full_name|default:row.user.username %}
+            <article class="va-card"
+                     data-user-card
+                     data-name="{{ name }}"
+                     data-username="{{ row.user.username }}"
+                     data-phone="{{ row.user.phone_number|default:'' }}"
+                     data-tickets="{{ row.ticket_count }}"
+                     data-codes="{{ row.code_count }}">
+                <input type="checkbox" class="va-check vip-check" value="{{ row.user.id }}"
+                       data-label="{{ name }}">
+                <div class="va-user">
+                    <div class="va-avatar">{{ name|slice:":1" }}</div>
+                    <div class="va-user-text">
+                        <div class="va-name">{{ name }}</div>
+                        <div class="va-meta">
+                            <span><i class="fas fa-at"></i>{{ row.user.username }}</span>
+                            {% if row.user.phone_number %}
+                                <span dir="ltr"><i class="fas fa-phone"></i>{{ row.user.phone_number }}</span>
+                            {% endif %}
+                            {% if row.quota %}
+                                <span><i class="fas fa-gauge"></i>سهمیه {{ row.quota.used }}/{{ row.quota.quota }}</span>
+                            {% endif %}
                         </div>
-                        <div class="user-meta">@{{ row.user.username }}</div>
-                    </td>
-                    <td class="hide-sm" dir="ltr">{{ row.user.phone_number|default:"—" }}</td>
-                    <td><span class="badge-soft badge-blue">{{ row.ticket_count }}</span></td>
-                    <td>
-                        <span class="badge-soft badge-purple">{{ row.code_count }}</span>
-                        {% if row.unused_code_count %}
-                            <small class="text-muted">({{ row.unused_code_count }} آزاد)</small>
-                        {% endif %}
-                    </td>
-                    <td class="hide-sm">
-                        {% if row.quota %}
-                            {{ row.quota.used }}/{{ row.quota.quota }}
-                        {% else %}
-                            —
-                        {% endif %}
-                    </td>
-                    <td>
-                        <div class="row-actions">
-                            <form method="post" class="row-actions">
-                                {% csrf_token %}
-                                <input type="hidden" name="user_id" value="{{ row.user.id }}">
-                                <input type="number" name="quantity" value="1" min="1" max="50" title="تعداد" style="width:64px;">
-                                <select name="block_id" required title="بلوک">
-                                    <option value="">بلوک…</option>
-                                    {% for b in blocks %}
-                                        <option value="{{ b.id }}">{{ b.name }}</option>
-                                    {% endfor %}
-                                </select>
-                                <button type="submit" name="action" value="issue_tickets_single" class="btn-mini btn-ticket"
-                                        onclick="return confirm('بلیط برای این کاربر ویژه صادر شود؟');">
-                                    <i class="fas fa-ticket-alt"></i> بلیط
-                                </button>
-                            </form>
-                            <form method="post" class="row-actions">
-                                {% csrf_token %}
-                                <input type="hidden" name="user_id" value="{{ row.user.id }}">
-                                <input type="number" name="quantity" value="1" min="1" max="500" title="تعداد کد" style="width:64px;">
-                                <button type="submit" name="action" value="issue_codes_single" class="btn-mini btn-code"
-                                        onclick="return confirm('کد ویژه برای این کاربر ساخته شود؟');">
-                                    <i class="fas fa-key"></i> کد ویژه
-                                </button>
-                            </form>
-                            <a href="{% url 'tickets:manage_user_tickets' row.user.id %}" class="btn-mini btn-outline" title="مدیریت کامل">
-                                <i class="fas fa-user-cog"></i>
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-            {% empty %}
-                <tr><td colspan="7" class="empty">کاربر ویژه‌ای یافت نشد.</td></tr>
+                    </div>
+                </div>
+                <div class="va-metrics">
+                    <div class="va-metric ticket">
+                        <span class="v">{{ row.ticket_count }}</span>
+                        <span class="k">بلیط</span>
+                    </div>
+                    <div class="va-metric code">
+                        <span class="v">{{ row.code_count }}</span>
+                        <span class="k">کد{% if row.unused_code_count %} · {{ row.unused_code_count }} آزاد{% endif %}</span>
+                    </div>
+                </div>
+                <div class="va-actions">
+                    <button type="button" class="va-btn va-btn-dark"
+                            data-open-modal="ticket"
+                            data-user-id="{{ row.user.id }}"
+                            data-user-name="{{ name }}">
+                        <i class="fas fa-ticket-alt"></i> صدور بلیط
+                    </button>
+                    <button type="button" class="va-btn va-btn-purple"
+                            data-open-modal="code"
+                            data-user-id="{{ row.user.id }}"
+                            data-user-name="{{ name }}">
+                        <i class="fas fa-key"></i> کد ویژه
+                    </button>
+                    <a href="{% url 'tickets:manage_user_tickets' row.user.id %}" class="va-btn va-btn-soft">
+                        <i class="fas fa-user-cog"></i> جزئیات
+                    </a>
+                </div>
+            </article>
+            {% endwith %}
+        {% empty %}
+            <div class="va-empty">
+                <i class="fas fa-user-slash"></i>
+                کاربر ویژه‌ای یافت نشد.
+            </div>
+        {% endfor %}
+        <div class="va-empty" id="noSearchResult" style="display:none;">
+            <i class="fas fa-search"></i>
+            نتیجه‌ای برای این جستجو نیست.
+        </div>
+    </div>
+</div>
+
+{# ===== نوار گروهی ===== #}
+<form method="post" id="batchForm" class="va-batch" onsubmit="return prepareBatch(event);">
+    {% csrf_token %}
+    <div id="batchUserInputs"></div>
+    <div class="sel"><span id="selectedCount">۰</span> نفر</div>
+    <div class="va-seg" id="batchSeg">
+        <button type="button" class="active" data-action="issue_tickets_batch">بلیط</button>
+        <button type="button" data-action="issue_codes_batch">کد ویژه</button>
+    </div>
+    <input type="hidden" name="action" id="batchAction" value="issue_tickets_batch">
+    <div>
+        <label>تعداد برای هر نفر</label>
+        <input type="number" name="quantity" id="batchQty" value="1" min="1" max="500" required>
+        <div class="va-qty-presets" data-target="batchQty">
+            <button type="button" data-q="1">۱</button>
+            <button type="button" data-q="2">۲</button>
+            <button type="button" data-q="5">۵</button>
+            <button type="button" data-q="10">۱۰</button>
+        </div>
+    </div>
+    <div id="batchBlockWrap">
+        <label>بلوک</label>
+        <select name="block_id" id="batchBlock">
+            <option value="">انتخاب بلوک…</option>
+            {% for b in blocks %}
+                <option value="{{ b.id }}">{{ b.name }}</option>
             {% endfor %}
-            </tbody>
-        </table>
+        </select>
     </div>
+    <button type="submit" class="va-btn va-btn-gold" style="margin-right:auto;">
+        <i class="fas fa-check"></i> اعمال گروهی
+    </button>
+</form>
 
-    <form method="post" id="batchForm" class="batch-bar" onsubmit="return prepareBatch(event);">
-        {% csrf_token %}
-        <div id="batchUserInputs"></div>
-        <div class="count"><span id="selectedCount">۰</span> نفر انتخاب‌شده</div>
-        <div>
-            <label>عملیات گروهی</label>
-            <select name="action" id="batchAction" required>
-                <option value="issue_tickets_batch">صدور بلیط</option>
-                <option value="issue_codes_batch">ساخت کد ویژه</option>
-            </select>
+{# ===== مودال صدور تکی ===== #}
+<div class="va-overlay" id="assignOverlay" role="dialog" aria-modal="true">
+    <div class="va-modal">
+        <div class="va-modal-head">
+            <h3 id="modalTitle"><i class="fas fa-ticket-alt"></i> صدور</h3>
+            <button type="button" class="va-modal-close" id="modalClose" aria-label="بستن">&times;</button>
         </div>
-        <div>
-            <label>تعداد برای هر نفر</label>
-            <input type="number" name="quantity" id="batchQty" value="1" min="1" max="500" required>
-        </div>
-        <div id="batchBlockWrap">
-            <label>بلوک (برای بلیط)</label>
-            <select name="block_id" id="batchBlock">
-                <option value="">انتخاب بلوک…</option>
-                {% for b in blocks %}
-                    <option value="{{ b.id }}">{{ b.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <button type="submit" class="btn-mini btn-ticket" style="padding:10px 16px;">
-            <i class="fas fa-check"></i> اعمال روی انتخاب‌شده‌ها
-        </button>
-    </form>
-
-    <p class="hint">
-        بلیط‌های صادرشده با وضعیت «تخصیص ادمین» در بخش بلیط‌های دریافتی پنل کاربر ویژه می‌نشینند.
-        کدهای ویژه در بخش کدهای ویژه پنل‌شان ظاهر می‌شوند و هوادار موقع خرید می‌تواند استفاده کند.
-        برای صدور گروهی، چند نفر را تیک بزنید و از نوار پایین استفاده کنید.
-    </p>
+        <form method="post" id="singleForm">
+            {% csrf_token %}
+            <input type="hidden" name="user_id" id="modalUserId">
+            <input type="hidden" name="action" id="modalAction">
+            <div class="va-modal-body">
+                <div class="va-target">برای: <strong id="modalUserName">—</strong></div>
+                <div class="va-field">
+                    <label for="modalQty">تعداد</label>
+                    <input type="number" name="quantity" id="modalQty" value="1" min="1" max="500" required>
+                    <div class="va-qty-presets" data-target="modalQty">
+                        <button type="button" data-q="1">۱</button>
+                        <button type="button" data-q="2">۲</button>
+                        <button type="button" data-q="5">۵</button>
+                        <button type="button" data-q="10">۱۰</button>
+                    </div>
+                </div>
+                <div class="va-field" id="modalBlockField">
+                    <label for="modalBlock">بلوک صندلی</label>
+                    <select name="block_id" id="modalBlock">
+                        <option value="">انتخاب بلوک…</option>
+                        {% for b in blocks %}
+                            <option value="{{ b.id }}">{{ b.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="va-modal-foot">
+                <button type="button" class="va-btn va-btn-soft" id="modalCancel">انصراف</button>
+                <button type="submit" class="va-btn va-btn-gold" id="modalSubmit">
+                    <i class="fas fa-check"></i> تأیید و ارسال
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 (function () {
-    const checkAll = document.getElementById('checkAll');
+    const fa = n => String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+    const cards = () => Array.from(document.querySelectorAll('[data-user-card]'));
     const checks = () => Array.from(document.querySelectorAll('.vip-check'));
-    const batchBar = document.getElementById('batchForm');
+    const checkAll = document.getElementById('checkAll');
+    const batchForm = document.getElementById('batchForm');
     const selectedCount = document.getElementById('selectedCount');
     const batchAction = document.getElementById('batchAction');
     const batchBlockWrap = document.getElementById('batchBlockWrap');
     const batchBlock = document.getElementById('batchBlock');
     const batchUserInputs = document.getElementById('batchUserInputs');
+    const liveSearch = document.getElementById('liveSearch');
+    const noSearchResult = document.getElementById('noSearchResult');
+    const overlay = document.getElementById('assignOverlay');
+    const modalUserId = document.getElementById('modalUserId');
+    const modalAction = document.getElementById('modalAction');
+    const modalUserName = document.getElementById('modalUserName');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBlockField = document.getElementById('modalBlockField');
+    const modalBlock = document.getElementById('modalBlock');
+    const modalQty = document.getElementById('modalQty');
+    const BLOCK_KEY = 'vipAssignBlock:' + {{ match.id }};
 
-    function faNum(n) {
-        return String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
-    }
-
-    function refresh() {
-        const selected = checks().filter(c => c.checked);
-        selectedCount.textContent = faNum(selected.length);
-        batchBar.classList.toggle('visible', selected.length > 0);
-        checks().forEach(c => {
-            const tr = c.closest('tr');
-            if (tr) tr.classList.toggle('selected', c.checked);
-        });
-        if (checkAll) {
-            const all = checks();
-            checkAll.checked = all.length > 0 && selected.length === all.length;
-            checkAll.indeterminate = selected.length > 0 && selected.length < all.length;
+    // بازیابی آخرین بلوک انتخاب‌شده
+    try {
+        const saved = localStorage.getItem(BLOCK_KEY);
+        if (saved) {
+            if (batchBlock.querySelector('option[value="' + saved + '"]')) batchBlock.value = saved;
+            if (modalBlock.querySelector('option[value="' + saved + '"]')) modalBlock.value = saved;
         }
-        toggleBlock();
+    } catch (e) {}
+
+    function rememberBlock(val) {
+        if (!val) return;
+        try { localStorage.setItem(BLOCK_KEY, val); } catch (e) {}
+        if (batchBlock) batchBlock.value = val;
+        if (modalBlock) modalBlock.value = val;
     }
 
-    function toggleBlock() {
-        const needBlock = batchAction.value === 'issue_tickets_batch';
-        batchBlockWrap.style.display = needBlock ? '' : 'none';
-        batchBlock.required = needBlock;
+    function visibleCards() {
+        return cards().filter(c => !c.classList.contains('is-hidden'));
     }
 
-    if (checkAll) {
-        checkAll.addEventListener('change', () => {
-            checks().forEach(c => { c.checked = checkAll.checked; });
-            refresh();
+    function refreshSelection() {
+        const selected = checks().filter(c => c.checked && !c.closest('[data-user-card]').classList.contains('is-hidden'));
+        selectedCount.textContent = fa(selected.length);
+        batchForm.classList.toggle('visible', selected.length > 0);
+        cards().forEach(card => {
+            const c = card.querySelector('.vip-check');
+            card.classList.toggle('is-selected', !!(c && c.checked));
         });
+        const vis = visibleCards();
+        const visChecked = vis.filter(c => c.querySelector('.vip-check').checked);
+        checkAll.checked = vis.length > 0 && visChecked.length === vis.length;
+        checkAll.indeterminate = visChecked.length > 0 && visChecked.length < vis.length;
+        toggleBatchBlock();
     }
-    document.querySelectorAll('.vip-check').forEach(c => c.addEventListener('change', refresh));
-    batchAction.addEventListener('change', toggleBlock);
+
+    function toggleBatchBlock() {
+        const need = batchAction.value === 'issue_tickets_batch';
+        batchBlockWrap.style.display = need ? '' : 'none';
+        batchBlock.required = need;
+    }
+
+    function applyFilterAndSearch() {
+        const q = (liveSearch.value || '').trim().toLowerCase();
+        const mode = document.querySelector('.va-filter-chip.active')?.dataset.filter || 'all';
+        let shown = 0;
+        cards().forEach(card => {
+            const hay = [
+                card.dataset.name || '',
+                card.dataset.username || '',
+                card.dataset.phone || ''
+            ].join(' ').toLowerCase();
+            const tickets = parseInt(card.dataset.tickets || '0', 10);
+            const codes = parseInt(card.dataset.codes || '0', 10);
+            let ok = !q || hay.includes(q);
+            if (mode === 'no-ticket') ok = ok && tickets === 0;
+            if (mode === 'no-code') ok = ok && codes === 0;
+            card.classList.toggle('is-hidden', !ok);
+            if (ok) shown += 1;
+        });
+        noSearchResult.style.display = shown === 0 && cards().length ? '' : 'none';
+        refreshSelection();
+    }
+
+    checkAll.addEventListener('change', () => {
+        visibleCards().forEach(card => {
+            card.querySelector('.vip-check').checked = checkAll.checked;
+        });
+        refreshSelection();
+    });
+    checks().forEach(c => c.addEventListener('change', refreshSelection));
+
+    document.querySelectorAll('.va-filter-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.va-filter-chip').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applyFilterAndSearch();
+        });
+    });
+    liveSearch.addEventListener('input', applyFilterAndSearch);
+
+    document.getElementById('batchSeg').addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        document.querySelectorAll('#batchSeg button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        batchAction.value = btn.dataset.action;
+        toggleBatchBlock();
+    });
+
+    document.querySelectorAll('.va-qty-presets').forEach(group => {
+        group.addEventListener('click', (e) => {
+            const b = e.target.closest('button[data-q]');
+            if (!b) return;
+            const input = document.getElementById(group.dataset.target);
+            if (input) input.value = b.dataset.q;
+        });
+    });
+
+    batchBlock.addEventListener('change', () => rememberBlock(batchBlock.value));
+    modalBlock.addEventListener('change', () => rememberBlock(modalBlock.value));
+
+    function openModal(kind, userId, userName) {
+        const isTicket = kind === 'ticket';
+        modalAction.value = isTicket ? 'issue_tickets_single' : 'issue_codes_single';
+        modalUserId.value = userId;
+        modalUserName.textContent = userName;
+        modalTitle.innerHTML = isTicket
+            ? '<i class="fas fa-ticket-alt"></i> صدور بلیط'
+            : '<i class="fas fa-key"></i> ساخت کد ویژه';
+        modalBlockField.style.display = isTicket ? '' : 'none';
+        modalBlock.required = isTicket;
+        modalQty.value = '1';
+        modalQty.max = isTicket ? '50' : '500';
+        overlay.classList.add('open');
+        modalQty.focus();
+    }
+    function closeModal() { overlay.classList.remove('open'); }
+
+    document.querySelectorAll('[data-open-modal]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            openModal(btn.dataset.openModal, btn.dataset.userId, btn.dataset.userName);
+        });
+    });
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    document.getElementById('modalCancel').addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+    document.getElementById('singleForm').addEventListener('submit', (e) => {
+        if (modalAction.value === 'issue_tickets_single' && !modalBlock.value) {
+            e.preventDefault();
+            alert('بلوک را انتخاب کنید.');
+            return;
+        }
+        const kind = modalAction.value === 'issue_tickets_single' ? 'بلیط' : 'کد ویژه';
+        if (!confirm(kind + ' برای «' + modalUserName.textContent + '» ثبت شود؟')) {
+            e.preventDefault();
+        }
+    });
 
     window.prepareBatch = function (ev) {
-        const selected = checks().filter(c => c.checked);
+        const selected = checks().filter(c => c.checked && !c.closest('[data-user-card]').classList.contains('is-hidden'));
         if (!selected.length) {
             alert('حداقل یک کاربر ویژه را انتخاب کنید.');
             ev.preventDefault();
@@ -360,10 +725,11 @@
             return false;
         }
         const label = batchAction.value === 'issue_tickets_batch' ? 'بلیط' : 'کد ویژه';
-        if (!confirm(label + ' برای ' + selected.length + ' کاربر ویژه اعمال شود؟')) {
+        if (!confirm(label + ' برای ' + selected.length + ' نفر اعمال شود؟')) {
             ev.preventDefault();
             return false;
         }
+        rememberBlock(batchBlock.value);
         batchUserInputs.innerHTML = '';
         selected.forEach(c => {
             const input = document.createElement('input');
@@ -375,7 +741,7 @@
         return true;
     };
 
-    refresh();
+    applyFilterAndSearch();
 })();
 </script>
 {% endblock %}
