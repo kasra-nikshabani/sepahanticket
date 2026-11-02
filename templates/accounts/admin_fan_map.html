@@ -226,12 +226,11 @@
 (function () {
     const cities = {{ map_cities_json|safe }};
     const map = L.map('isfahanFanMap', { scrollWheelZoom: true }).setView([32.85, 51.55], 8);
-    // tile.openstreetmap.org در production مسدود می‌کند (403 / x-blocked)؛
-    // Carto روی همان داده‌ی OSM سرو می‌دهد و برای این پنل مناسب است.
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    // OSM عمومی و Carto بدون API key برای production مسدودند؛
+    // Esri World Street Map بدون کلید برای این پنل داخلی کار می‌کند.
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 14,
-        subdomains: 'abcd',
-        attribution: '&copy; OpenStreetMap &copy; CARTO'
+        attribution: 'Tiles &copy; Esri'
     }).addTo(map);
 
     if (!cities.length) {
