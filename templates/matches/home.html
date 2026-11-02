@@ -332,10 +332,10 @@
                         </span>
                     {% endif %}
                 {% else %}
-                    <span class="btn-state vip">
+                    <a href="{% url 'tickets:vip_tickets' %}" class="btn-state vip">
                         <i class="fas fa-star"></i>
-                        {% trans "صدور از پنل ویژه" %}
-                    </span>
+                        {% trans "مشاهده پنل ویژه" %}
+                    </a>
                 {% endif %}
             </div>
         </div>

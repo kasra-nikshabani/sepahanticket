@@ -57,14 +57,18 @@ logger = logging.getLogger(__name__)
 
 @login_required
 def user_tickets(request):
+    # پنل VIP دیگر «بلیط‌های من» ندارد؛ بلیط‌های تخصیص‌شده در vip_tickets است.
+    if request.user.user_type == 'vip':
+        return redirect('tickets:vip_tickets')
+
     match_id = request.GET.get('match_id')
     status_filter = request.GET.get('status')
 
-    # ===== کاربران VIP و ادمین/staff بلیط‌های admin_assigned/vip_issued خودشون
-    # رو هم می‌بینن -- این دومی لازمه چون «صدور دستی بلیط» (admin_issue_ticket)
-    # بلیط رو زیر user خودِ ادمین با status='admin_assigned' می‌سازه؛ بدون این
+    # ===== ادمین/staff بلیط‌های admin_assigned/vip_issued خودشون رو هم
+    # می‌بینن -- این لازمه چون «صدور دستی بلیط» (admin_issue_ticket) بلیط
+    # رو زیر user خودِ ادمین با status='admin_assigned' می‌سازه؛ بدون این
     # شرط، ادمین بلیطی که خودش صادر کرده رو توی «بلیط‌های من» نمی‌دید. =====
-    can_see_admin_tickets = request.user.user_type in ('vip', 'admin') or request.user.is_staff
+    can_see_admin_tickets = request.user.user_type == 'admin' or request.user.is_staff
     if can_see_admin_tickets:
         tickets_qs = Ticket.objects.filter(
             user=request.user, status__in=['paid', 'admin_assigned', 'vip_issued', 'cancelled']
@@ -292,25 +296,11 @@ def vip_tickets(request):
 
 @login_required
 def vip_dashboard(request):
+    # صدور مستقیم بلیط توسط VIP از پنل برداشته شده؛ فقط بلیط/کد دریافتی می‌ماند.
     if request.user.user_type != 'vip':
         messages.error(request, _t("شما دسترسی به این بخش ندارید."))
         return redirect('matches:home')
-
-    match_id = request.GET.get('match_id')
-    quotas_qs = VIPQuota.objects.filter(user=request.user).select_related('match')
-    if match_id:
-        quotas_qs = quotas_qs.filter(match_id=match_id)
-
-    matches = Match.objects.filter(is_active=True).order_by('-date_time')
-    available_matches = Match.objects.filter(id__in=quotas_qs.values_list('match_id', flat=True)).order_by('-date_time')
-
-    context = {
-        'quotas': quotas_qs,
-        'matches': available_matches,
-        'all_matches': matches,
-        'selected_match_id': int(match_id) if match_id else None,
-    }
-    return render(request, 'tickets/vip_dashboard.html', context)
+    return redirect('tickets:vip_tickets')
 
 
 @login_required
@@ -318,34 +308,7 @@ def vip_issued_tickets(request):
     if request.user.user_type != 'vip':
         messages.error(request, _t("شما دسترسی به این بخش ندارید."))
         return redirect('matches:home')
-
-    match_id = request.GET.get('match_id')
-    tickets_qs = Ticket.objects.filter(user=request.user, status='vip_issued').order_by('-purchase_date')
-
-    selected_match = None
-    if match_id:
-        tickets_qs = tickets_qs.filter(match_id=match_id)
-        selected_match = get_object_or_404(Match, id=match_id)
-
-    matches = Match.objects.filter(is_active=True).order_by('-date_time')
-
-    if not tickets_qs.exists() and not match_id:
-        messages.info(request, _t("هیچ بلیط صادرشده‌ای یافت نشد."))
-    elif not tickets_qs.exists() and match_id:
-        messages.info(request, _t("هیچ بلیطی برای مسابقه \"%(selected_match)s\" صادر نشده است.") % {"selected_match": selected_match})
-
-    tickets, query, selected_zone = _search_and_filter_tickets(request, tickets_qs)
-    context = {
-        'tickets': tickets,
-        'search_query': query,
-        'selected_zone': selected_zone,
-        'zone_choices': ZONE_CHOICES,
-        'total_count': len(tickets),
-        'matches': matches,
-        'selected_match': selected_match,
-        'selected_match_id': int(match_id) if match_id else None,
-    }
-    return render(request, 'tickets/vip_issued_tickets.html', context)
+    return redirect('tickets:vip_tickets')
 
 
 @login_required
@@ -504,10 +467,14 @@ def _build_special_code_pdf_bytes(user, code, font_config=None):
 
 @login_required
 def vip_issue_manual(request, match_id):
+    # صدور مستقیم VIP از پنل حذف شده است.
     if request.user.user_type != 'vip':
         messages.error(request, _t("شما دسترسی به این بخش ندارید."))
         return redirect('matches:home')
+    return redirect('tickets:vip_tickets')
 
+
+def _vip_issue_manual_legacy(request, match_id):
     if request.method == 'POST':
         # قفل کردن رکورد مسابقه برای جلوگیری از ثبت همزمان (Race Condition)
         match = get_object_or_404(Match.objects.select_for_update(), id=match_id, is_active=True)
@@ -621,6 +588,7 @@ def vip_edit_issued_ticket(request, ticket_id):
     if request.user.user_type != 'vip':
         messages.error(request, _t("شما دسترسی به این بخش ندارید."))
         return redirect('matches:home')
+    return redirect('tickets:vip_tickets')
 
     ticket = get_object_or_404(Ticket, id=ticket_id, user=request.user, status='vip_issued')
 
@@ -654,30 +622,18 @@ def vip_delete_issued_ticket(request, ticket_id):
     if request.user.user_type != 'vip':
         messages.error(request, _t("شما دسترسی به این بخش ندارید."))
         return redirect('matches:home')
-
-    ticket = get_object_or_404(Ticket, id=ticket_id, user=request.user, status='vip_issued')
-
-    if request.method == 'POST':
-        with transaction.atomic():
-            if ticket.match_seat:
-                ticket.match_seat.is_available = True
-                ticket.match_seat.save()
-
-            if ticket.pdf_file:
-                ticket.pdf_file.delete(save=False)
-            if ticket.qr_code:
-                ticket.qr_code.delete(save=False)
-
-            ticket.delete()
-
-        messages.success(request, _t("✅ بلیط با موفقیت لغو شد و صندلی آزاد شد."))
-        return redirect('tickets:vip_issued_tickets')
-
-    return render(request, 'tickets/vip_delete_issued_ticket.html', {'ticket': ticket})
+    return redirect('tickets:vip_tickets')
 
 
 @login_required
 def vip_issue_excel(request, match_id):
+    if request.user.user_type != 'vip':
+        messages.error(request, _t("شما دسترسی به این بخش ندارید."))
+        return redirect('matches:home')
+    return redirect('tickets:vip_tickets')
+
+
+def _vip_issue_excel_legacy(request, match_id):
     if request.user.user_type != 'vip':
         messages.error(request, _t("شما دسترسی به این بخش ندارید."))
         return redirect('matches:home')

@@ -465,7 +465,7 @@ def dashboard_redirect(request):
     if request.user.user_type == 'admin':
         return redirect('admin_dashboard')
     elif request.user.user_type == 'vip':
-        return redirect('tickets:vip_dashboard')
+        return redirect('tickets:vip_tickets')
     else:
         return redirect('matches:home')
 
