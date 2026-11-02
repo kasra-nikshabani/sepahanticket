@@ -5,31 +5,77 @@
 
 {% block extra_css %}
 <style>
-    .vt-page { max-width: 820px; margin: 0 auto; padding: 12px 0 120px; }
+    .vt-page { max-width: 720px; margin: 0 auto; padding: 12px 0 140px; }
 
-    .vt-hero {
+    .vt-top { margin-bottom: 16px; }
+    .vt-top h1 { margin: 0 0 6px; font-size: 26px; font-weight: 900; color: #1A1A2E; }
+    .vt-top h1 i { color: #D4AF37; margin-left: 8px; }
+    .vt-top p { margin: 0; color: #6c757d; font-size: 14px; line-height: 1.7; }
+
+    .vt-back {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: #f3f4f6; color: #1A1A2E; text-decoration: none;
+        border-radius: 12px; padding: 10px 14px; font-weight: 800; font-size: 14px;
+        margin-bottom: 14px;
+    }
+
+    .vt-match-pick { display: flex; flex-direction: column; gap: 12px; }
+    .vt-pick {
+        display: block; text-decoration: none; color: inherit;
+        background: #fff; border: 2px solid #e8eaed; border-radius: 20px;
+        padding: 16px; box-shadow: 0 6px 18px rgba(0,0,0,.04);
+        transition: border-color .15s ease, transform .15s ease;
+    }
+    .vt-pick:hover { border-color: #D4AF37; transform: translateY(-1px); }
+    .vt-pick-teams {
+        display: flex; align-items: center; justify-content: center; gap: 14px;
+        margin-bottom: 10px;
+    }
+    .vt-pick-teams img {
+        width: 48px; height: 48px; object-fit: contain; border-radius: 50%;
+        background: #f8f9fb; padding: 4px;
+    }
+    .vt-pick-vs { font-weight: 900; font-size: 18px; color: #1A1A2E; text-align: center; }
+    .vt-pick-date { text-align: center; color: #6c757d; font-size: 13px; margin-bottom: 12px; }
+    .vt-pick-stat {
+        text-align: center; background: #f8f9fb; border-radius: 14px; padding: 12px;
+    }
+    .vt-pick-stat .n { display: block; font-size: 22px; font-weight: 900; color: #1A1A2E; }
+    .vt-pick-stat .l { display: block; font-size: 12px; color: #6c757d; margin-top: 2px; font-weight: 700; }
+    .vt-pick-go {
+        margin-top: 12px; text-align: center; font-weight: 900; color: #8a6d12;
+        background: #fff9e6; border-radius: 12px; padding: 12px;
+    }
+
+    .vt-match-banner {
         background: linear-gradient(135deg, #1A1A2E, #16213E);
-        border-radius: 22px; padding: 22px 20px; color: #fff;
-        border-bottom: 4px solid #D4AF37; margin-bottom: 16px;
-        box-shadow: 0 12px 32px rgba(0,0,0,.18);
+        border-radius: 20px; padding: 18px; color: #fff; margin-bottom: 14px;
+        border-bottom: 4px solid #D4AF37;
     }
-    .vt-hero h1 { margin: 0 0 8px; font-size: 24px; font-weight: 900; color: #D4AF37; }
-    .vt-hero h1 i { margin-left: 8px; }
-    .vt-hero p { margin: 0; color: rgba(255,255,255,.7); font-size: 14px; line-height: 1.8; }
-    .vt-steps {
-        display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 14px;
+    .vt-match-banner .teams {
+        display: flex; align-items: center; justify-content: center; gap: 12px;
+        margin-bottom: 8px;
     }
-    .vt-step {
-        background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08);
-        border-radius: 14px; padding: 10px 12px; display: flex; gap: 10px; align-items: flex-start;
+    .vt-match-banner img {
+        width: 40px; height: 40px; object-fit: contain; border-radius: 50%;
+        background: #fff; padding: 3px;
     }
-    .vt-step .n {
-        width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
-        background: #D4AF37; color: #1A1A2E; font-weight: 900;
-        display: flex; align-items: center; justify-content: center;
+    .vt-match-banner .title { font-size: 18px; font-weight: 900; color: #D4AF37; text-align: center; }
+    .vt-match-banner .meta { text-align: center; color: rgba(255,255,255,.7); font-size: 13px; margin-top: 4px; }
+    .vt-match-banner .stats {
+        display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 12px;
     }
-    .vt-step b { display: block; color: #fff; font-size: 14px; }
-    .vt-step span { color: rgba(255,255,255,.65); font-size: 12px; line-height: 1.6; }
+    .vt-banner-chip {
+        background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+        border-radius: 999px; padding: 7px 12px; font-size: 13px; font-weight: 800;
+        color: rgba(255,255,255,.9);
+    }
+
+    .vt-help {
+        background: #fff9e6; border: 1px solid rgba(212,175,55,.35);
+        border-radius: 14px; padding: 12px 14px; margin-bottom: 14px;
+        font-size: 14px; line-height: 1.8; color: #8a6d12; font-weight: 700;
+    }
 
     .vt-filter {
         background: #fff; border: 1px solid #e8eaed; border-radius: 18px;
@@ -38,56 +84,43 @@
     .vt-filter label { display: block; font-weight: 800; color: #1A1A2E; margin-bottom: 8px; font-size: 14px; }
     .vt-filter select, .vt-filter input[type=search] {
         width: 100%; border: 2px solid #e5e7eb; border-radius: 14px;
-        padding: 14px 14px; font-size: 16px; background: #fafafa; margin-bottom: 10px;
+        padding: 14px; font-size: 16px; background: #fafafa; margin-bottom: 10px;
     }
     .vt-filter select:focus, .vt-filter input[type=search]:focus {
         outline: none; border-color: #D4AF37; background: #fff;
         box-shadow: 0 0 0 4px rgba(212,175,55,.15);
     }
     .vt-filter-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
     .vt-btn {
         display: inline-flex; align-items: center; justify-content: center; gap: 8px;
         border: none; border-radius: 14px; padding: 14px 18px; font-size: 15px;
-        font-weight: 800; cursor: pointer; text-decoration: none; transition: .2s ease;
-        min-height: 52px;
+        font-weight: 800; cursor: pointer; text-decoration: none; transition: .15s ease;
+        min-height: 54px;
     }
     .vt-btn:hover { transform: translateY(-1px); }
-    .vt-btn-dark { background: #1A1A2E; color: #D4AF37; flex: 1; }
+    .vt-btn-dark { background: #1A1A2E; color: #D4AF37; }
     .vt-btn-soft { background: #f3f4f6; color: #1A1A2E; border: 1px solid #e5e7eb; }
     .vt-btn-green { background: #1f9d55; color: #fff; }
-    .vt-btn-blue { background: #1a73e8; color: #fff; }
     .vt-btn-gold { background: linear-gradient(135deg, #F2D57A, #D4AF37); color: #1A1A2E; }
-    .vt-btn-wide { width: 100%; }
     .vt-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 
-    .vt-summary {
-        background: #fff9e6; border: 1px solid rgba(212,175,55,.35);
-        border-radius: 14px; padding: 12px 14px; margin-bottom: 14px;
-        font-size: 15px; font-weight: 700; color: #8a6d12;
-        display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;
+    .vt-toolbar {
+        display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;
     }
+    .vt-toolbar .vt-btn { flex: 1; min-width: 140px; }
 
     .vt-list { display: flex; flex-direction: column; gap: 12px; }
     .vt-card {
-        background: #fff; border: 2px solid #eef0f3; border-radius: 20px;
-        padding: 16px; box-shadow: 0 6px 18px rgba(0,0,0,.04);
-        transition: border-color .2s ease, box-shadow .2s ease;
+        background: #fff; border: 2px solid #eef0f3; border-radius: 18px;
+        padding: 16px; box-shadow: 0 4px 14px rgba(0,0,0,.03);
+        transition: border-color .15s ease;
     }
-    .vt-card.is-selected {
-        border-color: #D4AF37; background: #fffdf5;
-        box-shadow: 0 10px 24px rgba(212,175,55,.15);
-    }
-    .vt-card-top {
-        display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px;
-    }
-    .vt-check {
-        width: 26px; height: 26px; accent-color: #D4AF37; margin-top: 4px; flex-shrink: 0;
-    }
+    .vt-card.is-selected { border-color: #D4AF37; background: #fffdf5; }
+    .vt-card-top { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+    .vt-check { width: 26px; height: 26px; accent-color: #D4AF37; margin-top: 4px; flex-shrink: 0; }
     .vt-main { min-width: 0; flex: 1; }
-    .vt-match {
-        font-size: 17px; font-weight: 900; color: #1A1A2E; line-height: 1.4;
-    }
-    .vt-buyer { color: #5f6b7a; font-size: 14px; margin-top: 4px; }
+    .vt-buyer { color: #1A1A2E; font-size: 16px; font-weight: 800; }
     .vt-seat-box {
         margin-top: 12px; background: #1A1A2E; color: #fff; border-radius: 16px;
         padding: 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
@@ -95,9 +128,7 @@
     }
     .vt-seat-box .k { display: block; font-size: 11px; color: rgba(255,255,255,.55); margin-bottom: 4px; }
     .vt-seat-box .v { display: block; font-size: 18px; font-weight: 900; color: #D4AF37; }
-    .vt-meta {
-        display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;
-    }
+    .vt-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
     .vt-chip {
         display: inline-flex; align-items: center; gap: 6px;
         background: #f8f9fb; border: 1px solid #eef0f3; border-radius: 999px;
@@ -110,14 +141,10 @@
     .zone-class1 { background: #e3f2fd; color: #1565c0; border-color: #90caf9; }
     .zone-vip { background: #f3e5f5; color: #6a1b9a; border-color: #ce93d8; }
 
-    .vt-actions {
-        display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 14px;
-    }
+    .vt-actions { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 14px; }
     .vt-actions .vt-btn { width: 100%; }
     .vt-actions .pdf-slot.disabled,
-    .vt-actions .btn-wait {
-        background: #f3f4f6; color: #98a2b3; cursor: wait;
-    }
+    .vt-actions .btn-wait { background: #f3f4f6; color: #98a2b3; cursor: wait; }
 
     .vt-empty {
         text-align: center; background: #fff; border: 2px dashed #e5e7eb;
@@ -128,7 +155,7 @@
 
     .vt-batch {
         position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%);
-        width: min(820px, calc(100% - 20px)); z-index: 40;
+        width: min(720px, calc(100% - 20px)); z-index: 40;
         background: #1A1A2E; color: #fff; border-radius: 20px;
         padding: 14px; display: none; gap: 10px; flex-wrap: wrap; align-items: center;
         box-shadow: 0 16px 40px rgba(0,0,0,.35);
@@ -152,31 +179,74 @@
 
 {% block content %}
 <div class="vt-page">
-    <div class="vt-hero">
+
+{% if not match_cards %}
+    <div class="vt-top">
         <h1><i class="fas fa-inbox"></i> بلیط‌های دریافتی</h1>
-        <p>اینجا بلیط‌هایی است که باشگاه برای شما فرستاده. فقط دانلود کنید و روی گوشی ذخیره کنید.</p>
-        <div class="vt-steps">
-            <div class="vt-step">
-                <div class="n">۱</div>
-                <div><b>بلیط را پیدا کنید</b><span>اگر لازم است مسابقه را از لیست پایین انتخاب کنید.</span></div>
+        <p>بلیط‌هایی که باشگاه برای شما فرستاده اینجا می‌آید.</p>
+    </div>
+    <div class="vt-empty">
+        <i class="fas fa-ticket-alt"></i>
+        <h3>هنوز بلیطی ندارید</h3>
+        <p>وقتی باشگاه بلیطی برایتان بفرستد، اینجا دیده می‌شود.</p>
+    </div>
+
+{% elif not selected_match %}
+    <div class="vt-top">
+        <h1><i class="fas fa-inbox"></i> بلیط‌های دریافتی</h1>
+        <p>اول مسابقه را انتخاب کنید، بعد بلیط‌های همان بازی را دانلود کنید.</p>
+    </div>
+    <div class="vt-match-pick">
+        {% for card in match_cards %}
+        <a class="vt-pick" href="?match_id={{ card.match.id }}">
+            <div class="vt-pick-teams">
+                {% if card.match.home_team_logo %}
+                    <img src="{{ card.match.home_team_logo.url }}" alt="">
+                {% endif %}
+                <div class="vt-pick-vs">{{ card.match.home_team }}<br>در برابر<br>{{ card.match.away_team }}</div>
+                {% if card.match.away_team_logo %}
+                    <img src="{{ card.match.away_team_logo.url }}" alt="">
+                {% endif %}
             </div>
-            <div class="vt-step">
-                <div class="n">۲</div>
-                <div><b>دانلود کنید</b><span>روی دکمه سبز «دانلود بلیط» بزنید تا فایل روی گوشی ذخیره شود.</span></div>
+            <div class="vt-pick-date">{{ card.match.date_time|date:"Y/m/d — H:i" }}</div>
+            <div class="vt-pick-stat">
+                <span class="n">{{ card.total }}</span>
+                <span class="l">بلیط برای این مسابقه</span>
             </div>
+            <div class="vt-pick-go"><i class="fas fa-arrow-left"></i> مشاهده بلیط‌های این مسابقه</div>
+        </a>
+        {% endfor %}
+    </div>
+
+{% else %}
+    {% if match_cards|length > 1 %}
+    <a class="vt-back" href="{% url 'tickets:vip_tickets' %}">
+        <i class="fas fa-arrow-right"></i> برگشت به لیست مسابقات
+    </a>
+    {% endif %}
+
+    <div class="vt-match-banner">
+        <div class="teams">
+            {% if selected_match.home_team_logo %}
+                <img src="{{ selected_match.home_team_logo.url }}" alt="">
+            {% endif %}
+            <div class="title">{{ selected_match.home_team }} vs {{ selected_match.away_team }}</div>
+            {% if selected_match.away_team_logo %}
+                <img src="{{ selected_match.away_team_logo.url }}" alt="">
+            {% endif %}
+        </div>
+        <div class="meta">{{ selected_match.date_time|date:"Y/m/d — H:i" }}</div>
+        <div class="stats">
+            <span class="vt-banner-chip">{{ total_count }} بلیط</span>
         </div>
     </div>
 
+    <div class="vt-help">
+        روی «دانلود بلیط» بزنید تا فایل روی گوشی ذخیره شود. چند بلیط را هم می‌توانید با هم دانلود کنید.
+    </div>
+
     <form method="get" class="vt-filter">
-        <label for="match_id">کدام مسابقه را می‌خواهید؟</label>
-        <select name="match_id" id="match_id" onchange="this.form.submit()">
-            <option value="">همه مسابقات</option>
-            {% for m in matches %}
-                <option value="{{ m.id }}" {% if selected_match_id == m.id %}selected{% endif %}>
-                    {{ m.home_team }} vs {{ m.away_team }} — {{ m.date_time|date:"Y/m/d" }}
-                </option>
-            {% endfor %}
-        </select>
+        <input type="hidden" name="match_id" value="{{ selected_match.id }}">
         <label for="zone">جایگاه (اختیاری)</label>
         <select name="zone" id="zone" onchange="this.form.submit()">
             <option value="">همه جایگاه‌ها</option>
@@ -184,27 +254,29 @@
                 <option value="{{ value }}" {% if selected_zone == value %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
         </select>
-        <label for="q">جستجو با نام یا شماره بلیط</label>
-        <input type="search" id="q" name="q" value="{{ search_query }}" placeholder="مثلاً نام روی بلیط یا شماره بلیط">
+        <label for="q">جستجو با نام، شماره بلیط یا صندلی</label>
+        <input type="search" id="q" name="q" value="{{ search_query }}" placeholder="مثلاً نام یا شماره بلیط">
         <div class="vt-filter-actions">
-            <button type="submit" class="vt-btn vt-btn-dark"><i class="fas fa-search"></i> نمایش</button>
-            {% if selected_match_id or search_query or selected_zone %}
-                <a href="{% url 'tickets:vip_tickets' %}" class="vt-btn vt-btn-soft">پاک کردن فیلتر</a>
+            <button type="submit" class="vt-btn vt-btn-dark" style="flex:1;"><i class="fas fa-search"></i> نمایش</button>
+            {% if search_query or selected_zone %}
+                <a href="?match_id={{ selected_match.id }}" class="vt-btn vt-btn-soft">پاک کردن فیلتر</a>
             {% endif %}
         </div>
     </form>
 
-    <div class="vt-summary">
-        <span>تعداد بلیط‌ها: {{ total_count }}</span>
-        <label style="display:inline-flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
-            <input type="checkbox" id="select-all" class="vt-check" style="width:22px;height:22px;">
-            انتخاب همه
-        </label>
-    </div>
-
+    {% if tickets %}
     <form method="post" id="ticketForm" action="{% url 'tickets:bulk_download_received' %}">
         {% csrf_token %}
         <input type="hidden" name="action" id="actionInput" value="download">
+
+        <div class="vt-toolbar">
+            <button type="button" class="vt-btn vt-btn-soft" id="selectAllBtn">
+                <i class="fas fa-check-double"></i> انتخاب همه
+            </button>
+            <button type="button" class="vt-btn vt-btn-gold" id="downloadAllBtn">
+                <i class="fas fa-file-archive"></i> دانلود همه
+            </button>
+        </div>
 
         <div class="vt-list">
             {% for ticket in tickets %}
@@ -218,8 +290,7 @@
                         <input type="checkbox" name="ticket_ids" value="{{ ticket.id }}"
                                class="vt-check ticket-checkbox">
                         <div class="vt-main">
-                            <div class="vt-match">{{ ticket.match.home_team }} vs {{ ticket.match.away_team }}</div>
-                            <div class="vt-buyer">به نام: <strong>{{ ticket.full_name }}</strong></div>
+                            <div class="vt-buyer">به نام: {{ ticket.full_name }}</div>
                             <div class="vt-seat-box">
                                 <div><span class="k">بلوک</span><span class="v">{{ ticket.seat.row.block.name }}</span></div>
                                 <div><span class="k">ردیف</span><span class="v">{{ ticket.seat.row.number }}</span></div>
@@ -230,7 +301,6 @@
                                     <i class="fas fa-map-marker-alt"></i> {{ ticket.zone_label }}
                                 </span>
                                 <span class="vt-chip"><i class="fas fa-hashtag"></i> {{ ticket.ticket_number }}</span>
-                                <span class="vt-chip"><i class="far fa-calendar"></i> {{ ticket.purchase_date|date:"Y/m/d" }}</span>
                             </div>
                         </div>
                     </div>
@@ -247,22 +317,26 @@
                         {% endif %}
                     </div>
                 </article>
-            {% empty %}
-                <div class="vt-empty">
-                    <i class="fas fa-ticket-alt"></i>
-                    <h3>هنوز بلیطی ندارید</h3>
-                    <p>وقتی باشگاه بلیطی برایتان بفرستد، اینجا دیده می‌شود.</p>
-                </div>
             {% endfor %}
         </div>
     </form>
-</div>
 
-<div class="vt-batch" id="batchBar">
-    <div class="count"><span id="selectedCount">۰</span> بلیط انتخاب شده</div>
-    <button type="button" class="vt-btn vt-btn-green" id="downloadBtn">
-        <i class="fas fa-file-archive"></i> دانلود همه انتخاب‌شده‌ها
-    </button>
+    <div class="vt-batch" id="batchBar">
+        <div class="count"><span id="selectedCount">۰</span> بلیط انتخاب شده</div>
+        <button type="button" class="vt-btn vt-btn-green" id="downloadBtn">
+            <i class="fas fa-file-archive"></i> دانلود انتخاب‌شده‌ها
+        </button>
+    </div>
+    {% else %}
+        <div class="vt-empty">
+            <i class="fas fa-search"></i>
+            <h3>بلیطی پیدا نشد</h3>
+            <p>فیلتر را عوض کنید یا پاک کنید.</p>
+            <a href="?match_id={{ selected_match.id }}" class="vt-btn vt-btn-dark" style="margin-top:14px;">پاک کردن فیلتر</a>
+        </div>
+    {% endif %}
+{% endif %}
+
 </div>
 {% endblock %}
 
@@ -271,41 +345,57 @@
 (function () {
     const fa = n => String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
     const checkboxes = () => Array.from(document.querySelectorAll('.ticket-checkbox'));
-    const selectAll = document.getElementById('select-all');
     const selectedCount = document.getElementById('selectedCount');
     const batchBar = document.getElementById('batchBar');
     const form = document.getElementById('ticketForm');
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const downloadAllBtn = document.getElementById('downloadAllBtn');
+
+    if (!form) return;
 
     function refresh() {
         const checked = checkboxes().filter(c => c.checked);
-        selectedCount.textContent = fa(checked.length);
-        batchBar.classList.toggle('visible', checked.length > 0);
+        if (selectedCount) selectedCount.textContent = fa(checked.length);
+        if (batchBar) batchBar.classList.toggle('visible', checked.length > 0);
         document.querySelectorAll('.vt-card').forEach(card => {
             const cb = card.querySelector('.ticket-checkbox');
             card.classList.toggle('is-selected', !!(cb && cb.checked));
         });
-        if (selectAll) {
+        if (selectAllBtn) {
             const all = checkboxes();
-            selectAll.checked = all.length > 0 && checked.length === all.length;
-            selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
+            const allOn = all.length > 0 && checked.length === all.length;
+            selectAllBtn.innerHTML = allOn
+                ? '<i class="fas fa-times"></i> برداشتن انتخاب'
+                : '<i class="fas fa-check-double"></i> انتخاب همه';
         }
     }
 
-    if (selectAll) {
-        selectAll.addEventListener('change', () => {
-            checkboxes().forEach(c => { c.checked = selectAll.checked; });
+    if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', () => {
+            const boxes = checkboxes();
+            const allOn = boxes.length && boxes.every(c => c.checked);
+            boxes.forEach(c => { c.checked = !allOn; });
             refresh();
         });
     }
     checkboxes().forEach(c => c.addEventListener('change', refresh));
 
-    document.getElementById('downloadBtn').addEventListener('click', () => {
+    function submitSelected() {
         const checked = checkboxes().filter(c => c.checked);
         if (!checked.length) { alert('اول حداقل یک بلیط را انتخاب کنید.'); return; }
         form.submit();
-    });
+    }
 
-    // PDF polling
+    if (downloadBtn) downloadBtn.addEventListener('click', submitSelected);
+    if (downloadAllBtn) {
+        downloadAllBtn.addEventListener('click', () => {
+            checkboxes().forEach(c => { c.checked = true; });
+            refresh();
+            form.submit();
+        });
+    }
+
     (function pollPendingPdfs() {
         let attempts = 0;
         const maxAttempts = 40;

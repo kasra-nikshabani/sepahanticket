@@ -269,27 +269,63 @@ def _search_and_filter_tickets(request, tickets_qs):
 
 @login_required
 def vip_tickets(request):
+    """بلیط‌های دریافتی VIP: مثل کد ویژه، اول مسابقه‌ی فعال را انتخاب
+    می‌کند، بعد فقط بلیط‌های همان بازی را می‌بیند و دانلود می‌کند."""
     if request.user.user_type != 'vip':
         messages.error(request, _t("شما دسترسی به این بخش ندارید."))
         return redirect('matches:home')
 
     match_id = request.GET.get('match_id')
-    tickets_qs = Ticket.objects.filter(
-        user=request.user, is_admin_assigned=True, status='admin_assigned'
-    ).order_by('-purchase_date')
-    if match_id:
-        tickets_qs = tickets_qs.filter(match_id=match_id)
+    try:
+        match_id = int(match_id) if match_id else None
+    except (TypeError, ValueError):
+        match_id = None
 
-    matches = Match.objects.filter(is_active=True).order_by('-date_time')
-    tickets, query, selected_zone = _search_and_filter_tickets(request, tickets_qs)
+    base_qs = Ticket.objects.filter(
+        user=request.user,
+        is_admin_assigned=True,
+        status='admin_assigned',
+        match__is_active=True,
+    )
+
+    # کارت‌های مسابقه: فقط مسابقه‌های فعال که برای این VIP بلیط دارند
+    from django.db.models import Count
+    match_rows = (
+        base_qs.values('match_id')
+        .annotate(total=Count('id'))
+        .order_by()
+    )
+    counts = {row['match_id']: row['total'] for row in match_rows}
+    matches = list(
+        Match.objects.filter(id__in=counts.keys(), is_active=True).order_by('-date_time')
+    )
+    match_cards = [
+        {'match': m, 'total': counts.get(m.id, 0)}
+        for m in matches
+    ]
+
+    if match_id is None and len(match_cards) == 1:
+        match_id = match_cards[0]['match'].id
+
+    selected_match = None
+    tickets = []
+    query = ''
+    selected_zone = ''
+    if match_id:
+        selected_match = next((c['match'] for c in match_cards if c['match'].id == match_id), None)
+        if selected_match:
+            tickets_qs = base_qs.filter(match=selected_match)
+            tickets, query, selected_zone = _search_and_filter_tickets(request, tickets_qs)
+
     context = {
+        'match_cards': match_cards,
+        'selected_match': selected_match,
+        'selected_match_id': match_id if selected_match else None,
         'tickets': tickets,
         'search_query': query,
         'selected_zone': selected_zone,
         'zone_choices': ZONE_CHOICES,
         'total_count': len(tickets),
-        'matches': matches,
-        'selected_match_id': int(match_id) if match_id else None,
     }
     return render(request, 'tickets/vip_tickets.html', context)
 
