@@ -479,20 +479,43 @@
             <div class="stat-number">{{ total_users }}</div>
             <div class="stat-label">کل کاربران ویژه</div>
         </div>
+        <div class="stat-card green">
+            <span class="stat-icon"><i class="fas fa-mobile-alt"></i></span>
+            <div class="stat-number">{{ with_phone|default:"0" }}</div>
+            <div class="stat-label">دارای شماره موبایل</div>
+        </div>
         <div class="stat-card blue">
             <span class="stat-icon"><i class="fas fa-ticket-alt"></i></span>
             <div class="stat-number">{{ total_tickets|default:"0" }}</div>
             <div class="stat-label">کل بلیط‌های تخصیص‌یافته</div>
         </div>
-        <div class="stat-card green">
+        <div class="stat-card orange">
             <span class="stat-icon"><i class="fas fa-check-circle"></i></span>
             <div class="stat-number">{{ active_users|default:"0" }}</div>
             <div class="stat-label">کاربران دارای بلیط</div>
         </div>
-        <div class="stat-card orange">
-            <span class="stat-icon"><i class="fas fa-clock"></i></span>
-            <div class="stat-number">{{ avg_tickets|floatformat:1|default:"0" }}</div>
-            <div class="stat-label">میانگین بلیط به ازای هر کاربر</div>
+    </div>
+
+    <!-- ===== ایمپورت موبایل ===== -->
+    <div class="card-custom" style="margin-bottom:20px;">
+        <div class="card-header-custom">
+            <h4><i class="fas fa-file-excel"></i> ایمپورت شماره موبایل از اکسل</h4>
+        </div>
+        <div class="card-body-custom">
+            <p style="color:#6c757d;font-size:13px;margin-bottom:12px;line-height:1.7;">
+                فایل اکسل/CSV با ستون‌های <b>نام کاربری</b> و <b>موبایل</b> را آپلود کنید.
+                کاربرانی که شماره دارند می‌توانند با همان شماره (به‌همراه رمز) وارد پنل شوند.
+                هر شماره فقط به یک کاربر تعلق می‌گیرد.
+            </p>
+            <form method="post" enctype="multipart/form-data" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="import_phones">
+                <input type="file" name="phones_file" accept=".xlsx,.xlsm,.csv,.txt" required
+                       style="flex:1;min-width:220px;padding:10px;border:2px dashed #e5e7eb;border-radius:12px;background:#fafafa;">
+                <button type="submit" class="btn-primary-gold">
+                    <i class="fas fa-upload"></i> آپلود و اعمال
+                </button>
+            </form>
         </div>
     </div>
 
@@ -504,10 +527,14 @@
         </div>
         <div class="card-body-custom">
 
-            <!-- ===== فیلتر مسابقه ===== -->
+            <!-- ===== فیلتر ===== -->
             <div class="filter-section">
-                <span class="filter-label"><i class="fas fa-filter"></i> فیلتر مسابقه:</span>
                 <form method="get" style="flex:1; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                    <span class="filter-label"><i class="fas fa-search"></i> جستجو:</span>
+                    <input type="search" name="q" value="{{ search_query }}"
+                           placeholder="نام، یوزرنیم یا موبایل"
+                           style="flex:1;min-width:180px;padding:10px 12px;border:2px solid #e5e7eb;border-radius:10px;">
+                    <span class="filter-label"><i class="fas fa-filter"></i> مسابقه:</span>
                     <select name="match_id" onchange="this.form.submit()">
                         <option value="">همه مسابقات</option>
                         {% for match in matches %}
@@ -517,18 +544,13 @@
                             </option>
                         {% endfor %}
                     </select>
-                    {% if selected_match_id %}
+                    <button type="submit" class="btn-primary-gold"><i class="fas fa-search"></i> اعمال</button>
+                    {% if selected_match_id or search_query %}
                         <a href="{% url 'tickets:manage_vip_users' %}" class="btn-reset">
-                            <i class="fas fa-times"></i> حذف فیلتر
+                            <i class="fas fa-times"></i> پاک کردن
                         </a>
                     {% endif %}
                 </form>
-                {% if selected_match_id %}
-                    <span class="selected-info">
-                        <i class="fas fa-check-circle"></i>
-                        فیلتر شده: {{ selected_match_id|yesno:"فعال,غیرفعال" }}
-                    </span>
-                {% endif %}
             </div>
 
             <!-- ===== جدول کاربران ===== -->
@@ -540,7 +562,7 @@
                                 <th><i class="fas fa-hashtag"></i> #</th>
                                 <th><i class="fas fa-user"></i> کاربر</th>
                                 <th><i class="fas fa-user-tag"></i> نام کامل</th>
-                                <th><i class="fas fa-envelope"></i> ایمیل</th>
+                                <th><i class="fas fa-mobile-alt"></i> موبایل (ورود)</th>
                                 <th><i class="fas fa-ticket-alt"></i> بلیط‌ها</th>
                                 <th style="text-align:center;"><i class="fas fa-cog"></i> عملیات</th>
                             </tr>
@@ -556,7 +578,20 @@
                                         </div>
                                     </td>
                                     <td>{{ user.get_full_name|default:"-" }}</td>
-                                    <td>{{ user.email|default:"-" }}</td>
+                                    <td style="min-width:220px;">
+                                        <form method="post" style="display:flex;gap:6px;align-items:center;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="update_phone">
+                                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                                            <input type="text" name="phone_number"
+                                                   value="{{ user.phone_number|default:'' }}"
+                                                   placeholder="09xxxxxxxxx" dir="ltr"
+                                                   style="width:130px;padding:8px 10px;border:2px solid #e5e7eb;border-radius:10px;font-family:monospace;">
+                                            <button type="submit" class="btn-primary-gold" style="padding:8px 12px;" title="ذخیره موبایل">
+                                                <i class="fas fa-save"></i>
+                                            </button>
+                                        </form>
+                                    </td>
                                     <td>
                                         <span class="badge-ticket {% if user.ticket_count == 0 %}zero{% endif %}">
                                             {{ user.ticket_count }}
@@ -566,7 +601,7 @@
                                         <a href="{% url 'tickets:manage_user_tickets' user.id %}{% if selected_match_id %}?match_id={{ selected_match_id }}{% endif %}"
                                            class="btn-primary-gold"
                                            title="مشاهده و مدیریت بلیط‌های این کاربر">
-                                            <i class="fas fa-eye"></i> مدیریت
+                                            <i class="fas fa-eye"></i> بلیط‌ها
                                         </a>
                                     </td>
                                 </tr>
@@ -583,10 +618,10 @@
                         </div>
                         <div class="pagination-custom">
                             {% if page_obj.has_previous %}
-                                <a href="?page=1{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}">
+                                <a href="?page=1{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">
                                     <i class="fas fa-angle-double-right"></i>
                                 </a>
-                                <a href="?page={{ page_obj.previous_page_number }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}">
+                                <a href="?page={{ page_obj.previous_page_number }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">
                                     <i class="fas fa-angle-right"></i>
                                 </a>
                             {% else %}
@@ -598,17 +633,17 @@
                                 {% if num == page_obj.number %}
                                     <span class="current">{{ num }}</span>
                                 {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                                    <a href="?page={{ num }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}">
+                                    <a href="?page={{ num }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">
                                         {{ num }}
                                     </a>
                                 {% endif %}
                             {% endfor %}
 
                             {% if page_obj.has_next %}
-                                <a href="?page={{ page_obj.next_page_number }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}">
+                                <a href="?page={{ page_obj.next_page_number }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">
                                     <i class="fas fa-angle-left"></i>
                                 </a>
-                                <a href="?page={{ page_obj.paginator.num_pages }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}">
+                                <a href="?page={{ page_obj.paginator.num_pages }}{% if selected_match_id %}&match_id={{ selected_match_id }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">
                                     <i class="fas fa-angle-double-left"></i>
                                 </a>
                             {% else %}

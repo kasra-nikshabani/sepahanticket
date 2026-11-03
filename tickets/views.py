@@ -2112,7 +2112,69 @@ def admin_issue_ticket(request):
 
 @staff_member_required
 def manage_vip_users(request):
+    """لیست کاربران ویژه + مدیریت شماره موبایل (ویرایش تکی / ایمپورت اکسل)."""
+    from accounts.phone_utils import normalize_iran_mobile
+
     match_id = request.GET.get('match_id')
+    q = (request.GET.get('q') or '').strip()
+
+    if request.method == 'POST':
+        action = (request.POST.get('action') or '').strip()
+
+        if action == 'update_phone':
+            user_id = request.POST.get('user_id')
+            raw_phone = (request.POST.get('phone_number') or '').strip()
+            try:
+                vip = User.objects.get(id=user_id, user_type='vip')
+            except (User.DoesNotExist, ValueError, TypeError):
+                messages.error(request, _t("کاربر ویژه یافت نشد."))
+                return redirect('tickets:manage_vip_users')
+
+            if not raw_phone or raw_phone in ('—', '-', '–'):
+                vip.phone_number = None
+                vip.save(update_fields=['phone_number'])
+                messages.success(
+                    request,
+                    _t("شماره موبایل «%(u)s» پاک شد.") % {"u": vip.username},
+                )
+                return redirect('tickets:manage_vip_users')
+
+            phone = normalize_iran_mobile(raw_phone)
+            if not phone:
+                messages.error(request, _t("شماره موبایل نامعتبر است. مثال: ۰۹۱۲۳۴۵۶۷۸۹"))
+                return redirect('tickets:manage_vip_users')
+
+            conflict = User.objects.filter(phone_number=phone).exclude(pk=vip.pk).first()
+            if conflict:
+                messages.error(
+                    request,
+                    _t("این شماره قبلاً برای «%(u)s» ثبت شده است.")
+                    % {"u": conflict.get_full_name() or conflict.username},
+                )
+                return redirect('tickets:manage_vip_users')
+
+            vip.phone_number = phone
+            vip.save(update_fields=['phone_number'])
+            messages.success(
+                request,
+                _t("شماره «%(u)s» به %(p)s به‌روز شد.") % {"u": vip.username, "p": phone},
+            )
+            return redirect('tickets:manage_vip_users')
+
+        if action == 'import_phones':
+            upload = request.FILES.get('phones_file')
+            if not upload:
+                messages.error(request, _t("فایل اکسل/CSV را انتخاب کنید."))
+                return redirect('tickets:manage_vip_users')
+
+            updated, skipped, conflicts, invalid = _import_vip_phones_from_upload(upload)
+            messages.success(
+                request,
+                _t("ایمپورت انجام شد: %(ok)s به‌روز، %(skip)s بدون تغییر، %(bad)s نامعتبر، %(dup)s تکراری.")
+                % {"ok": updated, "skip": skipped, "bad": invalid, "dup": conflicts},
+            )
+            return redirect('tickets:manage_vip_users')
+
     matches = Match.objects.filter(is_active=True).order_by('-date_time')
 
     ticket_filter = Q(ticket__is_admin_assigned=True, ticket__status='admin_assigned')
@@ -2123,19 +2185,131 @@ def manage_vip_users(request):
         ticket_count=Count('ticket', filter=ticket_filter)
     ).order_by('username')
 
-    total_users = vip_users_qs.count()
+    if q:
+        vip_users_qs = vip_users_qs.filter(
+            Q(username__icontains=q)
+            | Q(first_name__icontains=q)
+            | Q(last_name__icontains=q)
+            | Q(phone_number__icontains=q)
+        )
+
+    total_users = User.objects.filter(user_type='vip').count()
+    with_phone = User.objects.filter(user_type='vip').exclude(phone_number__isnull=True).exclude(phone_number='').count()
     total_tickets = vip_users_qs.aggregate(total=Sum('ticket_count'))['total'] or 0
     active_users = vip_users_qs.filter(ticket_count__gt=0).count()
     avg_tickets = total_tickets / total_users if total_users else 0
 
-    paginator = Paginator(vip_users_qs, 20)
+    paginator = Paginator(vip_users_qs, 30)
     page_obj = paginator.get_page(request.GET.get('page', 1))
 
     context = {
-        'page_obj': page_obj, 'matches': matches, 'selected_match_id': int(match_id) if match_id else None,
-        'total_users': total_users, 'total_tickets': total_tickets, 'active_users': active_users, 'avg_tickets': avg_tickets,
+        'page_obj': page_obj,
+        'matches': matches,
+        'selected_match_id': int(match_id) if match_id else None,
+        'search_query': q,
+        'total_users': total_users,
+        'with_phone': with_phone,
+        'total_tickets': total_tickets,
+        'active_users': active_users,
+        'avg_tickets': avg_tickets,
     }
     return render(request, 'tickets/manage_vip_users.html', context)
+
+
+def _import_vip_phones_from_upload(upload):
+    """از اکسل/CSV با ستون‌های نام کاربری + موبایل، شماره VIPها را ست می‌کند.
+    شماره تکراری بین کاربران → conflict و رد می‌شود."""
+    from accounts.phone_utils import normalize_iran_mobile
+    import csv
+    import io
+
+    name = (getattr(upload, 'name', '') or '').lower()
+    rows = []
+
+    if name.endswith(('.xlsx', '.xlsm')):
+        try:
+            import openpyxl
+        except ImportError:
+            raise
+        wb = openpyxl.load_workbook(upload, data_only=True)
+        ws = wb.active
+        for row in ws.iter_rows(values_only=True):
+            rows.append([('' if c is None else str(c)).strip() for c in row])
+    else:
+        # CSV / ODS تبدیل‌شده
+        raw = upload.read()
+        if isinstance(raw, bytes):
+            text = raw.decode('utf-8-sig', errors='replace')
+        else:
+            text = str(raw)
+        reader = csv.reader(io.StringIO(text))
+        rows = [[(c or '').strip() for c in row] for row in reader]
+
+    # تشخیص ستون‌ها از هدر
+    username_idx = phone_idx = None
+    data_start = 0
+    for i, row in enumerate(rows[:15]):
+        joined = ' '.join(row).lower()
+        if any(k in joined for k in ('نام کاربری', 'username', 'یوزرنیم')) and any(
+            k in joined for k in ('موبایل', 'mobile', 'phone', 'شماره')
+        ):
+            for j, cell in enumerate(row):
+                cl = cell.lower()
+                if username_idx is None and any(k in cl for k in ('نام کاربری', 'username', 'یوزرنیم')):
+                    username_idx = j
+                if phone_idx is None and any(k in cl for k in ('موبایل', 'mobile', 'phone', 'شماره')):
+                    phone_idx = j
+            data_start = i + 1
+            break
+
+    if username_idx is None or phone_idx is None:
+        # فرض رایج فایل ما: #, نام, نام کاربری, رمز, موبایل
+        username_idx, phone_idx, data_start = 2, 4, 0
+
+    updated = skipped = conflicts = invalid = 0
+    seen_phones = {}
+
+    for row in rows[data_start:]:
+        if len(row) <= max(username_idx, phone_idx):
+            continue
+        username = (row[username_idx] or '').lstrip('@').strip()
+        raw_phone = row[phone_idx]
+        if not username or username in ('—', '-', '–'):
+            continue
+        if not raw_phone or str(raw_phone).strip() in ('—', '-', '–', '', 'None'):
+            skipped += 1
+            continue
+
+        phone = normalize_iran_mobile(raw_phone)
+        if not phone:
+            invalid += 1
+            continue
+
+        if phone in seen_phones and seen_phones[phone] != username:
+            conflicts += 1
+            continue
+        seen_phones[phone] = username
+
+        try:
+            vip = User.objects.get(username=username, user_type='vip')
+        except User.DoesNotExist:
+            skipped += 1
+            continue
+
+        conflict = User.objects.filter(phone_number=phone).exclude(pk=vip.pk).first()
+        if conflict:
+            conflicts += 1
+            continue
+
+        if vip.phone_number == phone:
+            skipped += 1
+            continue
+
+        vip.phone_number = phone
+        vip.save(update_fields=['phone_number'])
+        updated += 1
+
+    return updated, skipped, conflicts, invalid
 
 
 @login_required

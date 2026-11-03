@@ -86,19 +86,39 @@ class RegisterForm(UserCreationForm):
 
 
 class LoginForm(AuthenticationForm):
-    """فرم ورود کاربر با نام کاربری و رمز عبور"""
+    """فرم ورود مدیر/VIP با نام کاربری یا شماره موبایل + رمز عبور"""
     username = forms.CharField(
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': _tl("نام کاربری")}),
-        label=_tl("نام کاربری")
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': _tl("نام کاربری یا شماره موبایل"),
+            'autocomplete': 'username',
+        }),
+        label=_tl("نام کاربری یا موبایل")
     )
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': _tl("رمز عبور")}),
         label=_tl("رمز عبور")
     )
     error_messages = {
-        'invalid_login': 'نام کاربری یا رمز عبور اشتباه است.',
+        'invalid_login': 'نام کاربری / موبایل یا رمز عبور اشتباه است.',
         'inactive': 'حساب کاربری شما غیرفعال است.',
     }
+
+    def clean(self):
+        # اگر به‌جای یوزرنیم شماره موبایل وارد شده، قبل از authenticate
+        # آن را به یوزرنیمِ کاربر ویژه/مدیر نگاشت می‌کنیم.
+        from .phone_utils import normalize_iran_mobile
+        username = self.cleaned_data.get('username')
+        phone = normalize_iran_mobile(username)
+        if phone:
+            vip = User.objects.filter(
+                phone_number=phone,
+                user_type__in=['vip', 'admin'],
+                is_active=True,
+            ).first()
+            if vip:
+                self.cleaned_data['username'] = vip.username
+        return super().clean()
 
 
 # ==========================================

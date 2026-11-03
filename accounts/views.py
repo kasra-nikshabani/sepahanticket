@@ -354,7 +354,9 @@ def login_view(request):
         # هر شمارنده‌ای که داخل شاخه‌ی موفق باشد هیچ‌وقت اجرا نمی‌شود.
         ip = _client_ip(request)
         attempted_username = (request.POST.get('username') or '').strip()
-        u_key = f'login_fail:u:{attempted_username}'
+        from .phone_utils import normalize_iran_mobile
+        attempted_phone = normalize_iran_mobile(attempted_username)
+        u_key = f'login_fail:u:{attempted_phone or attempted_username}'
         ip_key = f'login_fail:ip:{ip}'
 
         if (cache.get(u_key, 0) >= LOGIN_MAX_ATTEMPTS
@@ -373,10 +375,13 @@ def login_view(request):
             cache.set(ip_key, cache.get(ip_key, 0) + 1, timeout=LOGIN_LOCKOUT_SECONDS)
 
         if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
+            # AuthenticationForm خودش authenticate کرده؛ get_user نتیجه را می‌دهد.
+            user = form.get_user()
+            if user is None:
+                username = form.cleaned_data.get('username')
+                password = form.cleaned_data.get('password')
+                user = authenticate(request, username=username, password=password)
 
-            user = authenticate(request, username=username, password=password)
             if user is None:
                 cache.set(u_key, cache.get(u_key, 0) + 1, timeout=LOGIN_LOCKOUT_SECONDS)
                 cache.set(ip_key, cache.get(ip_key, 0) + 1, timeout=LOGIN_LOCKOUT_SECONDS)
@@ -417,7 +422,7 @@ def login_view(request):
                     messages.error(request, _t("این روش ورود فقط برای مدیران و کاربران ویژه است."))
                     return redirect('accounts:phone_login')
             else:
-                messages.error(request, _t("نام کاربری یا رمز عبور اشتباه است."))
+                messages.error(request, _t("نام کاربری / موبایل یا رمز عبور اشتباه است."))
         else:
             messages.error(request, _t("لطفاً اطلاعات را به درستی وارد کنید."))
     else:
