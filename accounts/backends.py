@@ -8,25 +8,21 @@ class PhoneBackend(ModelBackend):
     """احراز هویت با شماره تلفن (بدون رمز عبور)"""
 
     def authenticate(self, request, username=None, password=None, **kwargs):
-        # این backend عمداً پسورد را چک نمی‌کند (ورود کاربران عادی فقط با
-        # OTP انجام می‌شود). به همین دلیل باید سخت‌گیرانه به کاربران
-        # user_type='normal' محدود بماند -- وگرنه چون این backend توی
-        # AUTHENTICATION_BACKENDS ثبت شده، فرم ورود با رمز عبور (برای
-        # ادمین/VIP) هم از طریق authenticate() این backend را امتحان
-        # می‌کند؛ اگر شماره تلفن یک ادمین/VIP هم is_phone_verified باشد
-        # (مثلاً بعد از ارتقا از کاربر عادی، یا با تیک‌زدن دستی در پنل
-        # ادمین)، هر رمز دلخواهی با آن شماره به‌جای یوزرنیم قبول می‌شد.
-        phone = kwargs.get('phone') or username
-        if phone is None:
+        # فقط وقتی صریحاً phone= پاس داده شود کار می‌کند (مسیر OTP).
+        # هرگز username را به‌عنوان شماره تفسیر نکن -- وگرنه در فرم ورود با
+        # رمز (VIP/ادمین)، اگر آن شماره قبلاً کاربر عادی بوده باشد، این
+        # backend بدون چک رمز همان کاربر عادی را برمی‌گرداند و با وجود
+        # کاربر ویژه روی همان شماره، رفتار ورود خراب/غیرامن می‌شود.
+        phone = kwargs.get('phone')
+        if not phone:
             return None
 
-        user = User.objects.filter(
+        return User.objects.filter(
             phone_number=phone,
             user_type='normal',
             is_active=True,
             is_phone_verified=True,
         ).first()
-        return user
 
     def get_user(self, user_id):
         try:

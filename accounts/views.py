@@ -66,17 +66,23 @@ def phone_login(request):
         if form.is_valid():
             phone_number = form.cleaned_data['phone_number']
 
-            try:
-                user = User.objects.get(phone_number=phone_number)
-            except User.DoesNotExist:
+            # فقط کاربر عادی -- اگر همین شماره برای VIP هم ثبت شده باشد
+            # نباید MultipleObjectsReturned بخورد یا اشتباهاً VIP برگردد.
+            user = User.objects.filter(
+                phone_number=phone_number, user_type='normal'
+            ).first()
+            if user is None:
+                # اگر فقط VIP با این شماره وجود دارد، به ورود با رمز هدایت کن
+                if User.objects.filter(
+                    phone_number=phone_number, user_type__in=['vip', 'admin']
+                ).exists():
+                    messages.error(
+                        request,
+                        _t("این روش ورود فقط برای کاربران معمولی است. لطفاً از ورود با رمز عبور استفاده کنید."),
+                    )
+                    return redirect('accounts:login_password')
                 messages.error(request, _t("کاربری با این شماره تلفن یافت نشد. لطفاً ثبت‌نام کنید."))
                 return redirect('accounts:phone_register')
-
-            # فقط کاربران معمولی اجازه ورود با OTP دارند
-            if user.user_type != 'normal':
-                messages.error(request,
-                               _t("این روش ورود فقط برای کاربران معمولی است. لطفاً از ورود با رمز عبور استفاده کنید."))
-                return redirect('accounts:login_password')
 
             try:
                 create_otp(phone_number)
@@ -127,7 +133,8 @@ def otp_verify(request):
 
             if otp:
                 try:
-                    user = User.objects.get(phone_number=phone_number)
+                    # فقط کاربر عادی؛ شماره ممکن است همزمان روی VIP هم باشد
+                    user = User.objects.get(phone_number=phone_number, user_type='normal')
                     otp.use()
                     user.is_active = True
                     user.is_phone_verified = True
@@ -271,7 +278,7 @@ def phone_register(request):
             national_code = form.cleaned_data['national_code']
             gender = form.cleaned_data['gender']
 
-            if User.objects.filter(phone_number=phone_number).exists():
+            if User.objects.filter(phone_number=phone_number, user_type='normal').exists():
                 messages.error(request, _t("این شماره تلفن قبلاً ثبت شده است."))
                 return render(request, 'accounts/phone_register.html', {'form': form})
 
