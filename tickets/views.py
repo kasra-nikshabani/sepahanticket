@@ -2144,11 +2144,16 @@ def manage_vip_users(request):
                 messages.error(request, _t("شماره موبایل نامعتبر است. مثال: ۰۹۱۲۳۴۵۶۷۸۹"))
                 return redirect('tickets:manage_vip_users')
 
-            conflict = User.objects.filter(phone_number=phone).exclude(pk=vip.pk).first()
+            # شماره فقط بین VIP/ادمین باید یکتا باشد؛ با کاربر عادی می‌تواند مشترک باشد
+            conflict = (
+                User.objects.filter(phone_number=phone, user_type__in=['vip', 'admin'])
+                .exclude(pk=vip.pk)
+                .first()
+            )
             if conflict:
                 messages.error(
                     request,
-                    _t("این شماره قبلاً برای «%(u)s» ثبت شده است.")
+                    _t("این شماره قبلاً برای کاربر ویژه «%(u)s» ثبت شده است.")
                     % {"u": conflict.get_full_name() or conflict.username},
                 )
                 return redirect('tickets:manage_vip_users')
@@ -2296,7 +2301,11 @@ def _import_vip_phones_from_upload(upload):
             skipped += 1
             continue
 
-        conflict = User.objects.filter(phone_number=phone).exclude(pk=vip.pk).first()
+        conflict = (
+            User.objects.filter(phone_number=phone, user_type__in=['vip', 'admin'])
+            .exclude(pk=vip.pk)
+            .first()
+        )
         if conflict:
             conflicts += 1
             continue

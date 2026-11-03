@@ -70,7 +70,8 @@ class RegisterForm(UserCreationForm):
         phone = self.cleaned_data.get('phone_number')
         if not re.match(r'^09\d{9}$', phone):
             raise ValidationError(_t("شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد."))
-        if User.objects.filter(phone_number=phone).exists():
+        # فقط با کاربران عادی تداخل نکند (VIP می‌تواند همان شماره سازمانی را داشته باشد)
+        if User.objects.filter(phone_number=phone, user_type='normal').exists():
             raise ValidationError(_t("این شماره موبایل قبلاً ثبت شده است."))
         return phone
 
@@ -251,7 +252,7 @@ class PhoneRegisterForm(forms.Form):
         phone = phone.replace(' ', '').replace('-', '')
         if not phone.isdigit() or len(phone) != 11 or not phone.startswith('09'):
             raise ValidationError(_t("شماره موبایل معتبر نیست (۱۱ رقم و با ۰۹ شروع شود)."))
-        if User.objects.filter(phone_number=phone).exists():
+        if User.objects.filter(phone_number=phone, user_type='normal').exists():
             raise ValidationError(_t("این شماره موبایل قبلاً ثبت شده است."))
         return phone
 

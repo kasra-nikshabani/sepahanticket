@@ -16,7 +16,10 @@ class User(AbstractUser):
         ('female', 'زن'),
     )
     user_type = models.CharField(max_length=10, choices=USER_TYPES, default='normal')
-    phone_number = models.CharField(max_length=11, unique=True, null=True, blank=True)
+    # یکتایی سراسری برداشته شد: کاربر عادی برای OTP و کاربر ویژه برای ورود با رمز
+    # می‌توانند (در موارد سازمانی) یک شماره مشترک داشته باشند. یکتایی فقط
+    # بین کاربران عادی با Partial Unique Index اعمال می‌شود.
+    phone_number = models.CharField(max_length=11, null=True, blank=True, db_index=True)
     national_code = models.CharField(max_length=10, unique=True, null=True, blank=True, verbose_name="کد ملی")
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, null=True, blank=True, verbose_name="جنسیت")
     is_phone_verified = models.BooleanField(default=False)
@@ -29,6 +32,22 @@ class User(AbstractUser):
     class Meta:
         verbose_name = "کاربر"
         verbose_name_plural = "کاربران"
+        constraints = [
+            models.UniqueConstraint(
+                fields=['phone_number'],
+                condition=models.Q(user_type='normal')
+                & models.Q(phone_number__isnull=False)
+                & ~models.Q(phone_number=''),
+                name='uniq_phone_for_normal_users',
+            ),
+            models.UniqueConstraint(
+                fields=['phone_number'],
+                condition=models.Q(user_type__in=['vip', 'admin'])
+                & models.Q(phone_number__isnull=False)
+                & ~models.Q(phone_number=''),
+                name='uniq_phone_for_vip_admin_users',
+            ),
+        ]
 
 
 # accounts/models.py

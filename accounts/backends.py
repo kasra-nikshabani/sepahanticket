@@ -20,13 +20,13 @@ class PhoneBackend(ModelBackend):
         if phone is None:
             return None
 
-        try:
-            user = User.objects.get(phone_number=phone)
-            if user.user_type == 'normal' and user.is_active and user.is_phone_verified:
-                return user
-            return None
-        except User.DoesNotExist:
-            return None
+        user = User.objects.filter(
+            phone_number=phone,
+            user_type='normal',
+            is_active=True,
+            is_phone_verified=True,
+        ).first()
+        return user
 
     def get_user(self, user_id):
         try:
