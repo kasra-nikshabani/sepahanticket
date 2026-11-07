@@ -2,7 +2,7 @@
 {% load static %}
 {% load currency_filters %}
 
-{% block title %}افزودن هزینه - {{ match.home_team }} vs {{ match.away_team }}{% endblock %}
+{% block title %}افزودن هزینه - {{ match.display_title }}{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
@@ -14,7 +14,7 @@
                 </div>
                 <div class="card-body">
                     <p class="text-muted">
-                        <strong>مسابقه:</strong> {{ match.home_team }} 🆚 {{ match.away_team }}
+                        <strong>مسابقه:</strong> {{ match.display_title }}
                     </p>
                     <hr>
                     

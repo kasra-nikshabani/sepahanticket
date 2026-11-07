@@ -1,47 +1,6 @@
-{% extends 'base.html' %}
-{% load static %}
-{% load currency_filters %}
-{% block title %}شارژ کیف پول{% endblock %}
-
-{% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-lg border-0 rounded-4">
-                <div class="card-header bg-success text-white text-center rounded-top-4" style="border-bottom: none; background: linear-gradient(135deg, #28a745, #1e7e34);">
-                    <h4 class="mb-0"><i class="fas fa-plus-circle"></i> شارژ کیف پول</h4>
-                </div>
-                <div class="card-body p-4">
-                    <div class="text-center mb-4">
-                        <div class="bg-light rounded-3 p-3 d-inline-block">
-                            <span class="text-muted">موجودی فعلی</span>
-                            <h3 class="mb-0 text-success">{{ wallet.balance|rial_display }} <small style="font-size:14px; color:#6c757d;">ریال</small></h3>
-                        </div>
-                    </div>
-
-                    <form method="post" action="{% url 'payments:payment_request' %}">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="amount" class="form-label fw-bold">مبلغ شارژ (ریال)</label>
-                            <input type="number" name="amount" id="amount" class="form-control form-control-lg"
-                                   placeholder="مثال: ۵۰,۰۰۰" min="10000" max="100000000" required
-                                   style="direction: ltr; font-feature-settings: 'tnum';">
-                            <small class="text-muted">حداقل ۱۰,۰۰۰ و حداکثر ۱۰۰,۰۰۰,۰۰۰ ریال</small>
-                        </div>
-
-                        <!-- فیلدهای مخفی برای ارسال به payment_request -->
-                        <input type="hidden" name="next_url" value="{% url 'wallet:dashboard' %}">
-
-                        <button type="submit" class="btn btn-success btn-lg w-100" style="background: linear-gradient(135deg, #28a745, #1e7e34); border: none;">
-                            <i class="fas fa-credit-card"></i> پرداخت و شارژ
-                        </button>
-                        <a href="{% url 'wallet:dashboard' %}" class="btn btn-outline-secondary w-100 mt-2">
-                            <i class="fas fa-arrow-right"></i> بازگشت
-                        </a>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
+{% extends 'accounts/account_base.html' %}
+{% load currency_filters persian_filters %}
+{% block title %}شارژ کیف پول | دیدآور{% endblock %}
+{% block account_title %}شارژ کیف پول{% endblock %}
+{% block account_intro %}موجودی کیف پولت را برای خرید بلیط یا ثبت‌نام آموزش افزایش بده.{% endblock %}
+{% block account_content %}<section class="account-panel"><div class="account-panel-heading"><h2>مبلغ شارژ</h2><span class="account-soft-label">ریال</span></div><div class="profile-fixed-info"><i class="fa-solid fa-wallet" aria-hidden="true"></i><div><span>موجودی فعلی</span><strong>{{ wallet.balance|rial_display|to_persian }} ریال</strong></div></div><form method="post" action="{% url 'payments:payment_request' %}" class="auth-form wallet-charge-form">{% csrf_token %}<div class="auth-field"><label for="amount">مبلغ شارژ (ریال)</label><div class="auth-input-wrap"><input type="number" name="amount" id="amount" min="10000" max="100000000" inputmode="numeric" required placeholder="مثال: ۵۰۰۰۰" aria-describedby="charge-hint"></div><p class="auth-hint" id="charge-hint">حداقل ۱۰٬۰۰۰ و حداکثر ۱۰۰٬۰۰۰٬۰۰۰ ریال</p></div><input type="hidden" name="next_url" value="{{ charge_next }}"><div class="profile-form-actions"><button type="submit" class="account-btn"><i class="fa-solid fa-credit-card" aria-hidden="true"></i> پرداخت و شارژ</button><a href="{{ charge_next }}" class="account-btn account-btn-light">بازگشت</a></div></form></section>{% endblock %}

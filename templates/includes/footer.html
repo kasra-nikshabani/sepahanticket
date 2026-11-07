@@ -1,65 +1,44 @@
-<!-- templates/includes/footer.html -->
-{% load currency_filters %}
-<footer class="footer">
-    <div class="container">
-        <div class="row g-4">
-            <div class="col-lg-4 col-md-6">
-                <div class="footer-logo">
-                    <i class="fas fa-futbol"></i> فولاد مبارکه سپاهان
-                </div>
-                <p class="footer-description">
-                    سامانه فروش بلیط مسابقات تیم فوتبال فولاد مبارکه سپاهان
-                </p>
-                <div>
-                    <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
-                    <a href="#" class="social-link"><i class="fab fa-telegram"></i></a>
-                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
-                </div>
+{% load static %}
+<footer class="didavar-footer">
+    <div class="didavar-footer__shell">
+        <div class="didavar-footer__invite">
+            <div class="didavar-footer__invite-copy">
+                <span class="didavar-footer__ticket" aria-hidden="true"><i class="fas fa-ticket-alt"></i></span>
+                <div><span class="didavar-footer__eyebrow">صحنه برای شماست</span><h2>دیدار بعدی را شما بسازید.</h2><p>نمایش، کنسرت یا رویدادتان را در دیدآور معرفی کنید.</p></div>
             </div>
-
-            <div class="col-lg-2 col-md-6">
-                <h5 class="footer-title">لینک‌ها</h5>
-                <ul class="footer-links">
-                    <li><a href="{% url 'matches:home' %}"><i class="fas fa-chevron-left"></i> صفحه اصلی</a></li>
-                    <li><a href="#"><i class="fas fa-chevron-left"></i> مسابقات</a></li>
-                </ul>
+            <a class="didavar-footer__cta" href="{% url 'accounts:event_submission_start' %}">ثبت برنامه <i class="fas fa-arrow-left" aria-hidden="true"></i></a>
+        </div>
+        <div class="didavar-footer__grid">
+            <div class="didavar-footer__brand">
+                <a href="{% url 'matches:home' %}" class="didavar-footer__logo" aria-label="دیدآور، صفحه اصلی"><img src="{% static 'events/didavar-logo-white.svg' %}" alt="دیدآور — DIDAVAR"></a>
+                <p class="didavar-footer__slogan">هر رویداد، یک دیدار.</p>
+                <p class="didavar-footer__description">برای شب‌هایی که به خاطره تبدیل می‌شوند؛<br>از صحنهٔ نمایش تا موسیقی و تجربه‌های تازه.</p>
             </div>
-
-            <div class="col-lg-2 col-md-6">
-                <h5 class="footer-title">حساب کاربری</h5>
-                <ul class="footer-links">
-                    {% if user.is_authenticated %}
-                        <li><a href="{% url 'accounts:profile' %}"><i class="fas fa-chevron-left"></i> پروفایل</a></li>
-                        <li><a href="{% url 'accounts:logout' %}"><i class="fas fa-chevron-left"></i> خروج</a></li>
-                    {% else %}
-                        <li><a href="{% url 'accounts:login' %}"><i class="fas fa-chevron-left"></i> ورود</a></li>
-                        <li><a href="{% url 'accounts:register' %}"><i class="fas fa-chevron-left"></i> ثبت‌نام</a></li>
-                    {% endif %}
-                </ul>
-            </div>
-
-            <div class="col-lg-4 col-md-6">
-                <h5 class="footer-title">تماس با ما</h5>
-                <ul class="footer-contact">
-                    <li><i class="fas fa-map-marker-alt"></i> اصفهان، ورزشگاه نقش جهان</li>
-                    <li><i class="fas fa-phone"></i> ۰۳۱-۳۷۶۶۰۴۹۱-۴</li>
-                    <li><i class="fas fa-envelope"></i> info@sepahansc.com</li>
-                </ul>
+            <nav aria-label="کشف برنامه‌ها" class="didavar-footer__nav">
+                <h3>یک دیدار تازه</h3>
+                <a href="{% url 'matches:event_catalogue' %}?category=theater&amp;sort=new"><i class="fas fa-theater-masks" aria-hidden="true"></i> نمایش‌ها</a>
+                <a href="{% url 'matches:event_catalogue' %}?category=concert&amp;sort=new"><i class="fas fa-music" aria-hidden="true"></i> کنسرت‌ها</a>
+                <a href="{% url 'matches:event_catalogue' %}?category=event&amp;sort=new"><i class="fas fa-calendar-alt" aria-hidden="true"></i> رویدادها</a>
+                <a href="{% url 'studios:catalogue' %}"><i class="fas fa-door-open" aria-hidden="true"></i> اجارهٔ پلاتو</a>
+                <a href="{% url 'education:catalogue' %}"><i class="fas fa-graduation-cap" aria-hidden="true"></i> کلاس‌ها و دوره‌ها</a>
+                <a href="{% url 'artists:directory' %}"><i class="fas fa-palette" aria-hidden="true"></i> هنرمندان</a>
+                <a href="{% url 'artists:opportunities' %}"><i class="fas fa-briefcase" aria-hidden="true"></i> فرصت‌های همکاری</a>
+            </nav>
+            <nav aria-label="حساب و برنامه‌های شما" class="didavar-footer__nav">
+                <h3>همراه شما</h3>
+                <a href="{% url 'accounts:profile' %}">حساب کاربری</a>
+                <a href="{% url 'tickets:user_tickets' %}">بلیط‌های من</a>
+                <a href="{% url 'accounts:program_list' %}">برنامه‌های من</a>
+                <a href="{% url 'education:my_learning' %}">آموزش‌های من</a>
+                <a href="{% url 'education:my_teaching' %}">فضای تدریس من</a>
+            </nav>
+            <div class="didavar-footer__help">
+                <span class="didavar-footer__help-icon" aria-hidden="true"><i class="fas fa-comments"></i></span>
+                <h3>کنارتان هستیم.</h3>
+                <p>دربارهٔ بلیط یا برنامه‌تان سوالی دارید؟ از بخش پشتیبانی با ما در ارتباط باشید.</p>
+                <a href="{% url 'accounts:support_list' %}">پشتیبانی دیدآور <i class="fas fa-arrow-left" aria-hidden="true"></i></a>
             </div>
         </div>
-
-        <hr class="footer-divider">
-        <div class="row align-items-center">
-            <div class="col-md-6 text-md-start text-center">
-                <p class="footer-copy">
-                    &copy; ۲۰۲۶ تمامی حقوق محفوظ است.
-                    باشگاه فرهنگی ورزشی فولاد مبارکه سپاهان
-                </p>
-            </div>
-            <div class="col-md-6 text-md-end text-center">
-                <span class="badge-gold">نسخه ۱.۰</span>
-                <span class="badge-dark">ورزشگاه نقش جهان</span>
-            </div>
-        </div>
+        <div class="didavar-footer__bottom"><p>تمامی حقوق برای دیدآور محفوظ است.</p><span><i class="far fa-heart" aria-hidden="true"></i> به امید دیدار، در رویداد بعدی</span></div>
     </div>
 </footer>

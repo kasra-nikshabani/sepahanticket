@@ -1,0 +1,5 @@
+{% extends 'accounts/account_base.html' %}{% load persian_filters %}
+{% block title %}درخواست تغییر برنامه | دیدآور{% endblock %}
+{% block account_title %}تغییرات برنامه را به ادمین بسپارید{% endblock %}
+{% block account_intro %}برنامه منتشر شده است و ویرایش مستقیم آن امکان‌پذیر نیست.{% endblock %}
+{% block account_content %}<section class="account-panel"><h2>{{ program.published_event.title|to_persian }}</h2><p class="program-note">هر تغییر در اطلاعات، تصاویر، مجوز، سالن، سانس‌ها یا قیمت بلیط باید از طریق تیکت درخواست شود. ادمین درخواست را بررسی می‌کند و تغییر را انجام می‌دهد.</p><a class="account-btn" href="{{ change_url }}">ثبت تیکت تغییرات</a><a class="account-btn account-btn-light" href="{% url 'accounts:program_detail' program.pk %}">جزئیات برنامه و گزارش فروش</a></section>{% endblock %}

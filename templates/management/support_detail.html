@@ -1,0 +1,4 @@
+{% extends 'management/base.html' %}{% load static %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'events/support.css' %}">{% endblock %}
+{% block intro %}اطلاعات درخواست و تاریخچه گفتگو با کاربر.{% endblock %}
+{% block content %}{% include 'support/_thread.html' %}{% endblock %}

@@ -1,0 +1,2 @@
+{% load persian_filters %}
+{% if artist.avatar %}<img class="artist-avatar" src="{{ artist.avatar.url }}" alt="{{ artist.display_name|to_persian }}" width="104" height="104" loading="lazy">{% else %}<span class="artist-avatar artist-avatar-placeholder" aria-hidden="true">{{ artist.display_name|first }}</span>{% endif %}

@@ -19,17 +19,17 @@
     .card-header-custom {
         background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
         padding: 20px 30px;
-        border-bottom: 3px solid #D4AF37;
+        border-bottom: 3px solid #2467a8;
         color: white;
     }
     .card-header-custom h4 {
         margin: 0;
         font-weight: 700;
-        color: #D4AF37;
+        color: #2467a8;
     }
     .card-header-custom h4 i {
         margin-left: 10px;
-        color: #D4AF37;
+        color: #2467a8;
     }
     .card-body-custom {
         padding: 30px;
@@ -45,7 +45,7 @@
         font-size: 0.95rem;
     }
     .form-group-custom label i {
-        color: #D4AF37;
+        color: #2467a8;
         margin-left: 8px;
         width: 20px;
     }
@@ -59,8 +59,8 @@
         background: #fafafa;
     }
     .form-control-custom:focus {
-        border-color: #D4AF37;
-        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+        border-color: #2467a8;
+        box-shadow: 0 0 0 3px rgba(36, 103, 168, 0.15);
         background: #fff;
         outline: none;
     }
@@ -70,20 +70,20 @@
         margin-top: 4px;
     }
     .btn-issue {
-        background: linear-gradient(135deg, #D4AF37, #B8960F);
+        background: linear-gradient(135deg, #2467a8, #194d82);
         border: none;
         color: #1A1A2E;
         font-weight: 700;
         padding: 12px 36px;
         border-radius: 12px;
         font-size: 1.1rem;
-        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+        box-shadow: 0 4px 12px rgba(36, 103, 168, 0.3);
     }
     .btn-issue:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
+        box-shadow: 0 8px 25px rgba(36, 103, 168, 0.4);
         color: #1A1A2E;
-        background: linear-gradient(135deg, #E8D58A, #D4AF37);
+        background: linear-gradient(135deg, #a9c9e8, #2467a8);
     }
     .btn-issue i { margin-left: 8px; }
     .btn-secondary-custom {
@@ -99,27 +99,27 @@
         background: #f8f9fa;
         border-radius: 8px;
         padding: 12px 16px;
-        border-right: 4px solid #D4AF37;
+        border-right: 4px solid #2467a8;
         margin-bottom: 20px;
         display: flex;
         align-items: center;
         gap: 12px;
         color: #1A1A2E;
     }
-    .info-badge i { color: #D4AF37; font-size: 1.3rem; }
+    .info-badge i { color: #2467a8; font-size: 1.3rem; }
     .block-option-full { color: #c62828; }
     .btn-inquiry {
         background: #1A1A2E;
         border: none;
-        color: #D4AF37;
+        color: #2467a8;
         font-weight: 700;
         padding: 12px 20px;
         border-radius: 12px;
         width: 100%;
     }
-    .btn-inquiry:hover { background: #16213E; color: #D4AF37; }
+    .btn-inquiry:hover { background: #16213E; color: #2467a8; }
     .btn-inquiry:disabled { opacity: 0.6; }
-    .btn-inquiry-verified { background: #1E8E3E !important; color: #fff !important; }
+    .btn-inquiry-verified { background: #12559a !important; color: #fff !important; }
     .inquiry-message { margin-top: 10px; display: none; }
     .btn-issue:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
     @media (max-width: 768px) {
@@ -148,7 +148,7 @@
                         <option value="">— انتخاب مسابقه —</option>
                         {% for m in matches %}
                             <option value="{{ m.id }}" {% if selected_match and selected_match.id == m.id %}selected{% endif %}>
-                                {{ m.home_team }} vs {{ m.away_team }} — {{ m.date_time|date:"Y/m/d H:i" }}
+                                {{ m.display_title }} — {{ m.date_time|date:"Y/m/d H:i" }}
                             </option>
                         {% endfor %}
                     </select>

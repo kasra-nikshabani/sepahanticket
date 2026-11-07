@@ -13,13 +13,13 @@
 
 {% block content %}
 <div id="site-stats-box" style="display:flex; gap:16px; margin-bottom:20px; flex-wrap:wrap;">
-    <div style="background:#0B3D24; color:#fff; border-radius:10px; padding:16px 24px; min-width:180px;">
+    <div style="background:#062342; color:#fff; border-radius:10px; padding:16px 24px; min-width:180px;">
         <div style="font-size:13px; opacity:0.75;">کاربران آنلاین (۵ دقیقه‌ی اخیر)</div>
         <div style="font-size:28px; font-weight:800; margin-top:4px;">
             {% if online_visitors_count is not None %}{{ online_visitors_count }}{% else %}—{% endif %}
         </div>
     </div>
-    <div style="background:#D4AF37; color:#1A1A2E; border-radius:10px; padding:16px 24px; min-width:180px;">
+    <div style="background:#2467a8; color:#1A1A2E; border-radius:10px; padding:16px 24px; min-width:180px;">
         <div style="font-size:13px; opacity:0.75;">بازدید ۷۲ ساعت گذشته</div>
         <div style="font-size:28px; font-weight:800; margin-top:4px;">
             {% if visits_72h_count is not None %}{{ visits_72h_count }}{% else %}—{% endif %}

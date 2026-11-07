@@ -1,0 +1,32 @@
+{% extends 'accounts/account_base.html' %}{% load static persian_filters jalali %}
+{% block title %}هنرکارت | دیدآور{% endblock %}
+{% block extra_css %}{{ block.super }}<link rel="stylesheet" href="{% static 'events/art-card.css' %}">{% endblock %}
+{% block account_title %}هنرکارت{% endblock %}
+{% block account_intro %}کارت بانکی هنرمندان و علاقه‌مندان به فرهنگ؛ با مزایای ویژه در دیدآور.{% endblock %}
+{% block account_content %}
+<main class="art-card-page">
+  <section class="art-card-hero">
+    <div class="art-card-copy"><span class="art-card-kicker"><i class="fa-solid fa-sparkles" aria-hidden="true"></i> همراهِ دیدارهای هنری</span><h2>هنرکارت؛ یک کارت برای تجربه‌های بیشتر</h2><p>درخواست صدور کارت بانکی هنرکارت از بانک شهر را ثبت کن و وضعیت پیگیری را از حساب دیدآورت ببین.</p><div class="art-card-brand"><span><i class="fa-solid fa-masks-theater" aria-hidden="true"></i></span><strong>هنرکارت</strong><small>با همراهی بانک شهر</small></div></div>
+    <div class="art-card-visual" aria-hidden="true"><div class="art-card-chip"></div><div class="art-card-contactless"><i class="fa-solid fa-wifi"></i></div><div class="art-card-visual-name">هنرکارت</div><div class="art-card-visual-brand">دیدآور <span>هر رویداد، یک دیدار.</span></div><i class="fa-solid fa-masks-theater art-card-watermark"></i></div>
+  </section>
+
+  <section class="art-card-benefits" aria-label="مزایای هنرکارت">
+    <article><span><i class="fa-solid fa-percent" aria-hidden="true"></i></span><div><strong>۱۰٪ تخفیف خرید</strong><p>برای خرید خدمات دیدآور با هنرکارت؛ جزئیات دامنهٔ خدمات و نحوهٔ اعمال تخفیف هنگام اتصال بانکی نهایی می‌شود.</p></div></article>
+    <article><span><i class="fa-solid fa-ticket" aria-hidden="true"></i></span><div><strong>بدون کارمزد دیدآور برای برگزارکننده</strong><p>گروه‌های تئاتری با انتخاب هنرکارت برای تسویهٔ فروش برنامه، از کارمزد خدمات دیدآور معاف می‌شوند.</p></div></article>
+  </section>
+
+  <section class="art-card-status-panel">
+    <div class="art-card-status-heading"><div><span class="art-card-eyebrow">درخواست و پیگیری</span><h2>وضعیت هنرکارت من</h2></div>{% if application %}<span class="art-card-status art-card-status-{{ application.status }}">{{ application.get_status_display }}</span>{% endif %}</div>
+    {% if application %}
+      {% if application.status == 'active' %}<div class="art-card-state art-card-state-active"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><div><strong>هنرکارت برای حسابت ثبت شده</strong><p>چهار رقم پایانی: <bdi dir="ltr">•••• {{ application.card_last_four|default:'—'|to_persian }}</bdi>{% if application.bank_reference %}<br>شناسهٔ پیگیری: <bdi dir="ltr">{{ application.bank_reference|to_persian }}</bdi>{% endif %}</p></div></div>
+      {% elif application.status == 'sent_to_bank' %}<div class="art-card-state"><i class="fa-solid fa-building-columns" aria-hidden="true"></i><div><strong>درخواست برای بانک ارسال شده</strong><p>پس از دریافت نتیجهٔ بانک، وضعیت این بخش به‌روزرسانی می‌شود.{% if application.bank_reference %}<br>شناسهٔ پیگیری: <bdi dir="ltr">{{ application.bank_reference|to_persian }}</bdi>{% endif %}</p></div></div>
+      {% elif application.status == 'rejected' %}<div class="art-card-state art-card-state-review"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><div><strong>درخواست نیاز به پیگیری دارد</strong><p>{{ application.admin_note|default:'برای راهنمایی بیشتر با پشتیبانی دیدآور تماس بگیر.'|to_persian }}</p></div></div>
+      {% else %}<div class="art-card-state"><i class="fa-regular fa-clock" aria-hidden="true"></i><div><strong>درخواستت ثبت شده است</strong><p>تیم دیدآور اطلاعات درخواست را بررسی می‌کند و نتیجه را همین‌جا می‌گذارد.</p></div></div>{% endif %}
+    {% else %}<div class="art-card-state"><i class="fa-regular fa-credit-card" aria-hidden="true"></i><div><strong>هنوز درخواست نداده‌ای</strong><p>برای شروع، درخواستت را ثبت کن. نام و شمارهٔ همراه حساب دیدآورت برای پیگیری استفاده می‌شود.</p></div></div>{% endif %}
+    {% if not application or application.status == 'rejected' %}<form method="post" class="art-card-request-form">{% csrf_token %}<label class="art-card-consent"><input type="checkbox" name="consent" required><span>با استفاده از نام و شمارهٔ همراه حسابم برای پیگیری درخواست هنرکارت موافقم.</span></label><button class="edu-button" type="submit"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> {% if application %}ثبت دوبارهٔ درخواست{% else %}درخواست صدور هنرکارت{% endif %}</button></form>{% endif %}
+    {% if application and application.admin_note and application.status != 'rejected' %}<div class="art-card-admin-note"><strong>پیام پیگیری:</strong> {{ application.admin_note|to_persian }}</div>{% endif %}
+    <p class="art-card-privacy"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> اطلاعات محرمانهٔ کارت مثل شمارهٔ کامل، رمز یا CVV در دیدآور دریافت یا ذخیره نمی‌شود.</p>
+  </section>
+  <p class="art-card-integration-note">درخواست صدور و مزایا پس از اتصال رسمی سرویس بانک شهر فعال می‌شوند؛ این صفحه وضعیت درخواست را نگه می‌دارد و به‌تنهایی به معنی صدور کارت یا اعمال تخفیف نیست.</p>
+</main>
+{% endblock %}

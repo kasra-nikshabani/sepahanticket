@@ -24,7 +24,7 @@
         .card-header-custom {
             background: linear-gradient(135deg, #1A1A2E, #16213E);
             padding: 20px 30px;
-            border-bottom: 3px solid #D4AF37;
+            border-bottom: 3px solid #2467a8;
             color: white;
             display: flex;
             align-items: center;
@@ -34,7 +34,7 @@
         .card-header-custom h4 {
             margin: 0;
             font-weight: 700;
-            color: #D4AF37;
+            color: #2467a8;
             font-size: 1.25rem;
         }
 
@@ -114,12 +114,12 @@
             border: none;
             cursor: pointer;
             background: #1A1A2E;
-            color: #D4AF37;
+            color: #2467a8;
             transition: all 0.2s;
         }
 
         .filter-form .btn-filter:hover {
-            background: #D4AF37;
+            background: #2467a8;
             color: #1A1A2E;
         }
 
@@ -140,7 +140,7 @@
 
         .table-custom thead th {
             background: #1A1A2E;
-            color: #D4AF37;
+            color: #2467a8;
             font-weight: 600;
             padding: 14px 16px;
             text-align: right;
@@ -184,7 +184,7 @@
         }
 
         .zone-vip {
-            background: #D4AF37;
+            background: #2467a8;
             color: #1A1A2E;
         }
 
@@ -199,7 +199,7 @@
         }
 
         .zone-home {
-            background: #28a745;
+            background: #1966b6;
             color: #fff;
         }
 
@@ -293,7 +293,7 @@
                         <option value="">انتخاب مسابقه...</option>
                         {% for m in matches %}
                             <option value="{{ m.id }}" {% if selected_match_id == m.id %}selected{% endif %}>
-                                {{ m.home_team }} vs {{ m.away_team }} - {{ m.date_time|date:"Y/m/d" }}
+                                {{ m.display_title }} - {{ m.date_time|date:"Y/m/d" }}
                             </option>
                         {% endfor %}
                     </select>
@@ -326,9 +326,9 @@
                         <div class="stat-box">
                             <div class="stat-info">
                                 <h6>باقی‌مانده</h6>
-                                <span style="color: #28a745;">{{ available_seats_sum }}</span>
+                                <span style="color: #1966b6;">{{ available_seats_sum }}</span>
                             </div>
-                            <div class="stat-icon" style="background: #e8f5e9; color: #28a745;">
+                            <div class="stat-icon" style="background: #eeeeef; color: #1966b6;">
                                 <i class="fas fa-check-circle"></i>
                             </div>
                         </div>
@@ -383,7 +383,7 @@
                                     </td>
                                     <td>{{ item.total }}</td>
                                     <td style="color: #dc3545; font-weight: 600;">{{ item.occupied }}</td>
-                                    <td style="color: #28a745; font-weight: 600;">{{ item.available }}</td>
+                                    <td style="color: #1966b6; font-weight: 600;">{{ item.available }}</td>
                                     <td>
                                         <div class="progress-wrapper">
                                             <div class="progress-bar-custom">
@@ -436,7 +436,7 @@
                             {
                                 label: 'باقی‌مانده',
                                 data: availableData,
-                                backgroundColor: '#28a745',
+                                backgroundColor: '#1966b6',
                                 borderRadius: 4
                             }
                         ]

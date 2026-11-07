@@ -1,0 +1,22 @@
+{% load jalali currency_filters persian_filters %}
+<article class="event-card compact-card">
+    <div class="card-artwork">
+        <a class="poster-link" href="{% url 'matches:event_detail' event.id %}" aria-label="مشاهده {{ event.title|to_persian }}">{% include 'events/_poster.html' %}</a>
+        <div class="card-preview" id="preview-{{ event.id }}" aria-hidden="true">
+            <span class="preview-category">{{ event.get_category_display }}</span>
+            <strong class="preview-title">{{ event.title|to_persian }}</strong>
+            <dl class="preview-facts">
+                <div><dt><i class="fa-regular fa-clock" aria-hidden="true"></i> مدت اجرا</dt><dd>{{ event.duration_minutes|to_persian }} دقیقه</dd></div>
+                {% if event.artists %}<div><dt>هنرمندان</dt><dd>{{ event.artists|truncatechars:90|to_persian }}</dd></div>{% endif %}
+                {% if event.organizer %}<div><dt>برگزارکننده</dt><dd>{{ event.organizer|truncatechars:60|to_persian }}</dd></div>{% endif %}
+                {% with session=event.upcoming_sessions.0 %}{% if session %}<div><dt><i class="fa-solid fa-location-dot" aria-hidden="true"></i> سالن</dt><dd>{{ session.stadium.name|to_persian }}{% if session.stadium.city %}، {{ session.stadium.city|to_persian }}{% endif %}</dd></div><div><dt>اولین سانس</dt><dd>{{ session.date_time|to_jalali_date|to_persian }}{% if session.has_time %} · {{ session.date_time|date:'H:i'|to_persian }}{% endif %}</dd></div>{% endif %}{% endwith %}
+            </dl>
+        </div>
+    </div>
+    <div class="event-card-body">
+        <div class="card-topline"><span class="card-category">{{ event.get_category_display }}</span><span class="card-rating"{% if event.rating_count %} title="میانگین {{ event.rating_count|to_persian }} رأی"{% endif %}><i class="{% if event.rating_count %}fa-solid{% else %}fa-regular{% endif %} fa-star" aria-hidden="true"></i>{% if event.rating_count %}<strong>{{ event.rating_average|floatformat:1|persian_number }}</strong><small> / ۵</small>{% else %}<small>بدون امتیاز</small>{% endif %}</span></div>
+        <h3><a href="{% url 'matches:event_detail' event.id %}">{{ event.title|to_persian }}</a></h3>
+        {% with session=event.upcoming_sessions.0 %}<p class="event-meta">{% if session %}<i class="fa-regular fa-calendar" aria-hidden="true"></i> {{ session.date_time|to_jalali_date|to_persian }}{% else %}سانس‌ها به‌زودی اعلام می‌شوند{% endif %}</p>{% endwith %}
+        <div class="card-bottom"><span class="starting-price">{% if event.starting_price != None %}<small>از</small> <strong>{{ event.starting_price|toman_display|persian_number }}</strong> <small>تومان</small>{% elif event.sale_open %}مشاهده سانس‌ها{% else %}{{ event.sale_label }}{% endif %}</span><a class="card-buy" href="{% url 'matches:event_detail' event.id %}" aria-label="انتخاب سانس {{ event.title|to_persian }}">سانس‌ها <span aria-hidden="true">←</span></a></div>
+    </div>
+</article>

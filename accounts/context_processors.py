@@ -17,7 +17,16 @@ def site_settings(request):
         # به خطا بخورد؛ پیش‌فرض همان رفتار قبلی (کیف پول فعال) است.
         pass
 
+    unread = 0
+    if getattr(request, 'user', None) and request.user.is_authenticated:
+        from django.db.utils import OperationalError, ProgrammingError
+        from .models import Notification
+        try:
+            unread = Notification.objects.filter(recipient=request.user, read_at__isnull=True).count()
+        except (OperationalError, ProgrammingError):
+            pass  # Initial setup before the notification migration.
     return {
         'settings': settings,
         'wallet_enabled': wallet_enabled,
+        'unread_notification_count': unread,
     }

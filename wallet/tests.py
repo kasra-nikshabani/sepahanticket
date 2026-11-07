@@ -291,13 +291,13 @@ class UserVisibilityAndCorrectionTests(TestCase):
         self.client.post(f'/wallet/withdraw/{self.req.pk}/cancel/')   # درخواست باز نباشد
         body = self.client.get('/wallet/dashboard/').content.decode()
         self.assertIn('قابل برداشت به حساب بانکی', body)
-        self.assertIn('4٬000٬000', body)          # کل مبلغ جبرانی
+        self.assertIn('۴٬۰۰۰٬۰۰۰', body)          # کل مبلغ جبرانی با اعداد فارسی
 
     def test_held_amount_is_explained_not_silently_missing(self):
         """وقتی درخواستی باز است، «قابل برداشت» کمتر می‌شود -- باید توضیح بدهیم."""
         body = self.client.get('/wallet/dashboard/').content.decode()
         self.assertIn('نگه داشته شده', body)
-        self.assertIn('3٬000٬000', body)          # مبلغِ نگه‌داشته‌شده
+        self.assertIn('۳٬۰۰۰٬۰۰۰', body)          # مبلغِ نگه‌داشته‌شده با اعداد فارسی
 
     def test_zero_withdrawable_is_explained(self):
         """کاربری که فقط شارژ شخصی دارد باید بفهمد چرا صفر است."""

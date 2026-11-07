@@ -35,13 +35,15 @@ def is_under15_free_enabled():
     return SiteSettings.get_solo().free_under_15
 
 
-def is_free_for_age(age):
+def is_free_for_age(age, match=None):
     """
     آیا بلیطِ فردی با این سن رایگان است؟
 
     age=None یعنی سنِ تأییدشده‌ای در دست نیست -- در آن حالت عمداً رایگان
     محسوب نمی‌شود (پیش‌فرض امن)، همان رفتاری که قبلاً هم بود.
     """
+    if match is not None and match.is_cultural:
+        return False
     if age is None:
         return False
     if not is_under15_free_enabled():
@@ -189,6 +191,8 @@ class Ticket(models.Model):
         می‌کند (یک بار برای هر شرطِ رنگ + یک بار برای خودِ متن). با
         property ساده، هر ارزیابی یک کوئری جدا بود. حالا فقط یک بار
         برای هر شیء بلیط محاسبه می‌شود."""
+        if self.match.is_cultural:
+            return self.seat.row.block.name
         if self.seat and self.seat.row and self.seat.row.block:
             from matches.models import get_block_zone_for_match
             zone = get_block_zone_for_match(self.match, self.seat.row.block)
@@ -200,12 +204,16 @@ class Ticket(models.Model):
             return labels.get(zone, "نامشخص")
         return "نامشخص"
 
+    @property
+    def gate_qr_payload(self):
+        return f"Ticket:{self.ticket_number}|Match:{self.match_id}|Seat:{self.seat_id}|User:{self.user.username}"
+
     def generate_qr_code(self):
         import qrcode
         from io import BytesIO
         from django.core.files import File
 
-        ticket_data = f"Ticket:{self.ticket_number}|Match:{self.match.id}|Seat:{self.seat.id}|User:{self.user.username}"
+        ticket_data = self.gate_qr_payload
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -291,8 +299,8 @@ class Ticket(models.Model):
         # یعنی بلیط واقعاً رایگان (سن زیر ۱۵) و نباید با save بعدی دوباره با
         # قیمت بلوک جایگزین شود.
         if self.price is None and self.seat and self.seat.row and self.seat.row.block:
-            from matches.models import get_block_price_for_match
-            self.price = get_block_price_for_match(self.match, self.seat.row.block) or 0
+            from matches.models import get_seat_price_for_match
+            self.price = get_seat_price_for_match(self.match, self.seat)
 
         is_new = self.pk is None
 

@@ -1,0 +1,94 @@
+/* Shared page edges and practical control sizes, loaded after page styles. */
+body{--didavar-width:1440px;--didavar-gutter:96px}
+.culture-site .shell,.culture-site .home-header .shell,.home-header .shell,.didavar-footer__shell{width:min(var(--didavar-width),calc(100% - var(--didavar-gutter)));margin-inline:auto}
+.culture-site .skip-link{z-index:1100}
+.home-header .home-search button{min-height:44px;font-size:12px}
+.culture-site .flow-steps{flex-wrap:wrap;gap:8px;font-size:12px}
+.culture-site .flow-steps span{padding:8px 12px}
+.culture-site .filters summary,.culture-site .pagination-links a{min-height:44px;display:flex;align-items:center}
+.culture-site .sort-form select{min-height:44px;font-size:12px}
+.culture-site .sort-submit{width:44px;height:44px}
+.home-page .compact-card .card-buy{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:6px 10px;font-size:12px}
+.home-page .compact-card .card-bottom{flex-wrap:wrap;gap:8px}
+.home-page .starting-price{white-space:normal;line-height:1.8;overflow-wrap:anywhere}
+.card-info-toggle{min-width:44px;min-height:44px;font-size:11px;padding:8px 11px}
+.home-page .compact-card h3{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;font-size:15px;line-height:1.8;min-height:54px}
+.card-preview .preview-facts{font-size:12px}
+.card-preview .preview-facts dt{font-size:11px}
+.landing-page .slider-controls>button{width:44px;height:44px}
+.landing-page .slider-dots button,.landing-page .slider-dots button[aria-current=true]{width:32px;height:44px}
+.landing-page .slider-dots button:before{top:18px}
+.detail-page .detail-tabs a{min-height:44px;display:inline-flex;align-items:center;font-size:13px}
+.detail-page .detail-description{font-size:14px;color:#3b4d60}
+.detail-page .purchase-note{font-size:12px}
+.detail-page .session-purchase .btn,.detail-page .purchase-button{min-height:44px;font-size:13px}
+.session-status{font-size:12px;line-height:1.9;color:#4b5b6b;max-width:260px}
+.status-sold_out{color:#805526;background:#f3ead8;border:1px solid #d9c4a3;padding:5px 10px;border-radius:8px}
+.status-ended,.status-closed{color:#576472;background:#ededee;padding:5px 10px;border-radius:8px}
+.checkout-page{background:#e8e8e9}
+.checkout-page .checkout-wrap{padding-top:24px}
+.checkout-page .checkout-panel{background:#f0f0f0;border:1px solid #b7bcc2;border-radius:18px;padding:28px}
+.checkout-section-title{font-size:20px;font-weight:750;color:#25384c;margin-bottom:10px}
+.checkout-hint,.checkout-page .checkout-note{color:#4a5b6d;font-size:13px;line-height:2;margin:8px 0 16px}
+.checkout-page .checkout-seat{background:#e2e3e5;border-color:#b5bbc1;padding:20px;border-radius:12px}
+.checkout-seat-heading{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;color:#2c455e;font-size:13px;margin-bottom:16px}
+.checkout-page .form-label,.checkout-page .form-check-label{font-size:14px;color:#2b4158}
+.checkout-page .form-control{min-height:48px;background:#ebeced;border-color:#9ea6af;font-size:16px;border-radius:10px;color:#203245}
+.checkout-page .form-control:focus{border-color:#2a4a6b;box-shadow:0 0 0 3px #2a4a6b20}
+.checkout-wallet{background:#e2e3e5;border:1px solid #b5bbc1;padding:18px;border-radius:12px;margin-block:22px}
+.checkout-page .form-check{display:flex;gap:12px;align-items:center;padding-inline-start:0}
+.checkout-page .form-check-input{float:none;flex-shrink:0;margin:0;width:22px;height:22px;accent-color:#2a4a6b}
+.checkout-page .form-check-label{min-height:44px;display:flex;align-items:center}
+.checkout-page .checkout-total{gap:16px;flex-wrap:wrap;color:#2b4158}
+.checkout-page #checkout-submit{min-height:50px;background:#2a4a6b;border-color:#2a4a6b;font-size:14px;border-radius:12px}
+.checkout-page #checkout-submit:disabled{background:#c7cbd0;color:#44586c;border-color:#a5aeb7}
+.checkout-page .checkout-cancel{min-height:44px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#3c5671}
+.checkout-page .reservation-notice{font-size:13px;background:#f0e4ca;border-color:#c7b385;color:#6c5228}
+.checkout-page .reservation-notice p{margin:8px 0 0}
+@media(max-width:1280px){body{--didavar-gutter:64px}}
+@media(max-width:1100px){body{--didavar-gutter:40px}}
+@media(max-width:760px){
+ body{--didavar-gutter:32px}
+ .home-header .home-search input,.culture-site input:not([type=checkbox]):not([type=radio]):not([data-otp-input]),.culture-site select{font-size:16px}
+ .home-header .home-login{font-size:12px;min-height:44px}
+ .home-page .event-meta{font-size:12px}
+ .home-page .compact-card h3{font-size:14px;min-height:50px}
+ .home-page .compact-card .starting-price strong{font-size:13px}
+ .home-page .compact-card .starting-price small,.card-category,.card-rating,.card-rating small{font-size:11px}
+ .home-page .compact-card .card-buy{font-size:12px;width:100%}
+ .home-page .home-section-title .eyebrow,.landing-page .home-section-title .eyebrow{font-size:11px}
+ .home-section-intro{font-size:12px}
+ .landing-page .section-all{font-size:13px;min-height:44px}
+ .landing-page .slider-controls{gap:3px;padding:4px}
+ .landing-page .slider-toolbar{grid-template-columns:minmax(0,1fr);gap:10px}
+ .slider-caption{flex-direction:row;align-items:center;flex-wrap:wrap;gap:10px}
+ .slider-caption>span{font-size:11px}
+ .slider-status{grid-column:auto}
+ .landing-page .slider-controls{justify-self:center;max-width:100%;flex-wrap:wrap;justify-content:center}
+ .compact-card.is-expanded .card-preview{position:static;visibility:visible;opacity:1;transform:none;padding:14px 10px 62px}
+ .compact-card.is-expanded .poster-link{display:none}
+ .card-preview .preview-title{display:block;font-size:14px}
+ .card-preview .preview-facts{grid-template-columns:minmax(0,1fr);font-size:12px;gap:9px}
+ .card-preview .preview-facts dt{font-size:11px}
+ .card-preview .preview-facts dd{display:block;-webkit-line-clamp:unset;overflow:visible}
+ .card-preview .preview-category{font-size:11px}
+ .detail-page .detail-purchase{grid-template-columns:90px minmax(0,1fr);gap:12px}
+ .detail-page .purchase-price{flex-wrap:wrap;gap:5px}
+ .detail-page .purchase-price>span,.detail-page .purchase-price small,.detail-page .detail-poster-caption{font-size:12px}
+ .detail-page .purchase-note{font-size:11px}
+ .detail-page .detail-rating,.detail-page .media-count{font-size:12px}
+ .detail-page .execution-summary{grid-template-columns:minmax(0,1fr)}
+ .detail-page .execution-fact span,.detail-page .execution-fact strong,.detail-page .event-credits>div{font-size:13px}
+ .detail-page .session-day strong,.detail-page .session-location,.detail-page .session-purchase>span,.detail-page .venue-address strong,.detail-page .venue-address p{font-size:13px}
+ .detail-page .detail-session{flex-wrap:wrap}
+ .detail-page .scene-gallery figcaption{font-size:12px}
+ .culture-site .sort-form{flex-wrap:wrap;justify-content:flex-end}
+ .checkout-page .checkout-panel{padding:18px}
+ .checkout-page .checkout-seat{padding:16px}
+ .checkout-page .checkout-total{font-size:14px}
+}
+@media(prefers-reduced-motion:reduce){.culture-site .compact-card,.card-preview{transition:none}}
+/* Keep signed-in controls usable at narrow mobile widths. */
+.home-header .notification-bell>i{margin:0}
+@media(max-width:760px){.home-header .home-account:has(.home-user-link){max-width:calc(100% - 145px);gap:6px;flex-wrap:wrap;justify-content:flex-end}.home-header .home-user-link{max-width:calc(100% - 100px);min-width:44px}.home-header .home-brand strong{font-size:26px}.home-header .home-brand-icon{width:39px;height:39px}.home-header .home-brand{gap:8px}.account-menu a{font-size:12px}.account-ticket-footer small{font-size:12px}.ticket-status{font-size:12px}.ticket-cancel-note{font-size:13px}}
+@media(max-width:380px){.home-header .home-header-main{gap:10px}.home-header .home-account:has(.home-user-link){max-width:calc(100% - 134px)}.home-header .home-user-link{max-width:100%;order:3;flex-basis:100%;justify-content:center}.home-header .home-brand small{font-size:9px}}

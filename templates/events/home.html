@@ -1,0 +1,33 @@
+{% extends 'events/base.html' %}
+{% load static persian_filters %}
+{% block title %}دیدآور | هر رویداد، یک دیدار.{% endblock %}
+{% block page_class %}home-page landing-page{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'events/home.css' %}">{% endblock %}
+{% block extra_js %}<script src="{% static 'events/home.js' %}"></script>{% endblock %}
+{% block content %}
+{% include 'events/_home_slider.html' %}
+{% for section in sections %}
+<section class="home-event-section section-{{ section.category }}" id="{{ section.category }}" aria-labelledby="heading-{{ section.category }}">
+    <div class="home-section-heading">
+        <div class="home-section-title">
+            <span class="section-icon" aria-hidden="true"><i class="fa-solid {% if section.category == 'theater' %}fa-masks-theater{% elif section.category == 'concert' %}fa-music{% else %}fa-calendar-days{% endif %}"></i></span>
+            <div>
+                <span class="eyebrow">{% if section.category == 'theater' %}روی صحنه{% elif section.category == 'concert' %}زنده و نزدیک{% else %}تجربه‌های تازه{% endif %}</span>
+                <h2 id="heading-{{ section.category }}">{{ section.title }}</h2>
+                <p class="home-section-intro">{% if section.category == 'theater' %}نمایش‌هایی که این روزها می‌توانی ببینی.{% elif section.category == 'concert' %}کنسرت‌هایی که جا ماندنشان سخت است.{% else %}کارگاه، گفت‌وگو و دیدارهایی که ارزش وقت گذاشتن دارند.{% endif %}</p>
+            </div>
+        </div>
+        <div class="rail-tools">
+            <div class="rail-arrows" aria-hidden="false">
+                <button type="button" data-rail-prev aria-label="نمایش برنامه‌های قبلی {{ section.title }}"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+                <button type="button" data-rail-next aria-label="نمایش برنامه‌های بعدی {{ section.title }}"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+            </div>
+            <a class="section-all" href="{% url 'matches:event_catalogue' %}?category={{ section.category }}&amp;sort=new">همه {{ section.title }} <span aria-hidden="true"><i class="fa-solid fa-arrow-left"></i></span></a>
+        </div>
+    </div>
+    <div class="event-grid" data-rail tabindex="0" aria-label="{{ section.title }}">
+        {% for event in section.events %}{% include 'events/_card.html' %}{% empty %}<div class="section-empty">هنوز {{ section.title }} برای نمایش ثبت نشده‌اند.</div>{% endfor %}
+    </div>
+</section>
+{% endfor %}
+{% endblock %}

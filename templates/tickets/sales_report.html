@@ -13,7 +13,7 @@
         flex-wrap: wrap;
         margin-bottom: 30px;
         padding-bottom: 20px;
-        border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+        border-bottom: 2px solid rgba(36, 103, 168, 0.3);
     }
     .page-header h2 {
         font-weight: 700;
@@ -21,7 +21,7 @@
         margin: 0;
         font-size: 28px;
     }
-    .page-header h2 i { color: #D4AF37; margin-left: 12px; }
+    .page-header h2 i { color: #2467a8; margin-left: 12px; }
 
     .stats-grid {
         display: grid;
@@ -40,8 +40,8 @@
     }
     .stat-card:hover {
         transform: translateY(-4px);
-        border-color: #D4AF37;
-        box-shadow: 0 8px 25px rgba(212,175,55,0.12);
+        border-color: #2467a8;
+        box-shadow: 0 8px 25px rgba(36, 103, 168,0.12);
     }
     .stat-card .stat-number {
         font-size: 24px;
@@ -58,8 +58,8 @@
         margin-bottom: 4px;
         display: block;
     }
-    .stat-card.gold .stat-number { color: #D4AF37; }
-    .stat-card.green .stat-number { color: #28a745; }
+    .stat-card.gold .stat-number { color: #2467a8; }
+    .stat-card.green .stat-number { color: #1966b6; }
     .stat-card.blue .stat-number { color: #17a2b8; }
     .stat-card.orange .stat-number { color: #ffc107; }
     .stat-card.purple .stat-number { color: #6f42c1; }
@@ -86,7 +86,7 @@
         font-weight: 600;
         color: #6c757d;
     }
-    .filter-section .filter-group label i { color: #D4AF37; }
+    .filter-section .filter-group label i { color: #2467a8; }
     .filter-section input[type="date"],
     .filter-section select {
         padding: 8px 12px;
@@ -99,9 +99,9 @@
     }
     .filter-section input[type="date"]:focus,
     .filter-section select:focus {
-        border-color: #D4AF37;
+        border-color: #2467a8;
         outline: none;
-        box-shadow: 0 0 0 3px rgba(212,175,55,0.12);
+        box-shadow: 0 0 0 3px rgba(36, 103, 168,0.12);
         background: #fff;
     }
     .btn-filter {
@@ -116,7 +116,7 @@
         height: 42px;
     }
     .btn-filter:hover {
-        background: #D4AF37;
+        background: #2467a8;
         color: #1A1A2E;
         transform: translateY(-2px);
     }
@@ -134,7 +134,7 @@
         gap: 6px;
     }
     .btn-reset:hover {
-        border-color: #D4AF37;
+        border-color: #2467a8;
         color: #1A1A2E;
     }
 
@@ -161,7 +161,7 @@
         border: none;
         font-weight: 600;
         font-size: 14px;
-        background: #28a745;
+        background: #1966b6;
         color: #fff;
         cursor: pointer;
         transition: all 0.3s ease;
@@ -171,7 +171,7 @@
     }
     .btn-export:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(40,167,69,0.3);
+        box-shadow: 0 4px 15px rgba(25, 102, 182,0.3);
     }
     .btn-export:disabled {
         opacity: 0.5;
@@ -204,7 +204,7 @@
         align-items: center;
         gap: 8px;
     }
-    .table-header h5 i { color: #D4AF37; }
+    .table-header h5 i { color: #2467a8; }
     .table-header .count-badge {
         background: #1A1A2E;
         color: #fff;
@@ -228,10 +228,10 @@
         font-weight: 600;
         font-size: 13px;
         color: #1A1A2E;
-        border-bottom: 2px solid #D4AF37;
+        border-bottom: 2px solid #2467a8;
         white-space: nowrap;
     }
-    .table-custom thead th i { margin-left: 6px; color: #D4AF37; }
+    .table-custom thead th i { margin-left: 6px; color: #2467a8; }
     .table-custom tbody td {
         padding: 10px 14px;
         border-bottom: 1px solid #f0f0f0;
@@ -245,7 +245,7 @@
         font-weight: 700;
     }
     .table-custom .total-row td {
-        border-top: 2px solid #D4AF37;
+        border-top: 2px solid #2467a8;
         padding: 12px 14px;
     }
     .badge-sport {
@@ -292,13 +292,13 @@
         background: #fff;
     }
     .pagination-custom a:hover {
-        border-color: #D4AF37;
-        color: #D4AF37;
+        border-color: #2467a8;
+        color: #2467a8;
         transform: translateY(-2px);
     }
     .pagination-custom .current {
-        background: #D4AF37;
-        border-color: #D4AF37;
+        background: #2467a8;
+        border-color: #2467a8;
         color: #1A1A2E;
         font-weight: 700;
     }
@@ -345,7 +345,7 @@
         align-items: center;
         gap: 8px;
     }
-    .chart-card .chart-title i { color: #D4AF37; }
+    .chart-card .chart-title i { color: #2467a8; }
     .chart-card canvas {
         width: 100% !important;
         max-height: 260px;
@@ -428,7 +428,7 @@
                     <option value="">همه مسابقات</option>
                     {% for match in matches %}
                         <option value="{{ match.id }}" {% if selected_match_id == match.id %}selected{% endif %}>
-                            {{ match.home_team }} vs {{ match.away_team }}
+                            {{ match.display_title }}
                         </option>
                     {% endfor %}
                 </select>
@@ -449,7 +449,7 @@
         <!-- ===== نوار انتخاب و خروجی ===== -->
         <div class="export-bar">
             <div class="selection-info">
-                <i class="fas fa-check-circle" style="color:#D4AF37;"></i>
+                <i class="fas fa-check-circle" style="color:#2467a8;"></i>
                 <span id="selectionText">مسابقات مورد نظر را انتخاب کنید و روی دکمه <strong>خروجی اکسل</strong> کلیک کنید.</span>
             </div>
             <button type="submit" class="btn-export" id="exportBtn" disabled>
@@ -506,12 +506,12 @@
                             <td><span style="background:#d1ecf1;color:#0c5460;padding:2px 12px;border-radius:50px;">{{ item.sold_count }}</span></td>
                             <td><span style="background:#fff3cd;color:#856404;padding:2px 12px;border-radius:50px;">{{ item.vip_count }}</span></td>
                             <td><strong>{{ item.total_tickets }}</strong></td>
-                            <td style="font-weight:600; color:#28a745;">{{ item.revenue|floatformat:0 }}</td>
+                            <td style="font-weight:600; color:#1966b6;">{{ item.revenue|floatformat:0 }}</td>
                             <td>
                                 <div style="display:flex; align-items:center; gap:6px;">
                                     <span>{{ item.occupancy_percent }}%</span>
                                     <div style="width:50px; height:4px; background:#e8eaed; border-radius:3px; overflow:hidden;">
-                                        <div style="width:{{ item.occupancy_percent }}%; height:100%; background:#D4AF37; border-radius:3px;"></div>
+                                        <div style="width:{{ item.occupancy_percent }}%; height:100%; background:#2467a8; border-radius:3px;"></div>
                                     </div>
                                 </div>
                             </td>
@@ -536,7 +536,7 @@
                             <td>{{ total_sold|default:"0" }}</td>
                             <td>{{ total_vip|default:"0" }}</td>
                             <td><strong>{{ total_tickets|default:"0" }}</strong></td>
-                            <td style="color:#28a745;"><strong>{{ total_revenue|floatformat:0|default:"0" }}</strong></td>
+                            <td style="color:#1966b6;"><strong>{{ total_revenue|floatformat:0|default:"0" }}</strong></td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -597,7 +597,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const checked = document.querySelectorAll('.row-checkbox:checked');
         const count = checked.length;
         if (count > 0) {
-            selectionText.innerHTML = `<i class="fas fa-check-circle" style="color:#28a745;"></i> ${count} مسابقه انتخاب شده است.`;
+            selectionText.innerHTML = `<i class="fas fa-check-circle" style="color:#1966b6;"></i> ${count} مسابقه انتخاب شده است.`;
             exportBtn.disabled = false;
         } else {
             selectionText.innerHTML = `مسابقات مورد نظر را انتخاب کنید و روی دکمه <strong>خروجی اکسل</strong> کلیک کنید.`;

@@ -1,0 +1,5 @@
+{% extends 'accounts/account_base.html' %}{% load static persian_filters %}
+{% block title %}درخواست همکاری | دیدآور{% endblock %}
+{% block extra_css %}{{ block.super }}<link rel="stylesheet" href="{% static 'events/artists.css' %}"><link rel="stylesheet" href="{% static 'events/collaboration.css' %}">{% endblock %}
+{% block account_title %}درخواست همکاری{% endblock %}{% block account_intro %}{{ opportunity.title|to_persian }} · {{ opportunity.project_name|to_persian }}{% endblock %}
+{% block account_content %}<div class="collab-notice"><i class="fa-solid fa-id-card" aria-hidden="true"></i><p>پروفایل «{{ artist.display_name|to_persian }}»، مهارت‌ها و سوابق شما همراه درخواست برای صاحب پروژه ارسال می‌شود. این درخواست عمومی نخواهد بود.</p></div><section class="account-panel"><form method="post" class="collab-form" novalidate>{% csrf_token %}{{ form.non_field_errors }}{% for field in form %}{% include 'collaboration/_field.html' %}{% endfor %}<div class="collab-actions"><button class="artist-button">ارسال درخواست همکاری</button><a class="artist-back" href="{{ opportunity.get_absolute_url }}">بازگشت به شرایط پروژه</a></div></form></section>{% endblock %}

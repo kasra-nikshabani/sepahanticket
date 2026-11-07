@@ -1,0 +1,4 @@
+<form class="panel-report-filters" method="get" role="search">
+{% for field in filter_form %}<div class="panel-field">{{ field.label_tag }}{{ field }}{% for error in field.errors %}<p class="panel-field-error">{{ error }}</p>{% endfor %}</div>{% endfor %}
+<div class="panel-filter-actions"><button class="panel-btn">اعمال فیلتر</button><a class="panel-reset" href="{% if selected_session %}{% url 'management:session_sales' selected_session.pk %}{% else %}{% url 'management:sales' %}{% endif %}">پاک‌کردن فیلتر</a></div>
+{{ filter_form.non_field_errors }}</form>

@@ -1,0 +1,9 @@
+{% extends 'accounts/account_base.html' %}{% load static %}
+{% block title %}ثبت فراخوان همکاری | دیدآور{% endblock %}
+{% block extra_css %}{{ block.super }}<link rel="stylesheet" href="{% static 'events/artists.css' %}"><link rel="stylesheet" href="{% static 'events/collaboration.css' %}">{% endblock %}
+{% block account_title %}{% if opportunity %}ویرایش فراخوان{% else %}یک همکار تازه پیدا کنید{% endif %}{% endblock %}
+{% block account_intro %}نیازهای پروژه را روشن بنویسید؛ پس از بررسی مدیریت، هنرمندان می‌توانند درخواست بفرستند.{% endblock %}
+{% block account_content %}
+<div class="collab-notice"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><p>برای جذب همکار، نیازی نیست فروش بلیط پروژه آغاز شده باشد. ویرایش فراخوان منتشرشده، آن را دوباره به مرحلهٔ بررسی می‌برد؛ درخواست‌های قبلی حفظ می‌شوند.</p></div>
+<section class="account-panel"><form method="post" class="collab-form" novalidate>{% csrf_token %}{{ form.version }}{% if form.errors %}<div class="collab-error-summary" role="alert">موارد مشخص‌شده را اصلاح کنید.{{ form.non_field_errors }}</div>{% endif %}<div class="collab-form-grid">{% for field in form.visible_fields %}{% if field.name == 'title' %}<h2 class="collab-form-heading">معرفی پروژه</h2>{% elif field.name == 'role' %}<h2 class="collab-form-heading">تخصص و محل همکاری</h2>{% elif field.name == 'description' %}<h2 class="collab-form-heading">شرح همکاری و زمان‌بندی</h2>{% elif field.name == 'pay_type' %}<h2 class="collab-form-heading">شرایط مالی</h2>{% endif %}{% include 'collaboration/_field.html' %}{% endfor %}</div><div class="collab-actions"><button class="artist-button" name="action" value="submit">ارسال برای بررسی و انتشار</button><button class="artist-button artist-button-light" name="action" value="save">ذخیرهٔ پیش‌نویس</button><a class="artist-back" href="{% url 'artists:my_opportunities' %}">بازگشت به فراخوان‌ها</a></div></form></section>
+{% endblock %}

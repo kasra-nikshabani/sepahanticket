@@ -1,0 +1,9 @@
+{% load persian_filters jalali %}
+{% if calendar_days %}
+<div class="studio-date-heading"><span><i class="fa-regular fa-calendar" aria-hidden="true"></i> روز تمرین را انتخاب کن</span><strong>{{ selected_day|to_jalali_date|to_persian }}</strong></div>
+<nav class="studio-date-list" aria-label="روزهای تقویم">{% for day in calendar_days %}<a href="?day={{ day|to_jalali_date|urlencode }}#studio-calendar" {% if day == selected_day %}class="is-selected" aria-current="date"{% endif %}><span class="studio-date-weekday">{% with weekday=day|date:'w' %}{% if weekday == '0' %}یکشنبه{% elif weekday == '1' %}دوشنبه{% elif weekday == '2' %}سه‌شنبه{% elif weekday == '3' %}چهارشنبه{% elif weekday == '4' %}پنجشنبه{% elif weekday == '5' %}جمعه{% else %}شنبه{% endif %}{% endwith %}</span><strong class="studio-date-number">{{ day|to_jalali_date|slice:'8:10'|to_persian }}</strong><span class="studio-date-month">{{ day|to_jalali_date|slice:':7'|to_persian }}</span>{% if day == selected_day %}<span class="studio-date-selected-label">انتخاب‌شده</span>{% endif %}</a>{% endfor %}</nav>
+{% endif %}
+{% if scheduled_only and not calendar_days %}<p class="edu-muted">صاحب پلاتو هنوز روزی برای رزرو مشخص نکرده است.</p>{% endif %}
+{% if not scheduled_only %}<form method="get" action="#studio-calendar" class="studio-date-search"><label for="studio-day">تاریخ دلخواه (شمسی)</label><div><input id="studio-day" class="edu-input" name="day" value="{{ selected_day|to_jalali_date|to_persian }}" placeholder="۱۴۰۵/۰۸/۲۰" maxlength="10" required><button class="edu-button edu-button-light" type="submit">نمایش روز</button></div></form>
+
+{% endif %}

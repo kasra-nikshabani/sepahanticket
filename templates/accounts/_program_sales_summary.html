@@ -1,0 +1,9 @@
+{% load persian_filters currency_filters %}
+<section class="program-sales-summary" aria-label="{{ label }}">
+<div class="program-sales-heading"><h2>{{ label }}</h2><span>فقط بلیط‌های پرداخت‌شده در فروش محاسبه می‌شوند</span></div>
+<div class="program-stats">
+    <div class="program-revenue"><span>{{ label }}</span><strong>{{ report_stats.revenue|toman_display|persian_number }}</strong><small>تومان · مبلغ نهایی پس از تخفیف</small></div>
+    <div><span>تعداد بلیط فروخته‌شده</span><strong>{{ report_stats.sold|to_persian }}</strong><small>{{ report_stats.buyers|to_persian }} خریدار</small></div>
+    <div><span>ورود ثبت‌شده</span><strong>{{ report_stats.used|to_persian }}</strong><small>{{ report_stats.complimentary|to_persian }} بلیط ویژه / تخصیصی · {{ report_stats.cancelled|to_persian }} لغوشده</small></div>
+</div>
+</section>

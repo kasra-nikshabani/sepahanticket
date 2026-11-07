@@ -14,9 +14,10 @@ from django.core.cache import cache
 from django.db.models import Q
 from django.utils.http import url_has_allowed_host_and_scheme
 
-from .forms import RegisterForm, LoginForm, PhoneLoginForm, OTPVerifyForm, PhoneRegisterForm
+from .forms import RegisterForm, LoginForm, PhoneLoginForm, OTPVerifyForm, PhoneRegisterForm, UserProfileForm
 from .models import OTP
-from .services import create_otp, get_valid_otp, OTPRateLimitError, SMSProviderBusyError
+from .notifications import welcome_user
+from .services import create_otp, get_valid_otp, OTPRateLimitError, SMSProviderBusyError, OTP_COOLDOWN_SECONDS, development_otp_enabled, development_otp_code
 
 User = get_user_model()
 
@@ -139,7 +140,7 @@ def otp_verify(request):
                     request.session['user_type'] = user.user_type
 
                     request.session.pop('otp_phone', None)
-                    messages.success(request, f'خوش آمدید {user.get_full_name() or user.phone_number}!')
+                    welcome_user(request, user)
 
                     # ===== جلوگیری از کش =====
                     response = redirect(request.GET.get('next', 'matches:home'))
@@ -150,7 +151,7 @@ def otp_verify(request):
                     pending = request.session.get('pending_registration')
                     if pending and pending.get('phone_number') == phone_number:
                         user = User.objects.create_user(
-                            username=pending['national_code'],
+                            username=pending.get('national_code') or phone_number,
                             phone_number=phone_number,
                             national_code=pending['national_code'],
                             first_name=pending['first_name'],
@@ -170,7 +171,7 @@ def otp_verify(request):
                         request.session['user_type'] = user.user_type
                         request.session.pop('otp_phone', None)
                         request.session.pop('pending_registration', None)
-                        messages.success(request, f'خوش آمدید {user.get_full_name()}!')
+                        welcome_user(request, user)
 
                         response = redirect(request.GET.get('next', 'matches:home'))
                         response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
@@ -181,11 +182,11 @@ def otp_verify(request):
                     latest_otp = OTP.objects.filter(phone_number=phone_number, is_used=False).latest('created_at')
                     latest_otp.increment_attempts()
                     if latest_otp.attempts >= 3:
-                        messages.error(request, '❌ تعداد تلاش‌های ناموفق بیش از حد مجاز.')
+                        form.add_error('otp_code', 'تعداد تلاش‌های ناموفق بیش از حد مجاز است. کد جدید درخواست کنید.')
                     else:
-                        messages.error(request, '❌ کد وارد شده صحیح نیست یا منقضی شده است.')
+                        form.add_error('otp_code', 'کد واردشده صحیح نیست یا منقضی شده است.')
                 except OTP.DoesNotExist:
-                    messages.error(request, '❌ کد وارد شده صحیح نیست یا منقضی شده است.')
+                    form.add_error('otp_code', 'کد واردشده صحیح نیست یا منقضی شده است.')
         else:
             for field, errors in form.errors.items():
                 for error in errors:
@@ -194,8 +195,11 @@ def otp_verify(request):
     try:
         latest_otp = OTP.objects.filter(phone_number=phone_number, is_used=False).latest('created_at')
         remaining_time = max(0, int((latest_otp.expires_at - timezone.now()).total_seconds()))
+        resend_remaining = max(0, int((latest_otp.created_at + timezone.timedelta(seconds=OTP_COOLDOWN_SECONDS) - timezone.now()).total_seconds()))
     except OTP.DoesNotExist:
+        latest_otp = None
         remaining_time = 0
+        resend_remaining = 0
 
     masked_phone = f"{phone_number[:4]}****{phone_number[-4:]}"
     return render(request, 'accounts/otp_verify.html', {
@@ -203,6 +207,9 @@ def otp_verify(request):
         'phone_number': phone_number,
         'phone_masked': masked_phone,
         'remaining_time': remaining_time,
+        'resend_remaining': resend_remaining,
+        'show_dev_otp': development_otp_enabled(),
+        'dev_otp_code': development_otp_code(latest_otp),
     })
 
 
@@ -223,8 +230,12 @@ def resend_otp(request):
     # ===== محدودیت واقعی درخواست مجدد -- سمت بک‌اند، مستقل از session =====
     # (پیاده‌سازی داخل create_otp؛ اینجا فقط خطای آن را به فرانت‌اند برمی‌گردانیم)
     try:
-        create_otp(phone_number)
-        return JsonResponse({'status': 'success', 'message': '✅ کد جدید با موفقیت ارسال شد.'})
+        otp = create_otp(phone_number)
+        payload = {'status': 'success', 'message': '✅ کد جدید با موفقیت ارسال شد.'}
+        code = development_otp_code(otp)
+        if code:
+            payload['dev_otp_code'] = code
+        return JsonResponse(payload)
     except OTPRateLimitError as e:
         return JsonResponse(
             {'status': 'error', 'message': f'⏳ لطفاً {e.retry_after} ثانیه صبر کنید و دوباره تلاش کنید.',
@@ -274,7 +285,7 @@ def phone_register(request):
                 messages.error(request, 'این شماره تلفن قبلاً ثبت شده است.')
                 return render(request, 'accounts/phone_register.html', {'form': form})
 
-            if User.objects.filter(national_code=national_code).exists():
+            if national_code and User.objects.filter(national_code=national_code).exists():
                 messages.error(request, 'این کد ملی قبلاً ثبت شده است.')
                 return render(request, 'accounts/phone_register.html', {'form': form})
 
@@ -385,13 +396,13 @@ def login_view(request):
                 cache.delete(ip_key)
 
             if user is not None:
-                if user.user_type in ['admin', 'vip']:
+                if (user.is_staff if getattr(settings, 'CULTURAL_PLATFORM', False) else user.user_type in ['admin', 'vip']):
                     login(request, user)
 
                     # ===== به‌روزرسانی سشن =====
                     request.session['user_type'] = user.user_type
 
-                    messages.success(request, f'خوش آمدید {user.get_full_name() or user.username}!')
+                    welcome_user(request, user)
 
                     # ===== بازگشت به صفحه قبلی =====
                     # next از URL می‌آید؛ بدون اعتبارسنجی، لینکی مثل
@@ -405,7 +416,7 @@ def login_view(request):
                     ):
                         if next_url:
                             logger.warning("next نامعتبر در ورود رد شد: %r", next_url[:120])
-                        next_url = 'matches:home'
+                        next_url = 'management:dashboard' if getattr(settings, 'CULTURAL_PLATFORM', False) else 'matches:home'
 
                     response = redirect(next_url)
                     response["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -414,7 +425,7 @@ def login_view(request):
 
                     return response
                 else:
-                    messages.error(request, 'این روش ورود فقط برای مدیران و کاربران ویژه است.')
+                    messages.error(request, 'این روش ورود مخصوص مدیران سایت است.')
                     return redirect('accounts:phone_login')
             else:
                 messages.error(request, 'نام کاربری یا رمز عبور اشتباه است.')
@@ -433,7 +444,7 @@ def logout_view(request):
     logout(request)
     request.session.flush()
 
-    messages.info(request, 'شما از حساب خود خارج شدید.')
+    messages.info(request, 'به امید دیدار!', extra_tags='farewell')
 
     response = redirect('matches:home')
     response["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -445,19 +456,55 @@ def logout_view(request):
 
 @login_required
 def profile_view(request):
-    return render(request, 'accounts/profile.html', {'user': request.user})
+    from tickets.models import Ticket
+    from accounts.models import EventSubmission, SupportTicket
+    from studios.models import Booking, Studio
+    from education.models import Course, Enrollment
+    from artists.models import CollaborationOpportunity, CollaborationApplication, ArtistProfile
+
+    user = request.user
+    statuses = ['paid', 'cancelled']
+    if user.user_type in ('admin', 'vip') or user.is_staff:
+        statuses += ['admin_assigned', 'vip_issued']
+    tickets = Ticket.objects.filter(user=user, status__in=statuses)
+    now = timezone.now()
+    upcoming_tickets = tickets.filter(is_used=False, match__date_time__gte=now).exclude(status='cancelled')
+    submissions = EventSubmission.objects.filter(owner=user)
+    opportunities = CollaborationOpportunity.objects.filter(owner=user)
+    applications = CollaborationApplication.objects.filter(applicant=user).exclude(status='withdrawn')
+    studios = Studio.objects.filter(owner=user)
+    courses = Course.objects.filter(owner=user)
+    next_ticket = upcoming_tickets.select_related('match__event', 'match__stadium').order_by('match__date_time').first()
+    next_booking = Booking.objects.filter(renter=user, status='confirmed', starts_at__gte=now).order_by('starts_at').first()
+    active_enrollments = Enrollment.objects.filter(learner=user, status='active').select_related('course').order_by('-purchased_at')[:3]
+    return render(request, 'accounts/profile.html', {
+        'user': user, 'ticket_count': tickets.count(), 'upcoming_count': upcoming_tickets.count(),
+        'next_ticket': next_ticket, 'next_booking': next_booking, 'active_enrollments': active_enrollments,
+        'submission_count': submissions.count(), 'revision_submissions': submissions.filter(status='revision').count(),
+        'studio_count': studios.count(), 'booking_count': Booking.objects.filter(renter=user, status='confirmed').count(),
+        'course_count': courses.count(), 'enrollment_count': Enrollment.objects.filter(learner=user, status='active').count(),
+        'open_applications': applications.filter(status__in=['submitted','reviewing','invited','selected']).count(),
+        'open_support': SupportTicket.objects.filter(requester=user).exclude(status='closed').count(),
+        'artist_profile': ArtistProfile.objects.filter(owner=user).first(),
+        'unread_count': user.notifications.filter(read_at__isnull=True).count(),
+    })
 
 
 @login_required
 def edit_profile_view(request):
+    form = UserProfileForm(request.POST if request.method == 'POST' else None, instance=request.user)
     if request.method == 'POST':
-        user = request.user
-        user.first_name = request.POST.get('full_name', user.first_name)
-        user.email = request.POST.get('email', user.email)
-        user.save()
-        messages.success(request, 'اطلاعات شما با موفقیت به‌روزرسانی شد.')
-        return redirect('accounts:profile')
-    return render(request, 'accounts/edit_profile.html', {'user': request.user})
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'اطلاعات شما با موفقیت به‌روزرسانی شد.')
+            return redirect('accounts:profile')
+    return render(request, 'accounts/edit_profile.html', {'user': request.user, 'form': form})
+
+
+@login_required
+def event_submission_start(request):
+    from .submission_views import wizard
+    return wizard(request)
 
 
 @login_required

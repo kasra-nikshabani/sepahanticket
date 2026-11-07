@@ -1,0 +1,1 @@
+{% load static %}{% if course.poster %}<img src="{{ course.poster.url }}" alt="" loading="lazy" decoding="async">{% elif course.kind == 'class' %}<img src="{% static 'events/education/stage.svg' %}" alt="" loading="lazy" decoding="async">{% else %}<img src="{% static 'events/education/recorded.svg' %}" alt="" loading="lazy" decoding="async">{% endif %}

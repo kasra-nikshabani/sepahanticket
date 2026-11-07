@@ -1,0 +1,4 @@
+{% extends 'accounts/account_base.html' %}{% load static %}
+{% block extra_css %}{{ block.super }}<link rel="stylesheet" href="{% static 'events/collaboration.css' %}">{% endblock %}
+{% block account_title %}فراخوان متوقف شده است{% endblock %}
+{% block account_content %}<section class="account-panel"><p>برای رفع توقف این فراخوان، موضوع را از طریق پشتیبانی با مدیریت پیگیری کنید.</p><p>{{ opportunity.review_note|linebreaksbr }}</p><a class="account-btn" href="{% url 'accounts:support_create' %}">ارسال تیکت</a></section>{% endblock %}

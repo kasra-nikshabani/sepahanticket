@@ -67,13 +67,16 @@ def user_tickets(request):
     if can_see_admin_tickets:
         tickets_qs = Ticket.objects.filter(
             user=request.user, status__in=['paid', 'admin_assigned', 'vip_issued', 'cancelled']
-        ).order_by('-purchase_date')
+        ).select_related('match__event', 'match__stadium', 'seat__row__block').order_by('-purchase_date')
     else:
         # 'cancelled' هم نشان داده می‌شود -- وگرنه وقتی ادمین به‌خاطر لغو
         # مسابقه بلیط را باطل و وجه را به کیف پول برمی‌گرداند، بلیط بدون هیچ
         # توضیحی از لیست کاربر ناپدید می‌شود و تنها اطلاع‌رسانیِ این اتفاق
         # همین صفحه است (فعلاً پیامکی برای این مورد ارسال نمی‌شود).
-        tickets_qs = Ticket.objects.filter(user=request.user, status__in=['paid', 'cancelled']).order_by('-purchase_date')
+        tickets_qs = Ticket.objects.filter(user=request.user).filter(
+            Q(status__in=['paid', 'cancelled']) | Q(match__event__category__in=['theater', 'concert', 'event'],
+                                                 status__in=['admin_assigned', 'vip_issued'])
+        ).select_related('match__event', 'match__stadium', 'seat__row__block').order_by('-purchase_date')
 
     if status_filter and can_see_admin_tickets:
         if status_filter in ['paid', 'admin_assigned', 'vip_issued', 'cancelled']:
@@ -89,6 +92,10 @@ def user_tickets(request):
         id__in=tickets_qs.values_list('match_id', flat=True).distinct()
     ).order_by('-date_time')
 
+    try:
+        match_id = int(match_id) if match_id else None
+    except (ValueError, TypeError):
+        match_id = None
     if match_id:
         tickets_qs = tickets_qs.filter(match_id=match_id)
 
@@ -128,10 +135,8 @@ def download_ticket_pdf(request, ticket_id):
     if not ticket.pdf_file:
         raise Http404
 
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="ticket_{ticket.ticket_number}.pdf"'
-    response['X-Accel-Redirect'] = f'/{settings.MEDIA_URL.strip("/")}/{ticket.pdf_file.name}'
-    return response
+    from .digital_views import pdf_response
+    return pdf_response(ticket)
 
 
 def shared_ticket_pdf(request, token):
@@ -147,10 +152,8 @@ def shared_ticket_pdf(request, token):
     if not ticket.pdf_file:
         raise Http404
 
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="ticket_{ticket.ticket_number}.pdf"'
-    response['X-Accel-Redirect'] = f'/{settings.MEDIA_URL.strip("/")}/{ticket.pdf_file.name}'
-    return response
+    from .digital_views import pdf_response
+    return pdf_response(ticket)
 
 
 @login_required
@@ -784,7 +787,7 @@ def vip_issue_excel(request, match_id):
 @login_required
 def select_seats(request, match_id):
     match = get_object_or_404(Match, id=match_id, is_active=True)
-    if not match.ticket_sales_enabled:
+    if not match.sales_available:
         messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
         return redirect('matches:home')
     row_id = request.session.get('selected_row_id')
@@ -851,7 +854,7 @@ def reserve_seats(request, match_id):
         return redirect('matches:home')
 
     match = get_object_or_404(Match, id=match_id, is_active=True)
-    if not match.ticket_sales_enabled:
+    if not match.sales_available:
         messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
         return redirect('matches:home')
 
@@ -1095,9 +1098,10 @@ def ticket_info(request, match_id):
         return redirect('matches:home')
 
     match = get_object_or_404(Match, id=match_id, is_active=True)
-    if not match.ticket_sales_enabled:
+    if not match.sales_available:
         messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
         return redirect('matches:home')
+    template_name = 'events/checkout.html' if match.is_cultural else 'tickets/ticket_info.html'
     selected_seats = request.session.get('selected_seats', [])
 
     if not selected_seats:
@@ -1143,22 +1147,25 @@ def ticket_info(request, match_id):
     if remaining_time <= 0 and reserved_at:
         return redirect('tickets:cancel_reservation', match_id=match_id)
 
-    block_price_map = get_block_price_map(match)
+    from matches.models import get_seat_price_map
+    selected_inventory = list(MatchSeat.objects.filter(id__in=selected_seats, match=match).select_related('seat__row__block'))
+    inventory_by_id = {item.pk: item for item in selected_inventory}
+    seat_prices = get_seat_price_map(match, [item.seat for item in selected_inventory])
 
     seats_data = []
     total_price = 0
     for seat_id in selected_seats:
         try:
-            match_seat = MatchSeat.objects.select_related('seat__row__block').get(id=seat_id, match=match)
+            match_seat = inventory_by_id[int(seat_id)]
             block = match_seat.seat.row.block
-            block_price = block_price_map.get(block.id, block.price)
-            price = int(block_price) if block_price else 0
+            price = int(seat_prices[match_seat.seat_id])
             seats_data.append({
                 'id': match_seat.id,
                 'number': match_seat.seat.number,
                 'row_name': match_seat.seat.row.name,
                 'is_home': match_seat.seat.row.is_home,
                 'price': price,
+                'full_name': request.POST.get(f'full_name_{match_seat.id}', '') if request.method == 'POST' else '',
                 # نوع جایگاه مخصوصِ همین مسابقه (نه مقدار گلوبالِ بلوک)
                 'zone_label': dict(ZONE_CHOICES).get(
                     get_block_zone_for_match(match, match_seat.seat.row.block),
@@ -1166,7 +1173,7 @@ def ticket_info(request, match_id):
                 ),
             })
             total_price += price
-        except MatchSeat.DoesNotExist:
+        except (KeyError, ValueError, TypeError):
             messages.error(request, 'یکی از صندلی‌های انتخاب‌شده معتبر نیست.')
             return redirect('matches:block_map', match_id=match_id)
 
@@ -1181,13 +1188,23 @@ def ticket_info(request, match_id):
         'remaining_time': remaining_time,
         'wallet_balance': wallet.balance,
         'wallet_enabled': wallet_enabled,
+        'checkout_discount': request.POST.get('discount_code', ''),
+        'checkout_use_wallet': request.POST.get('use_wallet') == 'true',
+        'checkout_wallet_toman': request.POST.get('wallet_amount_toman', ''),
         'bypass_civil_registry_inquiry': SiteSettings.get_solo().bypass_civil_registry_inquiry,
     }
 
     if request.method == 'POST':
+        if match.is_cultural:
+            from .cultural_checkout import validate_purchase
+            try:
+                _, validated_wallet_amount = validate_purchase(request, match)
+            except ValueError as error:
+                messages.error(request, str(error))
+                return render(request, template_name, context)
         use_wallet = request.POST.get('use_wallet') == 'true'
         try:
-            wallet_amount = int(request.POST.get('wallet_amount', 0))
+            wallet_amount = validated_wallet_amount if match.is_cultural else int(request.POST.get('wallet_amount', 0))
         except (ValueError, TypeError):
             wallet_amount = 0
 
@@ -1209,11 +1226,11 @@ def ticket_info(request, match_id):
                 valid, msg = discount_obj.is_valid(match=match)
                 if not valid:
                     messages.error(request, f'کد تخفیف نامعتبر: {msg}')
-                    return render(request, 'tickets/ticket_info.html', context)
+                    return render(request, template_name, context)
                 discount_percent = discount_obj.discount_percent
             except DiscountCode.DoesNotExist:
                 messages.error(request, 'کد تخفیف یافت نشد.')
-                return render(request, 'tickets/ticket_info.html', context)
+                return render(request, template_name, context)
 
         actual_total_price = 0
         pre_code_discount_total = 0  # جمع قیمت‌ها بعد از تخفیف باسا، قبل از کد تخفیف -- برای subtotal سفارش
@@ -1226,7 +1243,7 @@ def ticket_info(request, match_id):
 
         for seat_data in seats_data:
             match_seat_id = seat_data['id']
-            full_name = request.POST.get(f'full_name_{match_seat_id}')
+            full_name = request.POST.get(f'full_name_{match_seat_id}', '').strip()
 
             # اگر کاربر این صندلی را در صفحه حذف کرده باشد، از پردازش رد می‌شود
             if not full_name:
@@ -1236,27 +1253,30 @@ def ticket_info(request, match_id):
             tarikhe_tavallod = request.POST.get(f'tarikhe_tavallod_{match_seat_id}')
             shomare_hamrah = request.POST.get(f'shomare_hamrah_{match_seat_id}')
 
-            if not all([full_name, national_code, tarikhe_tavallod, shomare_hamrah]):
+            if match.is_cultural:
+                national_code = ''
+                tarikhe_tavallod = ''
+            if not match.is_cultural and not all([full_name, national_code, tarikhe_tavallod, shomare_hamrah]):
                 messages.error(request, 'لطفاً تمام اطلاعات را برای همه صندلی‌ها وارد و استعلام کنید.')
-                return render(request, 'tickets/ticket_info.html', context)
+                return render(request, template_name, context)
 
-            if len(national_code) != 10 or not national_code.isdigit():
+            if not match.is_cultural and (len(national_code) != 10 or not national_code.isdigit()):
                 messages.error(request, f'کد ملی برای صندلی {seat_data["number"]} باید ۱۰ رقم باشد.')
-                return render(request, 'tickets/ticket_info.html', context)
+                return render(request, template_name, context)
 
             # ===== بررسی محدودیت خرید (VIP و ۱ بلیط در هر مسابقه) =====
-            if request.user.user_type != 'vip':
+            if not match.is_cultural and request.user.user_type != 'vip':
                 if national_code in [t['national_code'] for t in processed_tickets_data]:
                     messages.error(request,
                                    f'کد ملی {national_code} برای دو صندلی مختلف وارد شده است. هر فرد فقط یک بلیط می‌تواند داشته باشد.')
-                    return render(request, 'tickets/ticket_info.html', context)
+                    return render(request, template_name, context)
 
                 has_ticket = Ticket.objects.filter(
                     national_code=national_code, status='paid', match=match
                 ).exists()
                 if has_ticket:
                     messages.error(request, f'کد ملی {national_code} قبلاً برای این مسابقه بلیط خریداری کرده است.')
-                    return render(request, 'tickets/ticket_info.html', context)
+                    return render(request, template_name, context)
 
             # ===== تصمیم «رایگانه یا نه» فقط از روی سنِ تأییدشده‌ی کش‌شده در
             # inquiry_fan گرفته می‌شود -- نه از tarikhe_tavallod که همینجا
@@ -1267,7 +1287,7 @@ def ticket_info(request, match_id):
             # محسوب نمی‌شود. raw_age فقط برای نمایش روی خودِ بلیط استفاده می‌شود. =====
             raw_age = get_age_from_jalali(tarikhe_tavallod)
             verified_age = get_verified_age(request.user.id, national_code)
-            is_free = is_free_for_age(verified_age)
+            is_free = is_free_for_age(verified_age, match=match)
             age = verified_age if verified_age is not None else raw_age
 
             basa_discount_amount = 0
@@ -1311,19 +1331,19 @@ def ticket_info(request, match_id):
                 # «رایگان زیر ۱۵ سال» زیر دسته‌ی «کد ویژه» شمرده می‌شه. =====
                 if is_free:
                     messages.error(request, 'این صندلی به‌خاطر سن زیر ۱۵ سال از قبل رایگان است و نیازی به کد ویژه ندارد؛ لطفاً کد ویژه را برای این صندلی وارد نکنید.')
-                    return render(request, 'tickets/ticket_info.html', context)
+                    return render(request, template_name, context)
                 if special_code_input in used_special_codes_in_order:
                     messages.error(request, f'کد ویژه «{special_code_input}» فقط یک‌بار قابل استفاده است و نمی‌تواند برای دو صندلی وارد شود.')
-                    return render(request, 'tickets/ticket_info.html', context)
+                    return render(request, template_name, context)
                 try:
                     special_code_obj = SpecialCode.objects.get(code=special_code_input)
                     valid, msg = special_code_obj.is_valid(match=match)
                     if not valid:
                         messages.error(request, f'کد ویژه نامعتبر: {msg}')
-                        return render(request, 'tickets/ticket_info.html', context)
+                        return render(request, template_name, context)
                 except SpecialCode.DoesNotExist:
                     messages.error(request, 'کد ویژه یافت نشد.')
-                    return render(request, 'tickets/ticket_info.html', context)
+                    return render(request, template_name, context)
                 used_special_codes_in_order.add(special_code_input)
                 seat_price = 0
                 ticket_discount_code_amount = 0
@@ -1342,7 +1362,7 @@ def ticket_info(request, match_id):
 
         if not processed_tickets_data:
             messages.error(request, 'شما هیچ صندلی‌ای برای خرید انتخاب نکرده‌اید.')
-            return render(request, 'tickets/ticket_info.html', context)
+            return render(request, template_name, context)
 
         discounted_total = actual_total_price
 
@@ -1350,18 +1370,22 @@ def ticket_info(request, match_id):
         if use_wallet and wallet_amount > 0:
             if wallet_amount > wallet.balance:
                 messages.error(request, f'موجودی کیف پول شما ({wallet.balance:,} ریال) کافی نیست.')
-                return render(request, 'tickets/ticket_info.html', context)
+                return render(request, template_name, context)
             if wallet_amount > discounted_total:
                 messages.error(request,
                                f'مبلغ قابل پرداخت از کیف پول نمی‌تواند از مبلغ نهایی ({discounted_total:,} ریال) بیشتر باشد.')
-                return render(request, 'tickets/ticket_info.html', context)
+                return render(request, template_name, context)
             wallet_amount_used = wallet_amount
 
         final_amount = discounted_total - wallet_amount_used
 
+        if final_amount > 0 and match.is_cultural:
+            from payments.views import payment_request
+            return payment_request(request)
+
         if final_amount > 0:
             messages.error(request, 'مبلغ نهایی خرید بزرگ‌تر از صفر است. لطفاً از طریق دکمه‌ی پرداخت اقدام کنید.')
-            return render(request, 'tickets/ticket_info.html', context)
+            return render(request, template_name, context)
 
         try:
             with transaction.atomic():
@@ -1374,7 +1398,7 @@ def ticket_info(request, match_id):
                     valid, msg = discount_obj.is_valid(match=match)
                     if not valid:
                         messages.error(request, f'کد تخفیف دیگر معتبر نیست: {msg}')
-                        return render(request, 'tickets/ticket_info.html', context)
+                        return render(request, template_name, context)
 
                 # ===== قفل و اعتبارسنجی مجدد کدهای ویژه (همون منطق ضدِ race
                 # condition بالا، برای هر کدِ ویژه‌ی استفاده‌شده در این سفارش) =====
@@ -1385,8 +1409,18 @@ def ticket_info(request, match_id):
                     valid, msg = locked.is_valid(match=match)
                     if not valid:
                         messages.error(request, f'کد ویژه دیگر معتبر نیست: {msg}')
-                        return render(request, 'tickets/ticket_info.html', context)
+                        return render(request, template_name, context)
                     ticket_data['special_code'] = locked
+
+                if match.is_cultural:
+                    locked = list(MatchSeat.objects.select_for_update().filter(
+                        pk__in=selected_seats, match=match).order_by('pk'))
+                    if len(locked) != len(selected_seats) or any(
+                        not ms.is_enabled or not SeatReservation.is_reserved_by_user(ms.pk, request.user.pk)
+                        or (ms.reserved_until and ms.reserved_until <= timezone.now())
+                        for ms in locked
+                    ) or Ticket.objects.filter(match_seat__in=locked, status__in=['paid', 'admin_assigned', 'vip_issued']).exists():
+                        raise ValueError('رزرو صندلی‌ها معتبر نیست؛ دوباره انتخاب کنید.')
 
                 payment_method = 'free'
                 if wallet_amount_used > 0 and discount_percent > 0:
@@ -1410,7 +1444,7 @@ def ticket_info(request, match_id):
                     discount_code=discount_obj.code if discount_obj else '',
                     discount_code_id=discount_obj.id if discount_obj else None,
                     full_name=request.user.get_full_name() or request.user.username,
-                    phone_number=getattr(request.user, 'phone_number', ''),
+                    phone_number=getattr(request.user, 'phone_number', '') or '',
                     paid_at=timezone.now(),
                 )
 
@@ -1495,6 +1529,9 @@ def ticket_info(request, match_id):
                 request.session.pop('section_id', None)
                 request.session.pop('reserved_at', None)
 
+                if match.is_cultural:
+                    from accounts.notifications import notify_purchase
+                    notify_purchase(order)
                 if wallet_amount_used > 0:
                     messages.success(request,
                                      f'✅ {len(tickets)} بلیط با موفقیت صادر شد. مبلغ {wallet_amount_used:,} ریال از کیف پول کسر شد.')
@@ -1506,9 +1543,9 @@ def ticket_info(request, match_id):
         except Exception as e:
             logger.error(f"❌ خطا در پردازش خرید: {str(e)}")
             messages.error(request, f'خطا در پردازش خرید: {str(e)}')
-            return render(request, 'tickets/ticket_info.html', context)
+            return render(request, template_name, context)
 
-    return render(request, 'tickets/ticket_info.html', context)
+    return render(request, template_name, context)
 
 
 @login_required
@@ -1877,8 +1914,8 @@ def bulk_issue_tickets(request):
                                f'تعداد صندلی‌های موجود در بلوک "{block.name}" ({len(available_match_seats)}) کافی نیست. به {total_needed} صندلی نیاز است.')
                 return render(request, 'tickets/bulk_issue.html', {'form': form})
 
-            from matches.models import get_block_price_for_match
-            block_price = get_block_price_for_match(match, block) or 0
+            from matches.models import get_seat_price_map
+            issued_prices = get_seat_price_map(match, [item.seat for item in available_match_seats])
 
             with transaction.atomic():
                 ticket_index = 0
@@ -1912,7 +1949,7 @@ def bulk_issue_tickets(request):
                             # خالی، چون خودِ فیلد وجود دارد و فقط مقدارش None است؛ همین باعث
                             # خطای IntegrityError/500 هنگام صدور گروهی می‌شد.
                             national_code=getattr(user, 'national_code', '') or '',
-                            status='admin_assigned', is_admin_assigned=True, price=block_price,
+                            status='admin_assigned', is_admin_assigned=True, price=issued_prices[match_seat.seat_id],
                         )
                         # .create() قبلاً خودش save() را صدا زده -- یک save() اضافه اینجا چون
                         # pdf_file هنوز خالیه، Ticket.save() را وادار می‌کرد enqueue_pdf_generation
@@ -2011,7 +2048,7 @@ def admin_issue_ticket(request):
                 messages.error(request, f'برای کد ملی {national_code} قبلاً بلیطی برای این مسابقه صادر شده است.')
             else:
                 block = get_object_or_404(Block, id=block_id, stadium=selected_match.stadium)
-                from matches.models import get_block_price_for_match
+                from matches.models import get_seat_price_for_match
                 if not is_block_active_for_match(selected_match, block):
                     messages.error(request, f'بلوک «{block.name}» برای این مسابقه غیرفعال است.')
                     return redirect(f'{reverse("tickets:admin_issue_ticket")}?match_id={selected_match.id}')
@@ -2046,7 +2083,7 @@ def admin_issue_ticket(request):
                     if not chosen_match_seat:
                         messages.error(request, f'صندلی خالی در بلوک «{block.name}» وجود ندارد.')
                     else:
-                        block_price = get_block_price_for_match(selected_match, block) or 0
+                        block_price = get_seat_price_for_match(selected_match, chosen_match_seat.seat)
                         ticket = Ticket.objects.create(
                             user=request.user, match=selected_match, seat=chosen_match_seat.seat,
                             match_seat=chosen_match_seat, full_name=full_name, national_code=national_code,

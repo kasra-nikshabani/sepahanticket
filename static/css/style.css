@@ -35,9 +35,15 @@
 }
 
 :root {
-    --gold: #D4AF37;
-    --gold-light: #E8D58A;
-    --gold-dark: #B8960F;
+    --gold: #2467a8;
+    --gold-light: #a9c9e8;
+    --gold-dark: #194d82;
+    /* Bootstrap success utility colors follow the site-wide blue identity. */
+    --bs-success: #2467a8;
+    --bs-success-rgb: 36, 103, 168;
+    --bs-success-bg-subtle: #e4eef9;
+    --bs-success-border-subtle: #b7cde5;
+    --bs-success-text-emphasis: #194d82;
     --black: #1A1A2E;
     --dark: #16213E;
     --bg-light: #F5F5F5;
@@ -50,6 +56,15 @@
     --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
     --radius: 10px;
     --transition: all 0.2s ease;
+}
+
+.btn-success {
+    --bs-btn-bg: #2467a8;
+    --bs-btn-border-color: #2467a8;
+    --bs-btn-hover-bg: #194d82;
+    --bs-btn-hover-border-color: #194d82;
+    --bs-btn-active-bg: #194d82;
+    --bs-btn-active-border-color: #194d82;
 }
 
 * {
@@ -94,7 +109,7 @@ body {
 }
 
 .nav-link:hover {
-    background: rgba(212, 175, 55, 0.12);
+    background: rgba(36, 103, 168, 0.12);
     color: var(--gold) !important;
 }
 
@@ -142,7 +157,7 @@ body {
     background: var(--gold-dark);
     color: var(--white);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    box-shadow: 0 4px 12px rgba(36, 103, 168, 0.3);
 }
 
 .btn-outline-primary {
@@ -157,12 +172,12 @@ body {
 }
 
 .btn-success {
-    background: #2d7d46;
+    background: #1f548b;
     color: white;
 }
 
 .btn-success:hover {
-    background: #1e5f34;
+    background: #143e69;
 }
 
 .btn-danger {
@@ -186,7 +201,7 @@ body {
 
 .form-control:focus {
     border-color: var(--gold);
-    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+    box-shadow: 0 0 0 3px rgba(36, 103, 168, 0.15);
 }
 
 .form-label {
@@ -218,13 +233,13 @@ body {
 }
 
 .seat.available {
-    background: #e8f5e9;
-    border-color: #a5d6a7;
-    color: #2e7d32;
+    background: #eeeeef;
+    border-color: #afbdcc;
+    color: #1f548c;
 }
 
 .seat.available:hover {
-    background: #c8e6c9;
+    background: #d2d7dc;
     transform: scale(1.05);
 }
 
@@ -252,13 +267,13 @@ body {
 }
 
 .badge.bg-success {
-    background: #e8f5e9 !important;
-    color: #2e7d32 !important;
+    background: #eeeeef !important;
+    color: #1f548c !important;
 }
 
 .badge.bg-warning {
     background: #fff8e1 !important;
-    color: #b8960f !important;
+    color: #194d82 !important;
 }
 
 .badge.bg-danger {
@@ -280,9 +295,9 @@ body {
 }
 
 .alert-success {
-    background: #e8f5e9;
-    border-color: #a5d6a7;
-    color: #2e7d32;
+    background: #eeeeef;
+    border-color: #afbdcc;
+    color: #1f548c;
 }
 
 .alert-danger {
@@ -294,7 +309,7 @@ body {
 .alert-warning {
     background: #fff8e1;
     border-color: #ffd54f;
-    color: #b8960f;
+    color: #194d82;
 }
 
 .alert-info {
@@ -400,12 +415,12 @@ body {
 }
 
 .badge-gold {
-    background: rgba(212, 175, 55, 0.15);
+    background: rgba(36, 103, 168, 0.15);
     color: var(--gold);
     padding: 2px 14px;
     border-radius: 12px;
     font-size: 0.75rem;
-    border: 1px solid rgba(212, 175, 55, 0.2);
+    border: 1px solid rgba(36, 103, 168, 0.2);
 }
 
 .badge-dark {
@@ -476,7 +491,7 @@ body {
 /* ----- هدر ادمین ----- */
 .admin-header {
     background: #1A1A2E;
-    border-bottom: 2px solid #D4AF37;
+    border-bottom: 2px solid #2467a8;
     padding: 10px 0;
     position: fixed;
     top: 0;
@@ -494,7 +509,7 @@ body {
 }
 
 .admin-header .header-brand {
-    color: #D4AF37;
+    color: #2467a8;
     font-weight: 700;
     font-size: 1.2rem;
     text-decoration: none;
@@ -512,7 +527,7 @@ body {
     display: none;
 }
 .sidebar-toggle:hover {
-    color: #D4AF37;
+    color: #2467a8;
 }
 
 /* ----- لایه‌بندی اصلی ادمین ----- */
@@ -526,7 +541,7 @@ body {
 .admin-sidebar {
     width: 250px;
     background: #1A1A2E;
-    border-left: 2px solid rgba(212, 175, 55, 0.2);
+    border-left: 2px solid rgba(36, 103, 168, 0.2);
     padding: 20px 0;
     height: calc(100vh - 60px);
     position: fixed;
@@ -546,7 +561,7 @@ body {
     background: transparent;
 }
 .admin-sidebar::-webkit-scrollbar-thumb {
-    background: #D4AF37;
+    background: #2467a8;
     border-radius: 4px;
 }
 
@@ -557,7 +572,7 @@ body {
 }
 
 .sidebar-brand {
-    color: #D4AF37;
+    color: #2467a8;
     font-weight: 700;
     font-size: 1.2rem;
 }
@@ -620,22 +635,22 @@ body {
 }
 
 .sidebar-link:hover {
-    background: rgba(212, 175, 55, 0.08);
-    color: #D4AF37;
+    background: rgba(36, 103, 168, 0.08);
+    color: #2467a8;
     text-decoration: none;
-    border-right-color: #D4AF37;
+    border-right-color: #2467a8;
 }
 .sidebar-link:hover i {
-    color: #D4AF37;
+    color: #2467a8;
 }
 
 .sidebar-link.active {
-    background: rgba(212, 175, 55, 0.12);
-    color: #D4AF37;
-    border-right-color: #D4AF37;
+    background: rgba(36, 103, 168, 0.12);
+    color: #2467a8;
+    border-right-color: #2467a8;
 }
 .sidebar-link.active i {
-    color: #D4AF37;
+    color: #2467a8;
 }
 
 .sidebar-link.logout-link {
@@ -700,8 +715,8 @@ body {
 }
 .block-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(212, 175, 55, 0.15);
-    border-color: #D4AF37;
+    box-shadow: 0 8px 30px rgba(36, 103, 168, 0.15);
+    border-color: #2467a8;
 }
 .block-card.inactive {
     opacity: 0.6;
@@ -728,7 +743,7 @@ body {
     gap: 8px;
 }
 .block-card-header .block-name i {
-    color: #D4AF37;
+    color: #2467a8;
     font-size: 18px;
 }
 .block-card-header .block-status {
@@ -738,8 +753,8 @@ body {
     border-radius: 50px;
 }
 .block-card-header .block-status.active {
-    background: #d4edda;
-    color: #155724;
+    background: #dde0e4;
+    color: #0d355f;
 }
 .block-card-header .block-status.inactive {
     background: #f8d7da;
@@ -769,7 +784,7 @@ body {
     gap: 5px;
 }
 .block-info-row .info-label i {
-    color: #D4AF37;
+    color: #2467a8;
     width: 16px;
 }
 .block-info-row .info-value {
@@ -777,7 +792,7 @@ body {
     color: #1A1A2E;
 }
 .block-info-row .info-value.price {
-    color: #28a745;
+    color: #1966b6;
 }
 
 /* آمار صندلی‌ها */
@@ -844,7 +859,7 @@ body {
     color: #1A1A2E;
 }
 .block-summary .summary-item .summary-value.text-danger { color: #dc3545; }
-.block-summary .summary-item .summary-value.text-success { color: #28a745; }
+.block-summary .summary-item .summary-value.text-success { color: #1966b6; }
 .block-summary .summary-item .summary-value.text-warning { color: #ffc107; }
 
 /* رنگ‌های سفارشی */
@@ -886,7 +901,7 @@ input[type="checkbox"]:not(.form-check-input) {
     width: 20px;
     height: 20px;
     cursor: pointer;
-    accent-color: #D4AF37;
+    accent-color: #2467a8;
 }
 .gap-2 { gap: 8px; }
 .flex-wrap { flex-wrap: wrap; }

@@ -1,0 +1,9 @@
+{% load persian_filters %}
+{% if field.is_hidden %}{{ field }}{% else %}
+<div class="collab-field{% if field.field.widget.input_type == 'checkbox' %} collab-checkbox{% endif %}">
+  <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span aria-hidden="true"> *</span>{% endif %}</label>
+  {{ field }}
+  {% if field.help_text %}<p class="collab-help" id="{{ field.name }}-help">{{ field.help_text }}</p>{% endif %}
+  <div id="{{ field.name }}-errors">{% for error in field.errors %}<p class="collab-error">{{ error|to_persian }}</p>{% endfor %}</div>
+</div>
+{% endif %}

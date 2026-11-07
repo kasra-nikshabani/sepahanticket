@@ -36,7 +36,8 @@ from django.views.decorators.http import require_POST
 from .forms import OTPVerifyForm
 from .keycloak_auth import InvalidKeycloakToken, decode_fanid_id_token
 from .models import OTP
-from .services import OTPRateLimitError, SMSProviderBusyError, create_otp, get_valid_otp
+from .notifications import welcome_user
+from .services import OTPRateLimitError, SMSProviderBusyError, create_otp, get_valid_otp, OTP_COOLDOWN_SECONDS, development_otp_enabled, development_otp_code
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +84,7 @@ def _login(request, user, next_url):
     user.backend = 'accounts.backends.PhoneBackend'
     login(request, user)
     request.session['user_type'] = user.user_type
-    messages.success(request, f'خوش آمدید {user.get_full_name() or user.phone_number}!')
+    welcome_user(request, user)
     response = redirect(next_url or 'matches:home')
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     return response
@@ -296,14 +297,20 @@ def fanid_verify(request):
     try:
         latest = OTP.objects.filter(phone_number=phone, is_used=False).latest('created_at')
         remaining_time = max(0, int((latest.expires_at - timezone.now()).total_seconds()))
+        resend_remaining = max(0, int((latest.created_at + timezone.timedelta(seconds=OTP_COOLDOWN_SECONDS) - timezone.now()).total_seconds()))
     except OTP.DoesNotExist:
+        latest = None
         remaining_time = 0
+        resend_remaining = 0
 
     return render(request, 'accounts/otp_verify.html', {
         'form': form,
         'phone_number': phone,
         'phone_masked': f'{phone[:4]}****{phone[-4:]}',
         'remaining_time': remaining_time,
+        'resend_remaining': resend_remaining,
+        'show_dev_otp': development_otp_enabled(),
+        'dev_otp_code': development_otp_code(latest),
         'page_title': 'اتصال حساب Fan ID',
         'page_subtitle': 'فقط همین یک بار: کد ارسال‌شده به شماره‌ی زیر را وارد کنید',
         'submit_label': 'تأیید و اتصال',
@@ -324,8 +331,12 @@ def fanid_resend(request):
     phone = pending['otp_phone']
     # پاسخ‌ها هم‌شکل resend_otp در views.py -- اسکریپت صفحه‌ی otp_verify.html همین را می‌خواند.
     try:
-        create_otp(phone)
-        return JsonResponse({'status': 'success', 'message': '✅ کد جدید با موفقیت ارسال شد.'})
+        otp = create_otp(phone)
+        payload = {'status': 'success', 'message': '✅ کد جدید با موفقیت ارسال شد.'}
+        code = development_otp_code(otp)
+        if code:
+            payload['dev_otp_code'] = code
+        return JsonResponse(payload)
     except OTPRateLimitError as e:
         return JsonResponse(
             {'status': 'error', 'message': f'⏳ لطفاً {e.retry_after} ثانیه صبر کنید و دوباره تلاش کنید.',

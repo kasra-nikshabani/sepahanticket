@@ -1,5 +1,6 @@
 # tickets/admin.py
 from django.contrib import admin
+from django.conf import settings
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -38,6 +39,12 @@ class TicketAdmin(admin.ModelAdmin):
     list_filter = ('match', 'status', 'is_admin_assigned', 'is_used')
     search_fields = ('ticket_number', 'user__username', 'user__phone_number', 'full_name', 'national_code')
     actions = [assign_to_vip]
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if getattr(settings, 'CULTURAL_PLATFORM', False):
+            actions.pop('assign_to_vip', None)
+        return actions
     # بدون این، فیلدهای user/seat/match توی صفحه‌ی جزئیات بلیط به‌صورت
     # <select> ساده رندر می‌شدند -- یعنی همه‌ی ردیف‌های اون جدول (الان
     # ۹۰۰۰+ کاربر و ۵۹۰۰۰+ صندلی) باید توی HTML لود می‌شد و صفحه عملاً هنگ

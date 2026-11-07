@@ -20,6 +20,15 @@ OTP_COOLDOWN_SECONDS = 60
 # و هم روز مسابقه بار اضافی روی سرویس پیامک و خودِ سایت می‌گذاشت.
 OTP_VALIDITY_MINUTES = 5
 
+
+def development_otp_enabled():
+    return settings.DEBUG and getattr(settings, 'SHOW_DEV_OTP', False)
+
+
+def development_otp_code(otp):
+    """Expose only a usable code when local development explicitly enables it."""
+    return otp.code if development_otp_enabled() and otp is not None and otp.is_valid() else ''
+
 # ===== احترام به مهلتی که خودِ سرویس پیامک اعلام می‌کند =====
 # وقتی sms.ir حساب را محدود می‌کند، در متن خطا می‌گوید چند ثانیه بعد
 # دوباره تلاش کنیم. تا وقتی این را نادیده می‌گرفتیم، هر کاربری که دکمه را

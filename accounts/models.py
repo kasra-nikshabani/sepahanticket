@@ -3,6 +3,74 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
 from datetime import timedelta
+import uuid
+import os
+from pathlib import Path
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.files.storage import FileSystemStorage
+
+
+class PrivateSubmissionStorage(FileSystemStorage):
+    @property
+    def base_location(self):
+        return getattr(settings, 'SUBMISSION_UPLOAD_ROOT', settings.BASE_DIR / '.private-submissions')
+
+    @property
+    def location(self):
+        return os.path.abspath(self.base_location)
+
+
+def submission_storage():
+    return PrivateSubmissionStorage()
+
+
+def submission_upload_path(instance, filename):
+    submission_id = instance.submission_id if hasattr(instance, 'submission_id') else instance.pk
+    return f'event_submissions/{submission_id}/{uuid.uuid4().hex}{Path(filename).suffix.lower()}'
+
+
+class EventSubmission(models.Model):
+    """Organizer-owned proposals, kept separate from live events and ticket inventory."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='event_submissions')
+    title = models.CharField(max_length=200)
+    category = models.CharField(max_length=20, choices=(('theater', 'نمایش'), ('concert', 'کنسرت'), ('event', 'رویداد')))
+    venue = models.ForeignKey('matches.Stadium', on_delete=models.PROTECT, null=True, blank=True,
+                              related_name='organizer_submissions', verbose_name='سالن آماده سامانه')
+    published_event = models.OneToOneField('matches.Event', on_delete=models.PROTECT, null=True,
+                                          blank=True, related_name='organizer_submission',
+                                          verbose_name='برنامه منتشرشده')
+    data = models.JSONField(default=dict, blank=True)
+    completed_step = models.PositiveSmallIntegerField(default=0)
+    status = models.CharField(max_length=20, choices=(('draft', 'پیش‌نویس'), ('submitted', 'در انتظار بررسی')), default='draft')
+    poster = models.ImageField(upload_to=submission_upload_path, storage=submission_storage, blank=True)
+    cover = models.ImageField(upload_to=submission_upload_path, storage=submission_storage, blank=True)
+    teaser = models.FileField(upload_to=submission_upload_path, storage=submission_storage, blank=True)
+    license_image = models.ImageField(upload_to=submission_upload_path, storage=submission_storage, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        verbose_name = 'درخواست ایجاد برنامه'
+        verbose_name_plural = 'درخواست‌های ایجاد برنامه'
+
+    @property
+    def display_title(self):
+        return self.published_event.title if self.published_event_id else self.title
+
+    def __str__(self):
+        return self.title
+
+
+class SubmissionPhoto(models.Model):
+    submission = models.ForeignKey(EventSubmission, on_delete=models.CASCADE, related_name='photos')
+    image = models.ImageField(upload_to=submission_upload_path, storage=submission_storage)
+
+    class Meta:
+        ordering = ['pk']
 
 
 class User(AbstractUser):
@@ -36,6 +104,36 @@ class User(AbstractUser):
     class Meta:
         verbose_name = "کاربر"
         verbose_name_plural = "کاربران"
+
+
+class ArtCardApplication(models.Model):
+    """User's request for a Shahr Bank Didavar art card; never stores card secrets."""
+    STATUS_CHOICES = (
+        ('requested', 'درخواست ثبت‌شده'),
+        ('sent_to_bank', 'ارسال‌شده به بانک'),
+        ('active', 'صادرشده و فعال'),
+        ('rejected', 'نیازمند پیگیری'),
+    )
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name='art_card_application', verbose_name='کاربر')
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='requested', db_index=True)
+    bank_reference = models.CharField(max_length=100, blank=True, verbose_name='شناسه پیگیری بانک')
+    card_last_four = models.CharField(max_length=4, blank=True, verbose_name='چهار رقم پایانی کارت')
+    admin_note = models.TextField(max_length=2000, blank=True, verbose_name='پیام به کاربر')
+    requested_at = models.DateTimeField(auto_now_add=True, verbose_name='زمان درخواست')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='آخرین به‌روزرسانی')
+
+    class Meta:
+        ordering = ['-requested_at']
+        verbose_name = 'درخواست هنرکارت'
+        verbose_name_plural = 'درخواست‌های هنرکارت'
+
+    def __str__(self):
+        return f'هنرکارت {self.user.get_full_name() or self.user.username}'
+
+    def clean(self):
+        if self.card_last_four and (len(self.card_last_four) != 4 or not self.card_last_four.isascii() or not self.card_last_four.isdigit()):
+            raise ValidationError({'card_last_four': 'فقط چهار رقم پایانی کارت را وارد کنید.'})
 
 
 # accounts/models.py
@@ -214,3 +312,84 @@ class SiteVisit(models.Model):
 
     def __str__(self):
         return f"{self.visitor_id} - {self.visited_at:%Y-%m-%d %H:%M}"
+
+
+class SupportTicket(models.Model):
+    class Category(models.TextChoices):
+        PROGRAM = 'program', 'مربوط به برنامه'
+        GENERAL = 'general', 'پشتیبانی کاربران'
+
+    class Status(models.TextChoices):
+        WAITING = 'waiting', 'منتظر پاسخ پشتیبانی'
+        ANSWERED = 'answered', 'پاسخ داده شده'
+        CLOSED = 'closed', 'بسته شده'
+
+    requester = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='support_tickets')
+    category = models.CharField(max_length=16, choices=Category.choices)
+    event = models.ForeignKey('matches.Event', on_delete=models.SET_NULL, null=True, blank=True, related_name='support_tickets')
+    submission = models.ForeignKey(EventSubmission, on_delete=models.SET_NULL, null=True, blank=True, related_name='support_tickets')
+    course = models.ForeignKey('education.Course', on_delete=models.SET_NULL, null=True, blank=True, related_name='support_tickets')
+    studio = models.ForeignKey('studios.Studio', on_delete=models.SET_NULL, null=True, blank=True, related_name='support_tickets')
+    subject = models.CharField(max_length=160)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.WAITING, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at', '-pk']
+        verbose_name = 'تیکت پشتیبانی'
+        verbose_name_plural = 'تیکت‌های پشتیبانی'
+
+    @property
+    def managed_event_id(self):
+        return self.event_id or (self.submission.published_event_id if self.submission_id else None)
+
+    @property
+    def program_title(self):
+        if self.studio_id:
+            return self.studio.title
+        if self.course_id:
+            return self.course.title
+        if self.event_id:
+            return self.event.title
+        return self.submission.display_title if self.submission_id else 'برنامه حذف شده'
+
+    def __str__(self):
+        return self.subject
+
+
+class SupportMessage(models.Model):
+    ticket = models.ForeignKey(SupportTicket, on_delete=models.CASCADE, related_name='messages')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='support_messages')
+    is_staff_reply = models.BooleanField(default=False)
+    body = models.TextField(max_length=8000)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at', 'pk']
+
+
+class Notification(models.Model):
+    class Kind(models.TextChoices):
+        PUBLICATION = 'publication', 'تأیید برنامه'
+        REVIEW = 'review', 'اصلاح اطلاعات برنامه'
+        SUPPORT = 'support', 'پاسخ پشتیبانی'
+        PURCHASE = 'purchase', 'خرید موفق'
+        PAYMENT = 'payment', 'پرداخت تکمیل‌نشده'
+        ARTIST = 'artist', 'خبر هنرمندان'
+
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+    kind = models.CharField(max_length=16, choices=Kind.choices)
+    title = models.CharField(max_length=180)
+    body = models.TextField()
+    action_url = models.CharField(max_length=500)
+    dedupe_key = models.CharField(max_length=180)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at', '-pk']
+        constraints = [models.UniqueConstraint(fields=['recipient', 'dedupe_key'], name='notification_recipient_key')]
+        indexes = [models.Index(fields=['recipient', 'read_at'], name='notification_unread_idx')]
+        verbose_name = 'اعلان کاربر'
+        verbose_name_plural = 'اعلان‌های کاربران'

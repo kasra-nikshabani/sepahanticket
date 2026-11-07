@@ -2,7 +2,7 @@
 {% load currency_filters %}
 {% load static %}
 
-{% block title %}{% if is_edit %}ویرایش{% else %}ایجاد{% endif %} ورزشگاه{% endblock %}
+{% block title %}{% if is_edit %}ویرایش{% else %}ایجاد{% endif %} محل برگزاری{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
@@ -12,9 +12,9 @@
                 <div class="card-header bg-primary text-white">
                     <h4 class="mb-0">
                         {% if is_edit %}
-                            <i class="fas fa-edit"></i> ویرایش ورزشگاه
+                            <i class="fas fa-edit"></i> ویرایش محل برگزاری
                         {% else %}
-                            <i class="fas fa-plus"></i> ایجاد ورزشگاه جدید
+                            <i class="fas fa-plus"></i> ایجاد محل برگزاری جدید
                         {% endif %}
                     </h4>
                 </div>
@@ -22,27 +22,31 @@
                     {% if is_edit %}
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle"></i>
-                            در حال ویرایش ورزشگاه <strong>{{ stadium.name }}</strong>
+                            در حال ویرایش محل برگزاری <strong>{{ stadium.name }}</strong>
                         </div>
                     {% endif %}
 
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
+                        {{ form.non_field_errors }}
+                        {{ form.errors }}
 
                         <div class="mb-3">
-                            <label for="id_name" class="form-label">نام ورزشگاه</label>
+                            <label for="id_name" class="form-label">نام محل برگزاری</label>
                             {{ form.name }}
                         </div>
 
+                        <div class="mb-3"><label for="id_city" class="form-label">شهر</label>{{ form.city }}{{ form.city.errors }}</div>
+                        <div class="mb-3"><label for="id_address" class="form-label">آدرس</label>{{ form.address }}{{ form.address.errors }}</div>
                         <div class="mb-3">
                             <label for="id_capacity" class="form-label">ظرفیت کل</label>
                             {{ form.capacity }}
-                            <small class="text-muted">تعداد کل صندلی‌های ورزشگاه.</small>
+                            <small class="text-muted">تعداد کل صندلی‌های محل برگزاری.</small>
                         </div>
 
                         <!-- ===== فیلد تصویر ===== -->
                         <div class="mb-3">
-                            <label for="id_image" class="form-label">تصویر ورزشگاه</label>
+                            <label for="id_image" class="form-label">تصویر محل برگزاری</label>
                             {{ form.image }}
                             {% if is_edit and stadium.image %}
                                 <div class="mt-2">

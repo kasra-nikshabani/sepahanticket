@@ -1,0 +1,6 @@
+{% load persian_filters %}
+<div class="welcome-notice" role="status" aria-atomic="true" data-welcome-notice>
+    <span class="welcome-notice-icon" aria-hidden="true"><i class="fa-solid {% if 'farewell' in message.tags %}fa-right-from-bracket{% else %}fa-check{% endif %}"></i></span>
+    <div class="welcome-notice-copy"><strong>{{ message|to_persian }}</strong>{% if 'farewell' in message.tags %}<p>از حسابت خارج شدی؛ تا دیدار بعدی در دیدآور.</p><a href="{% url 'accounts:phone_login' %}">ورود دوباره <i class="fa-solid fa-arrow-left" aria-hidden="true"></i></a>{% else %}<p>دیدارهای تازه در انتظار توست.</p><a href="{% url 'matches:event_catalogue' %}">کشف رویدادها <i class="fa-solid fa-arrow-left" aria-hidden="true"></i></a>{% endif %}</div>
+    <button class="welcome-notice-close" type="button" data-close-welcome aria-label="بستن پیام"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+</div>

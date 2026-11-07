@@ -22,17 +22,17 @@
     .card-header-custom {
         background: linear-gradient(135deg, #1A1A2E, #16213E);
         padding: 20px 30px;
-        border-bottom: 3px solid #D4AF37;
+        border-bottom: 3px solid #2467a8;
         color: white;
     }
     .card-header-custom h4 {
         margin: 0;
         font-weight: 700;
-        color: #D4AF37;
+        color: #2467a8;
     }
     .card-header-custom h4 i {
         margin-left: 10px;
-        color: #D4AF37;
+        color: #2467a8;
     }
     .card-body-custom {
         padding: 30px;
@@ -62,7 +62,7 @@
         font-weight: 700;
         font-size: 1.2rem;
     }
-    .value.green { color: #28a745; }
+    .value.green { color: #1966b6; }
     .value.gold { color: #b8860b; }
     .value.blue { color: #17a2b8; }
     .filter-form {
@@ -87,7 +87,7 @@
         transition: background 0.2s;
     }
     .filter-form button:hover {
-        background: #D4AF37;
+        background: #2467a8;
         color: #1A1A2E;
     }
     .table-custom {
@@ -101,7 +101,7 @@
         font-weight: 600;
         padding: 12px 16px;
         text-align: right;
-        border-bottom: 2px solid #D4AF37;
+        border-bottom: 2px solid #2467a8;
     }
     .table-custom td {
         padding: 12px 16px;
@@ -129,13 +129,13 @@
         font-size: 0.9rem;
     }
     .pagination-wrapper a:hover {
-        background: #D4AF37;
+        background: #2467a8;
         color: #1A1A2E;
-        border-color: #D4AF37;
+        border-color: #2467a8;
     }
     .pagination-wrapper .current {
         background: #1A1A2E;
-        color: #D4AF37;
+        color: #2467a8;
         border-color: #1A1A2E;
         font-weight: 700;
     }
@@ -144,7 +144,7 @@
         font-weight: 700;
         margin: 25px 0 15px 0;
         color: #1A1A2E;
-        border-right: 4px solid #D4AF37;
+        border-right: 4px solid #2467a8;
         padding-right: 12px;
     }
     .empty-state {
@@ -154,7 +154,7 @@
     }
     .empty-state i {
         font-size: 2.5rem;
-        color: #D4AF37;
+        color: #2467a8;
         margin-bottom: 10px;
     }
     .btn-back {
@@ -187,7 +187,7 @@
 {% block content %}
 <div class="report-container">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <h2><i class="fas fa-chart-pie" style="color: #D4AF37;"></i> گزارشات فروش</h2>
+        <h2><i class="fas fa-chart-pie" style="color: #2467a8;"></i> گزارشات فروش</h2>
         <a href="{% url 'accounts:profile' %}" class="btn-back">
             <i class="fas fa-arrow-right"></i> بازگشت به پروفایل
         </a>
@@ -199,7 +199,7 @@
             <option value="">همه مسابقات</option>
             {% for m in matches %}
                 <option value="{{ m.id }}" {% if match and match.id == m.id %}selected{% endif %}>
-                    {{ m.home_team }} vs {{ m.away_team }} - {{ m.date_time|date:"Y/m/d" }}
+                    {{ m.display_title }} - {{ m.date_time|date:"Y/m/d" }}
                 </option>
             {% endfor %}
         </select>
@@ -253,7 +253,7 @@
                         <td>{{ ticket.user.username }}</td>
                         <td>{{ ticket.full_name }}</td>
                         <td>{{ ticket.national_code }}</td>
-                        <td>{{ ticket.match.home_team }} vs {{ ticket.match.away_team }}</td>
+                        <td>{{ ticket.match.display_title }}</td>
                         <td>{{ ticket.seat.row.price|default:0 }}</td>
                         <td>{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
                     </tr>
@@ -308,7 +308,7 @@
                         <td>{{ ticket.user.username }}</td>
                         <td>{{ ticket.full_name }}</td>
                         <td>{{ ticket.national_code }}</td>
-                        <td>{{ ticket.match.home_team }} vs {{ ticket.match.away_team }}</td>
+                        <td>{{ ticket.match.display_title }}</td>
                         <td>{{ ticket.seat.row.price|default:0 }}</td>
                         <td>{{ ticket.purchase_date|date:"Y/m/d H:i" }}</td>
                     </tr>

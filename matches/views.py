@@ -22,7 +22,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from tickets.models import Ticket
 from tickets.reservation import SeatReservation
-from .forms import BlockForm, MatchForm, StadiumForm
+from .forms import BlockForm, MatchForm, LegacyMatchForm, StadiumForm
 from .models import Match, Row, Seat, MatchSeat, Block, Stadium
 
 from django.shortcuts import render, get_object_or_404, redirect
@@ -184,6 +184,8 @@ def set_splash_seen(request):
 def match_detail(request, match_id):
     """نمایش جزئیات یک مسابقه"""
     match = get_object_or_404(Match, id=match_id, is_active=True)
+    if match.event_id:
+        return redirect('matches:event_detail', event_id=match.event_id)
     return render(request, 'matches/match_detail.html', {'match': match})
 
 
@@ -199,9 +201,13 @@ def select_floor(request, match_id):
     روی خودِ نقشه با یک کلید عوض می‌شود.
     """
     match = get_object_or_404(Match, id=match_id, is_active=True)
-    if not match.ticket_sales_enabled:
+    if not match.sales_available:
         messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
         return redirect('matches:home')
+
+    if match.is_cultural:
+        request.session['selected_team_type'] = 'all'
+        return redirect('matches:select_block', match_id=match_id)
 
     if request.method == 'POST':
         floor = request.POST.get('floor')
@@ -223,9 +229,11 @@ def select_floor(request, match_id):
 @login_required
 def select_block(request, match_id):
     match = get_object_or_404(Match, id=match_id, is_active=True)
-    if not match.ticket_sales_enabled:
+    if not match.sales_available:
         messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
         return redirect('matches:home')
+    if match.is_cultural:
+        return select_venue_section(request, match)
     stadium = match.stadium
 
     # ===== تغییر طبقه از روی همین صفحه =====
@@ -334,7 +342,7 @@ def select_block(request, match_id):
     if request.method == 'POST':
         block_id = request.POST.get('block_id')
         if block_id:
-            block = get_object_or_404(Block, id=block_id)
+            block = get_object_or_404(Block, id=block_id, stadium=match.stadium)
             if Seat.objects.filter(row__block=block).count() == 0:
                 messages.error(
                     request,
@@ -421,7 +429,7 @@ def select_block(request, match_id):
 @login_required
 def show_block_map(request, match_id):
     match = get_object_or_404(Match, id=match_id, is_active=True)
-    if not match.ticket_sales_enabled:
+    if not match.sales_available:
         messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
         return redirect('matches:home')
     block_id = request.session.get('selected_block_id')
@@ -429,7 +437,7 @@ def show_block_map(request, match_id):
         messages.error(request, 'لطفاً ابتدا یک بلوک را انتخاب کنید.')
         return redirect('matches:select_block', match_id=match_id)
 
-    block = get_object_or_404(Block, id=block_id)
+    block = get_object_or_404(Block, id=block_id, stadium=match.stadium)
     # ===== بلوکی که برای همین مسابقه غیرفعال شده نباید قابل خرید باشد، حتی
     # اگر شناسه‌اش از سشن/لینک قدیمی بیاید =====
     if not is_block_active_for_match(match, block):
@@ -444,7 +452,7 @@ def show_block_map(request, match_id):
     all_seats = list(
         Seat.objects
         .filter(row__block=block, row_id__in=active_row_ids)
-        .select_related('row')
+        .select_related('row__block')
         .order_by('row__number', 'number')
     )
     seat_ids = [s.id for s in all_seats]
@@ -471,6 +479,8 @@ def show_block_map(request, match_id):
     ms_ids = [ms.id for ms in existing_ms.values()]
     reserved_map = SeatReservation.get_reserved_map(ms_ids)
 
+    from .models import get_seat_price_map
+    seat_prices = get_seat_price_map(match, all_seats)
     map_data = []
     first_row_id = None
     seats_by_row = {}
@@ -514,6 +524,7 @@ def show_block_map(request, match_id):
                 'number': seat.number,
                 'is_available': is_avail,
                 'id': ms.id,
+                'price': int(seat_prices[seat.id]),
             })
         map_data.append({
             'row_number': row.number,
@@ -544,17 +555,26 @@ def show_block_map(request, match_id):
         'map_data': map_data,
         'first_row_id': first_row_id,
         'block_price': block_price,
+        'minimum_seat_price': min(seat_prices.values(), default=block_price),
+        'maximum_seat_price': max(seat_prices.values(), default=block_price),
         'seat_total': seat_total,
         'seat_available': seat_available,
         'seat_occupancy': round((seat_total - seat_available) / seat_total * 100, 1) if seat_total else 0,
     }
+    if match.is_cultural:
+        from .seating import purchase_rows
+        layout = match.stadium.seating_layout or {}
+        context['map_data'] = purchase_rows(map_data, layout, block.name)
+        context['map_direction'] = layout.get('direction', 'rtl')
+        context['map_stage'] = layout.get('stage', 'top')
+        context['base_template'] = 'events/base.html'
     return render(request, 'matches/block_map.html', context)
 
 
 @login_required
 def select_row(request, match_id):
     match = get_object_or_404(Match, id=match_id, is_active=True)
-    if not match.ticket_sales_enabled:
+    if not match.sales_available:
         messages.error(request, 'فروش بلیط برای این مسابقه غیرفعال است.')
         return redirect('matches:home')
     block_id = request.session.get('selected_block_id')
@@ -2242,7 +2262,7 @@ def admin_match_create(request):
             match = form.save(commit=False)
             match.created_by = request.user
             match.save()
-            messages.success(request, f'مسابقه "{match.home_team} vs {match.away_team}" با موفقیت ایجاد شد.')
+            messages.success(request, f'سانس "{match.display_title}" با موفقیت ایجاد شد.')
             return redirect('matches:admin_match_list')
         else:
             for field, errors in form.errors.items():
@@ -2250,20 +2270,21 @@ def admin_match_create(request):
                 for error in errors:
                     messages.error(request, f'{label}: {error}')
     else:
-        form = MatchForm()
+        form = MatchForm(initial={"event": request.GET.get("event")})
 
-    return render(request, 'matches/admin_match_form.html', {'form': form, 'is_edit': False})
+    return render(request, 'events/session_form.html', {'form': form, 'is_edit': False})
 
 
 @staff_member_required
 def admin_match_edit(request, match_id):
     match = get_object_or_404(Match, id=match_id)
+    form_class = MatchForm if match.is_cultural else LegacyMatchForm
 
     if request.method == 'POST':
-        form = MatchForm(request.POST, request.FILES, instance=match)
+        form = form_class(request.POST, request.FILES, instance=match)
         if form.is_valid():
             form.save()
-            messages.success(request, f'مسابقه "{match.home_team} vs {match.away_team}" با موفقیت ویرایش شد.')
+            messages.success(request, f'سانس "{match.display_title}" با موفقیت ویرایش شد.')
             return redirect('matches:admin_match_list')
         else:
             for field, errors in form.errors.items():
@@ -2271,7 +2292,7 @@ def admin_match_edit(request, match_id):
                 for error in errors:
                     messages.error(request, f'{label}: {error}')
     else:
-        form = MatchForm(instance=match)
+        form = form_class(instance=match)
 
     price_blocks = Block.objects.filter(stadium=match.stadium).order_by('order')
     price_overrides = dict(MatchBlockPrice.objects.filter(match=match).values_list('block_id', 'price'))
@@ -2280,7 +2301,7 @@ def admin_match_edit(request, match_id):
 
     basa_discount = MatchBasaDiscount.objects.filter(match=match).first()
 
-    return render(request, 'matches/admin_match_form.html', {
+    return render(request, 'events/session_form.html' if match.is_cultural else 'matches/admin_match_form.html', {
         'form': form, 'match': match, 'is_edit': True, 'price_blocks': price_blocks,
         'basa_discount': basa_discount,
     })
@@ -2313,11 +2334,11 @@ def admin_match_block_prices(request, match_id):
         except (InvalidOperation, ValueError):
             messages.error(request, f'قیمت وارد‌شده برای بلوک «{block.name}» معتبر نیست.')
             continue
-        if price < 0:
-            messages.error(request, f'قیمت بلوک «{block.name}» نمی‌تواند منفی باشد.')
+        if not price.is_finite() or price < 0 or price != price.to_integral_value() or price > 9999999999:
+            messages.error(request, f'قیمت بخش «{block.name}» باید عدد صحیح بین صفر و ۹٬۹۹۹٬۹۹۹٬۹۹۹ ریال باشد.')
             continue
         MatchBlockPrice.objects.update_or_create(match=match, block=block, defaults={'price': price})
-        if block.price != price:
+        if not match.is_cultural and block.price != price:
             block.price = price
             block.save(update_fields=['price'])
         changed += 1
@@ -3393,3 +3414,32 @@ def stadium_map_preview(request, match_id):
         'total_blocks': len(blocks),
         'drawn': len(pieces),
     })
+
+
+@login_required
+def select_venue_section(request, match):
+    """Select arbitrary venue sections without football geometry or team filters."""
+    if match.is_cancelled or not match.event.is_active or match.date_time <= timezone.now():
+        messages.error(request, 'فروش این سانس در دسترس نیست.')
+        return redirect('matches:event_detail', event_id=match.event_id)
+    blocks = list(Block.objects.filter(stadium=match.stadium, id__in=get_active_block_ids(match)).order_by('floor', 'order', 'name'))
+    from .models import get_seat_price_map
+    eligible = list(Seat.objects.filter(row__block_id__in=[item.pk for item in blocks],
+        row_id__in=get_active_row_ids(match), is_available=True,
+        match_seats__match=match, match_seats__is_enabled=True).select_related('row__block'))
+    prices = get_seat_price_map(match, eligible)
+    for block in blocks:
+        values = [prices[seat.pk] for seat in eligible if seat.row.block_id == block.pk]
+        block.session_price = min(values, default=None)
+        block.session_max_price = max(values, default=None)
+    if request.method == 'POST':
+        block = get_object_or_404(Block, pk=request.POST.get('block_id') or 0, stadium=match.stadium,
+                                 id__in=[b.id for b in blocks])
+        if not Seat.objects.filter(row__block=block, row_id__in=get_active_row_ids(match, block)).exists():
+            messages.error(request, 'این بخش صندلی فعالی ندارد.')
+        else:
+            request.session['selected_block_id'] = block.id
+            request.session['selected_floor'] = block.floor
+            request.session['selected_team_type'] = 'all'
+            return redirect('matches:block_map', match_id=match.id)
+    return render(request, 'events/sections.html', {'match': match, 'blocks': blocks})

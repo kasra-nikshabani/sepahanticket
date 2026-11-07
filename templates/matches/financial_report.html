@@ -2,7 +2,7 @@
 {% load static %}
 {% load currency_filters %}
 
-{% block title %}گزارش مالی {{ match.home_team }} vs {{ match.away_team }}{% endblock %}
+{% block title %}گزارش مالی {{ match.display_title }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -15,7 +15,7 @@
         border-radius: 20px;
         padding: 30px 35px;
         margin-bottom: 30px;
-        border: 1px solid rgba(212, 175, 55, 0.2);
+        border: 1px solid rgba(36, 103, 168, 0.2);
         box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
         position: relative;
         overflow: hidden;
@@ -28,7 +28,7 @@
         right: -20%;
         width: 300px;
         height: 300px;
-        background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(36, 103, 168, 0.08) 0%, transparent 70%);
         border-radius: 50%;
     }
 
@@ -39,7 +39,7 @@
         left: -10%;
         width: 250px;
         height: 250px;
-        background: radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(36, 103, 168, 0.05) 0%, transparent 70%);
         border-radius: 50%;
     }
 
@@ -54,7 +54,7 @@
     }
 
     .report-header .header-title {
-        color: #D4AF37;
+        color: #2467a8;
         font-size: 24px;
         font-weight: 700;
         display: flex;
@@ -143,7 +143,7 @@
     }
 
     .stat-card.bg-success-gradient {
-        background: linear-gradient(135deg, #28a745, #1e7e34);
+        background: linear-gradient(135deg, #1966b6, #134d89);
         color: #fff;
     }
 
@@ -173,7 +173,7 @@
     }
 
     .stat-card.bg-gold-gradient {
-        background: linear-gradient(135deg, #D4AF37, #b8960f);
+        background: linear-gradient(135deg, #2467a8, #194d82);
         color: #1A1A2E;
     }
 
@@ -214,9 +214,9 @@
     }
 
     .profit-card.bg-profit {
-        background: linear-gradient(135deg, #d4edda, #b7e4c7);
-        color: #155724;
-        border: 1px solid #c3e6cb;
+        background: linear-gradient(135deg, #dde0e4, #c4cdd7);
+        color: #0d355f;
+        border: 1px solid #ced4db;
     }
 
     .profit-card.bg-loss {
@@ -289,7 +289,7 @@
         font-weight: 600;
         font-size: 13px;
         color: #1A1A2E;
-        border-bottom: 2px solid #D4AF37;
+        border-bottom: 2px solid #2467a8;
         white-space: nowrap;
     }
 
@@ -310,7 +310,7 @@
     .table-custom tfoot td {
         padding: 12px 16px;
         font-weight: 700;
-        border-top: 2px solid #D4AF37;
+        border-top: 2px solid #2467a8;
     }
 
     .btn-action {
@@ -441,7 +441,7 @@
             <div class="header-title">
                 <i class="fas fa-chart-pie"></i>
                 <span>گزارش مالی</span>
-                <span style="color: #fff; font-weight: 700;">{{ match.home_team }} 🆚 {{ match.away_team }}</span>
+                <span style="color: #fff; font-weight: 700;">{{ match.display_title }}</span>
             </div>
             <div class="header-actions">
                 <a href="{% url 'matches:export_financial_report_pdf' match.id %}" class="btn-pdf">
@@ -589,11 +589,11 @@
 
     <!-- ===== درآمدهای اضافی ===== -->
     <div class="section-card">
-        <div class="section-header" style="background: #d4edda; border-bottom-color: #c3e6cb;">
-            <h5 style="color: #155724;">
+        <div class="section-header" style="background: #dde0e4; border-bottom-color: #ced4db;">
+            <h5 style="color: #0d355f;">
                 <i class="fas fa-coins"></i> درآمدهای اضافی
             </h5>
-            <a href="{% url 'matches:add_match_revenue' match.id %}" class="btn-add" style="background: #28a745; color: #fff;">
+            <a href="{% url 'matches:add_match_revenue' match.id %}" class="btn-add" style="background: #1966b6; color: #fff;">
                 <i class="fas fa-plus"></i> افزودن درآمد
             </a>
         </div>
@@ -625,7 +625,7 @@
                             {% endfor %}
                         </tbody>
                         <tfoot>
-                            <tr style="background: #d4edda;">
+                            <tr style="background: #dde0e4;">
                                 <td>مجموع درآمدهای اضافی</td>
                                 <td>{{ report.total_revenues|rial_display }}</td>
                                 <td></td>

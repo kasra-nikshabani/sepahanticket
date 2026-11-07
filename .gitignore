@@ -9,5 +9,8 @@ __pycache__/
 venv/
 staticfiles/
 media/
+.private-submissions/
 tmp_downloads/
 *.log
+
+.private-education/

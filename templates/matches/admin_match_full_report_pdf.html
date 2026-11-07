@@ -3,7 +3,7 @@
 <html dir="rtl" lang="fa">
 <head>
     <meta charset="UTF-8">
-    <title>گزارش کامل مسابقه {{ match.home_team }} vs {{ match.away_team }}</title>
+    <title>گزارش کامل مسابقه {{ match.display_title }}</title>
     <style>
         @font-face {
             font-family: 'Vazirmatn';
@@ -43,10 +43,10 @@
             color: #fff;
             padding: 18px 22px;
             border-radius: 12px;
-            border-bottom: 4px solid #D4AF37;
+            border-bottom: 4px solid #2467a8;
             margin-bottom: 18px;
         }
-        .header h1 { color: #D4AF37; font-size: 19px; font-weight: 800; }
+        .header h1 { color: #2467a8; font-size: 19px; font-weight: 800; }
         .header .meta { font-size: 11px; opacity: 0.88; margin-top: 5px; }
 
         .section {
@@ -60,10 +60,10 @@
         .section h2 {
             font-size: 13px; font-weight: 800; color: #1A1A2E;
             padding-bottom: 6px; margin-bottom: 10px;
-            border-bottom: 2px solid #D4AF37;
+            border-bottom: 2px solid #2467a8;
             position: relative;
             padding-right: 10px;
-            border-right: 4px solid #D4AF37;
+            border-right: 4px solid #2467a8;
             padding-top: 2px;
             padding-bottom: 2px;
             margin-bottom: 10px;
@@ -80,7 +80,7 @@
             text-align: center;
             flex: 1;
             min-width: 100px;
-            border-top: 3px solid #D4AF37;
+            border-top: 3px solid #2467a8;
         }
         .kpi-box .num { font-size: 16px; font-weight: 800; color: #1A1A2E; }
         .kpi-box .lbl { font-size: 9.5px; color: #666; margin-top: 3px; }
@@ -92,12 +92,12 @@
         }
         tbody tr { border-bottom: 1px solid #eee; }
         tbody tr:nth-child(even) { background: #f8f9fb; }
-        tr.total-row { font-weight: 800; background: #fdf6e3 !important; color: #7a5c00; border-top: 2px solid #D4AF37; }
+        tr.total-row { font-weight: 800; background: #fdf6e3 !important; color: #7a5c00; border-top: 2px solid #2467a8; }
 
         .note {
             font-size: 9.5px; color: #666; margin-top: 8px;
             background: #f8f9fb; border-radius: 6px; padding: 6px 10px;
-            border-right: 3px solid #D4AF37;
+            border-right: 3px solid #2467a8;
         }
         .footer { margin-top: 18px; font-size: 9px; color: #999; text-align: center; }
 
@@ -126,7 +126,7 @@
             border: 1px solid #e4e4e4;
         }
         .bar-seg { height: 100%; }
-        .bar-seg.used { background: linear-gradient(90deg, #2e9e5b, #43c274); }
+        .bar-seg.used { background: linear-gradient(90deg, #1e65ae, #3181d4); }
         .bar-seg.not-used { background: #e2665a; }
         .bar-pct {
             width: 74px;
@@ -140,19 +140,19 @@
                ترتیبشون رو لنگر بندازه). */
             direction: ltr;
         }
-        .bar-pct b { color: #2e9e5b; }
+        .bar-pct b { color: #1e65ae; }
         .bar-pct span.nu { color: #c0392b; }
 
         .legend { display: flex; gap: 14px; margin-top: 6px; font-size: 9.5px; color: #555; }
         .legend .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-left: 4px; vertical-align: middle; }
-        .legend .dot.used { background: #43c274; }
+        .legend .dot.used { background: #3181d4; }
         .legend .dot.not-used { background: #e2665a; }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>گزارش کامل مسابقه</h1>
-        <div class="meta">{{ match.home_team }} vs {{ match.away_team }} — {{ match.date_time|date:"Y/m/d H:i" }} — {{ match.stadium.name }}</div>
+        <div class="meta">{{ match.display_title }} — {{ match.date_time|date:"Y/m/d H:i" }} — {{ match.stadium.name }}</div>
     </div>
 
     <div class="section">

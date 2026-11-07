@@ -81,7 +81,7 @@ def payment_request(request):
             messages.error(request, "مسابقه یافت نشد.")
             return redirect('matches:home')
 
-        if request.user.user_type != 'vip':
+        if not match_obj.is_cultural and request.user.user_type != 'vip':
             submitted_codes = []
             for key, value in request.POST.items():
                 if key.startswith('national_code_') and value:
@@ -121,6 +121,21 @@ def payment_request(request):
                 wallet_amount_used, request.user.id,
             )
             wallet_amount_used = 0
+
+        if not match_obj.sales_available:
+            messages.error(request, 'فروش این سانس در دسترس نیست.')
+            return redirect('matches:home')
+        if match_obj.is_cultural:
+            from tickets.cultural_checkout import validate_purchase
+            try:
+                total, wallet_amount_used = validate_purchase(request, match_obj)
+            except ValueError as error:
+                messages.error(request, str(error))
+                return redirect('tickets:ticket_info', match_id=match_id)
+            gateway_amount = total - wallet_amount_used
+            if gateway_amount <= 0:
+                messages.error(request, 'برای پرداخت کامل از کیف پول، فرم خرید را ثبت کنید.')
+                return redirect('tickets:ticket_info', match_id=match_id)
 
         # ===== ذخیره تمام اطلاعات خریدار در دیتابیس =====
         buyer_info = {}
@@ -417,7 +432,7 @@ def _release_payment_seats(payment):
 
 def _finalize_ticket_purchase(payment, gateway_amount_paid):
     from tickets.models import Ticket, Order, DiscountCode, SpecialCode
-    from matches.models import Match, MatchSeat, get_block_price_map, get_basa_discount_percent
+    from matches.models import Match, MatchSeat, get_seat_price_map, get_basa_discount_percent
     from tickets.reservation import SeatReservation
     from wallet.models import Wallet
     from accounts.models import User
@@ -466,7 +481,7 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             )
         }
 
-        block_price_map = get_block_price_map(match)
+        seat_price_map = get_seat_price_map(match, [item.seat for item in locked_seats.values()])
         basa_discount_percent = get_basa_discount_percent(match)
         basa_national_codes = set()
         if basa_discount_percent > 0:
@@ -476,8 +491,8 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
         for pk in match_seat_pks:
             pk_str = str(pk)
             full_name = payment.buyer_info.get(f'full_name_{pk_str}', '')
-            national_code = payment.buyer_info.get(f'national_code_{pk_str}', '')
-            tarikhe_tavallod = payment.buyer_info.get(f'tarikhe_tavallod_{pk_str}', '')
+            national_code = '' if match.is_cultural else payment.buyer_info.get(f'national_code_{pk_str}', '')
+            tarikhe_tavallod = '' if match.is_cultural else payment.buyer_info.get(f'tarikhe_tavallod_{pk_str}', '')
 
             match_seat = locked_seats.get(pk)
             if not match_seat:
@@ -493,11 +508,11 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             # محسوب نمی‌شود. raw_age فقط برای نمایش روی خودِ بلیط استفاده می‌شود.
             raw_age = get_age_from_jalali(tarikhe_tavallod)
             verified_age = get_verified_age(user.id, national_code)
-            is_free = is_free_for_age(verified_age)
+            is_free = is_free_for_age(verified_age, match=match)
             age = verified_age if verified_age is not None else raw_age
 
             block = match_seat.seat.row.block
-            base_price = block_price_map.get(block.id, block.price) if block else 0
+            base_price = seat_price_map[match_seat.seat_id]
             seat_price = 0 if is_free else base_price
             basa_discount_amount = 0
             if seat_price and basa_discount_percent > 0 and national_code in basa_national_codes:
@@ -614,7 +629,7 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
             discount_code=discount_obj.code if discount_obj else '',
             discount_code_id=discount_obj.id if discount_obj else None,
             full_name=user.get_full_name() or user.username,
-            phone_number=getattr(user, 'phone_number', ''),
+            phone_number=getattr(user, 'phone_number', '') or '',
             track_id=payment.track_id, paid_at=timezone.now(),
         )
         payment.order = order
@@ -676,7 +691,7 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
                 )
                 continue
 
-            if user.user_type != 'vip':
+            if not match.is_cultural and user.user_type != 'vip':
                 if national_code in processed_national_codes:
                     logger.error(f"Duplicate national code {national_code} in same order {order.id}. Skipping.")
                     match_seat.is_available = True; match_seat.reserved_until = None; match_seat.save()
@@ -747,6 +762,9 @@ def _finalize_ticket_purchase(payment, gateway_amount_paid):
                 except Exception as exc:            # noqa: BLE001
                     logger.error("بازگشت کسری برای پرداخت %s شکست خورد: %s", payment.id, exc)
 
+        from accounts.notifications import notify_purchase
+        if tickets_created:
+            notify_purchase(order)
         return True, None
 
     except Exception as e:

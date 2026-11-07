@@ -10,7 +10,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment
 
 # ===== ایمپورت مدل‌ها (با اضافه کردن Block) =====
-from .models import Match, Row, Seat, Stadium, MatchSeat, Block
+from .models import Event, EventRating, EventSceneImage, Match, Row, Seat, Stadium, MatchSeat, Block
 from .models import get_active_block_ids, get_active_row_ids
 from tickets.models import Ticket
 
@@ -101,12 +101,12 @@ class VIPAssignedTicketInline(admin.TabularInline):
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
     change_form_template = 'admin/matches/change_form_with_pagination.html'
-    list_display = ('sport_type', 'home_team', 'away_team', 'date_time', 'stadium', 'is_active', 'report_link')
-    list_filter = ('sport_type', 'is_active', 'date_time')
-    search_fields = ('home_team', 'away_team', 'sport_type')
+    list_display = ('display_title', 'date_time', 'stadium', 'is_active', 'report_link')
+    list_filter = ('event__category', 'is_active', 'date_time')
+    search_fields = ('event__title', 'home_team', 'away_team')
     inlines = []
     readonly_fields = ('created_by',)
-    fields = ('sport_type', 'home_team', 'away_team', 'home_team_logo', 'away_team_logo', 'stadium', 'date_time',
+    fields = ('event', 'sport_type', 'home_team', 'away_team', 'home_team_logo', 'away_team_logo', 'stadium', 'date_time',
               'is_active', 'created_by')
 
     def report_link(self, obj):
@@ -479,3 +479,25 @@ class MatchFinancialReportAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False  # جلوگیری از حذف گزارش
+
+
+@admin.register(EventRating)
+class EventRatingAdmin(admin.ModelAdmin):
+    list_display = ('event', 'user', 'score', 'created_at')
+    list_filter = ('score',)
+    search_fields = ('event__title', 'user__username')
+    autocomplete_fields = ('event',)
+    raw_id_fields = ('user',)
+
+
+class EventSceneImageInline(admin.TabularInline):
+    model = EventSceneImage
+    extra = 1
+
+
+@admin.register(Event)
+class EventAdmin(admin.ModelAdmin):
+    list_display = ('title', 'category', 'organizer', 'is_active')
+    list_filter = ('category', 'is_active')
+    search_fields = ('title', 'artists', 'organizer')
+    inlines = [EventSceneImageInline]

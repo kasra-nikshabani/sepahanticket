@@ -23,7 +23,7 @@
         flex-wrap: wrap;
         margin-bottom: 25px;
         padding-bottom: 15px;
-        border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+        border-bottom: 2px solid rgba(36, 103, 168, 0.3);
     }
     .page-header h2 {
         font-weight: 700;
@@ -31,7 +31,7 @@
         margin: 0;
         font-size: 24px;
     }
-    .page-header h2 i { color: #D4AF37; margin-left: 10px; }
+    .page-header h2 i { color: #2467a8; margin-left: 10px; }
     .page-header .subtitle {
         font-size: 14px;
         color: #6c757d;
@@ -42,7 +42,7 @@
         margin-top: 4px;
     }
     .page-header .subtitle .badge-stadium {
-        background: #D4AF37;
+        background: #2467a8;
         color: #1A1A2E;
         padding: 2px 14px;
         border-radius: 50px;
@@ -59,7 +59,7 @@
         transition: all 0.3s ease;
     }
     .back-link:hover {
-        color: #D4AF37;
+        color: #2467a8;
         transform: translateX(-4px);
     }
 
@@ -84,7 +84,7 @@
         align-items: center;
         gap: 6px;
     }
-    .block-selector label i { color: #D4AF37; }
+    .block-selector label i { color: #2467a8; }
     .block-selector select {
         flex: 1;
         min-width: 200px;
@@ -103,9 +103,9 @@
         color: #333;
     }
     .block-selector select:focus {
-        border-color: #D4AF37;
+        border-color: #2467a8;
         outline: none;
-        box-shadow: 0 0 0 4px rgba(212,175,55,0.15);
+        box-shadow: 0 0 0 4px rgba(36, 103, 168,0.15);
         background: #fff;
     }
     .block-selector .selected-info {
@@ -116,7 +116,7 @@
         align-items: center;
         gap: 4px;
     }
-    .block-selector .selected-info i { color: #28a745; }
+    .block-selector .selected-info i { color: #1966b6; }
 
     /* ===== آمار ===== */
     .stats-row {
@@ -143,12 +143,12 @@
         right: 0;
         width: 100%;
         height: 3px;
-        background: linear-gradient(90deg, #D4AF37, #B8960F);
+        background: linear-gradient(90deg, #2467a8, #194d82);
     }
     .stat-box:hover {
         transform: translateY(-4px);
-        border-color: #D4AF37;
-        box-shadow: 0 8px 25px rgba(212,175,55,0.12);
+        border-color: #2467a8;
+        box-shadow: 0 8px 25px rgba(36, 103, 168,0.12);
     }
     .stat-box .number {
         font-size: 24px;
@@ -160,10 +160,10 @@
         color: #6c757d;
         margin-top: 4px;
     }
-    .stat-box .number.green { color: #28a745; }
+    .stat-box .number.green { color: #1966b6; }
     .stat-box .number.red { color: #dc3545; }
     .stat-box .number.blue { color: #17a2b8; }
-    .stat-box .number.gold { color: #D4AF37; }
+    .stat-box .number.gold { color: #2467a8; }
 
     /* ===== نوار ابزار ===== */
     .toolbar {
@@ -203,8 +203,8 @@
         cursor: not-allowed;
         transform: none;
     }
-    .btn-success { background: #28a745; color: #fff; }
-    .btn-success:hover { background: #218838; box-shadow: 0 4px 15px rgba(40,167,69,0.3); }
+    .btn-success { background: #1966b6; color: #fff; }
+    .btn-success:hover { background: #155394; box-shadow: 0 4px 15px rgba(25, 102, 182,0.3); }
     .btn-danger { background: #dc3545; color: #fff; }
     .btn-danger:hover { background: #c82333; box-shadow: 0 4px 15px rgba(220,53,69,0.3); }
     .btn-warning { background: #ffc107; color: #212529; }
@@ -262,7 +262,7 @@
     .seat-card:hover {
         transform: translateY(-4px);
         box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-        border-color: #D4AF37;
+        border-color: #2467a8;
     }
     .seat-card .seat-number {
         display: block;
@@ -285,8 +285,8 @@
         margin-top: 4px;
     }
     .seat-card .seat-status.active {
-        background: #d4edda;
-        color: #155724;
+        background: #dde0e4;
+        color: #0d355f;
     }
     .seat-card .seat-status.inactive {
         background: #f8d7da;
@@ -299,8 +299,8 @@
 
     /* وضعیت کارت */
     .seat-card.active-seat {
-        border-color: #28a745;
-        background: #f0fff4;
+        border-color: #1966b6;
+        background: #f7f7f8;
     }
     .seat-card.inactive-seat {
         border-color: #dc3545;
@@ -311,13 +311,13 @@
         color: #dc3545;
     }
     .seat-card.sold-seat {
-        border-color: #D4AF37;
+        border-color: #2467a8;
         background: #fff9e6;
         cursor: not-allowed;
         opacity: 0.85;
     }
     .seat-card.sold-seat .seat-number {
-        color: #B8960F;
+        color: #194d82;
     }
     .seat-card.sold-seat input[type="checkbox"] {
         display: none;
@@ -329,12 +329,12 @@
 
     /* انتخاب‌شده */
     .seat-card.selected {
-        border-color: #D4AF37;
+        border-color: #2467a8;
         background: #fff9e6;
-        box-shadow: 0 0 0 3px rgba(212,175,55,0.25);
+        box-shadow: 0 0 0 3px rgba(36, 103, 168,0.25);
     }
     .seat-card.selected .seat-number {
-        color: #B8960F;
+        color: #194d82;
     }
 
     /* چک‌باکس مخفی */
@@ -353,13 +353,13 @@
         width: 20px;
         height: 20px;
         border-radius: 50%;
-        background: #D4AF37;
+        background: #2467a8;
         color: #fff;
         font-size: 12px;
         display: none;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 2px 8px rgba(212,175,55,0.4);
+        box-shadow: 0 2px 8px rgba(36, 103, 168,0.4);
     }
     .seat-card.selected .selection-indicator {
         display: flex;
@@ -393,7 +393,7 @@
     }
     .select-block-prompt i {
         font-size: 72px;
-        color: #D4AF37;
+        color: #2467a8;
         margin-bottom: 16px;
         display: block;
     }
@@ -502,7 +502,7 @@
                 <div class="number red">{{ inactive_seats }}</div>
                 <div class="label">غیرفعال</div>
             </div>
-            <div class="stat-box" style="border-color:#D4AF37;">
+            <div class="stat-box" style="border-color:#2467a8;">
                 <div class="number gold">{{ sold_seats }}</div>
                 <div class="label">فروخته‌شده / بلیط ویژه</div>
             </div>

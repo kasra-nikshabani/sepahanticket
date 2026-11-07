@@ -1,0 +1,7 @@
+{% extends 'accounts/account_base.html' %}{% load static %}
+{% block title %}تیکت‌های پشتیبانی | دیدآور{% endblock %}
+{% block extra_css %}{{ block.super }}<link rel="stylesheet" href="{% static 'events/support.css' %}">{% endblock %}
+{% block account_title %}تیکت‌های پشتیبانی{% endblock %}
+{% block account_intro %}کنارتان هستیم؛ درخواست‌های مربوط به برنامه و حساب کاربری را جدا پیگیری کنید.{% endblock %}
+{% block account_heading_action %}<a class="account-btn" href="{% url 'accounts:support_create' %}"><i class="fa-solid fa-plus" aria-hidden="true"></i> تیکت جدید</a>{% endblock %}
+{% block account_content %}{% include 'support/_list.html' %}{% endblock %}

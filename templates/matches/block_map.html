@@ -1,8 +1,10 @@
-{% extends 'base.html' %}
+{% extends base_template|default:'base.html' %}
 {% load currency_filters %}
-{% load static %}
+{% load static persian_filters jalali %}
 
 {% block title %}نقشه سکو {{ selected_block.name }}{% endblock %}
+
+{% block page_class %}{% if match.is_cultural %}purchase-page seat-map-page{% endif %}{% endblock %}
 
 {% block extra_css %}
     <style>
@@ -14,7 +16,7 @@
             background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
             border-radius: 40px 40px 20px 20px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-            border: 2px solid #D4AF37;
+            border: 2px solid #2467a8;
         }
 
         .map-header {
@@ -22,12 +24,12 @@
             color: #f5f5f5;
             margin-bottom: 20px;
             padding-bottom: 12px;
-            border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+            border-bottom: 2px solid rgba(36, 103, 168, 0.3);
         }
 
         .map-header h2 {
             font-weight: 700;
-            color: #D4AF37;
+            color: #2467a8;
             text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
         }
 
@@ -37,7 +39,7 @@
             font-weight: 800;
             letter-spacing: 1px;
             color: #1A1A2E;
-            background: linear-gradient(135deg, #D4AF37, #f0d670);
+            background: linear-gradient(135deg, #2467a8, #f0d670);
             padding: 3px 10px;
             border-radius: 20px;
             margin: 0 8px;
@@ -55,25 +57,25 @@
             padding: 4px 12px; border-radius: 20px;
             display: inline-flex; align-items: center; gap: 6px;
         }
-        .meta-chip i { color: #D4AF37; font-size: .8rem; }
+        .meta-chip i { color: #2467a8; font-size: .8rem; }
 
         .header-badges {
             display: flex; justify-content: center; flex-wrap: wrap;
             gap: 8px; margin-top: 10px;
         }
         .map-header .block-name {
-            color: #D4AF37; font-weight: 700; font-size: .86rem;
-            background: rgba(212, 175, 55, 0.15);
-            border: 1px solid rgba(212,175,55,.35);
+            color: #2467a8; font-weight: 700; font-size: .86rem;
+            background: rgba(36, 103, 168, 0.15);
+            border: 1px solid rgba(36, 103, 168,.35);
             display: inline-flex; align-items: center; gap: 6px;
             padding: 5px 16px; border-radius: 20px;
         }
         .price-badge {
             color: #1A1A2E; font-weight: 800; font-size: .86rem;
-            background: linear-gradient(135deg, #D4AF37, #e8c964);
+            background: linear-gradient(135deg, #2467a8, #e8c964);
             display: inline-flex; align-items: center; gap: 6px;
             padding: 5px 16px; border-radius: 20px;
-            box-shadow: 0 3px 12px rgba(212,175,55,.28);
+            box-shadow: 0 3px 12px rgba(36, 103, 168,.28);
         }
 
         /* نوار ظرفیت */
@@ -85,14 +87,14 @@
         }
         .capacity-fill {
             height: 100%;
-            background: linear-gradient(90deg, #2d8a4e, #4caf50);
+            background: linear-gradient(90deg, #1e5a99, #377cc4);
             border-radius: 20px;
         }
         .capacity-text {
             display: flex; justify-content: space-between;
             font-size: .72rem; color: #9aa5b8; margin-top: 6px;
         }
-        .capacity-text b { color: #4caf50; }
+        .capacity-text b { color: #377cc4; }
 
         /* ===== منطقه صندلی‌ها ===== */
         .seating-area {
@@ -100,7 +102,7 @@
             border-radius: 30px 30px 10px 10px;
             padding: 20px 10px;
             backdrop-filter: blur(2px);
-            border: 1px solid rgba(212, 175, 55, 0.15);
+            border: 1px solid rgba(36, 103, 168, 0.15);
             overflow: hidden;
         }
 
@@ -112,7 +114,7 @@
 
         .view-toggle .btn-toggle {
             background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(212, 175, 55, 0.3);
+            border: 1px solid rgba(36, 103, 168, 0.3);
             color: #e0e0e0;
             padding: 6px 20px;
             border-radius: 30px;
@@ -125,9 +127,9 @@
         }
 
         .view-toggle .btn-toggle:hover {
-            background: rgba(212, 175, 55, 0.15);
-            border-color: #D4AF37;
-            color: #D4AF37;
+            background: rgba(36, 103, 168, 0.15);
+            border-color: #2467a8;
+            color: #2467a8;
         }
 
         .view-toggle .btn-toggle i {
@@ -147,7 +149,7 @@
         }
 
         .row-container:hover {
-            background: rgba(212, 175, 55, 0.05);
+            background: rgba(36, 103, 168, 0.05);
         }
 
         .row-label {
@@ -156,18 +158,18 @@
             font-weight: 700;
             font-size: 13px;
             color: #f0f0f0;
-            background: rgba(212, 175, 55, 0.2);
+            background: rgba(36, 103, 168, 0.2);
             border-radius: 6px;
             padding: 4px 0;
-            border: 1px solid rgba(212, 175, 55, 0.2);
+            border: 1px solid rgba(36, 103, 168, 0.2);
             flex-shrink: 0;
             text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
             transition: all 0.2s;
         }
 
         .row-container:hover .row-label {
-            background: rgba(212, 175, 55, 0.35);
-            border-color: #D4AF37;
+            background: rgba(36, 103, 168, 0.35);
+            border-color: #2467a8;
         }
 
         /* ===== گرید صندلی‌ها ===== */
@@ -202,7 +204,7 @@
         }
 
         .seat-grid::-webkit-scrollbar-thumb {
-            background: #D4AF37;
+            background: #2467a8;
             border-radius: 10px;
         }
 
@@ -244,15 +246,15 @@
         }
 
         .seat.available {
-            background: linear-gradient(145deg, #2d8a4e, #1f6b3a);
-            border-color: #4caf50;
+            background: linear-gradient(145deg, #1e5a99, #144476);
+            border-color: #377cc4;
             color: #fff;
             box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
         }
 
         .seat.available:hover {
             transform: scale(1.15);
-            box-shadow: 0 0 20px rgba(76, 175, 80, 0.6);
+            box-shadow: 0 0 20px rgba(55, 124, 196, 0.6);
             z-index: 2;
         }
 
@@ -265,11 +267,11 @@
         }
 
         .seat.selected {
-            background: linear-gradient(145deg, #f0d670, #D4AF37) !important;
+            background: linear-gradient(145deg, #f0d670, #2467a8) !important;
             border-color: #ffd700 !important;
             color: #1A1A2E !important;
             transform: scale(1.22) translateY(-2px);
-            box-shadow: 0 0 26px rgba(212, 175, 55, 0.75), 0 4px 10px rgba(0,0,0,.35);
+            box-shadow: 0 0 26px rgba(36, 103, 168, 0.75), 0 4px 10px rgba(0,0,0,.35);
             z-index: 3;
             animation: seatPop .22s ease;
         }
@@ -312,9 +314,9 @@
         .pitch-area {
             margin-top: 24px;
             padding: 16px 20px;
-            background: linear-gradient(180deg, #2e7d32, #1b5e20);
+            background: linear-gradient(180deg, #1f548c, #113c68);
             border-radius: 50px 50px 16px 16px;
-            border: 3px solid #4caf50;
+            border: 3px solid #377cc4;
             box-shadow: inset 0 8px 20px rgba(0, 0, 0, 0.3);
             text-align: center;
             color: rgba(255, 255, 255, 0.5);
@@ -324,7 +326,7 @@
         }
 
         .pitch-area::before {
-            content: "⚽ ورزشگاه نقش جهان ⚽";
+            content: "";
             display: block;
             color: rgba(255, 255, 255, 0.6);
             font-weight: 700;
@@ -351,7 +353,7 @@
             border-radius: 30px;
             padding: 10px 20px;
             backdrop-filter: blur(4px);
-            border: 1px solid rgba(212, 175, 55, 0.15);
+            border: 1px solid rgba(36, 103, 168, 0.15);
         }
 
         .legend-item {
@@ -370,7 +372,7 @@
         }
 
         .legend-box.available {
-            background: #2d8a4e;
+            background: #1e5a99;
         }
 
         .legend-box.unavailable {
@@ -378,7 +380,7 @@
         }
 
         .legend-box.selected {
-            background: #D4AF37;
+            background: #2467a8;
         }
 
         .legend-box.reserved {
@@ -400,7 +402,7 @@
             padding: 14px 20px;
             background: rgba(15, 15, 26, 0.97);
             backdrop-filter: blur(6px);
-            border-top: 1px solid rgba(212, 175, 55, 0.25);
+            border-top: 1px solid rgba(36, 103, 168, 0.25);
             box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.4);
             color: #f0f0f0;
         }
@@ -423,11 +425,11 @@
         }
 
         .selection-info { font-size: 15px; }
-        .selection-info strong { color: #D4AF37; font-size: 1.2rem; }
+        .selection-info strong { color: #2467a8; font-size: 1.2rem; }
         .sel-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-        .sel-line i { color: #D4AF37; }
+        .sel-line i { color: #2467a8; }
         .sel-total { color: #cfd6e4; font-size: .9rem; }
-        .sel-total b { color: #4caf50; font-size: 1rem; }
+        .sel-total b { color: #377cc4; font-size: 1rem; }
 
         .orphan-warn-line {
             margin-top: 6px; font-size: .78rem; color: #ffcf9e;
@@ -450,7 +452,7 @@
         .sel-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; max-width: 460px; }
         .sel-chip {
             font-size: .72rem; font-weight: 700; color: #1A1A2E;
-            background: linear-gradient(135deg, #D4AF37, #e8c964);
+            background: linear-gradient(135deg, #2467a8, #e8c964);
             padding: 3px 9px; border-radius: 14px;
             display: inline-flex; align-items: center; gap: 5px;
             animation: chipIn .18s ease;
@@ -462,7 +464,7 @@
         .btn-continue {
             padding: 10px 32px;
             font-size: 1rem;
-            background: linear-gradient(135deg, #D4AF37, #B8960F);
+            background: linear-gradient(135deg, #2467a8, #194d82);
             color: #1A1A2E;
             border: none;
             border-radius: 30px;
@@ -472,12 +474,12 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            box-shadow: 0 4px 15px rgba(36, 103, 168, 0.3);
         }
 
         .btn-continue:hover {
             transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.5);
+            box-shadow: 0 8px 25px rgba(36, 103, 168, 0.5);
         }
 
         .btn-continue:disabled {
@@ -607,77 +609,92 @@
             }
         }
     </style>
+{% if match.is_cultural %}<link rel="stylesheet" href="{% static 'events/seating.css' %}">{% endif %}
 {% endblock %}
 
 {% block content %}
-    {% include 'includes/purchase_timeline.html' with current_step=3 %}
+    {% if match.is_cultural %}<div class="flow-steps"><span>۱. انتخاب سانس</span><span>۲. بخش سالن</span><span class="current">۳. صندلی</span><span>۴. پرداخت</span></div>{% else %}{% include 'includes/purchase_timeline.html' with current_step=3 %}{% endif %}
     <div class="stadium-map">
         <!-- هدر -->
         <div class="map-header">
-            <h2>{{ match.home_team }} <span class="vs-badge">VS</span> {{ match.away_team }}</h2>
+            <h2>{{ match.display_title }}</h2>
             <div class="header-meta">
-                <span class="meta-chip"><i class="far fa-calendar"></i> {{ match.date_time|date:"Y/m/d" }}</span>
-                {% if match.has_time %}<span class="meta-chip"><i class="far fa-clock"></i> {{ match.date_time|date:"H:i" }}</span>{% endif %}
+                <span class="meta-chip"><i class="far fa-calendar"></i> {{ match.date_time|to_jalali_date|to_persian }}</span>
+                {% if match.has_time %}<span class="meta-chip"><i class="far fa-clock"></i> {{ match.date_time|date:"H:i"|to_persian }}</span>{% endif %}
                 <span class="meta-chip"><i class="fas fa-location-dot"></i> {{ match.stadium.name }}</span>
             </div>
             <div class="header-badges">
                 <span class="block-name"><i class="fas fa-layer-group"></i> {{ selected_block.name }}</span>
-                <span class="price-badge"><i class="fas fa-tag"></i> {{ block_price|rial_display }} ریال</span>
+                <span class="price-badge"><i class="fas fa-tag"></i> {% if match.is_cultural %}{{ minimum_seat_price|toman_display|persian_number }}{% if minimum_seat_price != maximum_seat_price %} تا {{ maximum_seat_price|toman_display|persian_number }}{% endif %} تومان{% else %}{{ block_price|rial_display }} ریال{% endif %}</span>
             </div>
             <div class="capacity-wrap">
                 <div class="capacity-bar"><div class="capacity-fill" style="width: {{ seat_occupancy }}%;"></div></div>
                 <div class="capacity-text">
-                    <span><b>{{ seat_available|rial_display }}</b> صندلی خالی از {{ seat_total|rial_display }}</span>
-                    <span>{{ seat_occupancy }}٪ پر شده</span>
+                    <span><b>{{ seat_available|persian_number }}</b> صندلی خالی از {{ seat_total|persian_number }}</span>
+                    <span>{{ seat_occupancy|persian_number }}٪ پر شده</span>
                 </div>
             </div>
         </div>
 
+        <p class="seat-map-help" id="seat-map-help">صندلی خود را انتخاب کنید؛ جمع بلیط‌ها پایین صفحه نمایش داده می‌شود.{% if match.is_cultural %} برای دیدن ادامهٔ ردیف‌ها، نقشه را افقی بکشید.{% endif %}<span class="seat-keyboard-help"> با کلیدهای جهت‌نما بین صندلی‌ها حرکت کنید و با Enter یا فاصله انتخاب کنید.</span></p>
+        <p class="seat-map-feedback" role="status" aria-live="polite" id="seat-map-feedback"></p>
         <!-- دکمه تغییر حالت -->
         <div class="view-toggle">
-            <button class="btn-toggle" id="toggleViewBtn">
-                <i class="fas fa-expand"></i> نمایش همه صندلی‌ها
+            <button type="button" class="btn-toggle" id="toggleViewBtn" aria-pressed="false" aria-controls="purchase-seat-canvas">
+                <i class="fas fa-expand"></i> {% if match.is_cultural %}نمای فشرده سالن{% else %}نمایش همه صندلی‌ها{% endif %}
             </button>
         </div>
 
         <!-- منطقه صندلی‌ها -->
-        <div class="seating-area">
+        <div class="seating-area" {% if match.is_cultural %}tabindex="0" role="region" aria-label="نقشه قابل پیمایش صندلی‌های {{ selected_block.name }}" aria-describedby="seat-map-help"{% endif %}>
+            <div id="purchase-seat-canvas" {% if match.is_cultural %}class="purchase-seat-canvas" dir="{{ map_direction }}"{% endif %}>
+            {% if match.is_cultural and map_stage == 'top' %}<div class="purchase-stage-row"><div class="pitch-area"><span>صحنه اجرا</span></div></div>{% endif %}
             {% for row_data in map_data %}
                 <div class="row-container">
-                    <div class="row-label">{{ row_data.row_number }}</div>
-                    <div class="seat-grid" data-row="{{ row_data.row_number }}">
-                        {% for seat in row_data.seats %}
-                            <div class="seat
+                    <div class="row-label" title="ردیف {{ row_data.row_number|to_persian }}">{% if match.is_cultural %}<span class="purchase-row-caption">ردیف</span>{% endif %}{{ row_data.row_number|to_persian }}</div>
+                    <div class="seat-grid{% if match.is_cultural %} align-{{ row_data.alignment }}{% endif %}" data-row="{{ row_data.row_number }}">
+                        {% if match.is_cultural %}<div class="purchase-seat-cells" style="--curve-top:{{ row_data.top }}px;--curve-bottom:{{ row_data.bottom }}px;{% if row_data.alignment == 'start' %}--row-offset:{{ row_data.offset }};{% endif %}">{% endif %}
+                        {% for seat in row_data.cells|default:row_data.seats %}
+                            {% if seat %}
+                            <button type="button" class="seat
                         {% if seat.is_available %}available{% else %}unavailable{% endif %}
                         {% if not seat.id %}missing{% endif %}"
+                                 aria-pressed="false" aria-disabled="{{ seat.is_available|yesno:'false,true' }}"
+                                 aria-label="ردیف {{ row_data.row_number|to_persian }}، صندلی {{ seat.number|to_persian }}{% if match.is_cultural and seat.price != None %}، {{ seat.price|toman_display|persian_number }} تومان{% endif %}"
                                  data-seat-id="{{ seat.id }}"
                                  data-row="{{ row_data.row_number }}"
                                  data-number="{{ seat.number }}"
+                                 data-price="{{ seat.price|default_if_none:block_price }}"
                                  data-available="{{ seat.is_available|yesno:"true,false" }}"
-                                 title="ردیف {{ row_data.row_number }} — صندلی {{ seat.number }}"
-                                 {% if not seat.id %}style="display:none;"{% endif %}>
-                                {{ seat.number }}
-                            </div>
+                                 title="ردیف {{ row_data.row_number|to_persian }} — صندلی {{ seat.number|to_persian }}{% if match.is_cultural and seat.price != None %} · {{ seat.price|toman_display|persian_number }} تومان{% endif %}"
+                                 {% if not seat.id %}style="display:none;"{% elif match.is_cultural %}style="translate:0 {{ seat.y }}px;rotate:{% if map_direction == 'rtl' %}calc(-1 * {{ seat.angle }}deg){% else %}{{ seat.angle }}deg{% endif %}"{% endif %}>
+                                {{ seat.number|to_persian }}
+                            </button>
+                            {% else %}<span class="purchase-seat-gap" aria-hidden="true"></span>{% endif %}
                         {% endfor %}
+                        {% if match.is_cultural %}</div>{% endif %}
                     </div>
+                    {% if match.is_cultural %}<span class="purchase-row-balance" aria-hidden="true"><span class="purchase-row-caption">ردیف</span>{{ row_data.row_number|to_persian }}</span>{% endif %}
                 </div>
             {% empty %}
                 <div class="alert alert-warning text-center">هیچ صندلی‌ای برای این سکو تعریف نشده است.</div>
             {% endfor %}
+            {% if match.is_cultural and map_stage == 'bottom' %}<div class="purchase-stage-row stage-bottom"><div class="pitch-area"><span>صحنه اجرا</span></div></div>{% endif %}
+            </div>
         </div>
 
         <!-- زمین چمن -->
-        <div class="pitch-area">
+        {% if not match.is_cultural %}<div class="pitch-area">
             <div class="pitch-line"></div>
-            <span>⚽ ورزشگاه نقش جهان ⚽</span>
+            <span>{% if match.is_cultural %}صحنه اجرا{% else %}زمین مسابقه{% endif %}</span>
             <div class="pitch-line"></div>
-        </div>
+        </div>{% endif %}
 
         <!-- راهنما -->
         <div class="legend">
             <div class="legend-item">
                 <div class="legend-box available"></div>
-                خالی <b>({{ seat_available|rial_display }})</b>
+                خالی <b>({{ seat_available|persian_number }})</b>
             </div>
             <div class="legend-item">
                 <div class="legend-box unavailable"></div>
@@ -702,15 +719,15 @@
             <!-- روی موبایل این بخش تا وقتی صندلی‌ای انتخاب نشده مخفی است -->
             <div class="selection-cta" id="selectionCta">
                 <div class="selection-info">
-                    <div class="sel-line">
+                    <div class="sel-line" role="status" aria-live="polite" aria-atomic="true">
                         <i class="fas fa-ticket"></i> انتخاب‌شده:
-                        <strong id="selectedCount">0</strong> از ۵
+                        <strong id="selectedCount">۰</strong> از ۵
                         <span class="sel-total" id="selTotalWrap" hidden>
-                            — جمع: <b id="selTotal">0</b> ریال
+                            — جمع: <b id="selTotal">۰</b> {% if match.is_cultural %}تومان{% else %}ریال{% endif %}
                         </span>
                     </div>
                     <div class="sel-chips" id="selChips"></div>
-                    <div class="orphan-warn-line" id="orphanWarn" hidden></div>
+                    <div class="orphan-warn-line" id="orphanWarn" role="status" hidden></div>
                 </div>
                 <button class="btn-continue" id="continueBtn" disabled>
                     <i class="fas fa-credit-card"></i> ادامه به اطلاعات خریدار
@@ -753,9 +770,26 @@
                 console.warn('⚠️ هیچ المنت .seat-grid یافت نشد!');
             }
 
-            let wrapMode = true; // نمایش همه صندلی‌ها به‌صورت پیش‌فرض
+            const CULTURAL = {{ match.is_cultural|yesno:'true,false' }};
+            let wrapMode = !CULTURAL;
+            const mapViewport = document.querySelector('.seating-area');
+
+            function centerMap() {
+                if (!CULTURAL) return;
+                const direction = getComputedStyle(mapViewport).direction === 'rtl' ? -1 : 1;
+                mapViewport.scrollLeft = direction * (mapViewport.scrollWidth - mapViewport.clientWidth) / 2;
+            }
 
             function updateView() {
+                toggleBtn.setAttribute('aria-pressed', String(wrapMode));
+                if (CULTURAL) {
+                    mapViewport.classList.toggle('is-compact', wrapMode);
+                    toggleBtn.innerHTML = wrapMode ?
+                        '<i class="fas fa-expand"></i> اندازه معمولی صندلی‌ها' :
+                        '<i class="fas fa-compress"></i> نمای فشرده سالن';
+                    centerMap();
+                    return;
+                }
                 seatGrids.forEach(grid => {
                     grid.classList.toggle('wrap-mode', wrapMode);
                 });
@@ -801,11 +835,10 @@
             rowInput.value = '{{ first_row_id|default:"" }}';
             form.appendChild(rowInput);
 
-            // قیمت هر صندلی در این بلوک برای همین مسابقه
-            const SEAT_PRICE = {{ block_price|default:0 }};
             const chipsBox = document.getElementById('selChips');
             const totalWrap = document.getElementById('selTotalWrap');
             const totalEl = document.getElementById('selTotal');
+            let renderedSelection = null;
 
             // شمارش‌ها با رقم فارسی، ولی مبالغ دقیقاً مثل فیلتر rial_display
             // سایت (رقم لاتین + جداکننده‌ی فارسی ٬) تا با بَج قیمت بالای
@@ -814,6 +847,7 @@
                 return Number(n).toLocaleString('fa-IR').replace(/,/g, '٬');
             }
             function moneyFmt(n) {
+                if (CULTURAL) return faNum(n);
                 return Number(n).toLocaleString('en-US').replace(/,/g, '٬');
             }
 
@@ -821,25 +855,41 @@
             // ببیند چه صندلی‌هایی انتخاب کرده و چقدر باید بپردازد.
             function renderChips() {
                 if (!chipsBox) return;
+                const signature = Array.from(selectedSeats).join(',');
+                if (signature === renderedSelection) return;
+                renderedSelection = signature;
                 chipsBox.innerHTML = '';
                 selectedSeats.forEach(id => {
                     const el = document.querySelector(`.seat[data-seat-id="${id}"]`);
                     if (!el) return;
                     const chip = document.createElement('span');
                     chip.className = 'sel-chip';
-                    chip.innerHTML = `ردیف ${faNum(el.dataset.row)} · صندلی ${faNum(el.dataset.number)} <span class="x">×</span>`;
+                    const tariff = CULTURAL ? ` · ${moneyFmt(Number(el.dataset.price) / 10)} تومان` : '';
+                    const label = `ردیف ${faNum(el.dataset.row)} · صندلی ${faNum(el.dataset.number)}`;
+                    chip.append(document.createTextNode(label + tariff + ' '));
+                    const remove = document.createElement('button');
+                    remove.type = 'button';
+                    remove.className = 'x';
+                    remove.textContent = '×';
+                    remove.setAttribute('aria-label', `حذف ${label} از انتخاب`);
+                    chip.appendChild(remove);
                     chip.querySelector('.x').addEventListener('click', () => {
                         el.classList.remove('selected');
                         el.classList.add('available');
                         selectedSeats.delete(parseInt(id));
                         updateSelectedCount();
+                        el.focus();
                     });
                     chipsBox.appendChild(chip);
                 });
                 if (totalWrap && totalEl) {
                     const count = selectedSeats.size;
-                    totalWrap.hidden = count === 0 || !SEAT_PRICE;
-                    totalEl.textContent = moneyFmt(count * SEAT_PRICE);
+                    totalWrap.hidden = count === 0;
+                    const total = Array.from(selectedSeats).reduce((sum, id) => {
+                        const el = document.querySelector(`.seat[data-seat-id="${id}"]`);
+                        return sum + Number(el?.dataset.price || 0);
+                    }, 0);
+                    totalEl.textContent = moneyFmt(CULTURAL ? total / 10 : total);
                 }
             }
 
@@ -901,7 +951,16 @@
 
             function updateSelectedCount() {
                 const count = selectedSeats.size;
-                selectedCountSpan.textContent = faNum(count);
+                seats.forEach(seat => {
+                    const selected = seat.classList.contains('selected');
+                    const blocked = seat.classList.contains('unavailable') || seat.classList.contains('reserved');
+                    if (!seat.dataset.baseLabel) seat.dataset.baseLabel = seat.getAttribute('aria-label');
+                    seat.setAttribute('aria-pressed', String(selected));
+                    seat.setAttribute('aria-disabled', String(blocked));
+                    const state = selected ? 'انتخاب شما' : seat.classList.contains('reserved') ? 'در حال رزرو' : blocked ? 'غیرقابل انتخاب' : 'قابل انتخاب';
+                    seat.setAttribute('aria-label', `${seat.dataset.baseLabel}، ${state}`);
+                });
+                if (selectedCountSpan.textContent !== faNum(count)) selectedCountSpan.textContent = faNum(count);
                 selectionCta.classList.toggle('visible', count > 0);
                 input.value = JSON.stringify(Array.from(selectedSeats));
                 renderChips();
@@ -924,15 +983,42 @@
                     }
 
                     if (selectedSeats.size >= 5) {
-                        alert('حداکثر ۵ صندلی می‌توانید انتخاب کنید.');
+                        document.getElementById('seat-map-feedback').textContent = 'حداکثر ۵ صندلی می‌توانید انتخاب کنید. برای تغییر، یکی از انتخاب‌ها را بردارید.';
                         return;
                     }
 
+                    document.getElementById('seat-map-feedback').textContent = '';
                     this.classList.add('selected');
                     selectedSeats.add(seatId);
                     updateSelectedCount();
                 });
             });
+
+            // Native buttons support Enter/Space; arrow keys follow the RTL seating rows.
+            seats.forEach(seat => seat.addEventListener('keydown', event => {
+                const grid = seat.closest('.seat-grid');
+                const rowSeats = Array.from(grid.querySelectorAll('.seat:not(.missing)'));
+                const index = rowSeats.indexOf(seat);
+                let target;
+                const rtl = getComputedStyle(grid).direction !== 'ltr';
+                if (event.key === 'ArrowLeft') target = rowSeats[index + (rtl ? 1 : -1)];
+                if (event.key === 'ArrowRight') target = rowSeats[index + (rtl ? -1 : 1)];
+                if (event.key === 'Home') target = rowSeats[0];
+                if (event.key === 'End') target = rowSeats[rowSeats.length - 1];
+                if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+                    const grids = Array.from(document.querySelectorAll('.seat-grid'));
+                    const nextGrid = grids[grids.indexOf(grid) + (event.key === 'ArrowDown' ? 1 : -1)];
+                    if (nextGrid) {
+                        const nextSeats = Array.from(nextGrid.querySelectorAll('.seat:not(.missing)'));
+                        target = nextSeats[Math.min(index, nextSeats.length - 1)];
+                    }
+                }
+                if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) {
+                    event.preventDefault();
+                    target?.focus();
+                }
+            }));
+            updateSelectedCount();
 
             continueBtn.addEventListener('click', function () {
                 if (selectedSeats.size === 0) return;
@@ -998,6 +1084,7 @@
                                         }
                                     }
                                 });
+                                updateSelectedCount();
                             }
                         })
                         .catch(error => console.error('خطا در بروزرسانی صندلی‌ها:', error));

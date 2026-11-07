@@ -2,7 +2,7 @@
 {% load currency_filters %}
 {% load static %}
 
-{% block title %}مدیریت مسابقات{% endblock %}
+{% block title %}مدیریت سانس‌ها{% endblock %}
 
 {% block extra_css %}
     <style>
@@ -11,11 +11,11 @@
             padding: 20px 0;
         }
 
-        /* ===== هدر کارت مسابقه ===== */
+        /* ===== هدر کارت سانس ===== */
         .match-card .card-header {
             background: #f8f9fa !important; /* پس‌زمینه روشن */
             padding: 14px 18px;
-            border-bottom: 2px solid #D4AF37 !important; /* خط طلایی */
+            border-bottom: 2px solid #2467a8 !important; /* خط طلایی */
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -38,12 +38,12 @@
             padding: 2px 10px;
             border-radius: 50px;
             background: rgba(0, 0, 0, 0.08);
-            color: #D4AF37;
+            color: #2467a8;
             font-weight: 600;
         }
 
         .match-card .card-header .teams .sport-icon {
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .match-card .card-header .status-badge {
@@ -64,12 +64,12 @@
         }
 
         .match-card .card-header .status-badge.active {
-            background: #d4edda;
-            color: #155724;
+            background: #dde0e4;
+            color: #0d355f;
         }
 
         .match-card .card-header .status-badge.active .dot {
-            background: #28a745;
+            background: #1966b6;
         }
 
         .match-card .card-header .status-badge.inactive {
@@ -89,7 +89,7 @@
             flex-wrap: wrap;
             margin-bottom: 30px;
             padding-bottom: 20px;
-            border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+            border-bottom: 2px solid rgba(36, 103, 168, 0.3);
         }
 
         .page-header h2 {
@@ -100,7 +100,7 @@
         }
 
         .page-header h2 i {
-            color: #D4AF37;
+            color: #2467a8;
             margin-left: 12px;
         }
 
@@ -135,16 +135,16 @@
 
         .btn-primary-custom:hover {
             background: #2A2A4E;
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .btn-success-custom {
-            background: #28a745;
+            background: #1966b6;
             color: #fff;
         }
 
         .btn-success-custom:hover {
-            background: #218838;
+            background: #155394;
             color: #fff;
         }
 
@@ -186,13 +186,13 @@
             right: 0;
             width: 100%;
             height: 3px;
-            background: linear-gradient(90deg, #D4AF37, #B8960F);
+            background: linear-gradient(90deg, #2467a8, #194d82);
         }
 
         .stat-card:hover {
             transform: translateY(-4px);
-            border-color: #D4AF37;
-            box-shadow: 0 8px 30px rgba(212, 175, 55, 0.12);
+            border-color: #2467a8;
+            box-shadow: 0 8px 30px rgba(36, 103, 168, 0.12);
         }
 
         .stat-card .stat-number {
@@ -214,7 +214,7 @@
         }
 
         .stat-card.gold .stat-number {
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .stat-card.blue .stat-number {
@@ -222,7 +222,7 @@
         }
 
         .stat-card.green .stat-number {
-            color: #28a745;
+            color: #1966b6;
         }
 
         .stat-card.orange .stat-number {
@@ -260,7 +260,7 @@
         }
 
         .filter-section .filter-group label i {
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .filter-section select {
@@ -281,9 +281,9 @@
         }
 
         .filter-section select:focus {
-            border-color: #D4AF37;
+            border-color: #2467a8;
             outline: none;
-            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
+            box-shadow: 0 0 0 4px rgba(36, 103, 168, 0.15);
             background: #fff;
         }
 
@@ -308,11 +308,11 @@
         }
 
         .btn-reset:hover {
-            border-color: #D4AF37;
+            border-color: #2467a8;
             color: #1A1A2E;
         }
 
-        /* ===== کارت‌های مسابقه ===== */
+        /* ===== کارت‌های سانس ===== */
         .matches-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -333,8 +333,8 @@
 
         .match-card:hover {
             transform: translateY(-6px);
-            box-shadow: 0 12px 40px rgba(212, 175, 55, 0.15);
-            border-color: #D4AF37;
+            box-shadow: 0 12px 40px rgba(36, 103, 168, 0.15);
+            border-color: #2467a8;
         }
 
         .match-card .card-header {
@@ -363,12 +363,12 @@
             padding: 2px 10px;
             border-radius: 50px;
             background: rgba(255, 255, 255, 0.15);
-            color: #D4AF37;
+            color: #2467a8;
             font-weight: 600;
         }
 
         .match-card .card-header .teams .sport-icon {
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .match-card .card-header .status-badge {
@@ -389,12 +389,12 @@
         }
 
         .match-card .card-header .status-badge.active {
-            background: #d4edda;
-            color: #155724;
+            background: #dde0e4;
+            color: #0d355f;
         }
 
         .match-card .card-header .status-badge.active .dot {
-            background: #28a745;
+            background: #1966b6;
         }
 
         .match-card .card-header .status-badge.inactive {
@@ -427,7 +427,7 @@
         }
 
         .match-card .card-body .match-meta i {
-            color: #D4AF37;
+            color: #2467a8;
             width: 16px;
         }
 
@@ -466,7 +466,7 @@
         }
 
         .match-card .card-body .stats-row .stat-item .number.revenue {
-            color: #28a745;
+            color: #1966b6;
         }
 
         .match-card .card-body .occupancy-section {
@@ -491,7 +491,7 @@
 
         .match-card .card-body .occupancy-section .progress-custom .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #D4AF37, #B8960F);
+            background: linear-gradient(90deg, #2467a8, #194d82);
             border-radius: 4px;
             transition: width 0.6s ease;
         }
@@ -520,7 +520,7 @@
         }
 
         .match-card .card-body .blocks-section .blocks-title i {
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .match-card .card-body .blocks-grid-mini {
@@ -543,7 +543,7 @@
         }
 
         .match-card .card-body .blocks-grid-mini .block-mini:hover {
-            border-color: #D4AF37;
+            border-color: #2467a8;
             transform: scale(1.05);
             background: #fff9e6;
         }
@@ -556,7 +556,7 @@
         }
 
         .match-card .card-body .blocks-grid-mini .block-mini .block-zone.home {
-            color: #28a745;
+            color: #1966b6;
         }
 
         .match-card .card-body .blocks-grid-mini .block-mini .block-zone.away {
@@ -737,14 +737,14 @@
         }
 
         .pagination-custom a:hover {
-            border-color: #D4AF37;
-            color: #D4AF37;
+            border-color: #2467a8;
+            color: #2467a8;
             transform: translateY(-2px);
         }
 
         .pagination-custom .current {
-            background: #D4AF37;
-            border-color: #D4AF37;
+            background: #2467a8;
+            border-color: #2467a8;
             color: #1A1A2E;
             font-weight: 700;
         }
@@ -834,10 +834,10 @@
 
         <!-- ===== هدر ===== -->
         <div class="page-header">
-            <h2><i class="fas fa-calendar-alt"></i> مدیریت مسابقات</h2>
+            <h2><i class="fas fa-calendar-alt"></i> مدیریت سانس‌ها</h2>
             <div class="header-actions">
                 <a href="{% url 'matches:admin_match_create' %}" class="btn-admin btn-success-custom">
-                    <i class="fas fa-plus"></i> مسابقه جدید
+                    <i class="fas fa-plus"></i> سانس جدید
                 </a>
                 <a href="{% url 'matches:admin_block_list' %}" class="btn-admin btn-outline-custom">
                     <i class="fas fa-layer-group"></i> مدیریت بلوک‌ها
@@ -853,7 +853,7 @@
             <div class="stat-card gold">
                 <span class="stat-icon"><i class="fas fa-calendar-check"></i></span>
                 <div class="stat-number">{{ total_matches }}</div>
-                <p class="stat-label">کل مسابقات</p>
+                <p class="stat-label">کل سانس‌ها</p>
             </div>
             <div class="stat-card blue">
                 <span class="stat-icon"><i class="fas fa-ticket-alt"></i></span>
@@ -897,13 +897,13 @@
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label><i class="fas fa-trophy"></i> مسابقه</label>
+                        <label><i class="fas fa-trophy"></i> سانس</label>
                         <select name="match_id" onchange="this.form.submit()">
-                            <option value="">همه مسابقات</option>
+                            <option value="">همه سانس‌ها</option>
                             {% for match in all_matches %}
                                 <option value="{{ match.id }}"
                                         {% if selected_match_id == match.id %}selected{% endif %}>
-                                    {{ match.home_team }} vs {{ match.away_team }}
+                                    {{ match.display_title }}
                                 </option>
                             {% endfor %}
                         </select>
@@ -919,7 +919,7 @@
             </form>
         </div>
 
-        <!-- ===== کارت‌های مسابقات ===== -->
+        <!-- ===== کارت‌های سانس‌ها ===== -->
         <div class="matches-grid">
             {% for item in page_obj %}
                 <div class="match-card">
@@ -932,8 +932,8 @@
                         {% elif item.match.sport_type == 'basketball' %}<i class="fas fa-basketball-ball"></i>
                         {% else %}<i class="fas fa-trophy"></i>{% endif %}
                     </span>
-                            {{ item.match.home_team }} <i class="fas fa-futbol"></i> {{ item.match.away_team }}
-                            <span class="sport-badge">{{ item.match.get_sport_type_display }}</span>
+                            {{ item.match.display_title }}
+                            <span class="sport-badge">{% if item.match.event_id %}{{ item.match.event.get_category_display }}{% else %}{{ item.match.get_sport_type_display }}{% endif %}</span>
                         </div>
                         <div class="d-flex gap-1 flex-wrap">
                             <span class="status-badge {% if item.match.is_active %}active{% else %}inactive{% endif %}">
@@ -1013,7 +1013,7 @@
                                 <i class="fas fa-eye"></i>
                             </a>
                             <a href="{% url 'matches:admin_block_list' %}?match_id={{ item.match.id }}"
-                               class="btn-sm btn-blocks" title="مدیریت بلوک‌های این مسابقه">
+                               class="btn-sm btn-blocks" title="مدیریت بلوک‌های این سانس">
                                 <i class="fas fa-layer-group"></i>
                             </a>
                             <a href="{% url 'matches:admin_match_edit' item.match.id %}" class="btn-sm btn-edit">
@@ -1028,10 +1028,10 @@
             {% empty %}
                 <div class="empty-state">
                     <i class="fas fa-calendar-times"></i>
-                    <h4>هیچ مسابقه‌ای یافت نشد</h4>
-                    <p>با فیلترهای انتخاب‌شده، مسابقه‌ای وجود ندارد.</p>
+                    <h4>هیچ سانس‌ای یافت نشد</h4>
+                    <p>با فیلترهای انتخاب‌شده، سانس‌ای وجود ندارد.</p>
                     <a href="{% url 'matches:admin_match_create' %}" class="btn-admin btn-success-custom mt-3">
-                        <i class="fas fa-plus"></i> ایجاد اولین مسابقه
+                        <i class="fas fa-plus"></i> ایجاد اولین سانس
                     </a>
                 </div>
             {% endfor %}
@@ -1042,7 +1042,7 @@
             <div class="pagination-wrapper">
                 <div class="pagination-info">
                     نمایش <strong>{{ page_obj.start_index }}</strong> تا <strong>{{ page_obj.end_index }}</strong>
-                    از <strong>{{ page_obj.paginator.count }}</strong> مسابقه
+                    از <strong>{{ page_obj.paginator.count }}</strong> سانس
                 </div>
                 <div class="pagination-custom">
                     <!-- ... کد صفحه‌بندی ... -->

@@ -11,22 +11,22 @@
     .page-header {
         background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
         border-radius: 20px; padding: 26px 32px; color: #fff; margin-bottom: 24px;
-        border-bottom: 3px solid #D4AF37; display: flex; justify-content: space-between;
+        border-bottom: 3px solid #2467a8; display: flex; justify-content: space-between;
         align-items: center; flex-wrap: wrap; gap: 16px;
     }
-    .page-header h2 { margin: 0; color: #D4AF37; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+    .page-header h2 { margin: 0; color: #2467a8; font-weight: 800; display: flex; align-items: center; gap: 10px; }
     .page-header p { margin: 6px 0 0; opacity: .7; font-size: .9rem; }
     .btn-create {
-        background: linear-gradient(135deg, #D4AF37, #B8960F); color: #1A1A2E; border: none;
+        background: linear-gradient(135deg, #2467a8, #194d82); color: #1A1A2E; border: none;
         font-weight: 700; padding: 12px 26px; border-radius: 12px; text-decoration: none;
         display: inline-flex; align-items: center; gap: 8px; transition: all .3s;
     }
-    .btn-create:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(212, 175, 55, .35); color: #1A1A2E; }
+    .btn-create:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(36, 103, 168, .35); color: #1A1A2E; }
 
     .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; margin-bottom: 28px; }
     .kpi-card {
         background: #fff; border-radius: 16px; padding: 20px; text-align: center;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, .06); border: 1px solid #eee; border-top: 4px solid #D4AF37;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, .06); border: 1px solid #eee; border-top: 4px solid #2467a8;
     }
     .kpi-card .num { font-size: 1.8rem; font-weight: 800; color: #1A1A2E; }
     .kpi-card .lbl { font-size: .85rem; color: #6c757d; margin-top: 4px; }
@@ -35,13 +35,13 @@
     .match-group-header {
         background: linear-gradient(135deg, #1A1A2E 0%, #2D2D44 100%); color: #fff; padding: 16px 24px;
         display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
-        border-bottom: 3px solid #D4AF37;
+        border-bottom: 3px solid #2467a8;
     }
     .match-group-header.no-match { background: linear-gradient(135deg, #4a4a4a, #2e2e2e); border-bottom-color: #888; }
     .match-title { font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .match-title i { color: #D4AF37; }
+    .match-title i { color: #2467a8; }
     .match-title .match-date { font-size: .78rem; opacity: .7; font-weight: 400; }
-    .match-code-count { background: rgba(212, 175, 55, .15); color: #D4AF37; padding: 4px 14px; border-radius: 50px; font-size: .8rem; font-weight: 700; border: 1px solid rgba(212, 175, 55, .25); white-space: nowrap; }
+    .match-code-count { background: rgba(36, 103, 168, .15); color: #2467a8; padding: 4px 14px; border-radius: 50px; font-size: .8rem; font-weight: 700; border: 1px solid rgba(36, 103, 168, .25); white-space: nowrap; }
 
     table.codes-table { width: 100%; border-collapse: collapse; font-size: .9rem; background: #fff; }
     table.codes-table th { background: #f8f9fa; color: #1A1A2E; font-weight: 700; padding: 12px 14px; text-align: center; border-bottom: 2px solid #eee; white-space: nowrap; }
@@ -50,15 +50,15 @@
     table.codes-table tbody tr:last-child td { border-bottom: none; }
 
     .code-pill { font-family: 'Courier New', monospace; direction: ltr; background: #f1f3f4; padding: 4px 10px; border-radius: 8px; font-weight: 700; color: #1A1A2E; display: inline-block; }
-    .owner-badge { background: #fff8e1; color: #B8960F; border: 1px solid #f0dfa0; padding: 3px 10px; border-radius: 50px; font-size: .78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+    .owner-badge { background: #fff8e1; color: #194d82; border: 1px solid #f0dfa0; padding: 3px 10px; border-radius: 50px; font-size: .78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
 
     .usage-bar-wrap { display: flex; align-items: center; gap: 8px; justify-content: center; }
     .usage-bar { width: 70px; height: 8px; background: #eee; border-radius: 6px; overflow: hidden; flex-shrink: 0; }
-    .usage-bar-fill { height: 100%; background: linear-gradient(90deg, #1E8E3E, #43c274); border-radius: 6px; }
+    .usage-bar-fill { height: 100%; background: linear-gradient(90deg, #12559a, #3181d4); border-radius: 6px; }
     .usage-text { font-size: .78rem; color: #555; white-space: nowrap; }
 
     .status-pill { padding: 4px 12px; border-radius: 50px; font-size: .78rem; font-weight: 700; white-space: nowrap; }
-    .status-pill.active { background: #e6f7ee; color: #1E8E3E; }
+    .status-pill.active { background: #edeef0; color: #12559a; }
     .status-pill.inactive { background: #fdeceb; color: #c0392b; }
 
     .action-btns { display: flex; gap: 6px; justify-content: center; }
@@ -66,10 +66,10 @@
         width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center;
         text-decoration: none; transition: all .2s; border: none; cursor: pointer;
     }
-    .action-btn.edit { background: #fff4d6; color: #B8960F; }
+    .action-btn.edit { background: #fff4d6; color: #194d82; }
     .action-btn.toggle { background: #e8f0fe; color: #1a56db; }
     .action-btn.delete { background: #fdeceb; color: #c0392b; }
-    .action-btn.view-users { background: #eafaf0; color: #1E8E3E; }
+    .action-btn.view-users { background: #f1f2f3; color: #12559a; }
     .action-btn:hover { transform: translateY(-2px); filter: brightness(0.95); color: inherit; }
 
     .usage-row td { padding: 0 !important; background: #fafbfc; }
@@ -81,9 +81,9 @@
 
     .empty-state {
         text-align: center; padding: 70px 20px; background: linear-gradient(145deg, #1A1A2E 0%, #2D2D44 50%, #1A1A2E 100%);
-        border-radius: 20px; border: 2px dashed rgba(212, 175, 55, .3); color: #fff;
+        border-radius: 20px; border: 2px dashed rgba(36, 103, 168, .3); color: #fff;
     }
-    .empty-state i { font-size: 48px; color: #D4AF37; margin-bottom: 16px; display: block; }
+    .empty-state i { font-size: 48px; color: #2467a8; margin-bottom: 16px; display: block; }
     .empty-state h4 { font-weight: 700; }
     .empty-state p { color: rgba(255, 255, 255, .5); margin-top: 6px; }
 
@@ -124,7 +124,7 @@
                 <div class="match-title">
                     {% if group.match %}
                         <i class="fas fa-futbol"></i>
-                        <span>{{ group.match.home_team }} vs {{ group.match.away_team }}</span>
+                        <span>{{ group.match.display_title }}</span>
                         <span class="match-date">{{ group.match.date_time|date:"Y/m/d H:i" }}</span>
                     {% else %}
                         <i class="fas fa-globe"></i>

@@ -1,106 +1,13 @@
-{% extends 'base.html' %}
-{% load static %}
-{% load currency_filters %}
-
-{% block title %}ورود به سامانه{% endblock %}
-
-{% block content %}
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-6 col-lg-5">
-                <div class="card shadow-lg border-0 rounded-4">
-                    <div class="card-body p-4 p-lg-5">
-                        <div class="text-center mb-4">
-                            <img src="{% static 'img/sepahan-logo.png' %}"
-                                 alt="لوگوی فولاد مبارکه سپاهان"
-                                 class="login-logo"
-                                 width="100"
-                                 height="auto">
-                            <h3 class="mt-3 fw-bold">فولاد مبارکه سپاهان</h3>
-                            <p class="text-muted small">برای ورود شماره تلفن خود را وارد کنید</p>
-                        </div>
-
-                        <form method="post" id="loginForm">
-                            {% csrf_token %}
-
-                            <div class="mb-4">
-                                <label class="form-label fw-semibold">شماره تلفن</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-mobile-alt"></i></span>
-                                    <input type="tel" name="phone_number" class="form-control form-control-lg"
-                                           placeholder="۰۹۱۲۳۴۵۶۷۸۹" dir="ltr" maxlength="11"
-                                           pattern="09[0-9]{9}" inputmode="numeric" required
-                                           id="phoneInput" value="{{ form.phone_number.value|default:'' }}">
-                                </div>
-                                {% if form.phone_number.errors %}
-                                    <div class="text-danger small mt-1">
-                                        {% for error in form.phone_number.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                                <small class="text-muted">شماره تلفن خود را به صورت ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید</small>
-                            </div>
-
-                            <button type="submit" class="btn btn-warning btn-lg w-100"
-                                    style="background: linear-gradient(135deg, #D4AF37, #B8960F); border: none; color: #1A1A2E; font-weight: 700;">
-                                <i class="fas fa-arrow-left"></i> ورود
-                            </button>
-                        </form>
-
-                        {% include 'accounts/_fanid_button.html' %}
-
-                        <hr class="my-4">
-
-                        <div class="text-center">
-                            <p class="text-muted small mb-0">
-                                <i class="fas fa-key"></i>
-                                <a href="{% url 'accounts:login_password' %}" class="text-decoration-none fw-semibold">
-                                    ورود با رمز عبور ثابت
-                                </a>
-                            </p>
-                            <p class="text-muted small mt-2">
-                                <i class="fas fa-info-circle"></i>
-                                کاربران ویژه و مدیران از طریق رمز عبور وارد می‌شوند.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // ===== محدود کردن ورودی شماره تلفن به عدد انگلیسی =====
-        document.getElementById('phoneInput').addEventListener('input', function () {
-            this.value = this.value.replace(/\D/g, '').slice(0, 11);
-        });
-
-        // ===== اعتبارسنجی شماره تلفن =====
-        document.getElementById('loginForm').addEventListener('submit', function (e) {
-            const phone = document.getElementById('phoneInput').value;
-            const phonePattern = /^09[0-9]{9}$/;
-            if (!phonePattern.test(phone)) {
-                e.preventDefault();
-                alert('⚠️ شماره تلفن معتبر نیست. لطفاً به صورت ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید.');
-            }
-        });
-
-        // ===== رفع مشکل لاگ اوت =====
-        document.addEventListener('DOMContentLoaded', function() {
-            // اگر کاربر به تازگی لاگ اوت کرده، صفحه را رفرش کن
-            if (sessionStorage.getItem('justLoggedOut') === 'true') {
-                sessionStorage.removeItem('justLoggedOut');
-                // فقط اگر لاگین نیست، رفرش کن
-                fetch('/accounts/check-login-status/')
-                    .then(r => r.json())
-                    .then(data => {
-                        if (!data.is_authenticated) {
-                            location.reload(true);
-                        }
-                    })
-                    .catch(() => {});
-            }
-        });
-    </script>
+{% extends 'accounts/auth_base.html' %}
+{% block title %}ورود | دیدآور{% endblock %}
+{% block login_active %}class="active" aria-current="page"{% endblock %}
+{% block auth_title %}به دیدآور خوش آمدید{% endblock %}
+{% block auth_intro %}شماره موبایلتان را وارد کنید تا کد ورود برایتان ارسال شود.{% endblock %}
+{% block auth_form %}
+<form method="post" class="auth-form" data-auth-form>{% csrf_token %}
+{% include 'accounts/_auth_field.html' with field=form.phone_number type='tel' numeric=True autocomplete='tel-national' icon='fa-solid fa-mobile-screen-button' placeholder='۰۹۱۲۳۴۵۶۷۸۹' hint='کد تأیید به این شماره پیامک می‌شود.' %}
+<button type="submit" class="auth-submit"><span>دریافت کد ورود</span><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+</form>
+{% include 'accounts/_fanid_button.html' %}
 {% endblock %}
+{% block auth_footer %}<div class="auth-footer"><p>هنوز حساب ندارید؟ <a href="{% url 'accounts:phone_register' %}">ثبت‌نام در دیدآور</a></p><a class="auth-alternative" href="{% url 'accounts:login_password' %}"><i class="fa-solid fa-key" aria-hidden="true"></i> ورود با رمز عبور</a></div>{% endblock %}

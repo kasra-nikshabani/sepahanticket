@@ -4,7 +4,7 @@
 <html dir="rtl" lang="fa">
 <head>
     <meta charset="UTF-8">
-    <title>بلیط ورود به ورزشگاه</title>
+    <title>بلیط ورود</title>
     <style>
         /* ===== تنظیمات پایه ===== */
         * {
@@ -151,10 +151,10 @@
     <!-- هدر -->
     <div class="header">
         <div class="header-top">
-            <h2>بلیط ورود به ورزشگاه</h2>
+            <h2>بلیط ورود</h2>
         </div>
         <div class="match-title">
-            {{ match.home_team }} <span style="font-weight:normal;color:#888;">vs</span> {{ match.away_team }}
+            {{ match.display_title }}
         </div>
         <div class="match-datetime">
             {# ساعت فقط وقتی چاپ می‌شود که واقعاً مشخص شده باشد #}
@@ -217,7 +217,7 @@
                 {% elif team_zone == 'women' %}#e83e8c
                 {% elif team_zone == 'women_away' %}#c2185b
                 {% elif team_zone == 'class1' %}#007bff
-                {% elif team_zone == 'home' %}#28a745
+                {% elif team_zone == 'home' %}#1966b6
                 {% else %}#ffc107{% endif %};
                 color: {% if team_zone == 'away' %}#212529{% else %}white{% endif %};
                 ">
@@ -228,7 +228,7 @@
     <!-- فوتر -->
     <div class="footer">
         این بلیط فقط با ارائه کارت ملی معتبر است.<br>
-        لطفاً ۳۰ دقیقه قبل از شروع مسابقه در ورزشگاه حاضر باشید.
+        لطفاً ۳۰ دقیقه قبل از شروع اجرا در محل برگزاری حاضر باشید.
     </div>
 </div>
 </body>

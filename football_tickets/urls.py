@@ -20,10 +20,16 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
+from accounts.management_views import dashboard
 
 urlpatterns = ([
+                   path('panel/', include('accounts.management_urls')),
+                   path('admin/', dashboard, name='management_entry'),
                    path('admin/', admin.site.urls),
                    path('accounts/', include('accounts.urls')),
+                   path('artists/', include('artists.urls')),
+                   path('learn/', include('education.urls')),
+                   path('studios/', include('studios.urls')),
                    path('matches/', include('matches.urls')),
                    path('tickets/', include('tickets.urls')),
                    path('payments/', include('payments.urls')),

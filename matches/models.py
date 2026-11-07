@@ -1,6 +1,8 @@
 from datetime import timedelta
 
 from django.core.cache import cache
+from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator, FileExtensionValidator
 from django.db import models
 from django.db.models import Sum
 from django.utils import timezone
@@ -133,9 +135,93 @@ class MatchFinancialReport(models.Model):
         return self
 
 
+class Event(models.Model):
+    CATEGORY_CHOICES = (
+        ('theater', 'تئاتر'), ('concert', 'کنسرت'),
+        ('event', 'رویداد'), ('sport', 'ورزشی'),
+    )
+    title = models.CharField(max_length=200, verbose_name='عنوان رویداد')
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='event', verbose_name='دسته‌بندی')
+    poster = models.ImageField(upload_to='event_posters/', blank=True, verbose_name='پوستر')
+    cover = models.ImageField(upload_to='event_covers/', blank=True, verbose_name='بنر صفحه جزئیات')
+    teaser = models.FileField(upload_to='event_teasers/', blank=True,
+                             validators=[FileExtensionValidator(['mp4', 'webm'])],
+                             verbose_name='تیزر اجرا', help_text='ویدئو با فرمت MP4 یا WebM')
+    description = models.TextField(blank=True, verbose_name='توضیحات')
+    artists = models.CharField(max_length=300, blank=True, verbose_name='هنرمندان')
+    organizer = models.CharField(max_length=200, blank=True, verbose_name='برگزارکننده')
+    duration_minutes = models.PositiveIntegerField(default=120, verbose_name='مدت اجرا (دقیقه)')
+    is_active = models.BooleanField(default=True, verbose_name='نمایش در سایت')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'رویداد'
+        verbose_name_plural = 'رویدادها'
+
+    def __str__(self):
+        return self.title
+
+
+class HomeBanner(models.Model):
+    title = models.CharField(max_length=120, verbose_name='نام بنر')
+    image = models.ImageField(upload_to='home_banners/%Y/%m/', verbose_name='تصویر بنر',
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'webp'])])
+    event = models.ForeignKey(Event, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='home_banners', verbose_name='برنامه مرتبط')
+    order = models.PositiveSmallIntegerField(default=0, validators=[MaxValueValidator(9999)], verbose_name='ترتیب نمایش')
+    is_active = models.BooleanField(default=True, verbose_name='نمایش در اسلایدر')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['order', 'pk']
+        verbose_name = 'بنر صفحه اصلی'
+        verbose_name_plural = 'بنرهای صفحه اصلی'
+
+    def __str__(self):
+        return self.title
+
+
+class EventSceneImage(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='scene_images')
+    image = models.ImageField(upload_to='event_scenes/', verbose_name='عکس صحنه')
+    caption = models.CharField(max_length=200, blank=True, verbose_name='توضیح عکس')
+    order = models.PositiveIntegerField(default=0, verbose_name='ترتیب نمایش')
+
+    class Meta:
+        ordering = ['order', 'pk']
+        verbose_name = 'عکس صحنه'
+        verbose_name_plural = 'عکس‌های صحنه'
+
+    def __str__(self):
+        return self.caption or self.event.title
+
+
+class EventRating(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='ratings', verbose_name='رویداد')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='کاربر')
+    score = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)], verbose_name='امتیاز از ۵')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'امتیاز رویداد'
+        verbose_name_plural = 'امتیازهای رویداد'
+        constraints = [
+            models.UniqueConstraint(fields=['event', 'user'], name='unique_event_user_rating'),
+            models.CheckConstraint(condition=models.Q(score__gte=1, score__lte=5), name='event_rating_score_range'),
+        ]
+
+    def __str__(self):
+        return f'{self.event}: {self.score}/5'
+
+
 class Stadium(models.Model):
-    name = models.CharField(max_length=100, verbose_name="نام ورزشگاه")
+    name = models.CharField(max_length=100, verbose_name="نام محل برگزاری")
     capacity = models.IntegerField(verbose_name="ظرفیت کل")
+    city = models.CharField(max_length=100, blank=True, verbose_name='شهر')
+    address = models.TextField(blank=True, verbose_name='آدرس')
+    seating_layout = models.JSONField(default=dict, blank=True, verbose_name='شکل و چیدمان سالن')
     image = models.ImageField(
         upload_to='stadium_images/',
         null=True,
@@ -144,6 +230,10 @@ class Stadium(models.Model):
     )
 
     def __str__(self): return self.name
+
+    class Meta:
+        verbose_name = 'محل برگزاری'
+        verbose_name_plural = 'محل‌های برگزاری'
 
 
 # ===== انتخاب‌های نوع جایگاه =====
@@ -267,8 +357,11 @@ class Seat(models.Model):
 
 
 class Match(models.Model):
-    home_team = models.CharField(max_length=100, verbose_name="تیم میزبان")
-    away_team = models.CharField(max_length=100, verbose_name="تیم میهمان")
+    # Keep the existing session table and IDs so payments, tickets and QR codes survive.
+    event = models.ForeignKey(Event, on_delete=models.PROTECT, null=True, blank=True,
+                              related_name='sessions', verbose_name='رویداد')
+    home_team = models.CharField(max_length=100, blank=True, verbose_name="تیم میزبان")
+    away_team = models.CharField(max_length=100, blank=True, verbose_name="تیم میهمان")
     home_team_logo = models.ImageField(upload_to='team_logos/', blank=True, null=True)
     away_team_logo = models.ImageField(upload_to='team_logos/', blank=True, null=True)
     stadium = models.ForeignKey(Stadium, on_delete=models.CASCADE)
@@ -311,13 +404,37 @@ class Match(models.Model):
         now = timezone.now()
         if self.date_time > now:
             return 'upcoming'
-        elif self.date_time <= now and self.date_time + timedelta(hours=2) > now:
+        elif self.date_time <= now and self.date_time + timedelta(minutes=self.duration_minutes) > now:
             return 'live'
         else:
             return 'finished'
 
+    @property
+    def display_title(self):
+        return self.event.title if self.event_id else f'{self.home_team} - {self.away_team}'
+
+    @property
+    def is_cultural(self):
+        return bool(self.event_id and self.event.category != 'sport')
+
+    @property
+    def duration_minutes(self):
+        return self.event.duration_minutes if self.event_id else 120
+
+    @property
+    def sales_available(self):
+        if not self.is_active or self.is_cancelled or not self.ticket_sales_enabled:
+            return False
+        if self.is_cultural:
+            return self.event.is_active and self.date_time > timezone.now()
+        return True
+
+    class Meta:
+        verbose_name = 'سانس'
+        verbose_name_plural = 'سانس‌ها'
+
     def __str__(self):
-        return f"{self.home_team} vs {self.away_team} - {self.date_time}"
+        return f"{self.display_title} - {self.date_time}"
 
 
 class MatchBlockPrice(models.Model):
@@ -358,6 +475,47 @@ def get_block_price_for_match(match, block):
     return override if override is not None else block.price
 
 
+class MatchRowPrice(models.Model):
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='row_price_overrides')
+    row = models.ForeignKey(Row, on_delete=models.CASCADE, related_name='match_price_overrides')
+    price = models.DecimalField(max_digits=10, decimal_places=0, validators=[MinValueValidator(0)])
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['match', 'row'], name='unique_match_row_price'),
+                       models.CheckConstraint(condition=models.Q(price__gte=0), name='match_row_price_nonnegative')]
+
+
+class MatchSeatPrice(models.Model):
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='seat_price_overrides')
+    seat = models.ForeignKey(Seat, on_delete=models.CASCADE, related_name='match_price_overrides')
+    price = models.DecimalField(max_digits=10, decimal_places=0, validators=[MinValueValidator(0)])
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['match', 'seat'], name='unique_match_seat_price'),
+                       models.CheckConstraint(condition=models.Q(price__gte=0), name='match_seat_price_nonnegative')]
+
+
+def get_seat_price_map(match, seats=None):
+    """Effective rial tariff keyed by Seat id: seat > row > session block > venue.
+
+    Venue defaults remain shared. Cultural overrides belong to one session and
+    never change a previously issued ticket's recorded final price.
+    """
+    seats = list(seats) if seats is not None else list(
+        Seat.objects.filter(row__block__stadium=match.stadium_id).select_related('row__block'))
+    blocks = get_block_price_map(match)
+    rows = dict(MatchRowPrice.objects.filter(match=match).values_list('row_id', 'price')) if match.is_cultural else {}
+    individual = dict(MatchSeatPrice.objects.filter(match=match).values_list('seat_id', 'price')) if match.is_cultural else {}
+    return {seat.pk: individual.get(seat.pk, rows.get(seat.row_id, blocks.get(seat.row.block_id, seat.row.block.price)))
+            for seat in seats if seat.row.block.stadium_id == match.stadium_id}
+
+
+def get_seat_price_for_match(match, seat):
+    if not match.is_cultural:
+        return get_block_price_for_match(match, seat.row.block)
+    return get_seat_price_map(match, [seat])[seat.pk]
+
+
 class MatchBasaDiscount(models.Model):
     """درصد تخفیف اعضای باسا برای یک مسابقهٔ خاص. اگر برای مسابقه‌ای رکوردی
     اینجا نباشد یعنی تخفیف باسا برای آن مسابقه فعال نیست."""
@@ -374,6 +532,8 @@ class MatchBasaDiscount(models.Model):
 
 def get_basa_discount_percent(match):
     """درصد تخفیف باسای این مسابقه، یا صفر اگر برای این مسابقه تعیین نشده باشد."""
+    if match.is_cultural:
+        return 0
     return MatchBasaDiscount.objects.filter(match=match).values_list('discount_percent', flat=True).first() or 0
 
 

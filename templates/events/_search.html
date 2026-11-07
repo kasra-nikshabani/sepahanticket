@@ -1,0 +1,20 @@
+<div class="discovery-search" data-discovery-search data-suggestions-url="{% url 'matches:search_suggestions' %}">
+  <form action="{% url 'matches:event_catalogue' %}" method="get" class="home-search" role="search" aria-label="جست‌وجوی برنامه‌ها و هنرمندان">
+    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+    <input type="search" id="discovery-query" name="q" value="{{ search.q }}" maxlength="120" autocomplete="off" aria-label="نام برنامه، هنرمند یا سالن" placeholder="برنامه، هنرمند یا سالن…" aria-controls="discovery-panel" aria-expanded="false" aria-haspopup="dialog">
+    <button class="search-panel-toggle" type="button" aria-label="باز کردن جست‌وجوی پیشرفته" aria-controls="discovery-panel" aria-expanded="false" hidden><i class="fa-solid fa-sliders" aria-hidden="true"></i><span class="search-filter-indicator" {% if not search.category and not search.city and not search.period %}hidden{% endif %}></span></button>
+    <button class="search-submit" type="submit">جست‌وجو <span aria-hidden="true">←</span></button>
+    <section class="discovery-panel" id="discovery-panel" role="dialog" aria-label="پیشنهادها و جست‌وجوی پیشرفته" hidden>
+      <div class="discovery-panel-heading"><div><strong>دیدار بعدی‌ات را پیدا کن</strong><p>نام اثر، هنرمند، برگزارکننده، سالن یا شهر</p></div><button type="button" class="search-close" aria-label="بستن پیشنهادهای جست‌وجو"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>
+      <div class="discovery-fields">
+        <label for="discovery-category"><span>نوع برنامه</span><select id="discovery-category" name="category"><option value="">همهٔ برنامه‌ها</option>{% for value,label in search_categories %}<option value="{{ value }}" {% if search.category == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+        <label for="discovery-city"><span>کجا؟</span><select id="discovery-city" name="city"><option value="">همهٔ شهرها</option>{% for city in search_cities %}<option value="{{ city }}" {% if search.city == city %}selected{% endif %}>{{ city }}</option>{% endfor %}</select></label>
+        <label for="discovery-period"><span>کِی؟</span><select id="discovery-period" name="period"><option value="">همهٔ روزها</option>{% for value,label in search_periods %}<option value="{{ value }}" {% if search.period == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      </div>
+      <div class="discovery-feedback" role="status" aria-live="polite" aria-atomic="true">حداقل دو حرف بنویسید تا پیشنهادها نمایش داده شوند.</div>
+      <div class="discovery-suggestions" data-search-suggestions aria-busy="false"></div>
+      <div class="discovery-quick" data-search-quick><span>از اینجا شروع کن</span><div>{% for value,label in search_categories %}<a href="{% url 'matches:event_catalogue' %}?category={{ value }}&amp;sort=new">{{ label }} <i class="fa-solid fa-arrow-left" aria-hidden="true"></i></a>{% endfor %}</div></div>
+      <div class="discovery-panel-footer"><span><i class="fa-regular fa-keyboard" aria-hidden="true"></i> ↑ ↓ حرکت بین پیشنهادها · Esc بستن</span><button type="submit" class="search-all">نمایش نتایج <i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button></div>
+    </section>
+  </form>
+</div>

@@ -3,7 +3,7 @@
 {% block content %}
     <div class="container mt-4">
         <h2 class="text-center">انتخاب ردیف</h2>
-        <p class="text-center">{{ match.home_team }} vs {{ match.away_team }}</p>
+        <p class="text-center">{{ match.display_title }}</p>
 
         <form method="post">
             {% csrf_token %}

@@ -1,0 +1,6 @@
+{% extends 'accounts/account_base.html' %}{% load static persian_filters %}
+{% block title %}{{ support_ticket.subject|to_persian }} | پشتیبانی دیدآور{% endblock %}
+{% block extra_css %}{{ block.super }}<link rel="stylesheet" href="{% static 'events/support.css' %}">{% endblock %}
+{% block account_title %}{{ support_ticket.subject|to_persian }}{% endblock %}
+{% block account_intro %}گفتگوی شما با پشتیبانی دیدآور؛ پیام‌ها فقط برای شما و مدیریت قابل مشاهده است.{% endblock %}
+{% block account_content %}{% include 'support/_thread.html' %}{% endblock %}

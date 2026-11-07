@@ -17,3 +17,18 @@ ADMIN_SESSION_AGE = 60 * 60 * 24 * 7  # ۷ روز -- یعنی عملاً بدو�
 def extend_admin_session(sender, request, user, **kwargs):
     if getattr(user, 'user_type', None) == 'admin':
         request.session.set_expiry(ADMIN_SESSION_AGE)
+
+
+from django.db.models.signals import post_save
+
+
+@receiver(post_save, sender='payments.Payment')
+def notify_failed_ticket_payment(sender, instance, raw=False, **kwargs):
+    if raw or instance.status != 'failed' or instance.purpose != 'ticket_purchase' or not instance.match_id:
+        return
+    from django.urls import reverse
+    from .notifications import notify
+    if instance.match.is_cultural:
+        notify(instance.user, 'payment', 'پرداخت بلیط تکمیل نشد',
+            f'خرید برنامهٔ «{instance.match.display_title}» تکمیل نشده است. بلیط‌های من و وضعیت کیف پول را بررسی کنید؛ در صورت نیاز از پشتیبانی کمک بگیرید.',
+            reverse('tickets:user_tickets'), f'payment:{instance.pk}:failed')

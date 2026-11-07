@@ -1,0 +1,7 @@
+<form method="post" action="{% url 'accounts:logout' %}" class="logout-action{% if wide %} logout-action-wide{% endif %}">
+    {% csrf_token %}
+    <button type="submit" class="didavar-logout" aria-label="خروج از حساب کاربری" title="خروج از حساب کاربری">
+        <span class="logout-icon" aria-hidden="true"><i class="fa-solid fa-right-from-bracket"></i></span>
+        <span class="logout-label">خروج از حساب</span>
+    </button>
+</form>

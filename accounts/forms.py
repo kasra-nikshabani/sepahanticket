@@ -1,5 +1,6 @@
 # accounts/forms.py
 from django import forms
+from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -8,6 +9,18 @@ import re
 from .models import OTP
 
 User = get_user_model()
+
+
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'email')
+        labels = {'first_name': 'نام', 'last_name': 'نام خانوادگی', 'email': 'ایمیل'}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['first_name'].required = True
+        self.fields['last_name'].required = True
 
 
 # ==========================================
@@ -143,7 +156,7 @@ class OTPVerifyForm(forms.Form):
     )
 
     def clean_otp_code(self):
-        code = self.cleaned_data['otp_code']
+        code = self.cleaned_data['otp_code'].translate(str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789'))
         if not code.isdigit():
             raise ValidationError('کد باید عددی باشد.')
         if len(code) != 4:
@@ -210,6 +223,12 @@ class PhoneRegisterForm(forms.Form):
         label="جنسیت"
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        required = getattr(settings, 'REGISTRATION_IDENTITY_REQUIRED', False)
+        self.fields['national_code'].required = required
+        self.fields['gender'].required = required
+
     def _clean_persian_name(self, field_name, label):
         value = (self.cleaned_data.get(field_name) or '').strip()
         if not value:
@@ -235,6 +254,8 @@ class PhoneRegisterForm(forms.Form):
 
     def clean_national_code(self):
         code = (self.cleaned_data.get('national_code') or '').strip()
+        if not code and not self.fields['national_code'].required:
+            return None
         if not code.isdigit() or not is_valid_iranian_national_code(code):
             raise ValidationError('کد ملی وارد شده معتبر نیست.')
         if User.objects.filter(national_code=code).exists():

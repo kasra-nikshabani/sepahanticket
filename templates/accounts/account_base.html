@@ -1,0 +1,32 @@
+{% extends 'events/base.html' %}
+{% load static persian_filters %}
+{% block page_class %}account-page{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'events/auth.css' %}"><link rel="stylesheet" href="{% static 'events/account.css' %}">{% endblock %}
+{% block content %}
+<div class="account-layout">
+<aside class="account-sidebar" aria-label="بخش‌های حساب کاربری">
+<div class="account-identity"><span class="account-avatar" aria-hidden="true">{{ user.first_name|default:user.username|slice:':1' }}</span><strong>{{ user.get_full_name|default:user.username|to_persian }}</strong><span>{{ user.phone_number|default:'حساب دیدآور'|to_persian }}</span><small>{{ user.get_user_type_display }}</small></div>
+<nav class="account-menu">
+<a href="{% url 'accounts:profile' %}" {% if request.resolver_match.url_name == 'profile' %}class="active" aria-current="page"{% endif %}><i class="fa-regular fa-user" aria-hidden="true"></i> نمای کلی حساب</a>
+<a href="{% url 'tickets:user_tickets' %}" {% if request.resolver_match.url_name == 'user_tickets' %}class="active" aria-current="page"{% endif %}><i class="fa-solid fa-ticket" aria-hidden="true"></i> بلیط‌های من</a>
+<a href="{% url 'studios:my_bookings' %}" {% if request.resolver_match.view_name == 'studios:my_bookings' or request.resolver_match.view_name == 'studios:checkout' %}class="active" aria-current="page"{% endif %}><i class="fa-regular fa-calendar-check" aria-hidden="true"></i> رزروهای پلاتوی من</a>
+<a href="{% url 'studios:my_studios' %}" {% if request.resolver_match.namespace == 'studios' and request.resolver_match.url_name != 'my_bookings' and request.resolver_match.url_name != 'checkout' %}class="active" aria-current="page"{% endif %}><i class="fa-solid fa-door-open" aria-hidden="true"></i> پلاتوهای من</a>
+<a href="{% url 'education:my_learning' %}" {% if request.resolver_match.view_name == 'education:my_learning' or request.resolver_match.view_name == 'education:checkout' %}class="active" aria-current="page"{% endif %}><i class="fa-solid fa-book-open" aria-hidden="true"></i> آموزش‌های من</a>
+<a href="{% url 'education:my_teaching' %}" {% if request.resolver_match.namespace == 'education' and request.resolver_match.url_name != 'my_learning' and request.resolver_match.url_name != 'checkout' %}class="active" aria-current="page"{% endif %}><i class="fa-solid fa-chalkboard-user" aria-hidden="true"></i> فضای تدریس من</a>
+<a href="{% url 'accounts:edit_profile' %}" {% if request.resolver_match.url_name == 'edit_profile' %}class="active" aria-current="page"{% endif %}><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i> ویرایش اطلاعات</a>
+<a href="{% url 'accounts:art_card' %}" {% if request.resolver_match.view_name == 'accounts:art_card' %}class="active" aria-current="page"{% endif %}><i class="fa-solid fa-credit-card" aria-hidden="true"></i> هنرکارت</a>
+<a href="{% url 'accounts:program_list' %}" {% if request.resolver_match.url_name == 'program_list' or request.resolver_match.url_name == 'program_detail' or request.resolver_match.url_name == 'program_session' or request.resolver_match.url_name == 'program_checkin' %}class="active" aria-current="page"{% endif %}><i class="fa-solid fa-layer-group" aria-hidden="true"></i> برنامه‌های من</a>
+<a href="{% url 'accounts:event_submission_start' %}" {% if request.resolver_match.url_name == 'event_submission_start' or request.resolver_match.url_name == 'event_submission_step' %}class="active" aria-current="page"{% endif %}><i class="fa-solid fa-circle-plus" aria-hidden="true"></i> ایجاد برنامه</a>
+<a href="{% url 'accounts:notifications' %}" {% if request.resolver_match.url_name == 'notifications' %}class="active" aria-current="page"{% endif %}><i class="far fa-bell" aria-hidden="true"></i> اعلان‌های من{% if unread_notification_count %}<span class="account-notification-count">{{ unread_notification_count|to_persian }}</span>{% endif %}</a>
+<a href="{% url 'artists:edit' %}" {% if request.resolver_match.view_name == 'artists:edit' %}class="active" aria-current="page"{% endif %}><i class="fa-solid fa-palette" aria-hidden="true"></i> صفحهٔ هنری من</a>
+<a href="{% url 'artists:following' %}" {% if request.resolver_match.view_name == 'artists:following' %}class="active" aria-current="page"{% endif %}><i class="fa-solid fa-user-check" aria-hidden="true"></i> دنبال می‌کنم</a>
+<a href="{% url 'artists:my_opportunities' %}" {% if request.resolver_match.view_name == 'artists:my_opportunities' or request.resolver_match.view_name == 'artists:opportunity_manage' or request.resolver_match.view_name == 'artists:opportunity_edit' or request.resolver_match.view_name == 'artists:opportunity_create' %}class="active" aria-current="page"{% endif %}><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> فراخوان‌های من</a>
+<a href="{% url 'artists:my_applications' %}" {% if request.resolver_match.view_name == 'artists:my_applications' or request.resolver_match.view_name == 'artists:application_detail' or request.resolver_match.view_name == 'artists:opportunity_apply' %}class="active" aria-current="page"{% endif %}><i class="fa-solid fa-handshake" aria-hidden="true"></i> درخواست‌های همکاری من</a>
+<a href="{% url 'accounts:support_list' %}" {% if request.resolver_match.url_name == 'support_list' or request.resolver_match.url_name == 'support_create' or request.resolver_match.url_name == 'support_detail' %}class="active" aria-current="page"{% endif %}><i class="fa-solid fa-headset" aria-hidden="true"></i> تیکت‌های پشتیبانی</a>
+</nav>
+<div class="account-sidebar-footer">{% include 'includes/logout_button.html' with wide=True %}</div>
+</aside>
+<div class="account-main"><header class="account-page-heading"><div><span class="eyebrow">حساب کاربری دیدآور</span><h1>{% block account_title %}{% endblock %}</h1><p>{% block account_intro %}{% endblock %}</p></div>{% block account_heading_action %}{% endblock %}</header>{% block account_content %}{% endblock %}</div>
+</div>
+{% endblock %}
+{% block extra_js %}{% block account_js %}{% endblock %}{% endblock %}

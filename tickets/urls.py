@@ -1,12 +1,15 @@
 # tickets/urls.py
 from django.urls import path
 from . import views
+from . import digital_views
 from . import api
 from . import api_loyalty
 
 app_name = 'tickets'
 
 urlpatterns = [
+    path('digital/<int:ticket_id>/', digital_views.digital_ticket, name='digital_ticket'),
+    path('digital/<int:ticket_id>/qr/', digital_views.ticket_qr, name='ticket_qr'),
     # فقط-خواندنی، برای Polling سرویس Loyalty در sepapp (Phase 12، ADR-0014)
     path('api/loyalty/completed-orders/', api_loyalty.completed_orders, name='loyalty_completed_orders'),
     path('admin-reports/', views.sales_report, name='admin_reports'),  # ← اضافه کنید

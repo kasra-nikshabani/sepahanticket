@@ -1,0 +1,4 @@
+{% extends 'accounts/account_base.html' %}{% load static %}
+{% block extra_css %}{{ block.super }}<link rel="stylesheet" href="{% static 'events/artists.css' %}"><link rel="stylesheet" href="{% static 'events/collaboration.css' %}">{% endblock %}
+{% block account_title %}گزارش فراخوان{% endblock %}
+{% block account_content %}<section class="account-panel"><form method="post" action="{% url 'artists:opportunity_report' opportunity.pk %}">{% csrf_token %}{% for field in form %}{% include 'collaboration/_field.html' %}{% endfor %}<button class="artist-button">ثبت گزارش</button></form></section>{% endblock %}

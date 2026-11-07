@@ -1,0 +1,18 @@
+{% load persian_filters %}
+{% if featured_banners %}
+<section class="featured-slider" aria-label="برنامه‌های تازه" aria-roledescription="اسلایدر" tabindex="0" data-slider>
+    <div class="slider-stage">
+        {% for banner in featured_banners %}
+        <article class="featured-slide" data-title="{{ banner.title|to_persian }}" role="group" aria-roledescription="اسلاید" aria-label="{{ forloop.counter|to_persian }} از {{ featured_banners|length|to_persian }}: {{ banner.title|to_persian }}" {% if not forloop.first %}hidden{% endif %}>
+            {% if banner.url %}<a class="banner-image-link" href="{{ banner.url }}" aria-label="مشاهده {{ banner.title|to_persian }}">{% else %}<div class="banner-image-link">{% endif %}<img src="{{ banner.image_url }}" width="2000" height="414" alt="{{ banner.title|to_persian }}" {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>{% if banner.url %}</a>{% else %}</div>{% endif %}
+        </article>
+        {% endfor %}
+    </div>
+    <div class="slider-toolbar">
+        <div class="slider-caption"><span>تازه روی صحنه</span><strong data-slider-caption>{{ featured_banners.0.title|to_persian }}</strong></div>
+        <div class="slider-controls"><button type="button" data-prev aria-label="نمایش اسلاید قبلی"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button><div class="slider-dots" aria-label="انتخاب اسلاید">{% for banner in featured_banners %}<button type="button" data-slide="{{ forloop.counter0 }}" aria-label="اسلاید {{ forloop.counter|to_persian }}: {{ banner.title|to_persian }}" aria-current="{% if forloop.first %}true{% else %}false{% endif %}"></button>{% endfor %}</div><button type="button" data-next aria-label="نمایش اسلاید بعدی"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button><span class="control-divider"></span><button type="button" data-pause aria-label="توقف پخش خودکار" aria-pressed="false"><i class="fa-solid fa-pause" aria-hidden="true"></i></button></div>
+        <div class="slider-status" aria-label="وضعیت اسلایدر"><span class="slider-counter"><b data-slider-current>۱</b> از {{ featured_banners|length|to_persian }}</span><span class="slider-progress-track" aria-hidden="true"><span data-slider-progress></span></span></div>
+    </div>
+</section>
+
+{% endif %}

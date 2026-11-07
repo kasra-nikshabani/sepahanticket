@@ -1,0 +1,2 @@
+{% load persian_filters %}
+{% if page_obj.has_other_pages %}<nav class="pagination-links" aria-label="صفحه‌بندی">{% if page_obj.has_previous %}<a href="?{{ filter_query }}&amp;page={{ page_obj.previous_page_number }}">قبلی</a>{% endif %}<span>{{ page_obj.number|to_persian }} از {{ page_obj.paginator.num_pages|to_persian }}</span>{% if page_obj.has_next %}<a href="?{{ filter_query }}&amp;page={{ page_obj.next_page_number }}">بعدی</a>{% endif %}</nav>{% endif %}

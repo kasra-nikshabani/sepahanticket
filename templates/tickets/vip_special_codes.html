@@ -12,10 +12,10 @@
     }
     .card-header-custom {
         background: linear-gradient(135deg, #1A1A2E, #16213E); padding: 20px 30px;
-        border-bottom: 3px solid #D4AF37; display: flex; justify-content: space-between;
+        border-bottom: 3px solid #2467a8; display: flex; justify-content: space-between;
         align-items: center; flex-wrap: wrap; gap: 12px;
     }
-    .card-header-custom h4 { margin: 0; font-weight: 700; color: #D4AF37; }
+    .card-header-custom h4 { margin: 0; font-weight: 700; color: #2467a8; }
     .card-header-custom h4 i { margin-left: 10px; }
     .card-body-custom { padding: 30px; }
 
@@ -30,8 +30,8 @@
     .match-group summary::-webkit-details-marker { display: none; }
     .match-group summary .meta { color: #6c757d; font-weight: 400; font-size: 0.82rem; margin-right: 6px; }
     .badge-count {
-        background: rgba(212, 175, 55, 0.15); color: #B8960F; padding: 4px 14px; border-radius: 50px;
-        font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(212, 175, 55, 0.25); white-space: nowrap;
+        background: rgba(36, 103, 168, 0.15); color: #194d82; padding: 4px 14px; border-radius: 50px;
+        font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(36, 103, 168, 0.25); white-space: nowrap;
     }
     .codes-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
     .codes-table th { background: #fff; color: #1A1A2E; font-weight: 700; padding: 10px 12px; text-align: center; border-bottom: 2px solid #eee; }
@@ -39,7 +39,7 @@
     .codes-table tr:last-child td { border-bottom: none; }
     .code-pill { font-family: 'Courier New', monospace; direction: ltr; background: #f1f3f4; padding: 4px 10px; border-radius: 8px; font-weight: 700; display: inline-block; }
     .status-badge { padding: 3px 12px; border-radius: 50px; font-size: 0.78rem; font-weight: 700; }
-    .status-badge.free { background: #d4edda; color: #155724; }
+    .status-badge.free { background: #dde0e4; color: #0d355f; }
     .single-download-btn {
         width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center;
         justify-content: center; background: #fdeceb; color: #c0392b; transition: all 0.2s;
@@ -48,22 +48,22 @@
     .status-badge.used { background: #f8d7da; color: #721c24; }
 
     .download-bar {
-        position: sticky; bottom: 0; background: #fff; border-top: 2px solid #D4AF37;
+        position: sticky; bottom: 0; background: #fff; border-top: 2px solid #2467a8;
         padding: 14px 20px; margin: 24px -30px -30px; display: flex; justify-content: space-between;
         align-items: center; flex-wrap: wrap; gap: 10px;
     }
     .btn-download-selected {
-        background: linear-gradient(135deg, #D4AF37, #B8960F); color: #1A1A2E; border: none;
+        background: linear-gradient(135deg, #2467a8, #194d82); color: #1A1A2E; border: none;
         font-weight: 700; padding: 10px 26px; border-radius: 10px; transition: all 0.2s;
     }
-    .btn-download-selected:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(212, 175, 55, .3); }
+    .btn-download-selected:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(36, 103, 168, .3); }
     .btn-download-selected:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
     .empty-state {
         text-align: center; padding: 70px 20px; background: linear-gradient(145deg, #1A1A2E 0%, #2D2D44 50%, #1A1A2E 100%);
-        border-radius: 16px; border: 2px dashed rgba(212, 175, 55, .3); color: #fff;
+        border-radius: 16px; border: 2px dashed rgba(36, 103, 168, .3); color: #fff;
     }
-    .empty-state i { font-size: 44px; color: #D4AF37; margin-bottom: 14px; display: block; }
+    .empty-state i { font-size: 44px; color: #2467a8; margin-bottom: 14px; display: block; }
     .empty-state p { color: rgba(255, 255, 255, .5); margin-top: 6px; }
 </style>
 {% endblock %}
@@ -83,7 +83,7 @@
                     <details class="match-group" {% if forloop.first %}open{% endif %}>
                         <summary>
                             <span>
-                                {{ group.match.home_team }} vs {{ group.match.away_team }}
+                                {{ group.match.display_title }}
                                 <span class="meta">({{ group.match.date_time|date:"Y/m/d" }})</span>
                             </span>
                             <span class="badge-count">{{ group.used_count }} / {{ group.codes|length }} استفاده‌شده</span>

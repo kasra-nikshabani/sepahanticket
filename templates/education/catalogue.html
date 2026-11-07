@@ -1,0 +1,35 @@
+{% extends 'education/base.html' %}{% load static persian_filters %}
+{% block title %}آموزش دیدآور | از علاقه تا مهارت{% endblock %}
+{% block content %}
+<header class="edu-hero">
+  <div class="edu-hero-copy">
+    <span class="edu-eyebrow"><span class="edu-live-dot" aria-hidden="true"></span> جایی برای یاد گرفتنِ هنر</span>
+    <h1>از علاقه شروع کن،<br><span>با مهارت ادامه بده.</span></h1>
+    <p>روی صحنه، پشت دوربین یا در دنیای موسیقی؛ قدم بعدی‌ات را با کلاس‌های حضوری و دوره‌های ویدئویی دیدآور بردار.</p>
+    <div class="edu-actions"><a class="edu-button" href="#education-list">آموزش دلخواهم را پیدا کنم <i class="fa-solid fa-arrow-down" aria-hidden="true"></i></a><a class="edu-hero-link" href="{% url 'education:my_learning' %}">آموزش‌های من <i class="fa-solid fa-arrow-left" aria-hidden="true"></i></a></div>
+    <div class="edu-hero-footnote"><i class="fa-solid fa-seedling" aria-hidden="true"></i> یاد بگیر. تمرین کن. خلق کن.</div>
+  </div>
+  <div class="edu-hero-art" aria-hidden="true">
+    <div class="edu-art-orbit"></div>
+    <div class="edu-art-card edu-art-stage"><img src="{% static 'events/education/stage.svg' %}" alt="" decoding="async"><span><i class="fa-solid fa-masks-theater"></i> تجربهٔ نزدیک، در کلاس</span></div>
+    <div class="edu-art-card edu-art-video"><img src="{% static 'events/education/recorded.svg' %}" alt="" decoding="async"><span><i class="fa-solid fa-circle-play"></i> یادگیری، در زمان خودت</span></div>
+    <span class="edu-art-note"><i class="fa-solid fa-wand-magic-sparkles"></i> نوبتِ توست</span>
+  </div>
+</header>
+<section id="education-list" class="edu-catalogue">
+  <div class="edu-section-heading"><div><span class="edu-eyebrow">یک انتخاب برای قدم بعدی تو</span><h2>چه چیزی دوست داری یاد بگیری؟</h2></div><span class="edu-result-count">{{ page_obj.paginator.count|to_persian }} آموزش{% if query or city or kind or subject %} پیدا شد{% else %} برای کشف کردن{% endif %}</span></div>
+  <nav class="edu-type-tabs" aria-label="نوع آموزش">
+    <a href="{% querystring kind=None page=None %}#education-list" {% if not kind %}class="is-active" aria-current="page"{% endif %}><i class="fa-solid fa-layer-group" aria-hidden="true"></i> همهٔ آموزش‌ها</a>
+    {% for value,label in kinds %}<a href="{% querystring kind=value page=None %}#education-list" {% if kind == value %}class="is-active" aria-current="page"{% endif %}><i class="fa-solid {% if value == 'class' %}fa-chalkboard-user{% else %}fa-circle-play{% endif %}" aria-hidden="true"></i> {{ label }}</a>{% endfor %}
+  </nav>
+  <form method="get" action="#education-list" class="edu-search" role="search" aria-label="جست‌وجوی آموزش">
+    <input type="hidden" name="kind" value="{{ kind }}">
+    <div class="edu-search-bar"><label class="edu-search-query"><span class="edu-sr-only">نام دوره، مدرس یا آموزشگاه</span><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input class="edu-input" type="search" maxlength="120" name="q" value="{{ query }}" placeholder="نام دوره، مدرس یا آموزشگاه…"></label><button class="edu-button" type="submit">جست‌وجو <i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button></div>
+    <details class="edu-search-filters" {% if subject or city %}open{% endif %}><summary><span><i class="fa-solid fa-sliders" aria-hidden="true"></i> انتخاب حوزه و شهر{% if subject or city %}<span class="edu-filter-dot" aria-label="فیلتر فعال"></span>{% endif %}</span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></summary><div class="edu-filter-fields"><label><span>حوزهٔ هنری</span><select class="edu-input" name="subject"><option value="">همهٔ هنرها</option>{% for value,label in subjects %}<option value="{{ value }}" {% if subject == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label><label><span>شهر کلاس حضوری</span><select class="edu-input" name="city"><option value="">همهٔ شهرها</option>{% for item in cities %}<option value="{{ item }}" {% if city == item %}selected{% endif %}>{{ item|to_persian }}</option>{% endfor %}</select></label><button class="edu-button edu-button-light" type="submit">اعمال فیلترها</button></div></details>
+    {% if query or city or kind or subject %}<a class="edu-text-link edu-clear-filters" href="{% url 'education:catalogue' %}#education-list"><i class="fa-solid fa-xmark" aria-hidden="true"></i> پاک کردن جست‌وجو و فیلترها</a>{% endif %}
+  </form>
+  <div class="edu-grid">{% for course in page_obj %}{% include 'education/_card.html' %}{% empty %}<div class="edu-empty"><i class="fa-solid {% if query or city or kind or subject %}fa-magnifying-glass{% else %}fa-seedling{% endif %}" aria-hidden="true"></i><h2>{% if query or city or kind or subject %}هنوز آموزشی با این مشخصات پیدا نشد{% else %}مسیر یادگیری تازه‌ای در راه است{% endif %}</h2><p>{% if query or city or kind or subject %}یک عبارت کوتاه‌تر یا حوزه و شهر دیگری را امتحان کن.{% else %}آموزش‌ها پس از بررسی مدیریت اینجا دیده می‌شوند.{% endif %}</p>{% if query or city or kind or subject %}<a class="edu-button edu-button-light" href="{% url 'education:catalogue' %}#education-list">دیدن همهٔ آموزش‌ها</a>{% else %}<a class="edu-button edu-button-light" href="{% url 'education:create' %}">ثبت آموزش</a>{% endif %}</div>{% endfor %}</div>
+  {% include 'education/_pagination.html' %}
+</section>
+<aside class="edu-teacher-invite"><span class="edu-invite-icon" aria-hidden="true"><i class="fa-solid fa-chalkboard-user"></i></span><div><span class="edu-eyebrow">این بار، تو یاد بده</span><h2>تجربه‌ات می‌تواند شروعِ مسیرِ یک نفر باشد.</h2><p>دورهٔ ویدئویی‌ات را بساز یا برای کلاس حضوری‌ات هنرجو بپذیر.</p></div><a class="edu-button edu-button-light" href="{% url 'education:my_teaching' %}">ورود به فضای تدریس <i class="fa-solid fa-arrow-left" aria-hidden="true"></i></a></aside>
+{% endblock %}

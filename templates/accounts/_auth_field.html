@@ -1,0 +1,10 @@
+{% load persian_filters %}
+<div class="auth-field">
+<label for="id_{{ field.html_name }}">{{ field.label }}{% if not field.field.required %}<small>اختیاری</small>{% endif %}</label>
+<div class="auth-input-wrap{% if field.errors %} has-error{% endif %}">
+{% if icon %}<i class="{{ icon }}" aria-hidden="true"></i>{% endif %}
+<input id="id_{{ field.html_name }}" name="{{ field.html_name }}" type="{{ type|default:'text' }}" value="{% if type != 'password' %}{% if numeric %}{{ field.value|default_if_none:''|to_persian }}{% else %}{{ field.value|default_if_none:'' }}{% endif %}{% endif %}" placeholder="{{ placeholder }}" {% if field.field.required %}required{% endif %} {% if field.field.max_length %}maxlength="{{ field.field.max_length }}"{% endif %} {% if field.field.min_length %}minlength="{{ field.field.min_length }}"{% endif %} {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %} {% if numeric %}data-numeric inputmode="numeric" dir="ltr"{% endif %} {% if field.errors %}aria-invalid="true"{% endif %} aria-describedby="{{ field.html_name }}-feedback">
+{% if type == 'password' %}<button class="auth-reveal" type="button" data-password-toggle aria-controls="id_{{ field.html_name }}" aria-label="نمایش رمز عبور" aria-pressed="false"><i class="fa-regular fa-eye" aria-hidden="true"></i></button>{% endif %}
+</div>
+<div id="{{ field.html_name }}-feedback">{% for error in field.errors %}<p class="auth-field-error">{{ error|to_persian }}</p>{% endfor %}{% if hint %}<p class="auth-hint">{{ hint }}</p>{% endif %}</div>
+</div>

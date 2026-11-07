@@ -7,8 +7,18 @@
 # می‌توانست ناگهان با TemplateSyntaxError خراب شود. الان فقط همین یک نسخه
 # هست، پس ابهامی در بارگذاری {% load currency_filters %} وجود ندارد.
 from django import template
+from decimal import Decimal, InvalidOperation
 
 register = template.Library()
+
+
+@register.filter
+def toman_display(value):
+    try:
+        amount = Decimal(str(value)) / 10
+        return format(amount, ',f').rstrip('0').rstrip('.') if '.' in format(amount, ',f') else format(amount, ',f')
+    except (InvalidOperation, ValueError, TypeError):
+        return ''
 
 
 @register.filter(name='rial_display')

@@ -1,0 +1,72 @@
+/* Cultural seating keeps the existing inventory and reservation behavior. */
+.culture-site .stadium-map{background:#ededee;border:1px solid #bcc0c4;border-radius:22px;box-shadow:0 8px 28px #192d4210;padding:26px 22px 150px}
+.culture-site .map-header{color:#203142;border-bottom:1px solid #ced0d2;padding-bottom:22px}
+.culture-site .map-header h2{color:#203142;font-size:24px;text-shadow:none}
+.culture-site .meta-chip,.culture-site .block-name,.culture-site .price-badge{background:#e1e2e3;color:#2b4968;border:1px solid #bcc0c5;box-shadow:none;font-size:13px}
+.culture-site .meta-chip i{color:#2b4968}
+.culture-site .seating-area{background:#e4e5e6;border:1px solid #bcc0c5;border-radius:18px;padding:22px 14px;backdrop-filter:none}
+.culture-site .seat-map-help{color:#405264;font-size:13px;line-height:2;max-width:680px;margin:14px auto;text-align:center}
+.culture-site .seat-map-feedback:empty{display:none}
+.culture-site .seat-map-feedback{background:#f1e6cc;color:#65471e;border:1px solid #c6ae79;padding:12px;border-radius:10px;font-size:13px}
+.culture-site .view-toggle .btn-toggle,.culture-site .btn-back{background:#e1e2e3;color:#2b4968;border:1px solid #a8b0b8;min-height:44px;border-radius:10px;font-size:13px}
+.culture-site .seat-grid{gap:8px;padding-block:12px;scroll-padding-inline:12px}
+.culture-site .seat,.culture-site .seat-grid.wrap-mode .seat{width:44px;height:44px;flex:0 0 44px;font:600 13px/1 Vazirmatn,sans-serif;padding:0;border-radius:10px 10px 5px 5px;animation:none;box-shadow:none;text-shadow:none}
+.culture-site .seat.available,.culture-site .legend-box.available{background:#d4d8dc;color:#273e56;border:1px solid #627a94}
+.culture-site .seat.unavailable,.culture-site .legend-box.unavailable{background:#cecfd0;color:#4d5a68;border:1px dashed #818d99;opacity:1}
+.culture-site .seat.selected,.culture-site .legend-box.selected{background:#2a4a6b!important;color:#fff!important;border:2px solid #182f47!important;box-shadow:none;transform:none;animation:none}
+.culture-site .seat.reserved,.culture-site .legend-box.reserved{background:#eeddb8!important;color:#684d22!important;border:1px solid #ad9051!important;opacity:1}
+.culture-site .seat.available:hover{background:#bdc5cd;transform:none}
+.culture-site .seat:focus-visible{outline:3px solid #1c3855;outline-offset:3px;position:relative;z-index:2}
+.culture-site .seat.orphan-warn{animation:none;box-shadow:0 0 0 3px #ac742e!important}
+.culture-site .row-label{background:#dcdee0;border-color:#bec2c7;color:#2b4157;font-size:13px;min-width:36px}
+.culture-site .pitch-area{background:#d4d7da;border-color:#94a1ae;color:#2b4968;box-shadow:none;border-radius:12px}
+.culture-site .pitch-area span{color:#2b4968;font-size:16px;text-shadow:none}
+.culture-site .pitch-line{background:#8d9baa}
+.culture-site .legend{background:#e1e2e3;border:1px solid #bec2c7;border-radius:12px;backdrop-filter:none;gap:14px 20px;padding:14px}
+.culture-site .legend-item{color:#2b4157;font-size:13px}
+.culture-site .capacity-text{color:#42566b;font-size:12px}
+.culture-site .capacity-text b{color:#2a4a6b}
+.culture-site .capacity-bar{background:#d4d6d8;border-color:#bcc0c5}
+.culture-site .capacity-fill{background:#5f80a2}
+.culture-site .selection-bar{background:#e8e9ea;border-top:1px solid #acb3ba;box-shadow:0 -4px 18px #192d4214;color:#203142;padding:14px 24px calc(14px + env(safe-area-inset-bottom));backdrop-filter:none}
+.culture-site .selection-info,.culture-site .sel-line,.culture-site .sel-total{color:#2b4157;font-size:13px}
+.culture-site .selection-info strong,.culture-site .sel-line i,.culture-site .sel-total b{color:#2a4a6b}
+.culture-site .sel-chip{background:#d8dadd;color:#223951;border:1px solid #a9b1ba;font-size:12px;border-radius:10px;animation:none}
+.culture-site .sel-chip .x{display:grid;place-items:center;width:44px;height:44px;background:transparent;color:#2b4968;border:0;opacity:1;font-size:22px;border-radius:8px}
+.culture-site .btn-continue{background:#2a4a6b;color:#fff;min-height:48px;border-radius:12px;box-shadow:none;font-size:14px;transform:none}
+.culture-site .btn-continue:hover{background:#203a55;transform:none;box-shadow:none}
+.culture-site .btn-continue:disabled{opacity:1;background:#cfd1d4;color:#506070;border:1px solid #a8b0b8;cursor:not-allowed}
+.culture-site .orphan-warn-line{background:#f1e6cc;color:#65471e;border-color:#c6ae79;font-size:12px}
+.culture-site .selection-cta{gap:12px}
+.culture-site .selection-bar~*{scroll-margin-bottom:180px}
+@media(max-width:760px){.culture-site .stadium-map{padding:20px 12px 220px;border-radius:16px;margin:18px auto}.culture-site .map-header h2{font-size:21px}.culture-site .selection-bar-inner{align-items:stretch}.culture-site .selection-bar .selection-cta{display:flex;width:100%;flex-direction:column;align-items:stretch}.culture-site .selection-bar .btn-continue{width:100%;justify-content:center}.culture-site .selection-info{width:100%}.culture-site .selection-bar{padding-inline:16px}.culture-site .sel-chips{max-height:112px;overflow-y:auto}.culture-site .seating-area{padding:12px 8px}.culture-site .seat-grid.wrap-mode{justify-content:center}}
+@media(prefers-reduced-motion:reduce){.culture-site .seat,.culture-site .btn-continue,.culture-site .sel-chip{transition:none;animation:none}}
+
+/* One scrollable hall preserves physical rows, aisles and the saved stage position. */
+.seat-map-page .stadium-map{min-width:0;width:100%;max-width:1100px}
+.seat-map-page .seating-area{--seat-size:44px;--seat-gap:8px;--seat-step:52px;--row-label-size:38px;overflow:auto;max-width:100%;padding:20px 12px;background:#f1f1f2;scrollbar-width:thin;scrollbar-color:#9aa3ad #e4e5e6;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.seat-map-page .seating-area:focus-visible{outline:3px solid #2a4a6b;outline-offset:3px}
+.purchase-seat-canvas{display:flex;flex-direction:column;gap:4px;width:max-content;min-width:100%;padding:8px 4px}
+.seat-map-page .row-container,.purchase-stage-row{display:grid;grid-template-columns:var(--row-label-size) minmax(max-content,1fr) var(--row-label-size);gap:10px;align-items:center;width:100%;margin:0;padding:0}
+.seat-map-page .row-label,.purchase-row-balance{width:var(--row-label-size);min-width:0;padding:7px 0;text-align:center;font-size:12px;line-height:1.2;letter-spacing:0}
+.purchase-row-balance{color:#576b80;font-weight:650}
+.seat-map-page .row-label{position:sticky;inset-inline-start:0;z-index:3;box-shadow:0 0 0 3px #f1f1f2}
+.purchase-row-balance{position:sticky;inset-inline-end:0;z-index:3;background:#dcdee0;border:1px solid #bec2c7;border-radius:6px;box-shadow:0 0 0 3px #f1f1f2}
+.purchase-row-caption{display:block;font-size:8px;line-height:1.5;font-weight:400}
+.seat-map-page .row-container:hover .row-label{background:#dcdee0;border-color:#bec2c7}
+.seat-map-page .seat-grid{display:flex;flex:initial;flex-wrap:nowrap;overflow:visible;min-width:max-content;padding:0;gap:0;justify-content:flex-start;transition:none}
+.seat-map-page .seat-grid.align-center{justify-content:center}
+.seat-map-page .seat-grid.align-end{justify-content:flex-end}
+.purchase-seat-cells{display:flex;flex-wrap:nowrap;align-items:flex-start;gap:var(--seat-gap);width:max-content;flex:0 0 auto;margin-inline-start:calc(var(--row-offset,0) * var(--seat-step));padding:calc(var(--curve-top,0px) + 10px) 5px calc(var(--curve-bottom,0px) + 10px)}
+.seat-map-page .seat,.purchase-seat-gap{width:var(--seat-size);height:var(--seat-size);flex:0 0 var(--seat-size);box-sizing:border-box}
+.seat-map-page .seat{font-size:13px;touch-action:manipulation}
+.purchase-seat-gap{display:block;pointer-events:none}
+.purchase-stage-row{margin-bottom:18px}
+.purchase-stage-row.stage-bottom{margin-top:18px;margin-bottom:0}
+.seat-map-page .purchase-stage-row .pitch-area{grid-column:2;justify-self:center;width:70%;max-width:420px;min-width:130px;margin:0;padding:14px 20px;background:#dbdde0;border:1px solid #a4aeb9;border-radius:70% 70% 12px 12px;letter-spacing:0}
+.seat-map-page .stage-bottom .pitch-area{border-radius:12px 12px 70% 70%}
+.seat-map-page .pitch-area span{font-size:14px;font-weight:700}
+.seat-map-page .view-toggle .btn-toggle[aria-pressed=true]{background:#2a4a6b;color:#fff;border-color:#2a4a6b}
+.seat-map-page .seating-area.is-compact{--seat-size:32px;--seat-gap:5px;--seat-step:37px}
+.seat-map-page .is-compact .seat{font-size:11px}
+@media(max-width:760px){.seat-map-page .seating-area{--row-label-size:30px;padding:14px 6px}.seat-map-page .row-container,.purchase-stage-row{gap:6px}.seat-map-page .row-label,.purchase-row-balance{font-size:10px}.seat-map-page .seat-map-help{font-size:12px;text-align:start}.seat-map-page .seat-keyboard-help{display:none}.seat-map-page .legend{gap:12px;font-size:11px}.seat-map-page .legend-item{font-size:11px}.seat-map-page .purchase-stage-row .pitch-area{padding:12px;max-width:220px}}

@@ -26,6 +26,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://ticket.sepahansc.com',
 ]
 DEBUG = False
+REGISTRATION_IDENTITY_REQUIRED = os.getenv('REGISTRATION_IDENTITY_REQUIRED', 'False') == 'True'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 # nginx به‌عنوان reverse proxy، SSL رو خودش terminate می‌کنه و این هدر رو
@@ -68,6 +69,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts',
     'matches',
+    'artists.apps.ArtistsConfig',
+    'education.apps.EducationConfig',
+    'studios.apps.StudiosConfig',
     'tickets',
     'payments',
     'crispy_forms',
@@ -75,6 +79,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'accounts.cultural_platform.CulturalPlatformMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'accounts.middleware.GeoAccessMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -273,6 +278,12 @@ FAN_API_PASSWORD = os.getenv('FAN_API_PASSWORD', '')
 
 # ===== گیت‌های اسکن بلیط =====
 GATE_USERS = {
+    'gate_event': {
+        'password': os.getenv('GATE_PASSWORD_EVENT', ''),
+        'zone': 'event',
+        'session_ids': [int(value.strip()) for value in os.getenv('GATE_EVENT_SESSION_IDS', '').split(',')
+                        if value.strip().isdigit()],
+    },
     'gate_class1': {'password': os.getenv('GATE_PASSWORD_CLASS1', ''), 'zone': 'class1'},
     'gate_home': {'password': os.getenv('GATE_PASSWORD_HOME', ''), 'zone': 'home'},
     'gate_away': {'password': os.getenv('GATE_PASSWORD_AWAY', ''), 'zone': 'away'},
@@ -348,3 +359,10 @@ FANID_LOGIN_ENABLED = (
 # هم‌الگوی GATE_USERS بالا. بدون مقدار (رشته‌ی خالی)، این Endpoint همیشه ۴۰۱ می‌دهد.
 LOYALTY_POLL_SERVICE_TOKEN = os.getenv('LOYALTY_POLL_SERVICE_TOKEN', '')
 
+# Didavar uses cultural events, organizer accounts and ticket holders.
+CULTURAL_PLATFORM = True
+
+# Private original videos and encrypted streams; never expose this directory as media.
+EDUCATION_PRIVATE_ROOT = BASE_DIR / '.private-education'
+EDUCATION_MAX_VIDEO_BYTES = 1024 * 1024 * 1024
+EDUCATION_PLAYBACK_TTL = 180

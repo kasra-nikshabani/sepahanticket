@@ -1,6 +1,6 @@
 from django import forms
 from .models import Block
-from .models import Match, Stadium
+from .models import Match, Stadium, Event, EventSceneImage
 from .models import MatchCost, MatchRevenue
 
 
@@ -20,7 +20,7 @@ class BlockForm(forms.ModelForm):
         }
 
 
-class MatchForm(forms.ModelForm):
+class LegacyMatchForm(forms.ModelForm):
     """
     تاریخ و ساعت به دو ورودی جدا شکسته شده‌اند: تاریخ اجباری است ولی ساعت
     می‌تواند خالی بماند (وقتی هنوز اعلام نشده). چون مدل یک فیلد واحد
@@ -140,14 +140,14 @@ from .models import Stadium
 class StadiumForm(forms.ModelForm):
     class Meta:
         model = Stadium
-        fields = ['name', 'capacity', 'image']
+        fields = ['name', 'city', 'address', 'capacity', 'image']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'capacity': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
             'image': forms.FileInput(attrs={'class': 'form-control'}),
         }
         labels = {
-            'image': 'تصویر ورزشگاه',
+            'image': 'تصویر محل برگزاری',
         }
 
 
@@ -181,3 +181,51 @@ class MatchRevenueForm(forms.ModelForm):
                 'placeholder': 'مبلغ به ریال'
             }),
         }
+
+
+class EventForm(forms.ModelForm):
+    class Meta:
+        model = Event
+        fields = ['title', 'category', 'poster', 'cover', 'teaser', 'description', 'artists',
+                  'organizer', 'duration_minutes', 'is_active']
+        widgets = {'description': forms.Textarea(attrs={'rows': 5})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-check-input' if isinstance(field.widget, forms.CheckboxInput) else 'form-control'
+        self.fields['duration_minutes'].min_value = 1
+
+
+EventSceneImageFormSet = forms.inlineformset_factory(
+    Event, EventSceneImage, fields=['image', 'caption', 'order'],
+    extra=1, can_delete=True, max_num=20, validate_max=True,
+    widgets={'caption': forms.TextInput(attrs={'class': 'form-control'}),
+             'order': forms.NumberInput(attrs={'class': 'form-control', 'min': 0})},
+)
+
+
+class MatchForm(LegacyMatchForm):
+    """A session reuses the existing ticket and inventory relations."""
+    class Meta:
+        model = Match
+        fields = ['event', 'stadium', 'is_active', 'ticket_sales_enabled']
+        widgets = {
+            'event': forms.Select(attrs={'class': 'form-select'}),
+            'stadium': forms.Select(attrs={'class': 'form-select'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'ticket_sales_enabled': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['event'].required = True
+        self.fields['match_time'].required = True
+        self.fields['match_time'].help_text = 'ساعت شروع این سانس'
+
+    def clean(self):
+        cleaned = super().clean()
+        if self.instance.pk and cleaned.get('stadium') != self.instance.stadium:
+            if self.instance.match_seats.exists():
+                self.add_error('stadium', 'برای تغییر سالن، سانس جدید بسازید؛ صندلی‌های این سانس قبلاً ایجاد شده‌اند.')
+        return cleaned

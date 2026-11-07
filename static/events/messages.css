@@ -1,0 +1,23 @@
+/* A welcome notification shared by the public site and account pages. */
+.welcome-notice { position:fixed; bottom:26px; right:26px; z-index:1060; display:flex; align-items:flex-start; gap:13px; width:min(410px,calc(100vw - 40px)); padding:20px 18px; border:1px solid #d9dce0; border-inline-start:4px solid #00458c; border-radius:16px; background:#fff; box-shadow:0 10px 45px #0c243d1a,0 2px 8px #0c243d09; color:#152536; font-family:Vazirmatn,sans-serif; line-height:1.8; direction:rtl; animation:welcome-arrive .28s ease-out; }
+.welcome-notice-icon { display:grid; place-items:center; flex-shrink:0; width:41px; height:41px; border:1px solid #dcdfe2; border-radius:13px; background:#f0f0f1; color:#00458c; font-size:18px; }
+.welcome-notice-copy { min-width:0; flex:1; }
+.welcome-notice-copy strong { display:block; font-size:14px; font-weight:750; overflow-wrap:anywhere; }
+.welcome-notice-copy p { margin:4px 0 10px; font-size:11px; color:#6d7986; }
+.welcome-notice-copy a { display:inline-flex; align-items:center; gap:9px; color:#00458c; text-decoration:none; font-size:11px; font-weight:600; }
+.welcome-notice-copy a:hover { color:#00356d; text-decoration:underline; text-underline-offset:4px; }
+.welcome-notice-copy a i { font-size:10px; }
+.welcome-notice-close { display:grid; place-items:center; width:32px; height:32px; flex-shrink:0; margin:-5px 0 0 -5px; border:0; border-radius:8px; background:#f5f5f5; color:#6a7887; font-size:14px; cursor:pointer; }
+.welcome-notice-close:hover { background:#ededee; color:#00458c; }
+.welcome-notice a:focus-visible,.welcome-notice button:focus-visible { outline:2px solid #00458c; outline-offset:3px; }
+.site-messages:has(.welcome-notice):not(:has(.alert)),.messages:has(.welcome-notice):not(:has(.alert)) { margin:0; padding:0; }
+@keyframes welcome-arrive { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+@media(max-width:760px) {
+ .welcome-notice { right:12px; bottom:calc(14px + env(safe-area-inset-bottom,0px)); width:calc(100vw - 24px); padding:16px 14px; gap:10px; border-radius:14px; }
+ body:has(.bottom-nav) .welcome-notice { bottom:calc(85px + env(safe-area-inset-bottom,0px)); }
+ .welcome-notice-icon { width:36px; height:36px; border-radius:11px; font-size:16px; }
+ .welcome-notice-copy strong { font-size:12px; }.welcome-notice-copy p { margin-bottom:5px; }
+ .welcome-notice-copy a { min-height:34px; }
+ .welcome-notice-close { width:40px; height:40px; margin:-5px 0 0 -5px; }
+}
+@media(prefers-reduced-motion:reduce) { .welcome-notice { animation:none; } }

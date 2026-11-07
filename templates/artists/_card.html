@@ -1,0 +1,7 @@
+{% load persian_filters %}
+<article class="artist-card">
+    <a class="artist-card-link" href="{{ artist.get_absolute_url }}">
+        <div class="artist-card-cover">{% if artist.cover %}<img src="{{ artist.cover.url }}" alt="" loading="lazy">{% else %}<span aria-hidden="true"><i class="fa-solid fa-star"></i></span>{% endif %}</div>
+        <div class="artist-card-info">{% include 'artists/_identity.html' %}<h2>{{ artist.display_name|to_persian }} <i class="fa-solid fa-circle-check artist-verified" aria-label="پروفایل تأییدشده توسط دیدآور"></i></h2><p>{{ artist.specialty|default:artist.get_discipline_display|to_persian }}</p><div class="artist-card-meta"><span>{% if artist.city %}<i class="fa-solid fa-location-dot" aria-hidden="true"></i> {{ artist.city|to_persian }}{% else %}{{ artist.get_discipline_display }}{% endif %}</span><span>{{ artist.follower_count|default:0|to_persian }} دنبال‌کننده</span></div><span class="artist-card-visit">آشنایی با هنرمند <i class="fa-solid fa-arrow-left" aria-hidden="true"></i></span></div>
+    </a>
+</article>

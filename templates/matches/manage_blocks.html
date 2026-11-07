@@ -19,7 +19,7 @@
         flex-wrap: wrap;
         margin-bottom: 30px;
         padding-bottom: 20px;
-        border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+        border-bottom: 2px solid rgba(36, 103, 168, 0.3);
     }
     .page-header h2 {
         font-weight: 700;
@@ -28,7 +28,7 @@
         font-size: 28px;
     }
     .page-header h2 i {
-        color: #D4AF37;
+        color: #2467a8;
         margin-left: 12px;
     }
     .btn-admin {
@@ -53,7 +53,7 @@
     }
     .btn-dark:hover {
         background: #2A2A4E;
-        color: #D4AF37;
+        color: #2467a8;
     }
 
     /* ===== کارت‌های آمار کلی ===== */
@@ -74,8 +74,8 @@
     }
     .stat-card:hover {
         transform: translateY(-4px);
-        border-color: #D4AF37;
-        box-shadow: 0 8px 30px rgba(212,175,55,0.12);
+        border-color: #2467a8;
+        box-shadow: 0 8px 30px rgba(36, 103, 168,0.12);
     }
     .stat-card .stat-number {
         font-size: 26px;
@@ -92,8 +92,8 @@
         margin-bottom: 6px;
         display: block;
     }
-    .stat-card.gold .stat-number { color: #D4AF37; }
-    .stat-card.green .stat-number { color: #28a745; }
+    .stat-card.gold .stat-number { color: #2467a8; }
+    .stat-card.green .stat-number { color: #1966b6; }
     .stat-card.red .stat-number { color: #dc3545; }
     .stat-card.orange .stat-number { color: #ffc107; }
     .stat-card.blue .stat-number { color: #17a2b8; }
@@ -119,7 +119,7 @@
         align-items: center;
         gap: 6px;
     }
-    .filter-section .filter-label i { color: #D4AF37; }
+    .filter-section .filter-label i { color: #2467a8; }
     .filter-section select {
         flex: 1;
         min-width: 250px;
@@ -138,9 +138,9 @@
         cursor: pointer;
     }
     .filter-section select:focus {
-        border-color: #D4AF37;
+        border-color: #2467a8;
         outline: none;
-        box-shadow: 0 0 0 4px rgba(212,175,55,0.15);
+        box-shadow: 0 0 0 4px rgba(36, 103, 168,0.15);
         background: #fff;
     }
     .filter-section .selected-match-info {
@@ -169,7 +169,7 @@
         font-size: 13px;
     }
     .filter-section .btn-reset:hover {
-        border-color: #D4AF37;
+        border-color: #2467a8;
         color: #1A1A2E;
     }
 
@@ -192,8 +192,8 @@
     }
     .block-card:hover {
         transform: translateY(-6px);
-        box-shadow: 0 12px 40px rgba(212,175,55,0.15);
-        border-color: #D4AF37;
+        box-shadow: 0 12px 40px rgba(36, 103, 168,0.15);
+        border-color: #2467a8;
     }
     .block-card .card-header {
         background: linear-gradient(135deg, #1A1A2E, #16213E);
@@ -208,7 +208,7 @@
         font-size: 16px;
     }
     .block-card .card-header .block-name i {
-        color: #D4AF37;
+        color: #2467a8;
         margin-left: 6px;
     }
     .block-card .card-header .status-badge {
@@ -227,10 +227,10 @@
         display: inline-block;
     }
     .block-card .card-header .status-badge.active {
-        background: #d4edda;
-        color: #155724;
+        background: #dde0e4;
+        color: #0d355f;
     }
-    .block-card .card-header .status-badge.active .dot { background: #28a745; }
+    .block-card .card-header .status-badge.active .dot { background: #1966b6; }
     .block-card .card-header .status-badge.inactive {
         background: #f8d7da;
         color: #721c24;
@@ -274,7 +274,7 @@
         color: #6c757d;
     }
     .block-card .card-body .stats-row .stat-item .number.total { color: #17a2b8; }
-    .block-card .card-body .stats-row .stat-item .number.available { color: #28a745; }
+    .block-card .card-body .stats-row .stat-item .number.available { color: #1966b6; }
     .block-card .card-body .stats-row .stat-item .number.occupied { color: #dc3545; }
 
     .block-card .card-body .occupancy-section {
@@ -296,7 +296,7 @@
     }
     .block-card .card-body .progress-custom .progress-fill {
         height: 100%;
-        background: linear-gradient(90deg, #D4AF37, #B8960F);
+        background: linear-gradient(90deg, #2467a8, #194d82);
         border-radius: 4px;
         transition: width 0.6s ease;
     }
@@ -339,10 +339,10 @@
     }
     .btn-action.info:hover { background: #138496; }
     .btn-action.success {
-        background: #28a745;
+        background: #1966b6;
         color: #fff;
     }
-    .btn-action.success:hover { background: #1e7e34; }
+    .btn-action.success:hover { background: #134d89; }
     .btn-action.danger {
         background: #dc3545;
         color: #fff;
@@ -478,7 +478,7 @@
                 <option value="">همه مسابقات</option>
                 {% for m in matches %}
                     <option value="{{ m.id }}" {% if selected_match_id == m.id %}selected{% endif %}>
-                        {{ m.home_team }} vs {{ m.away_team }} ({{ m.date_time|date:"Y/m/d H:i" }})
+                        {{ m.display_title }} ({{ m.date_time|date:"Y/m/d H:i" }})
                     </option>
                 {% endfor %}
             </select>
@@ -490,7 +490,7 @@
         </form>
         {% if selected_match %}
             <span class="selected-match-info">
-                <i class="fas fa-check-circle" style="color:#28a745;"></i>
+                <i class="fas fa-check-circle" style="color:#1966b6;"></i>
                 <strong>{{ selected_match.home_team }}</strong> vs <strong>{{ selected_match.away_team }}</strong>
             </span>
         {% endif %}

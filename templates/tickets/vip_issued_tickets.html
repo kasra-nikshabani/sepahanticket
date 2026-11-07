@@ -21,13 +21,13 @@
         .card-header-custom {
             background: linear-gradient(135deg, #1A1A2E, #16213E);
             padding: 20px 30px;
-            border-bottom: 3px solid #D4AF37;
+            border-bottom: 3px solid #2467a8;
         }
 
         .card-header-custom h4 {
             margin: 0;
             font-weight: 700;
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .card-header-custom h4 i {
@@ -76,7 +76,7 @@
         }
 
         .filter-form .btn-primary:hover {
-            background: #D4AF37;
+            background: #2467a8;
             color: #1A1A2E;
         }
 
@@ -101,7 +101,7 @@
             font-weight: 600;
             padding: 12px 16px;
             text-align: right;
-            border-bottom: 2px solid #D4AF37;
+            border-bottom: 2px solid #2467a8;
         }
 
         .table-custom td {
@@ -130,7 +130,7 @@
         }
 
         .btn-action:hover {
-            background: #D4AF37;
+            background: #2467a8;
             color: #1A1A2E;
         }
 
@@ -155,7 +155,7 @@
         }
 
         .btn-download {
-            background: #28a745;
+            background: #1966b6;
             color: #fff;
             border: none;
             padding: 8px 20px;
@@ -165,7 +165,7 @@
         }
 
         .btn-download:hover {
-            background: #1e7e34;
+            background: #134d89;
             transform: translateY(-2px);
         }
 
@@ -192,7 +192,7 @@
 
         .empty-state i {
             font-size: 3rem;
-            color: #D4AF37;
+            color: #2467a8;
             margin-bottom: 12px;
         }
 
@@ -205,7 +205,7 @@
             width: 20px;
             height: 20px;
             cursor: pointer;
-            accent-color: #D4AF37;
+            accent-color: #2467a8;
         }
 
         .filter-form select[name="zone"] { min-width: 170px; }
@@ -218,7 +218,7 @@
             white-space: nowrap;
             color: #fff;
         }
-        .zone-home       { background: #28a745; }
+        .zone-home       { background: #1966b6; }
         .zone-away       { background: #ffc107; color: #212529; }
         .zone-women      { background: #e83e8c; }
         .zone-women_away { background: #c2185b; }
@@ -255,14 +255,14 @@
         }
 
         #select-all {
-            accent-color: #D4AF37;
+            accent-color: #2467a8;
             width: 18px;
             height: 18px;
             cursor: pointer;
         }
 
         .selected-count {
-            background: #D4AF37;
+            background: #2467a8;
             color: #1A1A2E;
             padding: 2px 12px;
             border-radius: 12px;
@@ -280,7 +280,7 @@
         }
 
         .badge-unused {
-            background: #28a745;
+            background: #1966b6;
             color: #fff;
             padding: 2px 10px;
             border-radius: 50px;
@@ -351,7 +351,7 @@
                         <option value="">همه مسابقات</option>
                         {% for m in matches %}
                             <option value="{{ m.id }}" {% if selected_match_id == m.id %}selected{% endif %}>
-                                {{ m.home_team }} vs {{ m.away_team }} - {{ m.date_time|date:"Y/m/d" }}
+                                {{ m.display_title }} - {{ m.date_time|date:"Y/m/d" }}
                             </option>
                         {% endfor %}
                     </select>
@@ -422,7 +422,7 @@
                                                    class="ticket-checkbox">
                                         </td>
                                         <td><strong>{{ ticket.ticket_number }}</strong></td>
-                                        <td>{{ ticket.match.home_team }} vs {{ ticket.match.away_team }}</td>
+                                        <td>{{ ticket.match.display_title }}</td>
                                         <td>{{ ticket.full_name }}</td>
                                         <td>{{ ticket.national_code }}</td>
                                         <td>{{ ticket.seat.row.name }} - {{ ticket.seat.number }}</td>

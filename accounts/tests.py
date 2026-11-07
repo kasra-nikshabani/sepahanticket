@@ -395,3 +395,121 @@ class RegularOtpPageUnchangedTests(TestCase):
         self.assertContains(response, 'تغییر شماره')
         self.assertContains(response, reverse('accounts:resend_otp'))
         self.assertNotContains(response, 'fanid')
+
+    def test_resend_timer_uses_cooldown_instead_of_code_expiry(self):
+        session = self.client.session
+        session['otp_phone'] = '09121111111'
+        session.save()
+        otp = OTP.objects.create(phone_number='09121111111', code='1234',
+                                 expires_at=timezone.now() + timedelta(minutes=5))
+        response = self.client.get(reverse('accounts:otp_verify'))
+        self.assertGreaterEqual(response.context['resend_remaining'], 58)
+        self.assertLessEqual(response.context['resend_remaining'], 60)
+        self.assertGreater(response.context['remaining_time'], 290)
+        OTP.objects.filter(pk=otp.pk).update(created_at=timezone.now() - timedelta(seconds=75))
+        response = self.client.get(reverse('accounts:otp_verify'))
+        self.assertEqual(response.context['resend_remaining'], 0)
+        self.assertGreater(response.context['remaining_time'], 290)
+
+    def test_wrong_code_shows_field_error_and_counts_attempt(self):
+        session = self.client.session
+        session['otp_phone'] = '09121111111'
+        session.save()
+        otp = OTP.objects.create(phone_number='09121111111', code='1234',
+                                 expires_at=timezone.now() + timedelta(minutes=5))
+        with patch('accounts.views.get_valid_otp', return_value=None):
+            response = self.client.post(reverse('accounts:otp_verify'), {'otp_code': '4321'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('otp_code', response.context['form'].errors)
+        self.assertContains(response, 'aria-invalid="true"')
+        otp.refresh_from_db()
+        self.assertEqual(otp.attempts, 1)
+
+    def test_otp_form_normalizes_persian_and_arabic_digits(self):
+        from accounts.forms import OTPVerifyForm
+        for digits in ('۱۲۳۴', '١٢٣٤', '1234'):
+            form = OTPVerifyForm({'otp_code': digits})
+            self.assertTrue(form.is_valid(), form.errors)
+            self.assertEqual(form.cleaned_data['otp_code'], '1234')
+        for digits in ('۱۲۳', '۱۲۳۴۵', 'abcd'):
+            self.assertFalse(OTPVerifyForm({'otp_code': digits}).is_valid())
+
+    def test_development_code_is_hidden_unless_both_settings_are_enabled(self):
+        session = self.client.session
+        session['otp_phone'] = '09121111111'
+        session.save()
+        otp = OTP.objects.create(phone_number='09121111111', code='1234',
+                                 expires_at=timezone.now() + timedelta(minutes=5))
+        OTP.objects.create(phone_number='09122222222', code='9876',
+                           expires_at=timezone.now() + timedelta(minutes=5))
+        for debug, enabled in ((True, True), (True, False), (False, True), (False, False)):
+            with self.subTest(debug=debug, enabled=enabled), override_settings(DEBUG=debug, SHOW_DEV_OTP=enabled):
+                response = self.client.get(reverse('accounts:otp_verify'))
+                if debug and enabled:
+                    self.assertContains(response, 'data-dev-otp-display')
+                    self.assertContains(response, '۱۲۳۴')
+                    self.assertNotContains(response, '۹۸۷۶')
+                else:
+                    self.assertNotContains(response, 'data-dev-otp-display')
+                    self.assertNotContains(response, '۱۲۳۴')
+                with patch('accounts.views.create_otp', return_value=otp):
+                    resent = self.client.post(reverse('accounts:resend_otp')).json()
+                if debug and enabled:
+                    self.assertEqual(resent['dev_otp_code'], '1234')
+                else:
+                    self.assertNotIn('dev_otp_code', resent)
+
+    @override_settings(DEBUG=True, SHOW_DEV_OTP=True)
+    def test_used_expired_or_locked_development_codes_are_not_exposed(self):
+        from accounts.services import development_otp_code
+        self.assertEqual(development_otp_code(None), '')
+        for fields in ({'is_used': True}, {'attempts': 3},
+                       {'expires_at': timezone.now() - timedelta(seconds=1)}):
+            otp = OTP(phone_number='09121111111', code='1234',
+                      expires_at=timezone.now() + timedelta(minutes=5))
+            for field, value in fields.items():
+                setattr(otp, field, value)
+            self.assertEqual(development_otp_code(otp), '')
+
+
+class AccountAreaTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='account-preview', first_name='علی',
+                                             last_name='رضایی', phone_number='09123334444')
+        self.client.force_login(self.user)
+
+    def test_submission_entry_requires_login_and_does_not_create_or_publish_events(self):
+        from matches.models import Event
+        count = Event.objects.count()
+        for category in ('theater', 'concert', 'event', 'invalid'):
+            response = self.client.get(reverse('accounts:event_submission_start'), {'category': category})
+            self.assertEqual(response.status_code, 200)
+            selected = response.context['selected_type']
+            self.assertEqual(selected['key'] if selected else None, category if category != 'invalid' else None)
+        self.assertEqual(Event.objects.count(), count)
+        self.client.logout()
+        response = self.client.get(reverse('accounts:event_submission_start'))
+        self.assertEqual(response.status_code, 302)
+
+    def test_profile_edit_updates_names_without_changing_identity_or_permissions(self):
+        response = self.client.post(reverse('accounts:edit_profile'), {
+            'first_name': 'مریم', 'last_name': 'احمدی', 'email': 'maryam@example.com',
+            'username': 'different', 'phone_number': '09129999999', 'is_staff': 'true',
+        })
+        self.assertRedirects(response, reverse('accounts:profile'))
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.get_full_name(), 'مریم احمدی')
+        self.assertEqual(self.user.username, 'account-preview')
+        self.assertEqual(self.user.phone_number, '09123334444')
+        self.assertFalse(self.user.is_staff)
+        self.assertContains(self.client.get(reverse('accounts:profile')), 'مریم احمدی')
+
+    def test_invalid_profile_edit_preserves_database_values(self):
+        response = self.client.post(reverse('accounts:edit_profile'), {
+            'first_name': '', 'last_name': 'احمدی', 'email': 'invalid',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('first_name', response.context['form'].errors)
+        self.assertIn('email', response.context['form'].errors)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.get_full_name(), 'علی رضایی')

@@ -1,0 +1,7 @@
+{% load persian_filters %}
+<article class="edu-card">
+  <a class="edu-card-link" href="{{ course.get_absolute_url }}">
+    <div class="edu-card-art">{% include 'education/_cover.html' %}<span class="edu-kind"><i class="fa-solid {% if course.kind == 'class' %}fa-location-dot{% else %}fa-play{% endif %}" aria-hidden="true"></i> {{ course.get_kind_display }}</span><span class="edu-card-arrow" aria-hidden="true"><i class="fa-solid fa-arrow-left"></i></span></div>
+    <div class="edu-card-content"><div class="edu-card-meta"><span>{{ course.get_subject_display }}</span><span>{{ course.get_level_display }}</span></div><h2>{{ course.title|to_persian }}</h2><p class="edu-teacher"><i class="fa-regular fa-user" aria-hidden="true"></i> {{ course.teacher_name|to_persian }}{% if course.academy %} · {{ course.academy|to_persian }}{% endif %}</p><p class="edu-card-summary">{{ course.summary|truncatechars:95|to_persian }}</p><div class="edu-card-bottom"><span>{% if course.price_toman %}<strong>{{ course.price_toman|floatformat:'0g'|persian_number }}</strong> <small>تومان</small>{% else %}<strong>رایگان</strong>{% endif %}</span><span class="edu-card-hint"><i class="fa-solid {% if course.kind == 'class' %}fa-location-dot{% else %}fa-list-ul{% endif %}" aria-hidden="true"></i> {% if course.kind == 'class' %}{{ course.city|to_persian }}{% else %}{{ course.lesson_count|default:'0'|to_persian }} درس{% endif %}</span></div></div>
+  </a>
+</article>

@@ -18,7 +18,7 @@
                     <div class="alert alert-warning">
                         <strong>{{ quota.user.get_full_name|default:quota.user.username }}</strong>
                         <br>
-                        <span class="text-muted">{{ quota.match.home_team }} vs {{ quota.match.away_team }}</span>
+                        <span class="text-muted">{{ quota.match.display_title }}</span>
                         <br>
                         <span class="text-muted">ظرفیت: {{ quota.quota }} | استفاده: {{ quota.used }} | باقی‌مانده: {{ quota.remaining }}</span>
                     </div>

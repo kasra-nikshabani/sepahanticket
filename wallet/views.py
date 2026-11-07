@@ -9,6 +9,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.cache import never_cache
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .models import (Wallet, Transaction, WithdrawalRequest,
                      is_wallet_enabled, is_wallet_charge_enabled, is_withdrawal_enabled,
@@ -49,7 +50,7 @@ def wallet_dashboard(request):
 
     total_withdrawals = Transaction.objects.filter(
         user=request.user,
-        transaction_type__in=['withdraw', 'ticket_purchase']
+        transaction_type__in=['withdraw', 'ticket_purchase', 'education_purchase', 'studio_rental']
     ).aggregate(total=Sum('amount'))['total'] or 0
 
     total_ticket_purchases = Transaction.objects.filter(
@@ -119,7 +120,12 @@ def wallet_charge(request):
         messages.info(request, 'برای شارژ کیف پول از دکمه‌ی «پرداخت و شارژ» استفاده کنید.')
         return redirect('wallet:charge')
 
-    return render(request, 'wallet/charge.html', {'wallet': wallet})
+    candidate = (request.GET.get('next') or '').strip()
+    safe_next = (candidate.startswith('/') and not candidate.startswith('//') and '\\' not in candidate
+                 and url_has_allowed_host_and_scheme(candidate, allowed_hosts=set()))
+    return render(request, 'wallet/charge.html', {
+        'wallet': wallet, 'charge_next': candidate if safe_next else reverse('wallet:dashboard'),
+    })
 
 
 # ============================================================

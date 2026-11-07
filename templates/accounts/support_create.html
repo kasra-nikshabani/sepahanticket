@@ -1,0 +1,7 @@
+{% extends 'accounts/account_base.html' %}{% load static persian_filters %}
+{% block title %}تیکت جدید | دیدآور{% endblock %}
+{% block extra_css %}{{ block.super }}<link rel="stylesheet" href="{% static 'events/support.css' %}">{% endblock %}
+{% block account_title %}{% if change_program %}درخواست تغییر برنامه{% else %}چطور می‌توانیم کمکتان کنیم؟{% endif %}{% endblock %}
+{% block account_intro %}{% if change_program %}برنامه منتشر شده است؛ تغییرات را در تیکت بنویسید تا ادمین بررسی و اعمال کند.{% else %}نوع درخواست را انتخاب کنید و موضوع را بنویسید. پاسخ‌ها در حساب شما قابل پیگیری است.{% endif %}{% endblock %}
+{% block account_content %}{% if studio %}<div class="support-closed-note">پلاتوی مرتبط: {{ studio.title|to_persian }}. برای تغییر معرفی پلاتو یا پیگیری و لغو رزرو، جزئیات و شمارهٔ رزرو را بنویسید.</div>{% endif %}{% if education_course %}<div class="support-closed-note">آموزش مرتبط: {{ education_course.title|to_persian }}. پس از انتشار، تغییرات را در همین تیکت از مدیریت درخواست کنید.</div>{% endif %}<section class="support-create"><form method="post" data-support-create>{% csrf_token %}{% include 'support/_fields.html' %}<div class="support-form-actions"><button type="submit" class="support-button">ثبت تیکت <i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button><a class="support-button support-button-light" href="{% url 'accounts:support_list' %}">بازگشت به تیکت‌ها</a></div></form></section>{% endblock %}
+{% block account_js %}<script src="{% static 'events/support.js' %}"></script>{% endblock %}

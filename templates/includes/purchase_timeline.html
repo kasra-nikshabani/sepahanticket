@@ -2,13 +2,13 @@
 <div class="purchase-timeline">
     <div class="pt-step {% if current_step > 1 %}pt-done{% elif current_step == 1 %}pt-active{% endif %}">
         <div class="pt-circle">{% if current_step > 1 %}<i class="fas fa-check"></i>{% else %}۱{% endif %}</div>
-        <div class="pt-label">طبقه و تیم</div>
+        <div class="pt-label">{% if match.is_cultural %}انتخاب سانس{% else %}طبقه و تیم{% endif %}</div>
     </div>
     <div class="pt-line {% if current_step > 1 %}pt-done{% endif %}"></div>
 
     <div class="pt-step {% if current_step > 2 %}pt-done{% elif current_step == 2 %}pt-active{% endif %}">
         <div class="pt-circle">{% if current_step > 2 %}<i class="fas fa-check"></i>{% else %}۲{% endif %}</div>
-        <div class="pt-label">انتخاب سکو</div>
+        <div class="pt-label">انتخاب بخش</div>
     </div>
     <div class="pt-line {% if current_step > 2 %}pt-done{% endif %}"></div>
 
@@ -72,10 +72,10 @@
     }
 
     .pt-step.pt-active .pt-circle {
-        background: linear-gradient(135deg, #D4AF37, #B8960F);
-        border-color: #D4AF37;
+        background: linear-gradient(135deg, #2467a8, #194d82);
+        border-color: #2467a8;
         color: #1A1A2E;
-        box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
+        box-shadow: 0 0 0 4px rgba(36, 103, 168, 0.2);
     }
 
     .pt-step.pt-active .pt-label {
@@ -86,7 +86,7 @@
     .pt-step.pt-done .pt-circle {
         background: #1A1A2E;
         border-color: #1A1A2E;
-        color: #D4AF37;
+        color: #2467a8;
     }
 
     .pt-step.pt-done .pt-label {

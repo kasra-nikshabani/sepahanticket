@@ -1,0 +1,20 @@
+{% load persian_filters venue_geometry %}
+<div class="detail-hall" data-layout-for="{{ venue.pk }}" hidden aria-label="چینش صندلی {{ venue.name|to_persian }}">
+    {% for section in venue.seating_layout.sections %}
+    <div class="detail-hall-section">
+        <h3>{{ section.name|to_persian }}</h3>
+        <div class="detail-hall-scroll" dir="{{ venue.seating_layout.direction|default:'rtl' }}">
+            {% if venue.seating_layout.stage != 'bottom' %}<div class="detail-hall-stage">صحنه</div>{% endif %}
+            {% for row in section.rows %}{% with geometry=row|curved_row %}
+            <div class="detail-hall-row">
+                <span>ردیف {{ row.number|to_persian }}</span>
+                <div class="detail-hall-seats align-{{ row.alignment|default:'center' }}" style="padding-top:{{ geometry.top }}px;padding-bottom:{{ geometry.bottom }}px">
+                    {% for cell in geometry.cells %}{% if cell.number %}<span class="detail-hall-seat" style="translate:0 {{ cell.y }}px">{{ cell.number|to_persian }}</span>{% else %}<span class="detail-hall-gap" aria-hidden="true"></span>{% endif %}{% endfor %}
+                </div>
+            </div>
+            {% endwith %}{% endfor %}
+            {% if venue.seating_layout.stage == 'bottom' %}<div class="detail-hall-stage">صحنه</div>{% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>

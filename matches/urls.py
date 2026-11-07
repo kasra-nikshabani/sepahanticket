@@ -1,12 +1,19 @@
 from django.urls import path
 from django.views.generic import TemplateView
 from . import views
+from . import event_views
 
 app_name = 'matches'
 
 urlpatterns = [
     # ===== صفحات عمومی =====
-    path('', views.home, name='home'),
+    path('', event_views.homepage, name='home'),
+    path('events/', event_views.catalogue, name='event_catalogue'),
+    path('events/search/suggestions/', event_views.search_suggestions, name='search_suggestions'),
+    path('events/<int:event_id>/', event_views.event_detail, name='event_detail'),
+    path('manage/events/', event_views.event_list, name='event_list'),
+    path('manage/events/create/', event_views.event_edit, name='event_create'),
+    path('manage/events/<int:event_id>/edit/', event_views.event_edit, name='event_edit'),
     path('match/<int:match_id>/', views.match_detail, name='match_detail'),
     path('match/<int:match_id>/select-row/', views.select_row, name='select_row'),
     path('match/<int:match_id>/block-map/', views.show_block_map, name='block_map'),

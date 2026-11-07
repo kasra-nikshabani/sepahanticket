@@ -8,7 +8,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>{% block title %}فروش بلیط سپاهان{% endblock %}</title>
+    <title>{% block title %}دیدآور | هر رویداد، یک دیدار.{% endblock %}</title>
 
     <!-- Bootstrap 5 RTL (لوکال -- در صورت قطعی اینترنت خارج هم کار کند) -->
     <link rel="stylesheet" href="{% static 'vendor/bootstrap/css/bootstrap.rtl.min.css' %}"/>
@@ -18,7 +18,7 @@
     <link href="{% static 'vendor/vazirmatn/Vazirmatn-font-face.css' %}" rel="stylesheet"/>
     <!-- استایل سفارشی -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}"/>
-    <link rel="icon" type="image/png" href="{% static 'img/sepahan-logo.png' %}"/>
+
 
     <style>
         /* ===== پس‌زمینه ثابت برای همه صفحات ===== */
@@ -28,7 +28,7 @@
         }
 
         body {
-            background: url("{% static 'img/site-background.webp' %}") no-repeat center center fixed;
+            background: linear-gradient(145deg, #f8f6fc, #edf0f7);
             background-size: cover;
             min-height: 100vh;
             position: relative;
@@ -40,7 +40,7 @@
             color: #ffffff;
             padding: 50px 0 20px 0;
             margin-top: 60px;
-            border-top: 3px solid #D4AF37;
+            border-top: 3px solid #2467a8;
             position: relative;
             z-index: 2;
             box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
@@ -49,7 +49,7 @@
         .footer-logo {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #D4AF37;
+            color: #2467a8;
             margin-bottom: 15px;
         }
 
@@ -76,7 +76,7 @@
             right: 0;
             width: 40px;
             height: 3px;
-            background: #D4AF37;
+            background: #2467a8;
             border-radius: 3px;
         }
 
@@ -103,7 +103,7 @@
         }
 
         .footer-links a:hover {
-            color: #D4AF37;
+            color: #2467a8;
             transform: translateX(-5px);
         }
 
@@ -116,7 +116,7 @@
         }
 
         .footer-contact i {
-            color: #D4AF37;
+            color: #2467a8;
             font-size: 16px;
             width: 20px;
             text-align: center;
@@ -137,13 +137,13 @@
         }
 
         .social-link:hover {
-            background: #D4AF37;
+            background: #2467a8;
             color: #1A1A2E;
             transform: translateY(-3px);
         }
 
         .footer-divider {
-            border-color: rgba(212, 175, 55, 0.2);
+            border-color: rgba(36, 103, 168, 0.2);
             margin: 30px 0 20px 0;
         }
 
@@ -154,7 +154,7 @@
         }
 
         .badge-gold {
-            background: #D4AF37;
+            background: #2467a8;
             color: #1A1A2E;
             padding: 5px 12px;
             border-radius: 20px;
@@ -213,7 +213,7 @@
         /* ===== هدر ادمین/VIP ===== */
         .admin-header {
             background: #1A1A2E;
-            border-bottom: 2px solid rgba(212, 175, 55, 0.15);
+            border-bottom: 2px solid rgba(36, 103, 168, 0.15);
             padding: 10px 0;
             position: sticky;
             top: 0;
@@ -238,17 +238,17 @@
         }
 
         .header-brand i {
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .header-brand:hover {
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .sidebar-toggle {
             background: transparent;
             border: none;
-            color: #D4AF37;
+            color: #2467a8;
             font-size: 24px;
             padding: 4px 12px;
             cursor: pointer;
@@ -262,7 +262,7 @@
         /* ===== هدر معمولی ===== */
         .custom-header {
             background: #1A1A2E;
-            border-bottom: 2px solid rgba(212, 175, 55, 0.2);
+            border-bottom: 2px solid rgba(36, 103, 168, 0.2);
         }
 
         /* ===== سایدبار ادمین ===== */
@@ -276,7 +276,7 @@
             width: 260px;
             min-height: calc(100vh - 70px);
             background: #1A1A2E;
-            border-left: 1px solid rgba(212, 175, 55, 0.1);
+            border-left: 1px solid rgba(36, 103, 168, 0.1);
             flex-shrink: 0;
             overflow-y: auto;
             padding: 16px 0;
@@ -295,12 +295,12 @@
         }
 
         .admin-sidebar::-webkit-scrollbar-thumb {
-            background: rgba(212, 175, 55, 0.3);
+            background: rgba(36, 103, 168, 0.3);
             border-radius: 4px;
         }
 
         .admin-sidebar .nav-header {
-            color: #D4AF37;
+            color: #2467a8;
             font-size: 14px;
             font-weight: 700;
             padding: 14px 20px 8px;
@@ -322,31 +322,31 @@
         }
 
         .admin-sidebar .nav-link:hover {
-            color: #D4AF37;
-            background: rgba(212, 175, 55, 0.08);
+            color: #2467a8;
+            background: rgba(36, 103, 168, 0.08);
         }
 
         .admin-sidebar .nav-link.active {
-            color: #D4AF37;
-            background: rgba(212, 175, 55, 0.12);
-            border-right: 3px solid #D4AF37;
+            color: #2467a8;
+            background: rgba(36, 103, 168, 0.12);
+            border-right: 3px solid #2467a8;
         }
 
         .admin-sidebar .nav-link i {
             width: 22px;
             text-align: center;
             font-size: 17px;
-            color: rgba(212, 175, 55, 0.6);
+            color: rgba(36, 103, 168, 0.6);
         }
 
         .admin-sidebar .nav-link:hover i {
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .admin-sidebar .nav-divider {
             height: 1px;
             margin: 8px 20px;
-            background: linear-gradient(90deg, rgba(212, 175, 55, 0.3), transparent);
+            background: linear-gradient(90deg, rgba(36, 103, 168, 0.3), transparent);
             list-style: none;
         }
 
@@ -387,7 +387,7 @@
         .sidebar-toggle {
             background: transparent;
             border: none;
-            color: #D4AF37;
+            color: #2467a8;
             font-size: 24px;
             padding: 4px 12px;
             cursor: pointer;
@@ -420,7 +420,7 @@
         }
 
         .page-header .header-left h2 i {
-            color: #D4AF37;
+            color: #2467a8;
             margin-left: 12px;
         }
 
@@ -440,7 +440,7 @@
         }
 
         .page-header .header-left .match-meta i {
-            color: #D4AF37;
+            color: #2467a8;
             width: 18px;
         }
 
@@ -459,10 +459,10 @@
         }
 
         .btn-back:hover {
-            border-color: #D4AF37;
-            color: #D4AF37;
+            border-color: #2467a8;
+            color: #2467a8;
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.15);
+            box-shadow: 0 4px 15px rgba(36, 103, 168, 0.15);
         }
 
         @media (max-width: 768px) {
@@ -493,7 +493,7 @@
             right: 0;
             z-index: 1060;
             background: #1A1A2E;
-            border-top: 2px solid rgba(212, 175, 55, 0.20);
+            border-top: 2px solid rgba(36, 103, 168, 0.20);
             box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.35);
             padding: 12px 0 env(safe-area-inset-bottom, 14px) 0;
             transition: none;
@@ -597,23 +597,23 @@
         }
 
         .bottom-nav-item:hover {
-            color: #D4AF37;
+            color: #2467a8;
             text-decoration: none;
-            background: rgba(212, 175, 55, 0.08);
+            background: rgba(36, 103, 168, 0.08);
         }
 
         .bottom-nav-item:hover i {
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .bottom-nav-item.active {
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .bottom-nav-item.active i {
-            color: #D4AF37;
+            color: #2467a8;
             transform: translateY(-3px);
-            filter: drop-shadow(0 2px 10px rgba(212, 175, 55, 0.30));
+            filter: drop-shadow(0 2px 10px rgba(36, 103, 168, 0.30));
         }
 
         .bottom-nav-item.active::after {
@@ -624,9 +624,9 @@
             transform: translateX(-50%);
             width: 24px;
             height: 3px;
-            background: #D4AF37;
+            background: #2467a8;
             border-radius: 0 0 4px 4px;
-            box-shadow: 0 2px 8px rgba(212, 175, 55, 0.30);
+            box-shadow: 0 2px 8px rgba(36, 103, 168, 0.30);
         }
 
         .bottom-nav-item.logout-item i {
@@ -642,11 +642,11 @@
         }
 
         .bottom-nav-item.login-item i {
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .bottom-nav-item.register-item i {
-            color: #4CAF50;
+            color: #377cc4;
         }
 
         @media (max-width: 480px) {
@@ -732,7 +732,11 @@
         }
     </style>
 
+    <link rel="stylesheet" href="{% static 'events/header.css' %}"><link rel="stylesheet" href="{% static 'events/search.css' %}">
+    <link rel="stylesheet" href="{% static 'events/messages.css' %}">
+    <link rel="stylesheet" href="{% static 'events/footer.css' %}">
     {% block extra_css %}{% endblock %}
+    <link rel="stylesheet" href="{% static 'events/usability.css' %}">
 </head>
 
 <body class="{% if user.is_authenticated and user.user_type in 'admin,vip' %}sidebar-mode{% endif %} {% if user.user_type == 'vip' %}no-bottom-nav{% endif %}">
@@ -743,24 +747,7 @@
     <!-- ============================================================ -->
     <!--  هدر (بر اساس نوع کاربر)                                     -->
     <!-- ============================================================ -->
-    {% if user.is_authenticated and user.user_type in 'admin,vip' %}
-        <!-- هدر مختص ادمین / VIP -->
-        <header class="admin-header">
-            <div class="container-fluid">
-                <div class="admin-header-inner">
-                    <a class="header-brand" href="{% url 'matches:home' %}">
-                        <i class="fas fa-futbol"></i> بلیط سپاهان
-                    </a>
-                    <button class="sidebar-toggle" id="sidebarToggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                </div>
-            </div>
-        </header>
-    {% else %}
-        <!-- هدر معمولی (مهمان و کاربران عادی) -->
-        {% include 'includes/header.html' %}
-    {% endif %}
+    {% include 'includes/header.html' with show_sidebar=True %}
 
     <!-- ============================================================ -->
     <!--  بدنه اصلی (سایدبار + محتوا)                                 -->
@@ -783,11 +770,13 @@
             {% if messages %}
                 <div class="messages">
                     {% for message in messages %}
+                        {% if 'welcome' in message.tags or 'farewell' in message.tags %}{% include 'includes/welcome_message.html' %}{% else %}
                         <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
                             <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
                             {{ message }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="بستن"></button>
                         </div>
+                        {% endif %}
                     {% endfor %}
                 </div>
             {% endif %}
@@ -920,6 +909,7 @@
 <script src="{% static 'vendor/jquery/jquery-3.6.0.min.js' %}"></script>
 <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'js/script.js' %}"></script>
+<script src="{% static 'events/messages.js' %}"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -982,6 +972,6 @@
     });
 </script>
 
-{% block extra_js %}{% endblock %}
+<script src="{% static 'events/search.js' %}"></script>{% block extra_js %}{% endblock %}
 </body>
 </html>

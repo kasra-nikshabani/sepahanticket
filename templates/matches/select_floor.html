@@ -30,7 +30,7 @@
         }
 
         .step-title i {
-            color: #D4AF37;
+            color: #2467a8;
             background: #f8f9fa;
             width: 35px;
             height: 35px;
@@ -61,15 +61,15 @@
         }
 
         .select-item:hover {
-            border-color: #D4AF37;
+            border-color: #2467a8;
             transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.1);
+            box-shadow: 0 5px 15px rgba(36, 103, 168, 0.1);
         }
 
         .select-item.selected {
-            border-color: #D4AF37;
+            border-color: #2467a8;
             background: #fffcf5;
-            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.2);
+            box-shadow: 0 5px 15px rgba(36, 103, 168, 0.2);
         }
 
         /* استایل لوگو تیم‌ها */
@@ -124,7 +124,7 @@
             width: 100%;
             padding: 15px;
             background: linear-gradient(135deg, #1A1A2E, #16213E);
-            color: #D4AF37;
+            color: #2467a8;
             border: none;
             border-radius: 12px;
             font-weight: 700;
@@ -154,7 +154,7 @@
             content: '';
             position: absolute; inset: auto 0 10px 0; margin: 0 auto;
             width: 20px; height: 20px; border-radius: 50%;
-            border: 2.5px solid rgba(212,175,55,.3); border-top-color: #D4AF37;
+            border: 2.5px solid rgba(36, 103, 168,.3); border-top-color: #2467a8;
             animation: spin .7s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -165,7 +165,7 @@
     <div class="selection-container">
         {% include 'includes/purchase_timeline.html' with current_step=1 %}
         <div class="text-center mb-4">
-            <h2 style="color: white">{{ match.home_team }} 🆚 {{ match.away_team }}</h2>
+            <h2 style="color: white">{{ match.display_title }}</h2>
             <p style="color: white">{{ match.date_time|date:"Y/m/d - H:i" }} | {{ match.stadium.name }}</p>
         </div>
 

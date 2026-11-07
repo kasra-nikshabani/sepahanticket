@@ -11,23 +11,23 @@
     .page-header {
         background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
         border-radius: 16px; padding: 20px 26px; color: #fff; margin-bottom: 16px;
-        border-bottom: 3px solid #D4AF37; display: flex; justify-content: space-between;
+        border-bottom: 3px solid #2467a8; display: flex; justify-content: space-between;
         align-items: center; flex-wrap: wrap; gap: 14px;
     }
-    .page-header h2 { margin: 0; color: #D4AF37; font-weight: 800; font-size: 21px;
+    .page-header h2 { margin: 0; color: #2467a8; font-weight: 800; font-size: 21px;
         display: flex; align-items: center; gap: 10px; }
     .page-header p { margin: 5px 0 0; opacity: .7; font-size: .85rem; }
     .header-link {
         background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2);
         padding: 8px 16px; border-radius: 9px; text-decoration: none; font-size: 13px; font-weight: 600;
     }
-    .header-link:hover { color: #D4AF37; }
+    .header-link:hover { color: #2467a8; }
 
     /* ===== شمارنده‌ها: هرکدام یک فیلترِ کلیک‌شدنی است ===== */
     .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
     .kpi-card {
         background: #fff; border-radius: 12px; padding: 13px 16px; border: 1px solid #eee;
-        border-top: 3px solid #D4AF37; text-decoration: none; display: block; transition: all .2s;
+        border-top: 3px solid #2467a8; text-decoration: none; display: block; transition: all .2s;
     }
     .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
     .kpi-card .num { font-size: 21px; font-weight: 800; color: #1A1A2E; }
@@ -49,11 +49,11 @@
         padding: 16px 20px; margin-bottom: 16px;
     }
     .finance-title { font-weight: 700; color: #1A1A2E; margin-bottom: 4px; font-size: 14px; }
-    .finance-title i { color: #D4AF37; margin-left: 6px; }
+    .finance-title i { color: #2467a8; margin-left: 6px; }
     .finance-hint { color: #6c757d; font-size: 12.5px; line-height: 1.85; margin: 0 0 10px; }
     .btn-file {
         display: inline-flex; align-items: center; gap: 6px; padding: 8px 15px;
-        border-radius: 9px; border: none; background: linear-gradient(135deg, #D4AF37, #B8960F);
+        border-radius: 9px; border: none; background: linear-gradient(135deg, #2467a8, #194d82);
         color: #1A1A2E; font-weight: 700; font-size: 13px; font-family: inherit;
         text-decoration: none; cursor: pointer; margin: 0 0 6px 6px;
     }
@@ -76,7 +76,7 @@
         font-weight: 600; color: #1A1A2E; border: 1px solid #e8eaed; background: #fafafa;
         white-space: nowrap;
     }
-    .tab.active { background: linear-gradient(135deg, #D4AF37, #B8960F); border-color: #D4AF37; }
+    .tab.active { background: linear-gradient(135deg, #2467a8, #194d82); border-color: #2467a8; }
     .tab.flag { background: #fff4ec; border-color: #f3c9a6; color: #8a4b1a; }
     .tab.flag.active { background: #e8873a; border-color: #e8873a; color: #fff; }
     .toolbar .spacer { margin-right: auto; }
@@ -102,7 +102,7 @@
         display: flex; gap: 9px; align-items: center; flex-wrap: wrap;
     }
     .bulkbar[hidden] { display: none; }
-    .bulkbar .count { font-weight: 800; color: #D4AF37; white-space: nowrap; }
+    .bulkbar .count { font-weight: 800; color: #2467a8; white-space: nowrap; }
     .bulkbar input[type=text] {
         flex: 1; min-width: 190px; padding: 8px 12px; border: 1px solid #3a3a52;
         border-radius: 9px; background: #2a2a3e; color: #fff; font-family: inherit; font-size: 13px;
@@ -124,7 +124,7 @@
     table.wd { width: 100%; border-collapse: collapse; font-size: 13.5px; }
     table.wd thead th {
         background: #fafbfc; padding: 11px 12px; text-align: right; font-weight: 700;
-        color: #1A1A2E; font-size: 12.5px; border-bottom: 2px solid #D4AF37; white-space: nowrap;
+        color: #1A1A2E; font-size: 12.5px; border-bottom: 2px solid #2467a8; white-space: nowrap;
     }
     table.wd tbody td { padding: 11px 12px; border-bottom: 1px solid #f1f3f5; vertical-align: middle; }
     table.wd tbody tr:hover { background: #fcfbf7; }
@@ -141,13 +141,13 @@
     }
     .badge.pending { background: #fff3cd; color: #856404; }
     .badge.approved { background: #cce5ff; color: #004085; }
-    .badge.paid { background: #d4edda; color: #155724; }
+    .badge.paid { background: #dde0e4; color: #0d355f; }
     .badge.rejected { background: #f8d7da; color: #721c24; }
     .badge.needs_correction { background: #ffe0cc; color: #8a4b1a; }
     .badge.cancelled { background: #e9ecef; color: #495057; }
 
     .vtag { font-size: 11.5px; font-weight: 700; white-space: nowrap; }
-    .vtag.ok { color: #1e7e34; }
+    .vtag.ok { color: #134d89; }
     .vtag.bad { color: #c0392b; }
     .vtag.unk { color: #8a6d1a; }
 
@@ -155,7 +155,7 @@
         background: #fff; border: 1px solid #e2e6ea; border-radius: 8px; padding: 5px 10px;
         font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; color: #1A1A2E;
     }
-    .rowbtn:hover { border-color: #D4AF37; }
+    .rowbtn:hover { border-color: #2467a8; }
 
     /* ===== ردیف جزئیات ===== */
     tr.detail > td { background: #fbfcfd; padding: 0; border-bottom: 2px solid #eef1f4; }
@@ -170,7 +170,7 @@
     .check-line {
         border-radius: 9px; padding: 9px 13px; font-size: 12.5px; line-height: 1.85; margin-bottom: 12px;
     }
-    .check-line.match { background: #eaf7ee; border: 1px solid #bfe3c9; color: #1e5c30; }
+    .check-line.match { background: #f0f0f1; border: 1px solid #cad1d8; color: #143c66; }
     .check-line.mismatch { background: #fdeceb; border: 1px solid #f5b7b1; color: #922b21; font-weight: 600; }
     .check-line.unknown { background: #fff8e6; border: 1px solid #f0dca8; color: #6b5400; }
 
@@ -185,7 +185,7 @@
         font-family: inherit; cursor: pointer; color: #fff; white-space: nowrap;
     }
     .btn-act.approve { background: #17a2b8; }
-    .btn-act.paid { background: #28a745; }
+    .btn-act.paid { background: #1966b6; }
     .btn-act.reject { background: #dc3545; }
     .btn-act.correct { background: #e8873a; }
 
@@ -198,7 +198,7 @@
         border-radius: 8px; border: 1px solid #e8eaed; background: #fff; color: #1A1A2E;
         text-decoration: none; font-size: 13px; padding: 0 10px;
     }
-    .pager .current { background: linear-gradient(135deg, #D4AF37, #B8960F); border-color: #D4AF37; font-weight: 700; }
+    .pager .current { background: linear-gradient(135deg, #2467a8, #194d82); border-color: #2467a8; font-weight: 700; }
 
     @media (max-width: 900px) {
         .hide-sm { display: none; }

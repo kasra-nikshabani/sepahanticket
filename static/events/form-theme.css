@@ -1,0 +1,115 @@
+/* Muted blue-grey surfaces for comfortable long form sessions. */
+.management-site,.account-page,.auth-page{
+  --green:#2467a8;--green-dark:#194d82;--ink:#233247;--muted:#64748b;
+  --line:#d2dce8;--panel:#edf2f8;--bg:#e7edf5;
+  --form-surface:#edf2f8;--field-surface:#e1e9f2;--field-border:#9aabc0;
+  --soft-surface:#dce6f1;--focus:#3d6590;
+  background:var(--bg);color:var(--ink);
+}
+.management-site{min-height:100vh}
+.management-site .panel-sidebar,.management-site .panel-topbar,
+.management-site .panel-box,.management-site .panel-stat,
+.management-site .program-seat-map,
+.account-page .account-sidebar,.account-page .account-panel,
+.account-page .wizard-shell,.auth-page .auth-layout,.auth-page .auth-form-panel{
+  background:var(--form-surface);border-color:var(--line);
+}
+.management-site .panel-nav-link.is-active,.management-site .panel-nav-link:hover,
+.account-page .account-menu a.active,.account-page .account-menu a:hover{
+  background:var(--soft-surface);color:var(--green);border-color:var(--line);
+}
+.management-site .panel-nav-link.is-active>i{color:var(--green)}
+.management-site .panel-field input:not([type=checkbox]):not([type=radio]):not([type=range]),
+.management-site .panel-field select,.management-site .panel-field textarea,
+.management-site .panel-search input,.management-site .panel-search select,
+.management-site .program-filters select,
+.account-page .wizard-field input:not([type=checkbox]):not([type=radio]):not([type=range]),
+.account-page .wizard-field select,.account-page .wizard-field textarea,
+.account-page .program-filters input,.account-page .program-filters select,
+.account-page .account-ticket-filters select,
+.management-site .venue-tool input:not([type=range]),.management-site .venue-tool select,
+.account-page .venue-tool input:not([type=range]),.account-page .venue-tool select,
+.management-site .venue-row-tools select,.management-site .venue-row-tools input,
+.account-page .venue-row-tools select,.account-page .venue-row-tools input,
+.account-page .venue-reference-section,
+.account-page .auth-input-wrap,.auth-page .auth-input-wrap,
+.auth-page .otp-digit{
+  background:var(--field-surface);border-color:var(--field-border);color:var(--ink);box-shadow:none;
+}
+.account-page .auth-input-wrap input,.auth-page .auth-input-wrap input{background:transparent;color:var(--ink)}
+.management-site input::placeholder,.management-site textarea::placeholder,
+.account-page input::placeholder,.account-page textarea::placeholder,
+.auth-page input::placeholder{color:#606c79;opacity:1}
+.management-site .panel-field>p:not(.panel-field-error),
+.management-site .panel-field>label,.account-page .wizard-help,
+.account-page .wizard-field>label,.account-page .wizard-field label>small,
+.account-page .venue-plan-header p,.management-site .venue-plan-header p,
+.account-page .venue-tool>label,.management-site .venue-tool>label,
+.account-page .venue-submit-note,.management-site .venue-submit-note,
+.account-page .auth-field label,.auth-page .auth-field label{color:var(--muted)}
+.management-site .panel-form-note,.management-site .panel-field.is-checkbox,
+.management-site .panel-scene-form,.management-site .panel-shortcuts>a,
+.account-page .wizard-checkbox,.account-page .wizard-upload-box,
+.account-page .wizard-steps,.account-page .wizard-review,
+.account-page .wizard-category input:checked+span,
+.account-page .venue-mode input:checked+span,
+.management-site .venue-tools,.account-page .venue-tools,
+.management-site .venue-plan-status,.account-page .venue-plan-status{
+  background:var(--soft-surface);border-color:var(--line);color:var(--ink);
+}
+.management-site .venue-editor,.management-site .venue-designer,
+.account-page .venue-editor,.account-page .venue-designer,
+.account-page .venue-reference,.account-page .venue-mode label>span,
+.account-page .wizard-category label>span,
+.management-site .program-map-scroll{background:var(--form-surface);border-color:var(--line)}
+.management-site .panel-btn,.management-site .account-btn,
+.account-page .account-btn,.auth-page .auth-submit{
+  background:var(--green);border-color:var(--green);color:#fff;box-shadow:none;
+}
+.management-site .panel-btn:hover,.management-site .account-btn:hover,
+.account-page .account-btn:hover,.auth-page .auth-submit:hover{
+  background:var(--green-dark);border-color:var(--green-dark);color:#fff;box-shadow:none;
+}
+.management-site .panel-btn-light,.management-site .account-btn-light,
+.account-page .account-btn-light{
+  background:var(--soft-surface);border-color:var(--line);color:var(--green-dark);
+}
+.management-site .panel-btn-light:hover,.management-site .account-btn-light:hover,
+.account-page .account-btn-light:hover{background:#d1d3d6;border-color:#a0a7af;color:var(--green-dark)}
+.management-site :is(input,select,textarea):focus,
+.account-page :is(input,select,textarea):focus,
+.auth-page :is(input,select,textarea):focus{
+  outline:2px solid var(--focus);outline-offset:2px;box-shadow:none;
+}
+.account-page .auth-input-wrap:focus-within,.auth-page .auth-input-wrap:focus-within{
+  border-color:var(--focus);box-shadow:0 0 0 2px #3d567125;
+}
+.account-page .auth-input-wrap input:focus,.auth-page .auth-input-wrap input:focus{outline:none}
+.management-site :is(button,a):focus-visible,
+.account-page :is(button,a):focus-visible,
+.auth-page :is(button,a):focus-visible{outline:2px solid var(--focus);outline-offset:3px}
+.management-site .panel-field :disabled,.account-page .wizard-field :disabled{
+  background:#d7d8d9;border-color:#babdc1;color:#5f6a75;
+}
+.auth-page .auth-icon,.account-page .account-avatar,
+.management-site .panel-brand>span,.management-site .panel-stat-icon{
+  background:var(--soft-surface);border-color:var(--line);color:var(--green);
+}
+.management-site .panel-badge.is-green,.management-site .panel-nav-link>b{
+  background:#d7d9db;color:#2c455e;
+}
+.management-site .panel-btn-white{background:var(--form-surface);border-color:var(--line);color:var(--green-dark)}
+.management-site .panel-btn-white:hover{background:var(--soft-surface);color:var(--green-dark)}
+.management-site .venue-row-action,.account-page .venue-row-action{background:var(--field-surface);border-color:var(--field-border);color:var(--ink)}
+.management-site .venue-seat,.account-page .venue-seat{background:#d6d8db;border-color:#8d9aa7;border-bottom-color:#566d84;color:#2d4053}
+.management-site .venue-seat:hover,.account-page .venue-seat:hover{background:#c7cbcf;border-color:#68819a}
+.management-site .venue-seat.is-gap,.account-page .venue-seat.is-gap{background:#e4e5e6;border-color:#b2b7bd;color:#5a6d81}
+.management-site .venue-seat.is-disabled,.account-page .venue-seat.is-disabled{background:#dbdcde;border-color:#b7bbbf;color:#606b76}
+.management-site .venue-stage,.account-page .venue-stage{background:#d3d5d8;border-color:#a7b1bb;color:#374f67}
+.management-site .map-state-sold{background:var(--green);border-color:var(--green-dark);color:#fff}
+.auth-page .otp-code-slots>span,.auth-page .otp-code-control:not([data-enhanced])>input{
+  background:var(--field-surface);border-color:var(--field-border);color:var(--ink);
+}
+.auth-page .otp-code-control:not(.has-error):focus-within .otp-code-slots>span.is-active{
+  background:var(--soft-surface);border-color:var(--focus);box-shadow:0 0 0 2px #3d567125;
+}

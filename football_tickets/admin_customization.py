@@ -11,6 +11,7 @@ get_app_list همون تابعیه که هم سایدبار و هم صفحه‌�
 رو می‌سازه، پس این تغییر روی هر دو اعمال می‌شه.
 """
 import types
+from django.conf import settings
 
 from django.contrib.admin import site as default_admin_site
 
@@ -25,6 +26,10 @@ PINNED_MODELS = [
 
 def _pinned_get_app_list(self, request, app_label=None):
     app_list = _original_get_app_list(self, request, app_label=app_label)
+
+    if getattr(settings, 'CULTURAL_PLATFORM', False):
+        for app in app_list:
+            app['models'] = [model for model in app['models'] if model['object_name'] not in ('VIPQuota', 'SpecialCode')]
 
     pinned_groups = []
     for target_app_label, target_object_name, group_label in PINNED_MODELS:
@@ -52,6 +57,8 @@ def _pinned_get_app_list(self, request, app_label=None):
 
 
 default_admin_site.get_app_list = types.MethodType(_pinned_get_app_list, default_admin_site)
+default_admin_site.site_header = 'مدیریت دیدآور'
+default_admin_site.site_title = 'دیدآور'
 
 
 # ============================================================

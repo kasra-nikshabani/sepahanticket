@@ -1,131 +1,14 @@
-{% load currency_filters %}
-<aside class="admin-sidebar">
-    <nav class="sidebar-nav">
-        <ul class="nav flex-column">
-
-            <!-- ===== دسته‌بندی: مسابقات ===== -->
-            <li class="nav-header">مسابقات</li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'matches:admin_match_list' %}">
-                    <i class="fas fa-list"></i> مدیریت مسابقات
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'matches:admin_block_list' %}">
-                    <i class="fas fa-layer-group"></i> مدیریت بلوک‌ها
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'tickets:row_occupancy' %}">
-                    <i class="fas fa-chair"></i> اشغال صندلی‌ها
-                </a>
-            </li>
-
-            <!-- ===== خط جداکننده ===== -->
-            <li class="nav-divider"></li>
-
-            <!-- ===== دسته‌بندی: بلیط‌ها ===== -->
-            <li class="nav-header">بلیط‌ها</li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'tickets:user_tickets' %}">
-                    <i class="fas fa-ticket-alt"></i> بلیط‌های من
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'tickets:bulk_issue' %}">
-                    <i class="fas fa-ticket-alt"></i> صدور گروهی
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'tickets:admin_issue_ticket' %}">
-                    <i class="fas fa-user-plus"></i> صدور دستی بلیط
-                </a>
-            </li>
-
-            <!-- ===== خط جداکننده ===== -->
-            <li class="nav-divider"></li>
-
-            <!-- ===== دسته‌بندی: کاربران ===== -->
-            <li class="nav-header">کاربران</li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'accounts:admin_user_list' %}">
-                    <i class="fas fa-users"></i> کاربران عادی
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'tickets:manage_vip_users' %}">
-                    <i class="fas fa-users-cog"></i> مدیریت کاربران ویژه
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'tickets:admin_vip_quota_list' %}">
-                    <i class="fas fa-star"></i> تخصیص ظرفیت بلیط ویژه
-                </a>
-            </li>
-
-            <!-- ===== خط جداکننده ===== -->
-            <li class="nav-divider"></li>
-
-            <!-- ===== دسته‌بندی: گزارش‌ها ===== -->
-            <li class="nav-header">گزارش‌ها</li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'tickets:sales_report' %}">
-                    <i class="fas fa-chart-bar"></i> گزارش فروش
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'matches:match_financial_list' %}">
-                    <i class="fas fa-file-invoice"></i> گزارش مالی
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'tickets:admin_discount_list' %}">
-                    <i class="fas fa-tags"></i> کدهای تخفیف
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'wallet:admin_withdrawal_list' %}">
-                    <i class="fas fa-money-bill-transfer"></i> درخواست‌های برداشت
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'wallet:admin_wallet_credit' %}">
-                    <i class="fas fa-hand-holding-dollar"></i> شارژ جبرانی کیف پول
-                </a>
-            </li>
-
-            <!-- ===== خط جداکننده ===== -->
-            <li class="nav-divider"></li>
-
-            <!-- ===== دسته‌بندی: تنظیمات ===== -->
-            <li class="nav-header">تنظیمات</li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'accounts:admin_site_settings' %}">
-                    <i class="fas fa-sliders-h"></i> تنظیمات سایت
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'accounts:admin_emergency_settings' %}">
-                    <i class="fas fa-first-aid"></i> تنظیمات اضطراری
-                </a>
-            </li>
-
-            <!-- ===== خط جداکننده ===== -->
-            <li class="nav-divider"></li>
-
-            <!-- ===== بخش کاربری ===== -->
-            <li class="nav-header">کاربری</li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'accounts:profile' %}">
-                    <i class="fas fa-user"></i> {{ user.username }}
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'accounts:logout' %}">
-                    <i class="fas fa-sign-out-alt"></i> خروج
-                </a>
-            </li>
-
-        </ul>
-    </nav>
-</aside>
+<aside class="admin-sidebar"><nav class="sidebar-nav"><ul class="nav flex-column">
+<li class="nav-header">مدیریت دیدآور</li>
+<li class="nav-item"><a class="nav-link" href="{% url 'management:banners' %}"><i class="fa-solid fa-images"></i> بنرهای صفحه اصلی</a></li>
+<li class="nav-item"><a class="nav-link" href="{% url 'management:dashboard' %}"><i class="fa-solid fa-chart-pie"></i> نمای کلی مدیریت</a></li>
+<li class="nav-item"><a class="nav-link" href="{% url 'management:events' %}"><i class="fa-solid fa-masks-theater"></i> برنامه‌ها</a></li>
+<li class="nav-item"><a class="nav-link" href="{% url 'management:sessions' %}"><i class="fa-solid fa-calendar-days"></i> سانس‌ها</a></li>
+<li class="nav-item"><a class="nav-link" href="{% url 'management:requests' %}"><i class="fa-solid fa-inbox"></i> درخواست‌های انتشار</a></li>
+<li class="nav-item"><a class="nav-link" href="{% url 'management:venues' %}"><i class="fa-solid fa-couch"></i> سالن‌ها و صندلی‌ها</a></li>
+<li class="nav-item"><a class="nav-link" href="{% url 'management:sales' %}"><i class="fa-solid fa-ticket"></i> فروش و بلیط‌ها</a></li>
+<li class="nav-item"><a class="nav-link" href="{% url 'management:users' %}"><i class="fa-solid fa-users"></i> کاربران</a></li>
+<li class="nav-item"><a class="nav-link" href="{% url 'management:activity' %}"><i class="fa-solid fa-clock-rotate-left"></i> تاریخچه مدیریت</a></li>
+<li class="nav-item"><a class="nav-link" href="{% url 'management:settings' %}"><i class="fa-solid fa-sliders"></i> تنظیمات</a></li>
+<li class="nav-item"><a class="nav-link" href="{% url 'management:support' %}"><i class="fa-solid fa-headset"></i> تیکت‌های پشتیبانی</a></li>
+</ul></nav></aside>

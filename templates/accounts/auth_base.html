@@ -1,0 +1,23 @@
+{% extends 'events/base.html' %}
+{% load static %}
+{% block page_class %}auth-page {% block auth_page_class %}{% endblock %}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'events/auth.css' %}">{% endblock %}
+{% block content %}
+<div class="auth-layout">
+<section class="auth-form-panel" aria-labelledby="auth-heading">
+<a class="auth-back" href="{% url 'matches:home' %}"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> بازگشت به رویدادها</a>
+{% block auth_nav %}<nav class="auth-tabs" aria-label="ورود یا ثبت‌نام"><a href="{% url 'accounts:phone_login' %}" {% block login_active %}{% endblock %}>ورود</a><a href="{% url 'accounts:phone_register' %}" {% block register_active %}{% endblock %}>ثبت‌نام</a></nav>{% endblock %}
+<div class="auth-heading"><span class="auth-icon"><i class="{% block auth_icon %}fa-solid fa-ticket{% endblock %}" aria-hidden="true"></i></span><h1 id="auth-heading">{% block auth_title %}{% endblock %}</h1><p>{% block auth_intro %}{% endblock %}</p></div>
+{% if form.non_field_errors %}<div class="auth-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+{% block auth_form %}{% endblock %}
+{% block auth_footer %}{% endblock %}
+</section>
+<aside class="auth-story" aria-label="هر رویداد، یک دیدار">
+<div class="auth-story-top"><span><i class="fa-solid fa-circle" aria-hidden="true"></i> جایی برای دیدارهای تازه</span><span>دیدآور<span class="story-dot">.</span></span></div>
+<div class="auth-art" aria-hidden="true"><div class="auth-orbit"></div><img class="auth-art-left" src="{% static 'events/uploads/rootcutter-poster.jpg' %}" alt=""><img class="auth-art-right" src="{% static 'events/uploads/today-poster.jpg' %}" alt=""><img class="auth-art-center" src="{% static 'events/uploads/headless-antler-poster.jpg' %}" alt=""><span class="auth-ticket"><i class="fa-solid fa-ticket"></i> دیدار بعدی، از اینجا شروع می‌شود</span></div>
+<div class="auth-story-copy"><span>صحنه را از نزدیک ببین.</span><h2>هر رویداد،<br>یک دیدار.</h2><p>نمایش، کنسرت و تجربه‌های تازه؛<br>دیدار بعدی‌ات را در دیدآور پیدا کن.</p></div>
+<div class="auth-categories"><span><i class="fa-solid fa-masks-theater" aria-hidden="true"></i> نمایش</span><span><i class="fa-solid fa-music" aria-hidden="true"></i> کنسرت</span><span><i class="fa-solid fa-calendar" aria-hidden="true"></i> رویداد</span></div>
+</aside>
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'events/auth.js' %}"></script>{% endblock %}

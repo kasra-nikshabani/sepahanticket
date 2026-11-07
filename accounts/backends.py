@@ -16,6 +16,8 @@ class PhoneBackend(ModelBackend):
         # می‌کند؛ اگر شماره تلفن یک ادمین/VIP هم is_phone_verified باشد
         # (مثلاً بعد از ارتقا از کاربر عادی، یا با تیک‌زدن دستی در پنل
         # ادمین)، هر رمز دلخواهی با آن شماره به‌جای یوزرنیم قبول می‌شد.
+        if password is not None:
+            return None
         phone = kwargs.get('phone') or username
         if phone is None:
             return None

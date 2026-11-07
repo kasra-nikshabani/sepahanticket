@@ -4,7 +4,7 @@
 <html dir="rtl" lang="fa">
 <head>
     <meta charset="UTF-8">
-    <title>گزارش مالی {{ match.home_team }} vs {{ match.away_team }}</title>
+    <title>گزارش مالی {{ match.display_title }}</title>
     <style>
         @font-face {
             font-family: 'Vazirmatn';
@@ -55,7 +55,7 @@
         /* ===== هدر ===== */
         .header {
             text-align: center;
-            border-bottom: 3px solid #D4AF37;
+            border-bottom: 3px solid #2467a8;
             padding-bottom: 20px;
             margin-bottom: 25px;
         }
@@ -69,13 +69,13 @@
         }
 
         .header .report-title .gold {
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .header .match-title {
             font-size: 20px;
             font-weight: 700;
-            color: #D4AF37;
+            color: #2467a8;
             margin-bottom: 8px;
         }
 
@@ -108,7 +108,7 @@
         }
 
         .team-names .team.home {
-            color: #28a745;
+            color: #1966b6;
         }
 
         .team-names .team.away {
@@ -150,11 +150,11 @@
         }
 
         .summary-item .value.gold {
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .summary-item .value.green {
-            color: #28a745;
+            color: #1966b6;
         }
 
         .summary-item .value.red {
@@ -188,9 +188,9 @@
         }
 
         .profit-box.profit-positive {
-            background: #d4edda;
-            border-color: #28a745;
-            color: #155724;
+            background: #dde0e4;
+            border-color: #1966b6;
+            color: #0d355f;
         }
 
         .profit-box.profit-negative {
@@ -237,7 +237,7 @@
         }
 
         .section-title .icon {
-            color: #D4AF37;
+            color: #2467a8;
             font-size: 18px;
         }
 
@@ -260,7 +260,7 @@
             background: #f1f3f5;
             font-weight: 700;
             color: #1A1A2E;
-            border-bottom: 2px solid #D4AF37;
+            border-bottom: 2px solid #2467a8;
         }
 
         table tbody tr:nth-child(even) {
@@ -274,7 +274,7 @@
         table tfoot td {
             font-weight: 700;
             background: #f8f9fa;
-            border-top: 2px solid #D4AF37;
+            border-top: 2px solid #2467a8;
         }
 
         table tfoot .total-cost {
@@ -283,8 +283,8 @@
         }
 
         table tfoot .total-revenue {
-            background: #d4edda;
-            color: #155724;
+            background: #dde0e4;
+            color: #0d355f;
         }
 
         .text-center {
@@ -316,7 +316,7 @@
         }
 
         .footer .footer-brand {
-            color: #D4AF37;
+            color: #2467a8;
             font-weight: 700;
         }
 
@@ -357,7 +357,7 @@
         </div>
 
         <div class="match-title">
-            {{ match.home_team }} 🆚 {{ match.away_team }}
+            {{ match.display_title }}
         </div>
 
 {#        <div class="team-names">#}

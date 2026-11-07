@@ -1,33 +1,33 @@
-{% extends 'base.html' %}
-{% load currency_filters %}
+{% extends 'accounts/account_base.html' %}
+{% load currency_filters persian_filters jalali %}
 {% block title %}برداشت وجه{% endblock %}
 
-{% block extra_css %}
+{% block extra_css %}{{ block.super }}
 <style>
-    .wd-wrap { max-width: 640px; margin: 30px auto; padding: 0 15px 40px; }
+    .wd-wrap { max-width: 640px; margin: 0 auto; padding: 0; }
 
-    .wd-header {
+    .wd-header { display:none !important;
         display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
-        margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid rgba(212,175,55,.3);
+        margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid rgba(0, 69, 140,.3);
     }
     .wd-header h2 {
-        margin: 0; font-size: 23px; font-weight: 700; color: #1A1A2E;
+        margin: 0; font-size: 23px; font-weight: 700; color: #101e2d;
         display: flex; align-items: center; gap: 10px;
     }
-    .wd-header h2 i { color: #D4AF37; }
+    .wd-header h2 i { color: #00458c; }
     .btn-back {
-        background: #1A1A2E; color: #fff; border: none; padding: 10px 22px; border-radius: 10px;
+        background: #101e2d; color: #fff; border: none; padding: 10px 22px; border-radius: 10px;
         font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
     }
-    .btn-back:hover { color: #D4AF37; }
+    .btn-back:hover { color: #00458c; }
 
     .amount-card {
         background: linear-gradient(135deg, #0f0f1f 0%, #1a1a2e 100%);
-        border: 1px solid rgba(212,175,55,.18); border-radius: 18px;
+        border: 1px solid rgba(0, 69, 140,.18); border-radius: 18px;
         padding: 24px 28px; margin-bottom: 22px;
     }
     .amount-card .lbl { color: #8a8a9a; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
-    .amount-card .val { color: #D4AF37; font-size: 34px; font-weight: 700; }
+    .amount-card .val { color: #00458c; font-size: 34px; font-weight: 700; }
     .amount-card .val small { font-size: 15px; color: #8a8a9a; font-weight: 400; }
 
     .note-box {
@@ -38,7 +38,7 @@
     .note-box ul { margin: 8px 0 0; padding-right: 20px; }
 
     .warn-box {
-        background: #fff8e6; border: 1px solid #f0dca8; border-right: 4px solid #D4AF37;
+        background: #fff8e6; border: 1px solid #f0dca8; border-right: 4px solid #00458c;
         border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;
         font-size: 14px; color: #6b5400; line-height: 2;
     }
@@ -47,13 +47,13 @@
         background: #fff; border: 1px solid #e8eaed; border-radius: 16px;
         padding: 26px; box-shadow: 0 2px 12px rgba(0,0,0,.04);
     }
-    .form-card label { font-weight: 700; color: #1A1A2E; margin-bottom: 6px; display: block; font-size: 14px; }
+    .form-card label { font-weight: 700; color: #101e2d; margin-bottom: 6px; display: block; font-size: 14px; }
     .form-card .hint { color: #6c757d; font-size: 12.5px; margin-top: 5px; display: block; }
     .form-card input[type=text], .form-card input[type=number] {
         width: 100%; padding: 12px 14px; border: 1px solid #dfe3e8; border-radius: 10px;
         font-size: 15px; font-family: inherit; background: #fbfcfd;
     }
-    .form-card input:focus { outline: none; border-color: #D4AF37; background: #fff; }
+    .form-card input:focus { outline: none; border-color: #00458c; background: #fff; }
     .field { margin-bottom: 20px; }
     .iban-field { direction: ltr; text-align: left; letter-spacing: 1px; }
 
@@ -65,25 +65,25 @@
     .verify-note i { color: #17a2b8; }
 
     .btn-submit {
-        background: linear-gradient(135deg, #D4AF37, #B8960F); color: #1A1A2E; border: none;
+        background: linear-gradient(135deg, #00458c, #00356d); color: #101e2d; border: none;
         padding: 13px 30px; border-radius: 12px; font-weight: 700; font-size: 15px; width: 100%;
         display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
     }
-    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(212,175,55,.35); }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0, 69, 140,.35); }
 
     .guide {
         background: #fff; border: 1px solid #e8eaed; border-radius: 16px;
         padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,.04);
     }
-    .guide-title { font-weight: 700; color: #1A1A2E; margin-bottom: 14px; font-size: 15px; }
-    .guide-title i { color: #D4AF37; margin-left: 6px; }
+    .guide-title { font-weight: 700; color: #101e2d; margin-bottom: 14px; font-size: 15px; }
+    .guide-title i { color: #00458c; margin-left: 6px; }
     .steps { display: grid; gap: 14px; }
     .step { display: flex; gap: 12px; align-items: flex-start; }
     .step .num {
-        flex: 0 0 30px; height: 30px; border-radius: 50%; background: #1A1A2E; color: #D4AF37;
+        flex: 0 0 30px; height: 30px; border-radius: 50%; background: #101e2d; color: #00458c;
         display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;
     }
-    .step strong { color: #1A1A2E; font-size: 14px; }
+    .step strong { color: #101e2d; font-size: 14px; }
     .step p { margin: 3px 0 0; color: #6c757d; font-size: 13px; line-height: 1.95; }
     .mono { font-family: monospace; direction: ltr; display: inline-block; }
 
@@ -115,14 +115,16 @@
     }
 
     .pending-card {
-        background: #fff; border: 1px solid #f0dca8; border-right: 5px solid #D4AF37;
-        border-radius: 16px; padding: 22px 26px; line-height: 2.1; color: #1A1A2E;
+        background: #fff; border: 1px solid #f0dca8; border-right: 5px solid #00458c;
+        border-radius: 16px; padding: 22px 26px; line-height: 2.1; color: #101e2d;
     }
-    .pending-card .amt { font-size: 22px; font-weight: 700; color: #D4AF37; }
+    .pending-card .amt { font-size: 22px; font-weight: 700; color: #00458c; }
 </style>
 {% endblock %}
 
-{% block content %}
+{% block account_title %}برداشت وجه{% endblock %}
+{% block account_intro %}درخواست برداشت و وضعیت رسیدگی به آن.{% endblock %}
+{% block account_content %}
 <div class="wd-wrap">
 
     <div class="wd-header">
@@ -139,13 +141,13 @@
         {% endcomment %}
         <div class="pending-card">
             <div style="font-weight:700; margin-bottom:8px;">
-                <i class="fas fa-hourglass-half" style="color:#D4AF37;"></i>
+                <i class="fas fa-hourglass-half" style="color:#00458c;"></i>
                 یک درخواست برداشت در جریان دارید
             </div>
-            <div class="amt">{{ pending.amount|rial_display }} <small style="font-size:14px;">ریال</small></div>
+            <div class="amt">{{ pending.amount|rial_display|to_persian }} <small style="font-size:14px;">ریال</small></div>
             <div>وضعیت: <strong>{{ pending.get_status_display }}</strong></div>
             <div>شبا: <span style="direction:ltr; display:inline-block;">{{ pending.iban_display }}</span></div>
-            <div>تاریخ ثبت: {{ pending.created_at|date:"Y/m/d - H:i" }}</div>
+            <div>تاریخ ثبت: {{ pending.created_at|to_jalali|to_persian }}</div>
             <div style="margin-top:12px; color:#6c757d; font-size:13.5px;">
                 پس از تأیید و واریز، مبلغ معمولاً طی یک تا سه روز کاری بانکی به حساب شما می‌نشیند.
                 تا تعیین تکلیف این درخواست، امکان ثبت درخواست تازه وجود ندارد.
@@ -178,8 +180,8 @@
     {% elif max_amount < min_amount %}
         <div class="warn-box">
             <i class="fas fa-circle-info"></i>
-            مبلغ قابل برداشت شما <strong>{{ max_amount|rial_display }} ریال</strong> است که از
-            حداقل مجاز ({{ min_amount|rial_display }} ریال) کمتر است.
+            مبلغ قابل برداشت شما <strong>{{ max_amount|rial_display|to_persian }} ریال</strong> است که از
+            حداقل مجاز ({{ min_amount|rial_display|to_persian }} ریال) کمتر است.
             <br>
             توجه: فقط مبلغی که <strong>باشگاه به کیف پول شما برگردانده</strong> — مثل جبران بلیط
             صادرنشده یا بازگشت وجه — قابل برداشت است. مبلغی که خودتان کیف پول را با آن شارژ
@@ -194,7 +196,7 @@
             </div>
             <div class="correction-reason">{{ editing.admin_note|default:"اطلاعات واردشده مغایرت دارد." }}</div>
             <p>
-                مبلغ <strong>{{ editing.amount|rial_display }} ریال</strong> همچنان برای شما نگه داشته
+                مبلغ <strong>{{ editing.amount|rial_display|to_persian }} ریال</strong> همچنان برای شما نگه داشته
                 شده است. اطلاعات زیر را درست کنید و دوباره بفرستید؛ درخواست به صف بررسی برمی‌گردد.
             </p>
         </div>
@@ -208,7 +210,7 @@
 
         <div class="amount-card">
             <div class="lbl"><i class="fas fa-coins"></i> حداکثر مبلغ قابل برداشت</div>
-            <div class="val">{{ max_amount|rial_display }} <small>ریال</small></div>
+            <div class="val">{{ max_amount|rial_display|to_persian }} <small>ریال</small></div>
         </div>
 
         <div class="guide">
@@ -269,7 +271,7 @@
                        min="{{ min_amount }}" max="{{ max_amount }}" step="1"
                        value="{{ form.amount }}" placeholder="{{ max_amount }}">
                 <span class="hint">
-                    حداقل {{ min_amount|rial_display }} و حداکثر {{ max_amount|rial_display }} ریال
+                    حداقل {{ min_amount|rial_display|to_persian }} و حداکثر {{ max_amount|rial_display|to_persian }} ریال
                 </span>
             </div>
 

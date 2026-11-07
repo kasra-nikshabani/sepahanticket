@@ -1,0 +1,39 @@
+{% extends 'events/base.html' %}
+{% load static jalali currency_filters persian_filters %}
+{% block title %}اطلاعات و پرداخت | {{ match.display_title }}{% endblock %}
+{% block page_class %}purchase-page checkout-page{% endblock %}
+{% block extra_js %}<script src="{% static 'events/checkout.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="checkout-wrap">
+    <div class="flow-steps" aria-label="مراحل خرید"><span>۱. سانس</span><span>۲. بخش سالن</span><span>۳. صندلی</span><span class="current" aria-current="step">۴. اطلاعات و پرداخت</span></div>
+    <div class="purchase-heading"><span class="eyebrow">یک قدم تا دیدار</span><h1>{{ match.display_title|to_persian }}</h1><p>{{ match.date_time|to_jalali_date|to_persian }}{% if match.has_time %} · {{ match.date_time|date:'H:i'|to_persian }}{% endif %} · {{ match.stadium.name|to_persian }}</p></div>
+    <div class="checkout-panel">
+        <div class="reservation-notice">زمان باقی‌مانده رزرو: <strong id="reservation-time" data-seconds="{{ remaining_time }}"></strong><p id="reservation-expiry" role="status" aria-live="polite" hidden>مهلت رزرو تمام شد؛ صندلی‌ها را دوباره انتخاب کنید.</p></div>
+        <h2 class="checkout-section-title">بلیط به نام چه کسی باشد؟</h2>
+        <p class="checkout-hint">نام دارنده هر بلیط را بنویسید؛ می‌توانید برای خودتان و همراهانتان خرید کنید.</p>
+        <form method="post" action="{% url 'tickets:ticket_info' match.id %}" id="cultural-checkout">
+            {% csrf_token %}<input type="hidden" name="match_id" value="{{ match.id }}"><input type="hidden" name="amount" value="{{ total_price }}">
+            {% for seat in seats_data %}
+            <div class="checkout-seat">
+                <div class="checkout-seat-heading"><span>ردیف {{ seat.row_name|to_persian }} · صندلی {{ seat.number|to_persian }}</span><strong>{{ seat.price|toman_display|persian_number }} تومان</strong></div>
+                <label class="form-label" for="name-{{ seat.id }}">نام و نام خانوادگی دارندهٔ بلیط {{ forloop.counter|to_persian }}</label>
+                <input id="name-{{ seat.id }}" name="full_name_{{ seat.id }}" class="form-control" maxlength="200" value="{{ seat.full_name }}" placeholder="نام و نام خانوادگی" autocomplete="off" required>
+                <input type="hidden" name="match_seat_id_{{ seat.id }}" value="{{ seat.id }}">
+            </div>
+            {% endfor %}
+            <div class="mb-3"><label for="discount-code" class="form-label">کد تخفیف <span class="checkout-hint">(اختیاری)</span></label><input id="discount-code" name="discount_code" value="{{ checkout_discount }}" class="form-control" aria-describedby="discount-hint"><p id="discount-hint" class="checkout-hint">اگر کد تخفیف دارید، اینجا وارد کنید. اعتبار آن در مرحلهٔ بعد بررسی می‌شود.</p></div>
+            {% if wallet_enabled %}
+            <div class="checkout-wallet">
+                <div class="form-check"><input id="use-wallet" type="checkbox" name="use_wallet" value="true" class="form-check-input" {% if checkout_use_wallet %}checked{% endif %} aria-controls="wallet-fields"><label for="use-wallet" class="form-check-label">استفاده از کیف پول</label></div>
+                <p class="checkout-hint">موجودی: {{ wallet_balance|toman_display|persian_number }} تومان</p>
+                <div id="wallet-fields"><label for="wallet-amount" class="form-label">مبلغ پرداخت از کیف پول (تومان)</label><input id="wallet-amount" type="text" inputmode="decimal" dir="ltr" name="wallet_amount_toman" value="{{ checkout_wallet_toman|to_persian }}" placeholder="۰" class="form-control" maxlength="24" aria-describedby="wallet-hint"><p id="wallet-hint" class="checkout-hint">مبلغ را به تومان وارد کنید؛ باقی مبلغ از درگاه پرداخت می‌شود.</p></div>
+            </div>
+            {% endif %}
+            <div class="checkout-total"><span>جمع بلیط‌ها پیش از تخفیف</span><strong>{{ total_price|toman_display|persian_number }} تومان</strong></div>
+            <p class="checkout-note">تخفیف و سهم کیف پول هنگام ثبت سفارش بررسی می‌شوند. مبلغ نهایی در مرحلهٔ پرداخت نمایش داده می‌شود.</p>
+            <button class="btn btn-primary w-100" id="checkout-submit">ثبت سفارش و ادامه پرداخت <i class="fas fa-arrow-left" aria-hidden="true"></i></button>
+        </form>
+        <a href="{% url 'tickets:cancel_reservation' match.id %}" class="checkout-cancel">لغو رزرو و انتخاب دوباره</a>
+    </div>
+</div>
+{% endblock %}

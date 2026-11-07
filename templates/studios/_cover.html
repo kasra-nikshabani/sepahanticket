@@ -1,0 +1,1 @@
+{% load static %}{% if studio.cover %}<img src="{{ studio.cover.url }}" alt="فضای {{ studio.title }}" loading="lazy" decoding="async">{% else %}<img src="{% static 'events/studios/room.svg' %}" alt="تصویرسازی فضای تمرین" loading="lazy">{% endif %}

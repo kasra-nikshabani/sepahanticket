@@ -1,0 +1,69 @@
+/* Shared discovery search: a quiet surface with a compact, non-modal panel. */
+.home-header .discovery-search{flex:1;min-width:180px;max-width:610px}
+.home-header .discovery-search .home-search{position:relative;max-width:none;width:100%;padding:6px 9px 6px 15px;gap:10px;background:#ecedee;border-color:#c0c5cb;border-radius:14px;margin:0}
+.home-header .discovery-search .home-search:focus-within{border-color:#5c7d9f;box-shadow:0 0 0 3px #35587c10}
+.home-header .discovery-search .home-search>i{color:#506e8d;font-size:17px}
+.home-header .discovery-search input[type=search]{flex:1;min-width:0;min-height:44px;font-size:13px;color:#26384a;text-align:start;box-shadow:none;background:transparent}
+.home-header .discovery-search input::placeholder{color:#677c92}
+.home-header .discovery-search .search-submit{min-height:44px;padding:8px 13px;border:1px solid #2a4868;background:#2a4868;color:#eeeff0;border-radius:10px;font-size:12px}
+.home-header .discovery-search .search-submit span{color:#b5bfca}
+.home-header .discovery-search .search-submit:hover{background:#203954}
+.home-header .discovery-search .search-panel-toggle,.home-header .discovery-search .search-close{position:relative;display:grid;place-items:center;width:40px;height:44px;padding:0;border:1px solid transparent;background:transparent;color:#486788;font-size:15px;flex-shrink:0;border-radius:9px}
+.home-header .discovery-search .search-panel-toggle:hover,.home-header .discovery-search .search-close:hover{background:#d9dcdf;border-color:#bfc6cd}
+.home-header .discovery-search [hidden]{display:none!important}
+.search-filter-indicator{position:absolute;top:7px;inset-inline-end:7px;width:6px;height:6px;border-radius:50%;background:#31577f}
+.home-header .discovery-panel{position:fixed;z-index:1060;overflow-y:auto;overscroll-behavior:contain;padding:20px;border:1px solid #b7bec6;border-radius:18px;background:#f0f0f0;box-shadow:0 18px 60px #1727382b;direction:rtl;text-align:right;color:#283b4f;scrollbar-width:thin;scrollbar-color:#b1bac4 transparent}
+.discovery-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:16px;border-bottom:1px solid #ccd0d5}
+.discovery-panel-heading strong{font-size:15px;font-weight:750;line-height:1.9}
+.discovery-panel-heading p{font-size:11px;color:#607892;margin:4px 0 0;line-height:1.9}
+.discovery-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding-block:17px}
+.discovery-fields label{min-width:0;display:flex;flex-direction:column;gap:7px;margin:0}
+.discovery-fields label>span{font-size:11px;color:#436282;font-weight:600}
+.home-header .discovery-fields select{width:100%;min-width:0;min-height:44px;background:#e2e3e5;border:1px solid #b3bdc7;border-radius:9px;color:#2a4561;font:inherit;font-size:12px;padding:7px 8px}
+.home-header .discovery-fields select:focus-visible{outline:2px solid #476f99;outline-offset:2px}
+.discovery-feedback{font-size:11px;color:#607892;line-height:2;padding:0 1px 10px}
+.discovery-group+.discovery-group{margin-top:12px;padding-top:12px;border-top:1px solid #d2d5d9}
+.discovery-group h3{font-size:10px;font-weight:650;color:#64809d;margin:4px 0 8px}
+.home-header .discovery-result{display:flex;align-items:center;gap:12px;min-height:67px;padding:9px;border:1px solid transparent;border-radius:11px;color:#2a4460;transition:background .15s,border-color .15s}
+.home-header .discovery-result:hover,.home-header .discovery-result:focus-visible{background:#dfe1e3;border-color:#bac2cb;outline:2px solid transparent}
+.discovery-artwork{display:grid;place-items:center;flex-shrink:0;width:36px;height:47px;border-radius:7px;background:#d8dbdf;color:#587ea5;font-size:16px;overflow:hidden}
+.discovery-artwork img{width:100%;height:100%;object-fit:cover}
+.discovery-artwork.is-artist{width:40px;height:40px;border-radius:50%}
+.discovery-result-text{flex:1;min-width:0}
+.discovery-result-text strong{display:block;font-size:12px;line-height:1.9;font-weight:700;overflow-wrap:anywhere}
+.discovery-result-text small{display:block;font-size:10px;color:#637b95;line-height:1.9;margin-top:3px;overflow-wrap:anywhere}
+.discovery-result-type{flex-shrink:0;font-size:9px;background:#e2e3e5;border:1px solid #c5cbd1;padding:3px 7px;border-radius:6px;color:#4a6e94}
+.discovery-quick{padding:7px 0 17px}
+.discovery-quick>span{font-size:10px;color:#6b839c}
+.discovery-quick>div{display:flex;gap:9px;margin-top:10px;flex-wrap:wrap}
+.home-header .discovery-quick a{display:flex;align-items:center;gap:20px;min-height:44px;background:#e0e2e4;border:1px solid #c1c7ce;border-radius:9px;padding:8px 13px;color:#375b81;font-size:12px}
+.discovery-quick a>i{font-size:10px;color:#708dac}
+.home-header .discovery-quick a:hover{background:#d3d7db;border-color:#93a8bd}
+.discovery-panel-footer{display:flex;align-items:center;justify-content:space-between;gap:15px;border-top:1px solid #c9ced3;padding-top:15px;margin-top:8px}
+.discovery-panel-footer>span{font-size:9px;color:#6e86a0}
+.discovery-panel-footer>span>i{margin-inline-end:5px}
+.home-header .discovery-search .search-all{display:flex;align-items:center;gap:14px;padding:9px 13px;min-height:44px;border:1px solid #abb7c4;border-radius:9px;background:#d9dcdf;color:#2a5179;font-size:12px;font-weight:650;white-space:nowrap}
+.home-header .discovery-search .search-all:hover{background:#c7ced6}
+.search-active-filters{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 22px}
+.search-active-filters a{display:flex;align-items:center;gap:12px;min-height:40px;padding:7px 12px;border:1px solid #bcc3cb;border-radius:9px;background:#e3e5e7;color:#395a7c;font-size:12px;overflow-wrap:anywhere}
+.search-active-filters a>i{font-size:10px}
+.search-active-filters a:hover{background:#d6d9dd;border-color:#95a7ba}
+.search-active-filters .search-reset{background:transparent;border-color:transparent;font-size:11px}
+.search-artist-matches{border:1px solid #c7ccd1;background:#ebebec;padding:20px;border-radius:16px;margin-bottom:24px}
+.search-artist-heading{display:flex;align-items:center;gap:10px;margin-bottom:13px;flex-wrap:wrap}
+.search-artist-heading h2{font-size:16px;margin:0;font-weight:750;color:#2c4a69}
+.search-artist-heading a{font-size:11px;color:#4c6e92;margin-inline-start:auto}
+.search-artist-links{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.search-artist-links>a{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid #c1c7cd;background:#e3e4e6;border-radius:12px;min-width:0;color:#325070}
+.search-artist-links>a>span:first-child{display:grid;place-items:center;width:42px;height:42px;flex-shrink:0;border-radius:50%;overflow:hidden;background:#cad0d7;color:#4e76a0;font-size:16px}
+.search-artist-links img{width:100%;height:100%;object-fit:cover}
+.search-artist-links>a>span:last-child{min-width:0}
+.search-artist-links strong{display:block;font-size:12px;line-height:1.9;overflow-wrap:anywhere}
+.search-artist-links small{display:block;font-size:10px;line-height:1.8;color:#647f9c;overflow-wrap:anywhere}
+@media(max-width:1100px){.home-header .home-header-main{gap:20px}.search-artist-links{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+ .home-header .discovery-search{flex-basis:100%;order:3;max-width:none;min-width:0}.home-header .discovery-search .home-search{padding:5px 7px 5px 12px;gap:7px}.home-header .discovery-search input[type=search]{font-size:16px}.home-header .discovery-search .search-submit{font-size:11px;padding-inline:10px}.home-header .discovery-search .search-panel-toggle{width:36px}
+ .home-header .discovery-panel{padding:16px;border-radius:15px}.discovery-panel-heading strong{font-size:14px}.discovery-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.discovery-fields label:first-child{grid-column:1/-1}.home-header .discovery-fields select{font-size:16px}.discovery-panel-footer>span{display:none}.discovery-panel-footer .search-all{width:100%;justify-content:space-between}.discovery-result-text strong{font-size:13px}.discovery-feedback{font-size:12px}.discovery-result-type{font-size:9px;padding-inline:5px}.discovery-result-text small{font-size:11px}
+ .search-artist-matches{padding:16px}.search-artist-links{grid-template-columns:1fr}.search-active-filters a{min-height:44px;font-size:11px}.search-active-filters{gap:7px}
+}
+@media(prefers-reduced-motion:reduce){.home-header .discovery-result{transition:none}}

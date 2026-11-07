@@ -10,7 +10,7 @@ from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from .models import Ticket
 
-ZONE_LABELS = {'class1': 'کلاس ۱', 'home': 'میزبان', 'away': 'میهمان', 'women': 'بانوان میزبان',
+ZONE_LABELS = {'event': 'ورودی رویداد', 'class1': 'کلاس ۱', 'home': 'میزبان', 'away': 'میهمان', 'women': 'بانوان میزبان',
                'women_away': 'بانوان میهمان', 'vip': 'VIP'}
 
 # حداکثر تلاش ناموفق ورود گیت قبل از قفل موقت
@@ -86,16 +86,31 @@ def gate_login(request):
         cache.set(attempts_key, cache.get(attempts_key, 0) + 1, timeout=GATE_LOGIN_LOCKOUT_SECONDS)
         return JsonResponse({'success': False, 'message': 'نام کاربری یا رمز اشتباه است'}, status=401)
 
+    gate_session = {'username': username, 'zone': user['zone']}
+    zone_label = ZONE_LABELS.get(user['zone'], '')
+    if user['zone'] == 'event':
+        from matches.models import Match
+        try:
+            session_id = int(data.get('match_id'))
+        except (TypeError, ValueError):
+            return JsonResponse({'success': False, 'message': 'شناسه سانس را وارد کنید.'}, status=400)
+        if session_id not in user.get('session_ids', []):
+            return JsonResponse({'success': False, 'message': 'این گیت به سانس انتخاب‌شده دسترسی ندارد.'}, status=403)
+        event_session = Match.objects.select_related('event').filter(pk=session_id, is_active=True, is_cancelled=False).first()
+        if event_session is None or not event_session.is_cultural or not event_session.event.is_active:
+            return JsonResponse({'success': False, 'message': 'سانس در دسترس نیست.'}, status=400)
+        gate_session['match_id'] = session_id
+        zone_label = f'{event_session.display_title} · {timezone.localtime(event_session.date_time):%Y/%m/%d %H:%M}'
     cache.delete(attempts_key)
 
     token = secrets.token_urlsafe(32)
-    cache.set(_gate_token_key(token), {'username': username, 'zone': user['zone']}, timeout=settings.GATE_TOKEN_TTL)
+    cache.set(_gate_token_key(token), gate_session, timeout=settings.GATE_TOKEN_TTL)
 
     return JsonResponse({
         'success': True,
         'token': token,
         'zone': user['zone'],
-        'zone_label': ZONE_LABELS.get(user['zone'], ''),
+        'zone_label': zone_label,
     })
 
 
@@ -133,7 +148,7 @@ def scan_ticket(request):
         # تراکنش دوم منتظر اولی می‌مونه و درست 'used' می‌بینه.
         with transaction.atomic():
             ticket = Ticket.objects.select_for_update(of=('self',)).select_related(
-                'seat__row__block', 'match', 'user'
+                'seat__row__block', 'match__event', 'user'
             ).get(ticket_number=ticket_number)
 
             # چک وضعیت بلیط
@@ -148,6 +163,14 @@ def scan_ticket(request):
             # می‌توانست دوباره وارد ورزشگاه شود.
             if ticket.match.is_cancelled:
                 return JsonResponse({'status': 'invalid', 'message': 'مسابقه‌ی این بلیط لغو شده است'})
+
+            if ticket.match.is_cultural:
+                if zone != 'event' or session.get('match_id') != ticket.match_id:
+                    return JsonResponse({'status': 'invalid', 'message': 'این بلیط متعلق به سانس انتخاب‌شده این گیت نیست.'})
+                if not ticket.match.event.is_active or not ticket.match.is_active:
+                    return JsonResponse({'status': 'invalid', 'message': 'این سانس غیرفعال است.'})
+            elif zone == 'event':
+                return JsonResponse({'status': 'invalid', 'message': 'این بلیط متعلق به سانس این گیت نیست.'})
 
             window = getattr(settings, 'GATE_MATCH_WINDOW_HOURS', 12)
             now = timezone.now()
@@ -178,7 +201,7 @@ def scan_ticket(request):
                 return JsonResponse(
                     {'status': 'invalid', 'message': 'جایگاه این بلیط قابل تشخیص نیست؛ با مدیر تماس بگیرید'}
                 )
-            if ticket_zone != zone:
+            if not ticket.match.is_cultural and ticket_zone != zone:
                 return JsonResponse({
                     'status': 'invalid',
                     'message': f'این بلیط متعلق به جایگاه {ZONE_LABELS.get(ticket_zone, ticket_zone)} است'
@@ -217,7 +240,7 @@ def scan_ticket(request):
         'message': 'بلیط معتبر است',
         'full_name': ticket.full_name,
         'national_code': ticket.national_code,
-        'match': f'{ticket.match.home_team} - {ticket.match.away_team}',
+        'match': ticket.match.display_title,
         'seat': f'بلوک {ticket.seat.row.block.name} - ردیف {ticket.seat.row.number} - صندلی {ticket.seat.number}',
         **extra_fields,
     })

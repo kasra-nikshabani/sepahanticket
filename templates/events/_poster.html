@@ -1,0 +1,2 @@
+{% load static persian_filters %}
+<div class="poster poster-{{ event.category }}">{% if event.poster %}<img src="{{ event.poster.url }}" alt="پوستر {{ event.title|to_persian }}" loading="lazy">{% else %}<img src="{% static 'events/' %}{% if event.category == 'theater' %}theater{% elif event.category == 'concert' %}concert{% else %}event{% endif %}.svg" alt="" aria-hidden="true"><div class="poster-lettering"><span>{{ event.get_category_display }}</span><strong>{{ event.title|to_persian }}</strong><small>یک تجربه از نزدیک</small></div>{% endif %}</div>

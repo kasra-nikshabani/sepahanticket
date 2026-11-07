@@ -130,6 +130,8 @@ class Transaction(models.Model):
         ('deposit', 'شارژ'),
         ('withdraw', 'برداشت'),
         ('ticket_purchase', 'خرید بلیط'),
+        ('education_purchase', 'خرید آموزش'),
+        ('studio_rental', 'اجارهٔ پلاتو'),
         ('refund', 'بازگشت وجه'),
     ]
     reference_id = models.CharField(max_length=100, blank=True, null=True)

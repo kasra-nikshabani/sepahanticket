@@ -1,20 +1,20 @@
-{% extends 'base.html' %}
+{% extends 'accounts/account_base.html' %}
 {% load static %}
-{% load currency_filters %}
+{% load currency_filters persian_filters jalali %}
 {% block title %}کیف پول من{% endblock %}
 
-{% block extra_css %}
+{% block extra_css %}{{ block.super }}
     <style>
         .wallet-page {
             padding: 20px 0;
         }
 
         .wallet-header {
-            background: linear-gradient(135deg, #1A1A2E 0%, #2D2D44 100%);
+            background: linear-gradient(135deg, #101e2d 0%, #183656 100%);
             border-radius: 20px;
             padding: 30px 35px;
             margin-bottom: 30px;
-            border: 1px solid rgba(212, 175, 55, 0.2);
+            border: 1px solid rgba(0, 69, 140, 0.2);
             box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
             position: relative;
             overflow: hidden;
@@ -27,7 +27,7 @@
             right: -20%;
             width: 300px;
             height: 300px;
-            background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(0, 69, 140, 0.08) 0%, transparent 70%);
             border-radius: 50%;
         }
 
@@ -38,7 +38,7 @@
             left: -10%;
             width: 250px;
             height: 250px;
-            background: radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(0, 69, 140, 0.05) 0%, transparent 70%);
             border-radius: 50%;
         }
 
@@ -53,7 +53,7 @@
         }
 
         .wallet-header .header-title {
-            color: #D4AF37;
+            color: #00458c;
             font-size: 24px;
             font-weight: 700;
             display: flex;
@@ -79,8 +79,8 @@
         }
 
         .btn-charge {
-            background: linear-gradient(135deg, #D4AF37, #B8960F);
-            color: #1A1A2E;
+            background: linear-gradient(135deg, #00458c, #00356d);
+            color: #101e2d;
             border: none;
             padding: 12px 28px;
             border-radius: 12px;
@@ -91,19 +91,19 @@
             align-items: center;
             gap: 8px;
             text-decoration: none;
-            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 69, 140, 0.3);
         }
 
         .btn-charge:hover {
             transform: translateY(-3px);
-            box-shadow: 0 8px 35px rgba(212, 175, 55, 0.4);
-            color: #1A1A2E;
+            box-shadow: 0 8px 35px rgba(0, 69, 140, 0.4);
+            color: #101e2d;
         }
 
         .btn-withdraw {
             background: rgba(255, 255, 255, 0.08);
-            color: #D4AF37;
-            border: 1px solid rgba(212, 175, 55, 0.45);
+            color: #00458c;
+            border: 1px solid rgba(0, 69, 140, 0.45);
             padding: 12px 24px;
             border-radius: 12px;
             font-weight: 700;
@@ -116,8 +116,8 @@
         }
 
         .btn-withdraw:hover {
-            background: rgba(212, 175, 55, 0.15);
-            color: #D4AF37;
+            background: rgba(0, 69, 140, 0.15);
+            color: #00458c;
             transform: translateY(-3px);
         }
 
@@ -144,14 +144,14 @@
         .withdrawals-section .section-header h5 {
             margin: 0;
             font-weight: 700;
-            color: #1A1A2E;
+            color: #101e2d;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
         .withdrawals-section .section-header h5 i {
-            color: #D4AF37;
+            color: #00458c;
         }
 
         .wd-status {
@@ -167,7 +167,7 @@
 
         .wd-status.pending { background: #fff3cd; color: #856404; }
         .wd-status.approved { background: #cce5ff; color: #004085; }
-        .wd-status.paid { background: #d4edda; color: #155724; }
+        .wd-status.paid { background: #dde0e4; color: #0d355f; }
         .wd-status.rejected { background: #f8d7da; color: #721c24; }
         .wd-status.cancelled { background: #e9ecef; color: #495057; }
         .wd-status.needs_correction { background: #ffe0cc; color: #8a4b1a; }
@@ -188,11 +188,11 @@
         .btn-edit-wd:hover { background: #eef4fb; color: #0a58ca; }
 
         .paid-ref {
-            background: #eaf7ee;
-            border: 1px solid #bfe3c9;
+            background: #f0f0f1;
+            border: 1px solid #cad1d8;
             border-radius: 10px;
             padding: 9px 12px;
-            color: #1e5c30;
+            color: #143c66;
             font-size: 12.5px;
             line-height: 1.9;
         }
@@ -203,9 +203,9 @@
             font-family: monospace;
             font-size: 15px;
             font-weight: 700;
-            color: #155724;
+            color: #0d355f;
             background: #fff;
-            border: 1px dashed #bfe3c9;
+            border: 1px dashed #cad1d8;
             border-radius: 7px;
             padding: 5px 9px;
             margin: 5px 0 3px;
@@ -265,7 +265,7 @@
 
         .btn-back:hover {
             background: rgba(255, 255, 255, 0.15);
-            color: #D4AF37;
+            color: #00458c;
             transform: translateY(-3px);
         }
 
@@ -274,7 +274,7 @@
             border-radius: 20px;
             padding: 30px 35px;
             margin-bottom: 30px;
-            border: 1px solid rgba(212, 175, 55, 0.15);
+            border: 1px solid rgba(0, 69, 140, 0.15);
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
             position: relative;
             overflow: hidden;
@@ -301,7 +301,7 @@
         .balance-card .balance-amount {
             font-size: 48px;
             font-weight: 700;
-            color: #D4AF37;
+            color: #00458c;
             display: flex;
             align-items: center;
             gap: 12px;
@@ -326,7 +326,7 @@
         .wd-strip {
             margin-top: 18px;
             padding-top: 16px;
-            border-top: 1px solid rgba(212, 175, 55, 0.18);
+            border-top: 1px solid rgba(0, 69, 140, 0.18);
         }
 
         .wd-strip .wd-main {
@@ -338,7 +338,7 @@
         }
 
         .wd-strip .wd-lbl { color: #8a8a9a; font-size: 13.5px; font-weight: 600; }
-        .wd-strip .wd-lbl i { color: #D4AF37; }
+        .wd-strip .wd-lbl i { color: #00458c; }
 
         .wd-strip .wd-val {
             color: #fff;
@@ -355,7 +355,7 @@
             margin-top: 8px;
         }
 
-        .wd-strip .wd-sub strong { color: #D4AF37; }
+        .wd-strip .wd-sub strong { color: #00458c; }
 
         .wd-cta {
             display: inline-flex;
@@ -364,14 +364,14 @@
             margin-top: 12px;
             padding: 9px 20px;
             border-radius: 10px;
-            background: linear-gradient(135deg, #D4AF37, #B8960F);
-            color: #1A1A2E;
+            background: linear-gradient(135deg, #00458c, #00356d);
+            color: #101e2d;
             font-weight: 700;
             font-size: 13.5px;
             text-decoration: none;
         }
 
-        .wd-cta:hover { color: #1A1A2E; transform: translateY(-2px); }
+        .wd-cta:hover { color: #101e2d; transform: translateY(-2px); }
 
         .stats-grid {
             display: grid;
@@ -391,8 +391,8 @@
 
         .stat-card:hover {
             transform: translateY(-4px);
-            border-color: #D4AF37;
-            box-shadow: 0 8px 30px rgba(212, 175, 55, 0.12);
+            border-color: #00458c;
+            box-shadow: 0 8px 30px rgba(0, 69, 140, 0.12);
         }
 
         .stat-card .stat-icon {
@@ -404,7 +404,7 @@
         .stat-card .stat-number {
             font-size: 22px;
             font-weight: 700;
-            color: #1A1A2E;
+            color: #101e2d;
         }
 
         .stat-card .stat-label {
@@ -414,11 +414,11 @@
         }
 
         .stat-card.gold .stat-number {
-            color: #D4AF37;
+            color: #00458c;
         }
 
         .stat-card.green .stat-number {
-            color: #28a745;
+            color: #1966b6;
         }
 
         .stat-card.red .stat-number {
@@ -451,18 +451,18 @@
         .transactions-section .section-header h5 {
             margin: 0;
             font-weight: 700;
-            color: #1A1A2E;
+            color: #101e2d;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
         .transactions-section .section-header h5 i {
-            color: #D4AF37;
+            color: #00458c;
         }
 
         .transactions-section .section-header .badge-count {
-            background: #1A1A2E;
+            background: #101e2d;
             color: #fff;
             padding: 2px 14px;
             border-radius: 50px;
@@ -490,14 +490,14 @@
             text-align: right;
             font-weight: 600;
             font-size: 13px;
-            color: #1A1A2E;
-            border-bottom: 2px solid #D4AF37;
+            color: #101e2d;
+            border-bottom: 2px solid #00458c;
             white-space: nowrap;
         }
 
         .table-custom thead th i {
             margin-left: 4px;
-            color: #D4AF37;
+            color: #00458c;
         }
 
         .table-custom tbody td {
@@ -526,8 +526,8 @@
         }
 
         .transaction-type.deposit {
-            background: #d4edda;
-            color: #155724;
+            background: #dde0e4;
+            color: #0d355f;
         }
 
         .transaction-type.withdraw {
@@ -550,7 +550,7 @@
         }
 
         .transaction-amount.positive {
-            color: #28a745;
+            color: #1966b6;
         }
 
         .transaction-amount.negative {
@@ -574,7 +574,7 @@
         }
 
         .empty-state h4 {
-            color: #1A1A2E;
+            color: #101e2d;
             font-weight: 600;
             margin-bottom: 8px;
         }
@@ -601,7 +601,7 @@
         }
 
         .table-pagination .info strong {
-            color: #1A1A2E;
+            color: #101e2d;
         }
 
         .pagination-custom {
@@ -621,7 +621,7 @@
             border-radius: 6px;
             border: 1px solid #e8eaed;
             text-decoration: none;
-            color: #1A1A2E;
+            color: #101e2d;
             font-size: 13px;
             font-weight: 500;
             transition: all 0.3s ease;
@@ -629,14 +629,14 @@
         }
 
         .pagination-custom a:hover {
-            border-color: #D4AF37;
-            color: #D4AF37;
+            border-color: #00458c;
+            color: #00458c;
         }
 
         .pagination-custom .current {
-            background: linear-gradient(135deg, #D4AF37, #B8960F);
-            border-color: #D4AF37;
-            color: #1A1A2E;
+            background: linear-gradient(135deg, #00458c, #00356d);
+            border-color: #00458c;
+            color: #101e2d;
             font-weight: 700;
         }
 
@@ -715,42 +715,22 @@
                 padding: 20px;
             }
         }
+    .account-page .wallet-page { padding:0; }
+    .account-wallet-actions { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
+    .account-page .stats-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .account-page .stat-number { font-size:20px; overflow-wrap:anywhere; }
+    .account-page .wd-wrap .form-control { border:1px solid #e0e1e3; border-radius:10px; background:#fcfcfc; }
+    .account-page .wd-wrap .form-control:focus { border-color:#00458c; box-shadow:0 0 0 3px #00458c10; }
+    @media(max-width:760px) { .account-page .stats-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.account-page .stat-number { font-size:18px; }.account-page .wd-wrap .form-control { font-size:16px; }.account-page .wallet-page .balance-card { padding:22px; }.account-wallet-actions .account-btn { flex:1; } }
     </style>
 {% endblock %}
 
-{% block content %}
+{% block account_title %}کیف پول{% endblock %}
+{% block account_intro %}موجودی، تراکنش‌ها و درخواست‌های برداشت را اینجا ببین.{% endblock %}
+{% block account_content %}
     <div class="wallet-page">
 
-        <!-- ===== هدر ===== -->
-        <div class="wallet-header">
-            <div class="header-content">
-                <div class="header-title">
-                    <i class="fas fa-wallet"></i>
-                    <span>کیف پول من</span>
-                </div>
-                <div class="header-actions">
-                    {% comment %}
-                        شرط عمداً wallet_charge_enabled است نه wallet_enabled: قبلاً
-                        دکمه در حالتی که شارژ خاموش بود هم دیده می‌شد و کلیک روی آن
-                        فقط به یک پیام خطا می‌رسید.
-                    {% endcomment %}
-                    {% if wallet_charge_enabled %}
-                    <a href="{% url 'wallet:charge' %}" class="btn-charge">
-                        <i class="fas fa-plus-circle"></i> شارژ کیف پول
-                    </a>
-                    {% endif %}
-                    {% if withdrawal_enabled and withdrawable %}
-                    <a href="{% url 'wallet:withdraw' %}" class="btn-withdraw">
-                        <i class="fas fa-money-bill-transfer"></i> برداشت وجه
-                    </a>
-                    {% endif %}
-                    <a href="{% url 'matches:home' %}" class="btn-back">
-                        <i class="fas fa-arrow-right"></i> بازگشت
-                    </a>
-                </div>
-            </div>
-        </div>
-
+        <div class="account-wallet-actions">{% if wallet_charge_enabled %}<a href="{% url 'wallet:charge' %}" class="account-btn"><i class="fa-solid fa-plus" aria-hidden="true"></i> شارژ کیف پول</a>{% endif %}{% if withdrawal_enabled and withdrawable %}<a href="{% url 'wallet:withdraw' %}" class="account-btn account-btn-light"><i class="fa-solid fa-money-bill-transfer" aria-hidden="true"></i> برداشت وجه</a>{% endif %}</div>
         {% if not wallet_enabled %}
         <!-- ===== کیف پول توسط مدیریت غیرفعال شده ===== -->
         <div style="background:#fdeceb; border:1px solid #f5b7b1; border-right:4px solid #c0392b;
@@ -767,25 +747,25 @@
         <div class="balance-card">
             <div class="balance-label"><i class="fas fa-coins"></i> موجودی کیف پول</div>
             <div class="balance-amount">
-                {{ wallet.balance|rial_display }}
+                {{ wallet.balance|rial_display|to_persian }}
                 <span class="currency">ریال</span>
             </div>
             <div class="balance-updated">
                 <i class="fas fa-clock"></i>
-                آخرین به‌روزرسانی: {{ wallet.updated_at|date:"Y/m/d - H:i" }}
+                آخرین به‌روزرسانی: {{ wallet.updated_at|to_jalali|to_persian }}
             </div>
 
             {% if withdrawal_enabled %}
             <div class="wd-strip">
                 <div class="wd-main">
                     <span class="wd-lbl"><i class="fas fa-money-bill-transfer"></i> قابل برداشت به حساب بانکی</span>
-                    <span class="wd-val">{{ withdrawable|rial_display }} <small>ریال</small></span>
+                    <span class="wd-val">{{ withdrawable|rial_display|to_persian }} <small>ریال</small></span>
                 </div>
 
                 {% if held_amount %}
                 <div class="wd-sub">
                     <i class="fas fa-lock"></i>
-                    {{ held_amount|rial_display }} ریال بابت درخواست در جریان نگه داشته شده و
+                    {{ held_amount|rial_display|to_persian }} ریال بابت درخواست در جریان نگه داشته شده و
                     به موجودی برنمی‌گردد مگر درخواست لغو یا رد شود.
                 </div>
                 {% endif %}
@@ -797,8 +777,8 @@
                 {% elif not held_amount and wallet.balance %}
                 <div class="wd-sub">
                     <i class="fas fa-circle-info"></i>
-                    از موجودی فعلی شما چیزی قابل برداشت نیست. فقط مبلغی که <strong>باشگاه</strong>
-                    به کیف پول شما برگردانده — بابت بلیط صادرنشده، لغو مسابقه یا بازگشت وجه —
+                    از موجودی فعلی شما چیزی قابل برداشت نیست. فقط مبلغی که <strong>سامانه</strong>
+                    به کیف پول شما برگردانده — بابت بلیط صادرنشده، لغو برنامه یا بازگشت وجه —
                     قابل برداشت است؛ مبلغی که خودتان شارژ کرده‌اید برای خرید بلیط قابل استفاده است.
                 </div>
                 {% endif %}
@@ -810,29 +790,29 @@
         <div class="stats-grid">
             <div class="stat-card gold">
                 <span class="stat-icon"><i class="fas fa-wallet"></i></span>
-                <div class="stat-number">{{ wallet.balance|rial_display }}</div>
+                <div class="stat-number">{{ wallet.balance|rial_display|to_persian }}</div>
                 <div class="stat-label">موجودی فعلی (ریال)</div>
             </div>
             <div class="stat-card green">
                 <span class="stat-icon"><i class="fas fa-arrow-up"></i></span>
-                <div class="stat-number">{{ total_deposits|rial_display }}</div>
+                <div class="stat-number">{{ total_deposits|rial_display|to_persian }}</div>
                 <div class="stat-label">کل شارژها (ریال)</div>
             </div>
             <div class="stat-card red">
                 <span class="stat-icon"><i class="fas fa-arrow-down"></i></span>
-                <div class="stat-number">{{ total_withdrawals|rial_display }}</div>
-                <div class="stat-label">کل برداشت‌ها (ریال)</div>
+                <div class="stat-number">{{ total_withdrawals|rial_display|to_persian }}</div>
+                <div class="stat-label">برداشت‌ها و خریدها (ریال)</div>
             </div>
             {% if withdrawal_enabled %}
             <div class="stat-card gold">
                 <span class="stat-icon"><i class="fas fa-money-bill-transfer"></i></span>
-                <div class="stat-number">{{ withdrawable|rial_display }}</div>
+                <div class="stat-number">{{ withdrawable|rial_display|to_persian }}</div>
                 <div class="stat-label">قابل برداشت (ریال)</div>
             </div>
             {% endif %}
             <div class="stat-card blue">
                 <span class="stat-icon"><i class="fas fa-exchange-alt"></i></span>
-                <div class="stat-number">{{ total_transactions|default:"۰" }}</div>
+                <div class="stat-number">{{ total_transactions|default:"۰"|to_persian }}</div>
                 <div class="stat-label">تعداد تراکنش‌ها</div>
             </div>
         </div>
@@ -858,10 +838,10 @@
                     {% for w in withdrawals %}
                         <tr>
                             <td style="white-space:nowrap;">
-                                {{ w.created_at|date:"Y/m/d" }}<br>
-                                <small style="color:#999;">{{ w.created_at|date:"H:i" }}</small>
+                                {{ w.created_at|to_jalali_date|to_persian }}<br>
+                                <small style="color:#999;">{{ w.created_at|date:"H:i"|to_persian }}</small>
                             </td>
-                            <td style="font-weight:700;">{{ w.amount|rial_display }}</td>
+                            <td style="font-weight:700;">{{ w.amount|rial_display|to_persian }}</td>
                             <td style="direction:ltr; text-align:left; font-family:monospace; font-size:13px;">
                                 {{ w.iban_display }}
                             </td>
@@ -941,7 +921,7 @@
         <div class="transactions-section">
             <div class="section-header">
                 <h5><i class="fas fa-list"></i> تاریخچه تراکنش‌ها</h5>
-                <span class="badge-count">{{ transactions|length }} تراکنش</span>
+                <span class="badge-count">{{ transactions|length|to_persian }} تراکنش</span>
             </div>
             <div class="table-responsive-custom">
                 {% if transactions %}
@@ -959,9 +939,9 @@
                         {% for tx in transactions %}
                             <tr>
                                 <td style="white-space:nowrap;">
-                                    {{ tx.created_at|date:"Y/m/d" }}
+                                    {{ tx.created_at|to_jalali_date|to_persian }}
                                     <br>
-                                    <small style="color:#999;">{{ tx.created_at|date:"H:i" }}</small>
+                                    <small style="color:#999;">{{ tx.created_at|date:"H:i"|to_persian }}</small>
                                 </td>
                                 <td>
                             <span class="transaction-type {{ tx.transaction_type }}">
@@ -969,6 +949,8 @@
                                     {% if tx.transaction_type == 'deposit' %}fa-arrow-up
                                     {% elif tx.transaction_type == 'withdraw' %}fa-arrow-down
                                     {% elif tx.transaction_type == 'ticket_purchase' %}fa-ticket-alt
+                                    {% elif tx.transaction_type == 'education_purchase' %}fa-graduation-cap
+                                    {% elif tx.transaction_type == 'studio_rental' %}fa-door-open
                                     {% else %}fa-undo{% endif %}">
                                 </i>
                                 {{ tx.get_transaction_type_display }}
@@ -977,16 +959,14 @@
                                 <td>
                             <span class="transaction-amount
                                 {% if tx.transaction_type == 'deposit' %}positive
-                                {% elif tx.transaction_type == 'withdraw' or tx.transaction_type == 'ticket_purchase' %}negative
+                                {% elif tx.amount < 0 %}negative
                                 {% else %}neutral{% endif %}">
-                                {% if tx.transaction_type == 'deposit' %}
-                                    +{% elif tx.transaction_type == 'withdraw' or tx.transaction_type == 'ticket_purchase' %}
-                                    -{% endif %}
-                                {{ tx.amount|rial_display }}
+                                {% if tx.amount > 0 %}+{% endif %}
+                                {{ tx.amount|rial_display|to_persian }}
                             </span>
                                 </td>
                                 <td>{{ tx.description|truncatechars:30 }}</td>
-                                <td>{{ tx.balance_after|rial_display }}</td>
+                                <td>{{ tx.balance_after|rial_display|to_persian }}</td>
                             </tr>
                         {% endfor %}
                         </tbody>
@@ -996,9 +976,9 @@
                     {% if transactions.has_other_pages %}
                         <div class="table-pagination">
                             <div class="info">
-                                نمایش <strong>{{ transactions.start_index }}</strong> تا
-                                <strong>{{ transactions.end_index }}</strong>
-                                از <strong>{{ transactions.paginator.count }}</strong> تراکنش
+                                نمایش <strong>{{ transactions.start_index|to_persian }}</strong> تا
+                                <strong>{{ transactions.end_index|to_persian }}</strong>
+                                از <strong>{{ transactions.paginator.count|to_persian }}</strong> تراکنش
                             </div>
                             <div class="pagination-custom">
                                 {% if transactions.has_previous %}
@@ -1012,9 +992,9 @@
 
                                 {% for num in transactions.paginator.page_range %}
                                     {% if num == transactions.number %}
-                                        <span class="current">{{ num }}</span>
+                                        <span class="current">{{ num|to_persian }}</span>
                                     {% elif num > transactions.number|add:'-3' and num < transactions.number|add:'3' %}
-                                        <a href="?page={{ num }}">{{ num }}</a>
+                                        <a href="?page={{ num|to_persian }}">{{ num|to_persian }}</a>
                                     {% endif %}
                                 {% endfor %}
 

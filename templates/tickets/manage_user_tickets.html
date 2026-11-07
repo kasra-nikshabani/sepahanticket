@@ -23,7 +23,7 @@
     .card-header-custom {
         background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
         padding: 20px 30px;
-        border-bottom: 3px solid #D4AF37;
+        border-bottom: 3px solid #2467a8;
         color: white;
         display: flex;
         justify-content: space-between;
@@ -34,20 +34,20 @@
     .card-header-custom h4 {
         margin: 0;
         font-weight: 700;
-        color: #D4AF37;
+        color: #2467a8;
     }
     .card-header-custom h4 i {
         margin-left: 10px;
-        color: #D4AF37;
+        color: #2467a8;
     }
     .card-header-custom .ticket-count {
-        background: rgba(212, 175, 55, 0.15);
-        color: #D4AF37;
+        background: rgba(36, 103, 168, 0.15);
+        color: #2467a8;
         padding: 4px 16px;
         border-radius: 50px;
         font-size: 14px;
         font-weight: 600;
-        border: 1px solid rgba(212, 175, 55, 0.2);
+        border: 1px solid rgba(36, 103, 168, 0.2);
     }
     .card-body-custom {
         padding: 30px;
@@ -74,7 +74,7 @@
         gap: 6px;
     }
     .filter-section .filter-label i {
-        color: #D4AF37;
+        color: #2467a8;
     }
     .filter-section select {
         flex: 1;
@@ -93,9 +93,9 @@
         cursor: pointer;
     }
     .filter-section select:focus {
-        border-color: #D4AF37;
+        border-color: #2467a8;
         outline: none;
-        box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.12);
+        box-shadow: 0 0 0 4px rgba(36, 103, 168, 0.12);
     }
     .filter-section .btn-filter {
         padding: 8px 20px;
@@ -108,7 +108,7 @@
         cursor: pointer;
     }
     .filter-section .btn-filter:hover {
-        background: #D4AF37;
+        background: #2467a8;
         color: #1A1A2E;
     }
     .filter-section .btn-reset {
@@ -122,7 +122,7 @@
         text-decoration: none;
     }
     .filter-section .btn-reset:hover {
-        border-color: #D4AF37;
+        border-color: #2467a8;
         color: #1A1A2E;
     }
     .filter-section .selected-match-info {
@@ -130,14 +130,14 @@
         border-radius: 8px;
         padding: 6px 14px;
         font-size: 13px;
-        border: 1px solid #D4AF37;
+        border: 1px solid #2467a8;
         color: #1A1A2E;
         display: inline-flex;
         align-items: center;
         gap: 6px;
     }
     .filter-section .selected-match-info i {
-        color: #D4AF37;
+        color: #2467a8;
     }
 
     /* ===== اطلاعات کاربر ===== */
@@ -146,7 +146,7 @@
         border-radius: 10px;
         padding: 12px 20px;
         margin-bottom: 20px;
-        border-right: 4px solid #D4AF37;
+        border-right: 4px solid #2467a8;
         display: flex;
         flex-wrap: wrap;
         gap: 20px;
@@ -161,7 +161,7 @@
         margin-left: 4px;
     }
     .badge-ticket {
-        background: #D4AF37;
+        background: #2467a8;
         color: #1A1A2E;
         padding: 4px 14px;
         border-radius: 20px;
@@ -181,12 +181,12 @@
         font-weight: 600;
         padding: 12px 16px;
         text-align: right;
-        border-bottom: 2px solid #D4AF37;
+        border-bottom: 2px solid #2467a8;
         white-space: nowrap;
     }
     .table-custom thead th i {
         margin-left: 4px;
-        color: #D4AF37;
+        color: #2467a8;
     }
     .table-custom tbody td {
         padding: 12px 16px;
@@ -215,12 +215,12 @@
         color: #721c24;
     }
     .table-custom .status-badge.unused {
-        background: #d4edda;
-        color: #155724;
+        background: #dde0e4;
+        color: #0d355f;
     }
     .table-custom .status-badge.active {
-        background: #d4edda;
-        color: #155724;
+        background: #dde0e4;
+        color: #0d355f;
     }
     .table-custom .status-badge.inactive {
         background: #f8d7da;
@@ -268,7 +268,7 @@
         color: #1A1A2E;
     }
     .btn-download {
-        background: #D4AF37;
+        background: #2467a8;
         border: none;
         color: #1A1A2E;
         padding: 6px 14px;
@@ -282,7 +282,7 @@
         gap: 6px;
     }
     .btn-download:hover {
-        background: #B8960F;
+        background: #194d82;
         color: #1A1A2E;
     }
 
@@ -294,7 +294,7 @@
     }
     .empty-state i {
         font-size: 3.5rem;
-        color: #D4AF37;
+        color: #2467a8;
         margin-bottom: 16px;
         display: block;
     }
@@ -396,7 +396,7 @@
                 <span><span class="label">نام کامل:</span> {{ target_user.get_full_name|default:"-" }}</span>
                 <span><span class="label">تعداد بلیط:</span> <span class="badge-ticket">{{ tickets|length }}</span></span>
                 {% if selected_match %}
-                    <span><span class="label">مسابقه فیلترشده:</span> {{ selected_match.home_team }} vs {{ selected_match.away_team }}</span>
+                    <span><span class="label">مسابقه فیلترشده:</span> {{ selected_match.display_title }}</span>
                 {% endif %}
             </div>
 
@@ -408,7 +408,7 @@
                         <option value="">همه مسابقات</option>
                         {% for match in matches %}
                             <option value="{{ match.id }}" {% if selected_match_id == match.id %}selected{% endif %}>
-                                {{ match.home_team }} vs {{ match.away_team }} ({{ match.date_time|date:"Y/m/d" }})
+                                {{ match.display_title }} ({{ match.date_time|date:"Y/m/d" }})
                             </option>
                         {% endfor %}
                     </select>
@@ -455,7 +455,7 @@
                                     <td><input type="checkbox" class="ticket-select" value="{{ ticket.id }}"></td>
                                     <td><strong>{{ ticket.ticket_number }}</strong></td>
                                     <td class="match-cell">
-                                        {{ ticket.match.home_team }} vs {{ ticket.match.away_team }}
+                                        {{ ticket.match.display_title }}
                                         <span class="match-date">{{ ticket.match.date_time|date:"Y/m/d H:i" }}</span>
                                     </td>
                                     <td>{{ ticket.seat.row.block.name }} - ردیف {{ ticket.seat.row.number }} - صندلی {{ ticket.seat.number }}</td>
@@ -524,7 +524,7 @@
                             <option value="">— انتخاب کنید —</option>
                             {% for m in matches %}
                                 <option value="{{ m.id }}" {% if selected_match_id == m.id %}selected{% endif %}>
-                                    {{ m.home_team }} vs {{ m.away_team }} ({{ m.date_time|date:"Y/m/d" }})
+                                    {{ m.display_title }} ({{ m.date_time|date:"Y/m/d" }})
                                 </option>
                             {% endfor %}
                         </select>
@@ -567,7 +567,7 @@
                                     <td><strong dir="ltr">{{ dc.code }}</strong></td>
                                     <td class="match-cell">
                                         {% if dc.match %}
-                                            {{ dc.match.home_team }} vs {{ dc.match.away_team }}
+                                            {{ dc.match.display_title }}
                                             <span class="match-date">{{ dc.match.date_time|date:"Y/m/d" }}</span>
                                         {% else %}
                                             —
@@ -621,7 +621,7 @@
                         <select name="special_match_id" required style="width:100%; padding:8px 14px; border-radius:8px; border:1.5px solid #e8eaed;">
                             <option value="">— انتخاب کنید —</option>
                             {% for m in matches %}
-                                <option value="{{ m.id }}">{{ m.home_team }} vs {{ m.away_team }} ({{ m.date_time|date:"Y/m/d" }})</option>
+                                <option value="{{ m.id }}">{{ m.display_title }} ({{ m.date_time|date:"Y/m/d" }})</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -639,7 +639,7 @@
                 <details class="special-code-group" {% if forloop.first %}open{% endif %} style="margin-bottom:14px; border:1px solid #e8eaed; border-radius:10px; overflow:hidden;">
                     <summary style="cursor:pointer; padding:12px 16px; background:#f8f9fa; font-weight:600; display:flex; justify-content:space-between; align-items:center; list-style:none;">
                         <span>
-                            {{ group.match.home_team }} vs {{ group.match.away_team }}
+                            {{ group.match.display_title }}
                             <span style="color:#6c757d; font-weight:400; font-size:13px;">({{ group.match.date_time|date:"Y/m/d" }})</span>
                         </span>
                         <span class="badge-ticket">{{ group.used_count }} / {{ group.codes|length }} استفاده‌شده</span>

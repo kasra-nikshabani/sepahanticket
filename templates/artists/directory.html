@@ -1,0 +1,13 @@
+{% extends 'events/base.html' %}{% load static persian_filters %}
+{% block title %}هنرمندان | دیدآور{% endblock %}
+{% block page_class %}artist-page artist-directory-page{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'events/artists.css' %}?v=20261031-2">{% endblock %}
+{% block content %}
+
+<section class="artist-directory-intro"><div><span class="artist-eyebrow">جامعهٔ هنری دیدآور</span><h1>هر هنرمند،<br><span>آغاز یک دیدار تازه.</span></h1><p>با هنرمندان آشنا شوید، دنبالشان کنید و از اجراهای تازه‌شان باخبر بمانید.</p></div><a class="artist-button artist-button-light" href="{% url 'artists:edit' %}"><i class="fa-solid fa-plus" aria-hidden="true"></i> صفحهٔ هنری من</a></section>
+<form method="get" class="artist-search" role="search"><label class="artist-search-input"><span class="visually-hidden">جست‌وجوی نام، تخصص یا شهر هنرمند</span><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" name="q" value="{{ query }}" maxlength="100" placeholder="نام هنرمند، تخصص یا شهر…"></label><label><span class="visually-hidden">حوزهٔ فعالیت</span><select name="discipline"><option value="">همهٔ هنرها</option>{% for value,label in disciplines %}<option value="{{ value }}" {% if discipline == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label><button class="artist-button">جست‌وجو</button>{% if query or discipline %}<a class="artist-reset" href="{% url 'artists:directory' %}">پاک‌کردن فیلتر</a>{% endif %}</form>
+<div class="artist-directory-results"><h2>با هنرمندان آشنا شوید</h2><p class="artist-result-count">{{ page_obj.paginator.count|to_persian }} هنرمند{% if query %} برای «{{ query|to_persian }}»{% endif %}</p></div>
+<div class="artist-grid">{% for artist in page_obj %}{% include 'artists/_card.html' %}{% empty %}<div class="artist-empty"><i class="fa-solid fa-palette" aria-hidden="true"></i><h2>{% if query or discipline %}هنرمندی با این مشخصات پیدا نشد{% else %}اولین صفحه‌های هنری در راه‌اند{% endif %}</h2><p>{% if query or discipline %}نام یا حوزهٔ فعالیت دیگری را جست‌وجو کنید.{% else %}اگر هنرمند هستید، صفحهٔ خودتان را بسازید و بعد از تأیید دیدآور، با مخاطبانتان ارتباط بگیرید.{% endif %}</p><a class="artist-button" href="{% url 'artists:edit' %}">ساخت صفحهٔ هنری</a></div>{% endfor %}</div>
+{% include 'artists/_pagination.html' %}
+<div class="artist-status-panel"><i class="fa-solid fa-handshake" aria-hidden="true"></i><div><strong>مسیر هنری‌تان را با یک همکاری تازه ادامه دهید</strong><p>فرصت‌های همکاری را ببینید یا برای گروه خود همکار پیدا کنید.</p><a class="artist-back" href="{% url 'artists:opportunities' %}">فرصت‌های همکاری <i class="fa-solid fa-arrow-left" aria-hidden="true"></i></a></div></div>
+{% endblock %}

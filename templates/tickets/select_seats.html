@@ -14,7 +14,7 @@
 <div class="container mt-4">
     <!-- اطلاعات مسابقه -->
     <div class="text-center mb-4">
-        <h2>{{ match.home_team }} <span style="color: var(--gold);">🆚</span> {{ match.away_team }}</h2>
+        <h2>{{ match.display_title }}</h2>
         <p class="text-muted">{{ match.date_time|date:"Y/m/d" }}{% if match.has_time %} {{ match.date_time|date:"H:i" }}{% endif %}</p>
         <p><strong>ردیف:</strong> {{ row.name }}</p>
     </div>
@@ -81,14 +81,14 @@
         user-select: none;
     }
     .seat.available {
-        background: #e8f5e9;
-        border-color: #a5d6a7;
-        color: #2e7d32;
+        background: #eeeeef;
+        border-color: #afbdcc;
+        color: #1f548c;
     }
     .seat.available:hover {
-        background: #c8e6c9;
+        background: #d2d7dc;
         transform: scale(1.05);
-        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        box-shadow: 0 4px 12px rgba(25, 102, 182, 0.3);
     }
     .seat.unavailable {
         background: #fce4ec;
@@ -98,11 +98,11 @@
         opacity: 0.6;
     }
     .seat.selected {
-        background: #D4AF37 !important;
-        border-color: #B8960F !important;
+        background: #2467a8 !important;
+        border-color: #194d82 !important;
         color: #1A1A2E !important;
         transform: scale(1.08);
-        box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+        box-shadow: 0 0 20px rgba(36, 103, 168, 0.5);
     }
     .seat.reserved {
         background: #ff8c00 !important;

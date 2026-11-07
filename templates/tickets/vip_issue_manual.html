@@ -2,7 +2,7 @@
 {% load static %}
 {% load currency_filters %}
 
-{% block title %}صدور دستی بلیط - {{ match.home_team }} vs {{ match.away_team }}{% endblock %}
+{% block title %}صدور دستی بلیط - {{ match.display_title }}{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
@@ -19,7 +19,7 @@
                     <!-- اطلاعات مسابقه -->
                     <div class="match-info mb-4 p-3 bg-light rounded">
                         <h5 class="text-center">
-                            {{ match.home_team }} <span class="text-muted">vs</span> {{ match.away_team }}
+                            {{ match.display_title }}
                         </h5>
                         <p class="text-center text-muted mb-0">
                             <i class="fas fa-calendar-alt"></i> {{ match.date_time|date:"Y/m/d" }}{% if match.has_time %} - {{ match.date_time|date:"H:i" }}{% endif %}
@@ -244,22 +244,22 @@
         margin-top: 2px;
     }
     .seat-label .seat-status.available {
-        color: #28a745;
+        color: #1966b6;
     }
     .seat-label .seat-status.unavailable {
         color: #dc3545;
     }
 
     .seat-radio:not(:disabled):checked + .seat-label {
-        background: #d4edda;
-        border-color: #28a745;
-        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.25);
+        background: #dde0e4;
+        border-color: #1966b6;
+        box-shadow: 0 0 0 3px rgba(25, 102, 182, 0.25);
     }
     .seat-radio:not(:disabled):checked + .seat-label i {
-        color: #28a745;
+        color: #1966b6;
     }
     .seat-radio:not(:disabled):checked + .seat-label .seat-status.available {
-        color: #155724;
+        color: #0d355f;
     }
 
     .seat-label:hover:not(.seat-card.sold .seat-label) {

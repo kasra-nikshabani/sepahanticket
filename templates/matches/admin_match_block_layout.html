@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}ردیف‌ها و صندلی‌های {{ selected_block.name }} — {{ match.home_team }} vs {{ match.away_team }}{% endblock %}
+{% block title %}ردیف‌ها و صندلی‌های {{ selected_block.name }} — {{ match.display_title }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -10,20 +10,20 @@
     .page-header {
         background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
         border-radius: 18px; padding: 22px 26px; color: #fff; margin-bottom: 14px;
-        border-bottom: 3px solid #D4AF37;
+        border-bottom: 3px solid #2467a8;
     }
-    .page-header h2 { margin: 0; color: #D4AF37; font-weight: 800; font-size: 1.28rem;
+    .page-header h2 { margin: 0; color: #2467a8; font-weight: 800; font-size: 1.28rem;
                       display: flex; align-items: center; gap: 10px; }
     .page-header .meta { font-size: .85rem; opacity: .78; margin-top: 7px; }
     .page-header .zone-badge {
-        display: inline-block; background: rgba(212,175,55,.18); border: 1px solid rgba(212,175,55,.45);
-        color: #D4AF37; padding: 3px 12px; border-radius: 20px; font-size: .76rem; font-weight: 700; margin-top: 8px;
+        display: inline-block; background: rgba(36, 103, 168,.18); border: 1px solid rgba(36, 103, 168,.45);
+        color: #2467a8; padding: 3px 12px; border-radius: 20px; font-size: .76rem; font-weight: 700; margin-top: 8px;
     }
 
     .info-banner, .warn-banner {
         border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; font-size: .85rem; line-height: 1.9;
     }
-    .info-banner { background: #fff8e1; border: 1px solid #f0dfa0; border-right: 4px solid #D4AF37; color: #6b5500; }
+    .info-banner { background: #fff8e1; border: 1px solid #f0dfa0; border-right: 4px solid #2467a8; color: #6b5500; }
     .warn-banner { background: #fdeceb; border: 1px solid #f5b7b1; border-right: 4px solid #c0392b; color: #922b21; }
 
     /* ===== نوار ابزار چسبان ===== */
@@ -42,7 +42,7 @@
         width: 100%; padding: 9px 34px 9px 12px; border-radius: 10px;
         border: 1.5px solid #e8eaed; font-size: .88rem; font-family: inherit; background: #fafbfc;
     }
-    .search-wrap input:focus { border-color: #D4AF37; outline: none; background: #fff; }
+    .search-wrap input:focus { border-color: #2467a8; outline: none; background: #fff; }
 
     .chips { display: flex; gap: 6px; flex-wrap: wrap; }
     .chip {
@@ -50,15 +50,15 @@
         padding: 7px 14px; border-radius: 20px; font-size: .8rem; font-weight: 700;
         cursor: pointer; transition: all .15s; font-family: inherit;
     }
-    .chip:hover { border-color: #D4AF37; }
-    .chip.on { background: #1A1A2E; border-color: #1A1A2E; color: #D4AF37; }
+    .chip:hover { border-color: #2467a8; }
+    .chip.on { background: #1A1A2E; border-color: #1A1A2E; color: #2467a8; }
     .chip .n { opacity: .6; font-weight: 500; }
 
     .btn-bulk {
         border-radius: 9px; padding: 7px 13px; font-size: .78rem; font-weight: 700; cursor: pointer;
         font-family: inherit; display: inline-flex; align-items: center; gap: 5px; transition: filter .15s;
     }
-    .btn-bulk.b-on  { background: #e6f7ee; color: #1E8E3E; border: 1px solid #bfe8cf; }
+    .btn-bulk.b-on  { background: #edeef0; color: #12559a; border: 1px solid #ccd3db; }
     .btn-bulk.b-off { background: #fdeceb; color: #c0392b; border: 1px solid #f5c6c1; }
     .btn-bulk.b-neutral { background: #f1f3f4; color: #5a6570; border: 1px solid #e2e5e8; }
     .btn-bulk:hover { filter: brightness(.96); }
@@ -90,7 +90,7 @@
     .caret:hover { background: #e2e5e8; }
 
     .pill { padding: 3px 11px; border-radius: 50px; font-size: .72rem; font-weight: 700; white-space: nowrap; display: inline-block; }
-    .pill.on { background: #e6f7ee; color: #1E8E3E; }
+    .pill.on { background: #edeef0; color: #12559a; }
     .pill.off { background: #fdeceb; color: #c0392b; }
     .pill.override { background: #e8f0fe; color: #1a56db; font-size: .68rem; }
     .pill.default { background: #f1f3f4; color: #7b8794; font-size: .68rem; }
@@ -103,7 +103,7 @@
         content: ""; position: absolute; width: 19px; height: 19px; border-radius: 50%;
         background: #fff; top: 3px; right: 3px; transition: transform .18s; box-shadow: 0 1px 4px rgba(0,0,0,.3);
     }
-    .sw.on .track { background: #2d8a4e; }
+    .sw.on .track { background: #1e5a99; }
     .sw.on .track::before { transform: translateX(-21px); }
 
     .row-body[hidden] { display: none; }
@@ -114,9 +114,9 @@
         font-size: .78rem; font-weight: 700; color: #1A1A2E; cursor: pointer; transition: all .15s;
         display: flex; align-items: center; justify-content: center; padding: 0;
     }
-    .seat-btn:hover { transform: translateY(-2px); border-color: #D4AF37; }
+    .seat-btn:hover { transform: translateY(-2px); border-color: #2467a8; }
     .seat-btn.off { background: #fdeceb; border-color: #f5b7b1; color: #c0392b; text-decoration: line-through; }
-    .seat-btn.sold { background: #1A1A2E; border-color: #1A1A2E; color: #D4AF37; cursor: not-allowed; }
+    .seat-btn.sold { background: #1A1A2E; border-color: #1A1A2E; color: #2467a8; cursor: not-allowed; }
     .seat-btn.sold:hover { transform: none; }
     .seat-btn.global-off { background: #f1f3f4; border-color: #ddd; color: #aaa; }
 
@@ -147,7 +147,7 @@
     <div class="page-header">
         <h2><i class="fas fa-list"></i> ردیف‌ها و صندلی‌های «{{ selected_block.name }}»</h2>
         <div class="meta">
-            {{ match.home_team }} vs {{ match.away_team }} — {{ match.date_time|date:"Y/m/d H:i" }}
+            {{ match.display_title }} — {{ match.date_time|date:"Y/m/d H:i" }}
         </div>
         {% if block_zone_label %}<span class="zone-badge">جایگاه این مسابقه: {{ block_zone_label }}</span>{% endif %}
     </div>

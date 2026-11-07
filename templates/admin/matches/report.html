@@ -29,7 +29,7 @@
             background: #f8f9fa;
             padding: 12px;
             text-align: right;
-            border-bottom: 2px solid #D4AF37;
+            border-bottom: 2px solid #2467a8;
             font-weight: 600;
         }
 
@@ -51,8 +51,8 @@
         }
 
         .badge-success {
-            background: #d4edda;
-            color: #155724;
+            background: #dde0e4;
+            color: #0d355f;
         }
 
         .badge-danger {
@@ -89,7 +89,7 @@
         }
 
         .btn-success {
-            background: #28a745;
+            background: #1966b6;
         }
 
         .btn-warning {
@@ -146,7 +146,7 @@
                 <tbody>
                 {% for item in report_data %}
                     <tr>
-                        <td><strong>{{ item.match.home_team }} vs {{ item.match.away_team }}</strong></td>
+                        <td><strong>{{ item.match.display_title }}</strong></td>
                         <td>{{ item.match.date_time|date:"Y/m/d H:i" }}</td>
                         <td><span class="badge badge-success">{{ item.sold_count }}</span></td>
                         <td><span class="badge badge-warning">{{ item.vip_count }}</span></td>
@@ -157,7 +157,7 @@
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span>{{ item.occupancy_percent }}%</span>
                                 <div style="width:80px; height:6px; background:#e8eaed; border-radius:3px; overflow:hidden;">
-                                    <div style="width:{{ item.occupancy_percent }}%; height:100%; background:linear-gradient(90deg, #D4AF37, #B8960F); border-radius:3px;"></div>
+                                    <div style="width:{{ item.occupancy_percent }}%; height:100%; background:linear-gradient(90deg, #2467a8, #194d82); border-radius:3px;"></div>
                                 </div>
                             </div>
                         </td>

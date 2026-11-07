@@ -2,7 +2,7 @@
 {% load currency_filters %}
 {% load static %}
 
-{% block title %}جزئیات مسابقه {{ match.home_team }} vs {{ match.away_team }}{% endblock %}
+{% block title %}جزئیات سانس {{ match.display_title }}{% endblock %}
 
 {% block extra_css %}
     <style>
@@ -19,7 +19,7 @@
             flex-wrap: wrap;
             margin-bottom: 25px;
             padding-bottom: 20px;
-            border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+            border-bottom: 2px solid rgba(36, 103, 168, 0.3);
         }
 
         .page-header .header-left h2 {
@@ -30,7 +30,7 @@
         }
 
         .page-header .header-left h2 i {
-            color: #D4AF37;
+            color: #2467a8;
             margin-left: 12px;
         }
 
@@ -50,7 +50,7 @@
         }
 
         .page-header .header-left .match-meta i {
-            color: #D4AF37;
+            color: #2467a8;
             width: 18px;
         }
 
@@ -69,10 +69,10 @@
         }
 
         .btn-back:hover {
-            border-color: #D4AF37;
-            color: #D4AF37;
+            border-color: #2467a8;
+            color: #2467a8;
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.15);
+            box-shadow: 0 4px 15px rgba(36, 103, 168, 0.15);
         }
 
         /* ----- کارت‌های آمار ----- */
@@ -95,8 +95,8 @@
 
         .stat-card:hover {
             transform: translateY(-4px);
-            border-color: #D4AF37;
-            box-shadow: 0 8px 30px rgba(212, 175, 55, 0.12);
+            border-color: #2467a8;
+            box-shadow: 0 8px 30px rgba(36, 103, 168, 0.12);
         }
 
         .stat-card .stat-number {
@@ -118,11 +118,11 @@
         }
 
         .stat-card.gold .stat-number {
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .stat-card.green .stat-number {
-            color: #28a745;
+            color: #1966b6;
         }
 
         .stat-card.blue .stat-number {
@@ -157,7 +157,7 @@
         }
 
         .section-title i {
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .section-title .badge-count {
@@ -187,8 +187,8 @@
         }
 
         .block-card:hover {
-            border-color: #D4AF37;
-            box-shadow: 0 8px 24px rgba(212, 175, 55, 0.12);
+            border-color: #2467a8;
+            box-shadow: 0 8px 24px rgba(36, 103, 168, 0.12);
             transform: translateY(-3px);
         }
 
@@ -209,7 +209,7 @@
             gap: 10px;
             padding: 14px 16px;
             background: linear-gradient(135deg, #1A1A2E, #23233d);
-            border-bottom: 3px solid #D4AF37;
+            border-bottom: 3px solid #2467a8;
         }
 
         .block-card.inactive .block-card-header {
@@ -228,7 +228,7 @@
         }
 
         .block-card .block-name i {
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .block-status {
@@ -240,8 +240,8 @@
         }
 
         .block-status.active {
-            background: rgba(40, 167, 69, 0.15);
-            color: #4caf50;
+            background: rgba(25, 102, 182, 0.15);
+            color: #377cc4;
         }
 
         .block-status.inactive {
@@ -274,7 +274,7 @@
         }
 
         .block-info-row .info-label i {
-            color: #D4AF37;
+            color: #2467a8;
             width: 14px;
             text-align: center;
         }
@@ -285,7 +285,7 @@
         }
 
         .block-info-row .info-value.price {
-            color: #B8960F;
+            color: #194d82;
         }
 
         .block-card .block-stats {
@@ -363,7 +363,7 @@
         }
 
         .table-header h5 i {
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .table-header .count-badge {
@@ -397,13 +397,13 @@
             font-weight: 600;
             font-size: 13px;
             color: #1A1A2E;
-            border-bottom: 2px solid #D4AF37;
+            border-bottom: 2px solid #2467a8;
             white-space: nowrap;
         }
 
         .table-custom thead th i {
             margin-left: 6px;
-            color: #D4AF37;
+            color: #2467a8;
         }
 
         .table-custom tbody td {
@@ -467,13 +467,13 @@
         }
 
         .pagination-custom a:hover {
-            border-color: #D4AF37;
-            color: #D4AF37;
+            border-color: #2467a8;
+            color: #2467a8;
         }
 
         .pagination-custom .current {
-            background: linear-gradient(135deg, #D4AF37, #B8960F);
-            border-color: #D4AF37;
+            background: linear-gradient(135deg, #2467a8, #194d82);
+            border-color: #2467a8;
             color: #1A1A2E;
             font-weight: 700;
         }
@@ -511,12 +511,12 @@
         }
 
         .btn-download.excel-sold {
-            background: linear-gradient(135deg, #28a745, #1e7e34);
+            background: linear-gradient(135deg, #1966b6, #134d89);
             color: #fff;
         }
 
         .btn-download.excel-sold:hover {
-            background: linear-gradient(135deg, #34ce57, #28a745);
+            background: linear-gradient(135deg, #237fdf, #1966b6);
         }
 
         .btn-download.excel-vip {
@@ -614,7 +614,7 @@
             <div class="header-left">
                 <h2>
                     <i class="fas fa-trophy"></i>
-                    {{ match.home_team }} <span style="color:#999;font-size:18px;">vs</span> {{ match.away_team }}
+                    {{ match.display_title }}
                 </h2>
                 <div class="match-meta">
                     <span><i class="fas fa-calendar-day"></i> {{ match.date_time|date:"Y/m/d" }}</span>
@@ -632,15 +632,15 @@
                 </div>
             </div>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <a href="{% url 'matches:admin_match_full_report' match.id %}" class="btn-back" style="background:#D4AF37; color:#1A1A2E; border-color:#D4AF37;">
-                    <i class="fas fa-file-alt"></i> گزارش کامل مسابقه
+                <a href="{% url 'matches:admin_match_full_report' match.id %}" class="btn-back" style="background:#2467a8; color:#1A1A2E; border-color:#2467a8;">
+                    <i class="fas fa-file-alt"></i> گزارش کامل سانس
                 </a>
-                <a href="{% url 'matches:admin_match_stadium_layout' match.id %}" class="btn-back" style="background:#1A1A2E; color:#D4AF37; border-color:#1A1A2E;">
-                    <i class="fas fa-th-large"></i> چیدمان ورزشگاه این مسابقه
+                <a href="{% url 'matches:admin_match_stadium_layout' match.id %}" class="btn-back" style="background:#1A1A2E; color:#2467a8; border-color:#1A1A2E;">
+                    <i class="fas fa-th-large"></i> چیدمان ورزشگاه این سانس
                 </a>
                 {% if not match.is_cancelled %}
                     <a href="{% url 'matches:admin_match_cancel' match.id %}" class="btn-back" style="background:#dc3545; color:#fff; border-color:#dc3545;">
-                        <i class="fas fa-ban"></i> لغو مسابقه و بازگشت وجه
+                        <i class="fas fa-ban"></i> لغو سانس و بازگشت وجه
                     </a>
                 {% endif %}
                 <a href="{% url 'matches:admin_match_list' %}" class="btn-back">
@@ -726,7 +726,7 @@
                 <div class="stat-number">{{ wallet_paid_total|rial_display }}</div>
                 <p class="stat-label">پرداخت‌شده از کیف پول (ریال)</p>
                 <small style="display:block; margin-top:4px; opacity:0.75; font-size:11px;">
-                    از کل {{ total_revenue|rial_display }} ریال درآمد این مسابقه، این مقدار از کیف پول کاربران کسر شده
+                    از کل {{ total_revenue|rial_display }} ریال درآمد این سانس، این مقدار از کیف پول کاربران کسر شده
                 </small>
             </div>
             <div class="stat-card orange">
@@ -898,13 +898,13 @@
         </div>
 
         <!-- ============================================================
-    بخش کدهای تخفیف کاربران ویژه (این مسابقه)
+    بخش کدهای تخفیف کاربران ویژه (این سانس)
     ============================================================ -->
         <div class="card shadow-sm mt-4">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
                     <i class="fas fa-percentage"></i>
-                    کدهای تخفیف کاربران ویژه (این مسابقه)
+                    کدهای تخفیف کاربران ویژه (این سانس)
                 </h5>
                 <span class="badge bg-light text-dark">{{ vip_discount_codes_total_uses }} استفاده از {{ vip_discount_codes_data|length }} کد</span>
             </div>
@@ -945,7 +945,7 @@
                         </table>
                     </div>
                 {% else %}
-                    <p class="text-muted mb-0">برای این مسابقه هیچ کد تخفیفی به کاربران ویژه داده نشده است.</p>
+                    <p class="text-muted mb-0">برای این سانس هیچ کد تخفیفی به کاربران ویژه داده نشده است.</p>
                 {% endif %}
             </div>
         </div>
@@ -982,7 +982,7 @@
                                     <!-- نوع جایگاه -->
                                     <div class="block-info-row">
                                         <span class="info-label"><i class="fas fa-tag"></i> نوع جایگاه</span>
-                                        {# نوع جایگاهِ همین مسابقه، نه zone_type گلوبالِ بلوک #}
+                                        {# نوع جایگاهِ همین سانس، نه zone_type گلوبالِ بلوک #}
                                         <span class="badge
                                 {% if block_data.zone == 'home' %}bg-success
                                 {% elif block_data.zone == 'away' %}bg-warning text-dark
@@ -1124,7 +1124,7 @@
                             <td colspan="10">
                                 <div class="empty-state">
                                     <i class="fas fa-ticket-alt"></i>
-                                    <p>هیچ بلیط فروخته‌شده‌ای برای این مسابقه وجود ندارد.</p>
+                                    <p>هیچ بلیط فروخته‌شده‌ای برای این سانس وجود ندارد.</p>
                                 </div>
                             </td>
                         </tr>
@@ -1227,7 +1227,7 @@
                             <td colspan="10">
                                 <div class="empty-state">
                                     <i class="fas fa-star"></i>
-                                    <p>هیچ بلیط ویژه‌ای برای این مسابقه وجود ندارد.</p>
+                                    <p>هیچ بلیط ویژه‌ای برای این سانس وجود ندارد.</p>
                                 </div>
                             </td>
                         </tr>

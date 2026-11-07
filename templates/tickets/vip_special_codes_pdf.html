@@ -35,7 +35,7 @@
         }
 
         .card {
-            border: 2px solid #D4AF37;
+            border: 2px solid #2467a8;
             border-radius: 20px;
             overflow: hidden;
             box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
@@ -43,10 +43,10 @@
 
         .title-band {
             background: linear-gradient(135deg, #1A1A2E 0%, #232345 100%);
-            color: #D4AF37;
+            color: #2467a8;
             text-align: center;
             padding: 22px 20px 18px;
-            border-bottom: 4px solid #D4AF37;
+            border-bottom: 4px solid #2467a8;
         }
         .title-band h1 {
             font-size: 28px;
@@ -72,7 +72,7 @@
             color: #1A1A2E;
         }
         .match-info .teams .vs {
-            color: #D4AF37;
+            color: #2467a8;
             font-weight: 800;
             margin: 0 8px;
         }
@@ -106,7 +106,7 @@
             letter-spacing: 6px;
             color: #1A1A2E;
             background: #fdf6e3;
-            border: 2px dashed #D4AF37;
+            border: 2px dashed #2467a8;
             border-radius: 14px;
             padding: 14px 32px;
             direction: ltr;
@@ -116,13 +116,13 @@
             font-size: 11px;
             font-weight: 700;
         }
-        .code-band .status.free { color: #1E8E3E; }
+        .code-band .status.free { color: #12559a; }
         .code-band .status.used { color: #c0392b; }
         .code-band .status.inactive { color: #c0392b; }
 
         .instructions {
             background: #fff8e1;
-            border-top: 2px solid #D4AF37;
+            border-top: 2px solid #2467a8;
             padding: 18px 24px;
         }
         .instructions h2 {
@@ -154,7 +154,7 @@
         </div>
 
         <div class="match-info">
-            <div class="teams">{{ code.match.home_team }}<span class="vs">vs</span>{{ code.match.away_team }}</div>
+            <div class="teams">{{ code.match.display_title }}</div>
             <div class="datetime">{{ code.match.date_time|to_jalali_full }}</div>
             {% if code.match.stadium %}
                 <div class="stadium">{{ code.match.stadium.name }}</div>

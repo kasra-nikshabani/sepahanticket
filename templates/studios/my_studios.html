@@ -1,0 +1,38 @@
+{% extends 'studios/account_base.html' %}{% load persian_filters currency_filters jalali %}
+{% block page_class %}account-page education-account-page studio-owner-page{% endblock %}
+{% block account_title %}پلاتوهای من{% endblock %}
+{% block account_intro %}فضاها، ساعت‌های قابل رزرو و وضعیت هر پلاتو را از همین‌جا مدیریت کن.{% endblock %}
+{% block account_heading_action %}<a class="edu-button" href="{% url 'studios:create' %}"><i class="fa-solid fa-plus" aria-hidden="true"></i> معرفی پلاتوی تازه</a>{% endblock %}
+{% block account_content %}
+<section class="studio-owner-welcome" aria-label="راهنمای مدیریت پلاتو">
+  <span class="studio-owner-welcome-icon"><i class="fa-solid fa-door-open" aria-hidden="true"></i></span>
+  <div><strong>فضایت را برای یک تجربهٔ هنری آماده کن</strong><p>ساعت‌های آزاد، قیمت و رزروها را در تقویم هر پلاتو ببین. اطلاعات پلاتوی منتشرشده با درخواست پشتیبانی تغییر می‌کند.</p></div>
+</section>
+<section class="studio-owner-summary" aria-label="خلاصهٔ پلاتوها">
+  <article><span><i class="fa-solid fa-house" aria-hidden="true"></i> همهٔ پلاتوها</span><strong>{{ summary.total|to_persian }}</strong></article>
+  <article><span><i class="fa-solid fa-circle-check" aria-hidden="true"></i> منتشرشده</span><strong>{{ summary.published|to_persian }}</strong></article>
+  <article><span><i class="fa-regular fa-clock" aria-hidden="true"></i> در انتظار بررسی</span><strong>{{ summary.pending|to_persian }}</strong></article>
+  <article><span><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> نیازمند اصلاح</span><strong>{{ summary.revision|to_persian }}</strong></article>
+</section>
+<div class="studio-owner-list-heading"><div><span class="edu-eyebrow">مدیریت فضاها</span><h2>فهرست پلاتوها</h2></div><span>{{ page_obj.paginator.count|to_persian }} پلاتو</span></div>
+<div class="edu-account-list studio-owner-list">
+{% for studio in page_obj %}
+<article class="edu-account-card studio-owner-card">
+  <a class="edu-account-art" href="{% url 'studios:manage' studio.pk %}" aria-label="مدیریت {{ studio.title|to_persian }}">{% include 'studios/_cover.html' %}</a>
+  <div class="studio-owner-card-main">
+    <div class="studio-owner-card-top"><span class="edu-pill studio-status-{{ studio.status }}"><i class="fa-solid {% if studio.status == 'published' %}fa-circle-check{% elif studio.status == 'revision' %}fa-pen-to-square{% elif studio.status == 'pending' %}fa-hourglass-half{% else %}fa-file-lines{% endif %}" aria-hidden="true"></i>{{ studio.get_status_display }}</span>{% if studio.status == 'published' %}<span class="studio-live-mark"><i class="fa-solid fa-earth-asia" aria-hidden="true"></i> روی سایت</span>{% endif %}</div>
+    <h3>{{ studio.title|to_persian }}</h3>
+    <p class="studio-owner-location"><i class="fa-solid fa-location-dot" aria-hidden="true"></i>{{ studio.city|default:'شهر ثبت نشده'|to_persian }}{% if studio.district %}، {{ studio.district|to_persian }}{% endif %}</p>
+    {% if studio.status == 'revision' and studio.review_note %}<p class="studio-review-note"><strong>پیام مدیریت:</strong> {{ studio.review_note|truncatechars:180|to_persian }}</p>{% elif studio.status == 'pending' %}<p class="studio-card-note">اطلاعات برای بررسی مدیریت ارسال شده است.</p>{% elif studio.status == 'draft' %}<p class="studio-card-note">پیش‌نویس است؛ هر زمان آماده بود برای بررسی بفرست.</p>{% elif studio.status == 'paused' %}<p class="studio-card-note">نمایش پلاتو متوقف شده است.</p>{% endif %}
+    <div class="studio-owner-metrics"><span><i class="fa-solid fa-ticket" aria-hidden="true"></i><b>{{ studio.booking_count|to_persian }}</b> رزرو قطعی</span><span><i class="fa-solid fa-wallet" aria-hidden="true"></i><b>{{ studio.revenue|default:0|toman_display|persian_number }}</b> تومان فروش رزروها</span></div>
+    <div class="studio-owner-availability">{% if studio.status == 'published' and studio.booking_open %}<span class="studio-open-indicator"><i class="fa-solid fa-circle" aria-hidden="true"></i> پذیرش رزرو روشن</span>{% else %}<span class="studio-closed-indicator"><i class="fa-solid fa-circle-pause" aria-hidden="true"></i> پذیرش رزرو غیرفعال</span>{% endif %}<span>{% if studio.open_slot_count %}{{ studio.open_slot_count|to_persian }} ساعت آینده قابل رزرو{% else %}ساعت آیندهٔ قابل رزرو ثبت نشده{% endif %}</span></div>
+    {% if studio.next_slot %}<p class="studio-next-slot"><i class="fa-regular fa-calendar" aria-hidden="true"></i> نزدیک‌ترین ساعت آزاد: {{ studio.next_slot|to_jalali_full|to_persian }}</p>{% endif %}
+  </div>
+  <div class="studio-owner-card-actions"><a class="edu-button" href="{% url 'studios:manage' studio.pk %}"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i> تقویم و رزروها</a>{% if studio.status == 'published' %}<a class="edu-button edu-button-light" href="{{ studio.get_absolute_url }}"><i class="fa-regular fa-eye" aria-hidden="true"></i> مشاهدهٔ صفحه</a>{% elif studio.published_at %}<a class="edu-button edu-button-light" href="{% url 'accounts:support_create' %}"><i class="fa-regular fa-message" aria-hidden="true"></i> درخواست تغییر</a>{% else %}<a class="edu-button edu-button-light" href="{% url 'studios:edit' studio.pk %}"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i> تکمیل اطلاعات</a>{% endif %}</div>
+</article>
+{% empty %}
+<div class="edu-empty studio-owner-empty"><i class="fa-solid fa-door-open" aria-hidden="true"></i><h2>هنوز پلاتویی معرفی نکرده‌ای</h2><p>فضای تمرین یا اجرای خود را ثبت کن، ساعت‌های آزاد را بچین و درخواست انتشار بفرست.</p><a class="edu-button" href="{% url 'studios:create' %}"><i class="fa-solid fa-plus" aria-hidden="true"></i> معرفی اولین پلاتو</a></div>
+{% endfor %}
+</div>
+{% include 'education/_pagination.html' %}
+{% endblock %}

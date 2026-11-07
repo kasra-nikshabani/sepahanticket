@@ -14,13 +14,13 @@
 <style>
     .manage-container { max-width: 1000px; margin: 30px auto; }
     .card-custom { background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #e8eaed; overflow: hidden; }
-    .card-header-custom { background: linear-gradient(135deg, #1A1A2E, #16213E); padding: 20px 30px; border-bottom: 3px solid #D4AF37; }
-    .card-header-custom h4 { margin: 0; font-weight: 700; color: #D4AF37; }
+    .card-header-custom { background: linear-gradient(135deg, #1A1A2E, #16213E); padding: 20px 30px; border-bottom: 3px solid #2467a8; }
+    .card-header-custom h4 { margin: 0; font-weight: 700; color: #2467a8; }
     .card-header-custom h4 i { margin-left: 10px; }
     .card-body-custom { padding: 30px; overflow-x: auto; }
 
     .stats { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
-    .stat-item { background: #f8f9fa; padding: 10px 20px; border-radius: 8px; border-right: 4px solid #D4AF37; }
+    .stat-item { background: #f8f9fa; padding: 10px 20px; border-radius: 8px; border-right: 4px solid #2467a8; }
     .stat-item span { font-weight: 700; font-size: 1.2rem; }
 
     .seat-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; max-width: 650px; margin: 20px 0; }
@@ -36,9 +36,9 @@
         user-select: none;
         position: relative;
     }
-    .seat.available { background: #e8f5e9; border-color: #a5d6a7; color: #2e7d32; }
+    .seat.available { background: #eeeeef; border-color: #afbdcc; color: #1f548c; }
     .seat.unavailable { background: #fce4ec; border-color: #ef9a9a; color: #c62828; cursor: pointer; }
-    .seat.selected { background: #D4AF37; border-color: #B8960F; color: #1A1A2E; }
+    .seat.selected { background: #2467a8; border-color: #194d82; color: #1A1A2E; }
     .seat.has-ticket { border-color: #ff5722; border-width: 2px; }
     .seat.has-ticket::after {
         content: "🔒";
@@ -57,8 +57,8 @@
     .bulk-actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 20px 0; align-items: center; }
     .btn-bulk { padding: 8px 20px; border-radius: 8px; font-weight: 600; border: none; transition: all 0.2s; cursor: pointer; }
     .btn-bulk:hover { transform: translateY(-2px); }
-    .btn-activate { background: #28a745; color: #fff; }
-    .btn-activate:hover { background: #1e7e34; }
+    .btn-activate { background: #1966b6; color: #fff; }
+    .btn-activate:hover { background: #134d89; }
     .btn-deactivate { background: #dc3545; color: #fff; }
     .btn-deactivate:hover { background: #b02a37; }
     .btn-gradual { background: #ffc107; color: #1A1A2E; }
@@ -129,14 +129,14 @@
                     ردیف <strong>{{ row.name }}</strong>
                 {% endif %}
                 برای مسابقه:
-                <strong>{{ match.home_team }} vs {{ match.away_team }}</strong>
+                <strong>{{ match.display_title }}</strong>
                 (تاریخ: {{ match.date_time|date:"Y/m/d H:i" }})
             </div>
 
             <!-- آمار -->
             <div class="stats">
                 <div class="stat-item">کل صندلی‌ها: <span>{{ total }}</span></div>
-                <div class="stat-item" style="border-color:#28a745;">فعال: <span>{{ available }}</span></div>
+                <div class="stat-item" style="border-color:#1966b6;">فعال: <span>{{ available }}</span></div>
                 <div class="stat-item" style="border-color:#dc3545;">غیرفعال: <span>{{ unavailable }}</span></div>
             </div>
 
